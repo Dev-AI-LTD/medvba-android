@@ -5,6 +5,7 @@ import superjson from "superjson";
 
 import type { AppRouter } from "@/backend/trpc/app-router";
 import { supabase } from "@/lib/supabase";
+import { isCognitoConfigured, getCognitoIdToken } from "@/lib/cognito";
 
 export const trpc = createTRPCReact<AppRouter>();
 
@@ -36,14 +37,31 @@ const getBaseUrl = () => {
   return url;
 };
 
+/**
+ * Resolve the Bearer token to attach to every tRPC request.
+ *
+ * Priority:
+ *   1. Cognito ID token (when EXPO_PUBLIC_COGNITO_USER_POOL_ID is set)
+ *   2. Supabase access token (legacy / transition period)
+ */
+async function getAuthToken(): Promise<string | null> {
+  if (isCognitoConfigured()) {
+    const cognitoToken = await getCognitoIdToken();
+    if (cognitoToken) return cognitoToken;
+  }
+
+  // Fallback to Supabase session (during migration or when Cognito is not configured)
+  const { data } = await supabase.auth.getSession();
+  return data?.session?.access_token ?? null;
+}
+
 export const trpcClient = trpc.createClient({
   links: [
     httpLink({
       url: `${getBaseUrl()}/api/trpc`,
       transformer: superjson,
       async headers() {
-        const { data } = await supabase.auth.getSession();
-        const token = data?.session?.access_token;
+        const token = await getAuthToken();
         return token ? { Authorization: `Bearer ${token}` } : {};
       },
     }),

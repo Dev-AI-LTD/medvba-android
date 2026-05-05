@@ -22,7 +22,10 @@ import { useAuth } from '@/providers/AuthProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { SPACING } from '@/theme/paperTheme';
 import { isSupabaseConfigured } from '@/lib/supabase';
+import { isCognitoConfigured } from '@/lib/cognito';
 import { log } from '@/lib/log';
+
+const isAuthConfigured = isSupabaseConfigured || isCognitoConfigured();
 
 export default function ForgotPasswordScreen() {
   const theme = useTheme();
@@ -47,7 +50,7 @@ export default function ForgotPasswordScreen() {
   }, [email, t]);
 
   const handleResetPassword = useCallback(async () => {
-    if (!isSupabaseConfigured) {
+    if (!isAuthConfigured) {
       Alert.alert(t('auth.error'), t('auth.supabaseNotConfigured'));
       return;
     }
@@ -204,7 +207,7 @@ export default function ForgotPasswordScreen() {
                   mode="contained"
                   onPress={handleResetPassword}
                   loading={isLoading}
-                  disabled={isLoading || !isSupabaseConfigured}
+                  disabled={isLoading || !isAuthConfigured}
                   style={{ marginTop: SPACING.x3 }}
                 >
                   {t('auth.sendResetLink')}

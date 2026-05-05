@@ -19,10 +19,22 @@ import { useAuth, AUTH_SIGN_IN_CANCELLED } from '@/providers/AuthProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { SPACING } from '@/theme/paperTheme';
 import { isSupabaseConfigured } from '@/lib/supabase';
+import { isCognitoConfigured } from '@/lib/cognito';
 import { log } from '@/lib/log';
 import { Ionicons } from '@expo/vector-icons';
 import { AuthError } from '@supabase/supabase-js';
 import { validateLoginForm, clearError, hasErrors, type FormErrors } from '@/lib/validation';
+import Constants from 'expo-constants';
+
+const extra = Constants.expoConfig?.extra ?? {};
+const _get = (key: string) =>
+  (process.env as Record<string, string | undefined>)[key] || (extra as Record<string, string | undefined>)[key] || '';
+
+/** True when there is an active auth backend (Supabase OR Cognito). */
+const isAuthConfigured = isSupabaseConfigured || isCognitoConfigured();
+const isGoogleConfigured = Boolean(_get('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID') || _get('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'));
+const isFacebookConfigured = Boolean(_get('EXPO_PUBLIC_FACEBOOK_APP_ID'));
+const isAppleConfigured = Platform.OS === 'ios';
 
 const ONBOARDING_COMPLETE_KEY = '@medvba_onboarding_complete';
 
@@ -56,7 +68,7 @@ function LoginScreen() {
   }, [email, password, t]);
 
   const handleLogin = useCallback(async () => {
-    if (!isSupabaseConfigured) {
+    if (!isAuthConfigured) {
       Alert.alert(t('auth.loginFailed'), t('auth.supabaseNotConfigured'));
       return;
     }
@@ -122,7 +134,7 @@ function LoginScreen() {
   }, []);
 
   const handleSocialLogin = useCallback(async (provider: 'google' | 'facebook' | 'apple') => {
-    if (!isSupabaseConfigured) {
+    if (!isAuthConfigured) {
       Alert.alert(t('auth.loginFailed'), t('auth.supabaseNotConfigured'));
       return;
     }
@@ -145,6 +157,7 @@ function LoginScreen() {
 
       if (result.error) {
         if (result.error.message === AUTH_SIGN_IN_CANCELLED) {
+          // User dismissed the provider sheet — not an error, just stop loading
           return;
         }
         if (Platform.OS !== 'web') {
@@ -163,6 +176,7 @@ function LoginScreen() {
       log.error('[Login] Social login error:', error);
       Alert.alert('Error', t('auth.unexpectedError'));
     } finally {
+      // Always reset loading — including on cancel (early return skips here without finally)
       setIsLoading(false);
     }
   }, [signInWithGoogle, signInWithFacebook, signInWithApple, t]);
@@ -208,28 +222,32 @@ function LoginScreen() {
 
             <Card style={[styles.card, { backgroundColor: theme.colors.surface }]} mode="elevated">
               <Card.Content style={styles.cardContent}>
-                {Platform.OS !== 'web' ? (
+                {Platform.OS !== 'web' && (isGoogleConfigured || isFacebookConfigured || isAppleConfigured) ? (
                   <>
                     <View style={styles.socialButtonsRow}>
-                      <TouchableOpacity
-                        style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
-                        onPress={() => handleSocialLogin('google')}
-                        disabled={isLoading}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('auth.signInWithGoogle')}
-                      >
-                        <Ionicons name="logo-google" size={24} color={theme.colors.onSurface} />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
-                        onPress={() => handleSocialLogin('facebook')}
-                        disabled={isLoading}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('auth.signInWithFacebook')}
-                      >
-                        <Ionicons name="logo-facebook" size={24} color={theme.colors.onSurface} />
-                      </TouchableOpacity>
-                      {Platform.OS === 'ios' ? (
+                      {isGoogleConfigured ? (
+                        <TouchableOpacity
+                          style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
+                          onPress={() => handleSocialLogin('google')}
+                          disabled={isLoading}
+                          accessibilityRole="button"
+                          accessibilityLabel={t('auth.signInWithGoogle')}
+                        >
+                          <Ionicons name="logo-google" size={24} color={theme.colors.onSurface} />
+                        </TouchableOpacity>
+                      ) : null}
+                      {isFacebookConfigured ? (
+                        <TouchableOpacity
+                          style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
+                          onPress={() => handleSocialLogin('facebook')}
+                          disabled={isLoading}
+                          accessibilityRole="button"
+                          accessibilityLabel={t('auth.signInWithFacebook')}
+                        >
+                          <Ionicons name="logo-facebook" size={24} color={theme.colors.onSurface} />
+                        </TouchableOpacity>
+                      ) : null}
+                      {isAppleConfigured ? (
                         <TouchableOpacity
                           style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
                           onPress={() => handleSocialLogin('apple')}
@@ -309,7 +327,7 @@ function LoginScreen() {
                   </UIButton>
                 </View>
 
-                {!isSupabaseConfigured && (
+                {!isAuthConfigured && (
                   <Text variant="bodySmall" style={[styles.notConfiguredText, { color: theme.colors.error }]}>
                     {t('auth.supabaseNotConfigured')}
                   </Text>
@@ -318,7 +336,7 @@ function LoginScreen() {
                   <UIButton
                     variant="borderedProminent"
                     onPress={handleLogin}
-                    disabled={isLoading || !isSupabaseConfigured}
+                    disabled={isLoading || !isAuthConfigured}
                     color={theme.colors.primary}
                     testID="loginSubmit"
                   >
@@ -338,7 +356,7 @@ function LoginScreen() {
             </View>
             {__DEV__ && (
               <Text variant="labelSmall" style={[styles.debugText, { color: theme.colors.onSurfaceVariant }]}>
-                [DEBUG] Supabase: {isSupabaseConfigured ? 'configured' : 'not configured'}
+                [DEBUG] supabase:{isSupabaseConfigured ? '✓' : '✗'} cognito:{isCognitoConfigured() ? '✓' : '✗'} google:{isGoogleConfigured ? '✓' : '✗'} fb:{isFacebookConfigured ? '✓' : '✗'}
               </Text>
             )}
           </ScrollView>
