@@ -1,21 +1,13 @@
 /**
- * Unit tests for AuthProvider
+ * Unit tests for AuthProvider — Cognito-only
  */
 
 import { renderHook, act, waitFor } from '@testing-library/react-native';
-import { Alert } from 'react-native';
 
 jest.mock('@supabase/supabase-js', () => ({
   createClient: jest.fn(() => ({
     auth: {
-      getSession: jest.fn().mockResolvedValue({ data: { session: null } }),
-      signUp: jest.fn(),
-      signInWithPassword: jest.fn(),
-      signOut: jest.fn().mockResolvedValue({ error: null }),
-      resetPasswordForEmail: jest.fn(),
-      onAuthStateChange: jest.fn(() => ({ data: { subscription: { unsubscribe: jest.fn() } } })),
-      signInWithOAuth: jest.fn(),
-      signInWithIdToken: jest.fn(),
+      // Supabase auth is no longer used — these should not be called
     },
     from: jest.fn(() => ({
       select: jest.fn(() => ({
@@ -25,8 +17,21 @@ jest.mock('@supabase/supabase-js', () => ({
       })),
       insert: jest.fn().mockResolvedValue({ error: null }),
       update: jest.fn().mockResolvedValue({ error: null }),
+      upsert: jest.fn().mockResolvedValue({ error: null }),
     })),
   })),
+}));
+
+jest.mock('@/lib/cognito', () => ({
+  isCognitoConfigured: jest.fn(() => true),
+  cognitoSignIn: jest.fn(),
+  cognitoSignUp: jest.fn(),
+  cognitoSignOut: jest.fn().mockResolvedValue(undefined),
+  cognitoForgotPassword: jest.fn(),
+  cognitoSocialSignIn: jest.fn(),
+  getCognitoSession: jest.fn().mockResolvedValue(null),
+  getCognitoIdToken: jest.fn().mockResolvedValue(null),
+  CognitoError: class CognitoError extends Error {},
 }));
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
@@ -50,30 +55,11 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn().mockResolvedValue(undefined),
 }));
 
-jest.mock('@react-native-google-signin/google-signin', () => ({
-  GoogleSignin: {
-    configure: jest.fn(),
-    signIn: jest.fn(),
-    signOut: jest.fn().mockResolvedValue(undefined),
-    hasPlayServices: jest.fn().mockResolvedValue(true),
-    getTokens: jest.fn(),
-  },
-  statusCodes: {
-    SIGN_IN_CANCELLED: 'SIGN_IN_CANCELLED',
-  },
-}));
-
-jest.mock('@/lib/appleAuth', () => ({
-  appleAuth: {
-    isSupported: false,
-    Scope: { FULL_NAME: 'full_name', EMAIL: 'email' },
-  },
-}));
-
 jest.mock('@/lib/biometric', () => ({
   authenticateWithBiometric: jest.fn().mockResolvedValue({ success: false }),
   isBiometricAvailable: jest.fn().mockResolvedValue(false),
   getBiometricCapabilities: jest.fn().mockResolvedValue({ hasHardware: false, isEnrolled: false, supportedTypes: [] }),
+  getBiometricTypeName: jest.fn().mockReturnValue('Biometric'),
 }));
 
 jest.mock('@/lib/log', () => ({
@@ -146,7 +132,7 @@ describe('AuthProvider', () => {
   });
 
   describe('Error Message Mapping', () => {
-    it('should map Supabase error codes to user-friendly messages', () => {
+    it('should map error codes to user-friendly messages', () => {
       const getErrorMessage = (error: { code?: string; message?: string }) => {
         const code = error.code;
         if (code === 'email_not_confirmed') {

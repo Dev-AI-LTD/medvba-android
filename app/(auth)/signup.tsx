@@ -15,25 +15,17 @@ import * as Haptics from 'expo-haptics';
 import { Appbar, Text, Card, useTheme } from 'react-native-paper';
 import { UIButton, UITextField } from '@/ui';
 import { useAuth, AUTH_SIGN_IN_CANCELLED } from '@/providers/AuthProvider';
-import { AuthError } from '@supabase/supabase-js';
+import type { AuthError } from '@/types/auth';
 import { Ionicons } from '@expo/vector-icons';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { isSupabaseConfigured } from '@/lib/supabase';
 import { isCognitoConfigured } from '@/lib/cognito';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SPACING } from '@/theme/paperTheme';
 import { log } from '@/lib/log';
 import { validateSignUpForm, clearError, hasErrors, type FormErrors } from '@/lib/validation';
-import Constants from 'expo-constants';
 
-const extra = Constants.expoConfig?.extra ?? {};
-const _get = (key: string) =>
-  (process.env as Record<string, string | undefined>)[key] || (extra as Record<string, string | undefined>)[key] || '';
-
-const isAuthConfigured = isSupabaseConfigured || isCognitoConfigured();
-const isGoogleConfigured = Boolean(_get('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID') || _get('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'));
-const isFacebookConfigured = Boolean(_get('EXPO_PUBLIC_FACEBOOK_APP_ID'));
-const isAppleConfigured = Platform.OS === 'ios';
+const isAuthConfigured = isCognitoConfigured();
+const isSocialConfigured = isCognitoConfigured();
 
 const ONBOARDING_COMPLETE_KEY = '@medvba_onboarding_complete';
 
@@ -58,7 +50,7 @@ export default function SignUpScreen() {
   const validateForm = useCallback((): boolean => {
     const validationErrors = validateSignUpForm({ name, email, password, confirmPassword });
     const translatedErrors: FormErrors = {};
-    
+
     Object.entries(validationErrors).forEach(([key, errorKey]) => {
       if (errorKey) {
         translatedErrors[key] = t(errorKey);
@@ -169,7 +161,7 @@ export default function SignUpScreen() {
         }
 
         if (result.error) {
-          if (result.error.message === AUTH_SIGN_IN_CANCELLED) return; // finally resets loading
+          if (result.error.message === AUTH_SIGN_IN_CANCELLED) return;
           if (Platform.OS !== 'web') {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
           }
@@ -238,42 +230,36 @@ export default function SignUpScreen() {
 
             <Card style={[styles.card, { backgroundColor: theme.colors.surface }]} mode="elevated">
               <Card.Content style={styles.cardContent}>
-                {Platform.OS !== 'web' && (isGoogleConfigured || isFacebookConfigured || isAppleConfigured) ? (
+                {isSocialConfigured ? (
                   <>
                     <View style={styles.socialButtonsRow}>
-                      {isGoogleConfigured ? (
-                        <TouchableOpacity
-                          style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
-                          onPress={() => handleSocialSignUp('google')}
-                          disabled={isLoading}
-                          accessibilityRole="button"
-                          accessibilityLabel={t('auth.signInWithGoogle')}
-                        >
-                          <Ionicons name="logo-google" size={24} color={theme.colors.onSurface} />
-                        </TouchableOpacity>
-                      ) : null}
-                      {isFacebookConfigured ? (
-                        <TouchableOpacity
-                          style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
-                          onPress={() => handleSocialSignUp('facebook')}
-                          disabled={isLoading}
-                          accessibilityRole="button"
-                          accessibilityLabel={t('auth.signInWithFacebook')}
-                        >
-                          <Ionicons name="logo-facebook" size={24} color={theme.colors.onSurface} />
-                        </TouchableOpacity>
-                      ) : null}
-                      {isAppleConfigured ? (
-                        <TouchableOpacity
-                          style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
-                          onPress={() => handleSocialSignUp('apple')}
-                          disabled={isLoading}
-                          accessibilityRole="button"
-                          accessibilityLabel={t('auth.signInWithApple')}
-                        >
-                          <Ionicons name="logo-apple" size={24} color={theme.colors.onSurface} />
-                        </TouchableOpacity>
-                      ) : null}
+                      <TouchableOpacity
+                        style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
+                        onPress={() => handleSocialSignUp('google')}
+                        disabled={isLoading}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('auth.signInWithGoogle')}
+                      >
+                        <Ionicons name="logo-google" size={24} color={theme.colors.onSurface} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
+                        onPress={() => handleSocialSignUp('facebook')}
+                        disabled={isLoading}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('auth.signInWithFacebook')}
+                      >
+                        <Ionicons name="logo-facebook" size={24} color={theme.colors.onSurface} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
+                        onPress={() => handleSocialSignUp('apple')}
+                        disabled={isLoading}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('auth.signInWithApple')}
+                      >
+                        <Ionicons name="logo-apple" size={24} color={theme.colors.onSurface} />
+                      </TouchableOpacity>
                     </View>
                     <View style={styles.dividerRow}>
                       <View style={[styles.dividerLine, { backgroundColor: theme.colors.outlineVariant }]} />

@@ -21,11 +21,10 @@ import {
 import { useAuth } from '@/providers/AuthProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { SPACING } from '@/theme/paperTheme';
-import { isSupabaseConfigured } from '@/lib/supabase';
 import { isCognitoConfigured } from '@/lib/cognito';
 import { log } from '@/lib/log';
 
-const isAuthConfigured = isSupabaseConfigured || isCognitoConfigured();
+const isAuthConfigured = isCognitoConfigured();
 
 export default function ForgotPasswordScreen() {
   const theme = useTheme();

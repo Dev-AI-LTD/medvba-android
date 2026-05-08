@@ -72,6 +72,7 @@ app.get("/health", (c) => {
     env: {
       hasSupabaseUrl: !!process.env.SUPABASE_URL,
       hasServiceRoleKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      hasCognitoConfig: !!(process.env.COGNITO_REGION && process.env.COGNITO_USER_POOL_ID),
       hasAiApiKey: !!(ai || openai),
       /** Which server AI key vars are set (no values). */
       aiKeyHints: {

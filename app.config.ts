@@ -57,13 +57,6 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
   loadEnvFile(path.join(root, '.env'), envFromFile);
   loadEnvFile(path.join(root, '.env.local'), envFromFile);
 
-  const facebookAppId =
-    envFromFile.EXPO_PUBLIC_FACEBOOK_APP_ID || process.env.EXPO_PUBLIC_FACEBOOK_APP_ID || '';
-  const facebookClientToken =
-    envFromFile.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN || process.env.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN || '';
-  const googleIosClientId =
-    envFromFile.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '';
-
   const plugins: NonNullable<ExpoConfig['plugins']> = [
     [
       'expo-router',
@@ -108,32 +101,6 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     './plugins/withAndroidNativeDebugSymbols.js',
   ];
 
-  if (facebookAppId && facebookClientToken) {
-    plugins.push([
-      'react-native-fbsdk-next',
-      {
-        appID: facebookAppId,
-        clientToken: facebookClientToken,
-        displayName: 'MEDVBA',
-        scheme: `fb${facebookAppId}`,
-        isAutoInitEnabled: true,
-        advertiserIDCollectionEnabled: false,
-        autoLogAppEventsEnabled: false,
-      },
-    ]);
-  }
-
-  const firstIosClientId = googleIosClientId.split(',')[0].trim();
-  const googleIosClientIdMatch = firstIosClientId.match(/^(.+)\.apps\.googleusercontent\.com$/);
-  if (googleIosClientIdMatch) {
-    plugins.push([
-      '@react-native-google-signin/google-signin',
-      {
-        iosUrlScheme: `com.googleusercontent.apps.${googleIosClientIdMatch[1]}`,
-      },
-    ]);
-  }
-
   return {
     ...config,
     name: 'MEDVBA',
@@ -158,7 +125,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       bundleIdentifier: 'com.devaieood.medvba',
       icon: './assets/images/icon.png',
       buildNumber: '39',
-      // Required for @invertase/react-native-apple-authentication (EAS / prebuild).
+      // Required for Apple Sign-In via Cognito Hosted UI (App Store compliance).
       entitlements: {
         'com.apple.developer.applesignin': ['Default'],
       },
@@ -178,8 +145,6 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       blockedPermissions: [
         'android.permission.CAMERA',
         'android.permission.RECORD_AUDIO',
-        // Strip AAID permission so Play Console „Advertising ID” can match „not used for ads”
-        // (Facebook plugin already has advertiserIDCollectionEnabled: false).
         'com.google.android.gms.permission.AD_ID',
       ],
       permissions: [
@@ -214,22 +179,14 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         envFromFile.EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID || process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID,
       EXPO_PUBLIC_PAYWALL_ENABLED:
         envFromFile.EXPO_PUBLIC_PAYWALL_ENABLED ?? process.env.EXPO_PUBLIC_PAYWALL_ENABLED ?? 'false',
-      EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID:
-        envFromFile.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-      EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID:
-        envFromFile.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-      EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID:
-        envFromFile.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-      EXPO_PUBLIC_FACEBOOK_APP_ID:
-        envFromFile.EXPO_PUBLIC_FACEBOOK_APP_ID || process.env.EXPO_PUBLIC_FACEBOOK_APP_ID,
-      EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN:
-        envFromFile.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN || process.env.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN,
-      EXPO_PUBLIC_APPLE_CLIENT_ID:
-        envFromFile.EXPO_PUBLIC_APPLE_CLIENT_ID ||
-        process.env.EXPO_PUBLIC_APPLE_CLIENT_ID ||
-        'com.devaieood.medvba.auth',
-      EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URI:
-        envFromFile.EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URI || process.env.EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URI || 'medvba://reset-password',
+      EXPO_PUBLIC_COGNITO_REGION:
+        envFromFile.EXPO_PUBLIC_COGNITO_REGION || process.env.EXPO_PUBLIC_COGNITO_REGION,
+      EXPO_PUBLIC_COGNITO_USER_POOL_ID:
+        envFromFile.EXPO_PUBLIC_COGNITO_USER_POOL_ID || process.env.EXPO_PUBLIC_COGNITO_USER_POOL_ID,
+      EXPO_PUBLIC_COGNITO_APP_CLIENT_ID:
+        envFromFile.EXPO_PUBLIC_COGNITO_APP_CLIENT_ID || process.env.EXPO_PUBLIC_COGNITO_APP_CLIENT_ID,
+      EXPO_PUBLIC_COGNITO_DOMAIN:
+        envFromFile.EXPO_PUBLIC_COGNITO_DOMAIN || process.env.EXPO_PUBLIC_COGNITO_DOMAIN,
     },
     owner: 'devaieood79',
   };

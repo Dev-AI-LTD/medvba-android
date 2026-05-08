@@ -4,27 +4,21 @@ import superjson from "superjson";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 
 // ---------------------------------------------------------------------------
-// JWT verification helpers
+// Startup validation
 // ---------------------------------------------------------------------------
 
-/**
- * Decode the `iss` claim from a JWT without full verification (to route to
- * the correct verifier). The token is already untrusted at this point.
- */
-function peekIssuer(token: string): string | null {
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-    const payload = JSON.parse(
-      Buffer.from(parts[1], "base64url").toString("utf-8")
-    );
-    return typeof payload.iss === "string" ? payload.iss : null;
-  } catch {
-    return null;
-  }
+if (!process.env.COGNITO_REGION || !process.env.COGNITO_USER_POOL_ID) {
+  console.warn(
+    "[Auth] WARNING: COGNITO_REGION or COGNITO_USER_POOL_ID is not set. " +
+    "Protected procedures will reject all requests."
+  );
 }
 
-// Lazy-initialised JWKS sets (cached per process lifecycle)
+// ---------------------------------------------------------------------------
+// JWT verification — Cognito only
+// ---------------------------------------------------------------------------
+
+// Lazy-initialised JWKS set (cached per process lifecycle)
 let cognitoJwks: ReturnType<typeof createRemoteJWKSet> | null = null;
 
 function getCognitoJwks(): ReturnType<typeof createRemoteJWKSet> | null {
@@ -57,27 +51,6 @@ async function verifyCognitoToken(token: string): Promise<string | null> {
   }
 }
 
-/**
- * Verify a Supabase JWT and return the user's UUID.
- * Falls back to calling the Supabase getUser API so both old-style and
- * new-style Supabase JWTs work, including when the JWT secret is not set.
- */
-async function verifySupabaseToken(token: string): Promise<string | null> {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceRoleKey) return null;
-
-  try {
-    const { createClient } = await import("@supabase/supabase-js");
-    const admin = createClient(supabaseUrl, serviceRoleKey);
-    const { data, error } = await admin.auth.getUser(token);
-    if (error || !data?.user?.id) return null;
-    return data.user.id;
-  } catch {
-    return null;
-  }
-}
-
 // ---------------------------------------------------------------------------
 // Context
 // ---------------------------------------------------------------------------
@@ -105,14 +78,8 @@ export const createTRPCRouter = t.router;
 export const publicProcedure = t.procedure;
 
 /**
- * Protected procedure — resolves the caller's user ID from the Bearer token.
- *
- * Supports two JWT issuers (dual-auth transition):
- *   1. AWS Cognito  — verified via JWKS; `sub` used as user ID
- *   2. Supabase Auth — verified via Supabase Admin API; UUID used as user ID
- *
- * Set COGNITO_REGION + COGNITO_USER_POOL_ID to enable Cognito verification.
- * Set SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY to enable Supabase verification.
+ * Protected procedure — resolves the caller's user ID from the Cognito Bearer token.
+ * Requires COGNITO_REGION and COGNITO_USER_POOL_ID environment variables.
  */
 export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
   if (!ctx.token) {
@@ -122,17 +89,7 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
     });
   }
 
-  let userId: string | null = null;
-
-  const issuer = peekIssuer(ctx.token);
-
-  if (issuer && issuer.includes("cognito-idp")) {
-    // Cognito JWT
-    userId = await verifyCognitoToken(ctx.token);
-  } else {
-    // Supabase JWT (or unknown issuer — try Supabase as fallback)
-    userId = await verifySupabaseToken(ctx.token);
-  }
+  const userId = await verifyCognitoToken(ctx.token);
 
   if (!userId) {
     throw new TRPCError({
