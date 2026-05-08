@@ -15,14 +15,17 @@ import * as Haptics from 'expo-haptics';
 import { Appbar, Text, Card, useTheme } from 'react-native-paper';
 import { UIButton, UITextField } from '@/ui';
 import { useAuth, AUTH_SIGN_IN_CANCELLED } from '@/providers/AuthProvider';
-import { AuthError } from '@supabase/supabase-js';
+import type { AuthError } from '@/types/auth';
 import { Ionicons } from '@expo/vector-icons';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { isSupabaseConfigured } from '@/lib/supabase';
+import { isCognitoConfigured } from '@/lib/cognito';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SPACING } from '@/theme/paperTheme';
 import { log } from '@/lib/log';
 import { validateSignUpForm, clearError, hasErrors, type FormErrors } from '@/lib/validation';
+
+const isAuthConfigured = isCognitoConfigured();
+const isSocialConfigured = isCognitoConfigured();
 
 const ONBOARDING_COMPLETE_KEY = '@medvba_onboarding_complete';
 
@@ -47,7 +50,7 @@ export default function SignUpScreen() {
   const validateForm = useCallback((): boolean => {
     const validationErrors = validateSignUpForm({ name, email, password, confirmPassword });
     const translatedErrors: FormErrors = {};
-    
+
     Object.entries(validationErrors).forEach(([key, errorKey]) => {
       if (errorKey) {
         translatedErrors[key] = t(errorKey);
@@ -65,7 +68,7 @@ export default function SignUpScreen() {
       }
       return;
     }
-    if (!isSupabaseConfigured) {
+    if (!isAuthConfigured) {
       Alert.alert(t('auth.signUpFailed'), t('auth.supabaseNotConfigured'));
       return;
     }
@@ -137,7 +140,7 @@ export default function SignUpScreen() {
 
   const handleSocialSignUp = useCallback(
     async (provider: 'google' | 'facebook' | 'apple') => {
-      if (!isSupabaseConfigured) {
+      if (!isAuthConfigured) {
         Alert.alert(t('auth.signUpFailed'), t('auth.supabaseNotConfigured'));
         return;
       }
@@ -227,7 +230,7 @@ export default function SignUpScreen() {
 
             <Card style={[styles.card, { backgroundColor: theme.colors.surface }]} mode="elevated">
               <Card.Content style={styles.cardContent}>
-                {Platform.OS !== 'web' ? (
+                {isSocialConfigured ? (
                   <>
                     <View style={styles.socialButtonsRow}>
                       <TouchableOpacity
@@ -248,17 +251,15 @@ export default function SignUpScreen() {
                       >
                         <Ionicons name="logo-facebook" size={24} color={theme.colors.onSurface} />
                       </TouchableOpacity>
-                      {Platform.OS === 'ios' ? (
-                        <TouchableOpacity
-                          style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
-                          onPress={() => handleSocialSignUp('apple')}
-                          disabled={isLoading}
-                          accessibilityRole="button"
-                          accessibilityLabel={t('auth.signInWithApple')}
-                        >
-                          <Ionicons name="logo-apple" size={24} color={theme.colors.onSurface} />
-                        </TouchableOpacity>
-                      ) : null}
+                      <TouchableOpacity
+                        style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
+                        onPress={() => handleSocialSignUp('apple')}
+                        disabled={isLoading}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('auth.signInWithApple')}
+                      >
+                        <Ionicons name="logo-apple" size={24} color={theme.colors.onSurface} />
+                      </TouchableOpacity>
                     </View>
                     <View style={styles.dividerRow}>
                       <View style={[styles.dividerLine, { backgroundColor: theme.colors.outlineVariant }]} />
@@ -347,7 +348,7 @@ export default function SignUpScreen() {
                   </Text>
                 ) : null}
 
-                {!isSupabaseConfigured && (
+                {!isAuthConfigured && (
                   <Text variant="bodySmall" style={[styles.notConfiguredText, { color: theme.colors.error }]}>
                     {t('auth.supabaseNotConfigured')}
                   </Text>
@@ -356,7 +357,7 @@ export default function SignUpScreen() {
                   <UIButton
                     variant="borderedProminent"
                     onPress={handleSignUp}
-                    disabled={isLoading || !isSupabaseConfigured}
+                    disabled={isLoading || !isAuthConfigured}
                     color={theme.colors.primary}
                   >
                     {isLoading ? (t('auth.loading') ?? '...') : t('auth.createAccount')}

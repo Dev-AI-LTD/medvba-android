@@ -18,11 +18,14 @@ import { UIButton, UITextField } from '@/ui';
 import { useAuth, AUTH_SIGN_IN_CANCELLED } from '@/providers/AuthProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { SPACING } from '@/theme/paperTheme';
-import { isSupabaseConfigured } from '@/lib/supabase';
+import { isCognitoConfigured } from '@/lib/cognito';
 import { log } from '@/lib/log';
 import { Ionicons } from '@expo/vector-icons';
-import { AuthError } from '@supabase/supabase-js';
+import type { AuthError } from '@/types/auth';
 import { validateLoginForm, clearError, hasErrors, type FormErrors } from '@/lib/validation';
+
+const isAuthConfigured = isCognitoConfigured();
+const isSocialConfigured = isCognitoConfigured();
 
 const ONBOARDING_COMPLETE_KEY = '@medvba_onboarding_complete';
 
@@ -33,10 +36,10 @@ function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-   const { 
-     signIn, 
-     signInWithGoogle, 
-     signInWithFacebook, 
+   const {
+     signIn,
+     signInWithGoogle,
+     signInWithFacebook,
      signInWithApple,
    } = useAuth();
   const { t } = useLanguage();
@@ -44,7 +47,7 @@ function LoginScreen() {
   const validateForm = useCallback((): boolean => {
     const validationErrors = validateLoginForm({ email, password });
     const translatedErrors: FormErrors = {};
-    
+
     Object.entries(validationErrors).forEach(([key, errorKey]) => {
       if (errorKey) {
         translatedErrors[key] = t(errorKey);
@@ -56,7 +59,7 @@ function LoginScreen() {
   }, [email, password, t]);
 
   const handleLogin = useCallback(async () => {
-    if (!isSupabaseConfigured) {
+    if (!isAuthConfigured) {
       Alert.alert(t('auth.loginFailed'), t('auth.supabaseNotConfigured'));
       return;
     }
@@ -122,7 +125,7 @@ function LoginScreen() {
   }, []);
 
   const handleSocialLogin = useCallback(async (provider: 'google' | 'facebook' | 'apple') => {
-    if (!isSupabaseConfigured) {
+    if (!isAuthConfigured) {
       Alert.alert(t('auth.loginFailed'), t('auth.supabaseNotConfigured'));
       return;
     }
@@ -208,7 +211,7 @@ function LoginScreen() {
 
             <Card style={[styles.card, { backgroundColor: theme.colors.surface }]} mode="elevated">
               <Card.Content style={styles.cardContent}>
-                {Platform.OS !== 'web' ? (
+                {isSocialConfigured ? (
                   <>
                     <View style={styles.socialButtonsRow}>
                       <TouchableOpacity
@@ -229,17 +232,15 @@ function LoginScreen() {
                       >
                         <Ionicons name="logo-facebook" size={24} color={theme.colors.onSurface} />
                       </TouchableOpacity>
-                      {Platform.OS === 'ios' ? (
-                        <TouchableOpacity
-                          style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
-                          onPress={() => handleSocialLogin('apple')}
-                          disabled={isLoading}
-                          accessibilityRole="button"
-                          accessibilityLabel={t('auth.signInWithApple')}
-                        >
-                          <Ionicons name="logo-apple" size={24} color={theme.colors.onSurface} />
-                        </TouchableOpacity>
-                      ) : null}
+                      <TouchableOpacity
+                        style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
+                        onPress={() => handleSocialLogin('apple')}
+                        disabled={isLoading}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('auth.signInWithApple')}
+                      >
+                        <Ionicons name="logo-apple" size={24} color={theme.colors.onSurface} />
+                      </TouchableOpacity>
                     </View>
 
                     <View style={styles.dividerRow}>
@@ -309,7 +310,7 @@ function LoginScreen() {
                   </UIButton>
                 </View>
 
-                {!isSupabaseConfigured && (
+                {!isAuthConfigured && (
                   <Text variant="bodySmall" style={[styles.notConfiguredText, { color: theme.colors.error }]}>
                     {t('auth.supabaseNotConfigured')}
                   </Text>
@@ -318,7 +319,7 @@ function LoginScreen() {
                   <UIButton
                     variant="borderedProminent"
                     onPress={handleLogin}
-                    disabled={isLoading || !isSupabaseConfigured}
+                    disabled={isLoading || !isAuthConfigured}
                     color={theme.colors.primary}
                     testID="loginSubmit"
                   >
@@ -336,11 +337,6 @@ function LoginScreen() {
                 {t('auth.signUp')}
               </UIButton>
             </View>
-            {__DEV__ && (
-              <Text variant="labelSmall" style={[styles.debugText, { color: theme.colors.onSurfaceVariant }]}>
-                [DEBUG] Supabase: {isSupabaseConfigured ? 'configured' : 'not configured'}
-              </Text>
-            )}
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -433,11 +429,6 @@ const styles = StyleSheet.create({
     marginTop: SPACING.x2,
     marginBottom: SPACING.x1,
     textAlign: 'center',
-  },
-  debugText: {
-    marginTop: SPACING.x4,
-    textAlign: 'center',
-    opacity: 0.7,
   },
 });
 

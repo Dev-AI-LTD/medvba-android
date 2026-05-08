@@ -18,7 +18,7 @@ import { monitoring } from "@/lib/monitoring";
 import { log } from "@/lib/log";
 import { trpc, trpcClient } from "@/lib/trpc";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { isSupabaseConfigured } from "@/lib/supabase";
+import { isCognitoConfigured } from "@/lib/cognito";
 
 let splashScreenAvailable = true;
 try {
@@ -28,13 +28,6 @@ try {
 }
 monitoring.init();
 
-const extraConfig = Constants.expoConfig?.extra ?? {};
-const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || extraConfig.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '';
-const googleAndroidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || extraConfig.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '';
-const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || extraConfig.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || googleIosClientId || '';
-const facebookAppId = process.env.EXPO_PUBLIC_FACEBOOK_APP_ID || extraConfig.EXPO_PUBLIC_FACEBOOK_APP_ID || '';
-const appleClientId = process.env.EXPO_PUBLIC_APPLE_CLIENT_ID || extraConfig.EXPO_PUBLIC_APPLE_CLIENT_ID || '';
-const passwordResetRedirectUri = process.env.EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URI || extraConfig.EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URI || 'medvba://reset-password';
 
 const isAbortSignalError = (args: unknown[]): boolean => {
   return args.some(arg => {
@@ -178,7 +171,7 @@ function RootLayoutNav({ splashAvailable }: { splashAvailable: boolean }) {
   }
 
   const envSource = Constants.executionEnvironment ? ` (${Constants.executionEnvironment})` : "";
-  const showEnvBanner = !isSupabaseConfigured && __DEV__ && !inAuthGroup;
+  const showEnvBanner = !isCognitoConfigured() && __DEV__ && !inAuthGroup;
 
   return (
     <>

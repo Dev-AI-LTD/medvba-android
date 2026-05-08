@@ -4,7 +4,7 @@ import Constants from "expo-constants";
 import superjson from "superjson";
 
 import type { AppRouter } from "@/backend/trpc/app-router";
-import { supabase } from "@/lib/supabase";
+import { getCognitoIdToken } from "@/lib/cognito";
 
 export const trpc = createTRPCReact<AppRouter>();
 
@@ -36,14 +36,18 @@ const getBaseUrl = () => {
   return url;
 };
 
+/** Resolve the Cognito ID token to attach to every tRPC request. */
+async function getAuthToken(): Promise<string | null> {
+  return getCognitoIdToken();
+}
+
 export const trpcClient = trpc.createClient({
   links: [
     httpLink({
       url: `${getBaseUrl()}/api/trpc`,
       transformer: superjson,
       async headers() {
-        const { data } = await supabase.auth.getSession();
-        const token = data?.session?.access_token;
+        const token = await getAuthToken();
         return token ? { Authorization: `Bearer ${token}` } : {};
       },
     }),
