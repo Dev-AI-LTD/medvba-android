@@ -2,19 +2,23 @@ import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
-import Constants from 'expo-constants';
 import { getMedvbaAccessToken } from '@/lib/medvba-access-token';
+import { getMergedExpoExtra } from '@/lib/expo-public-extra';
 
-const extraConfig = Constants.expoConfig?.extra ?? (Constants as any)?.manifest?.extra ?? {};
+const extraConfig = getMergedExpoExtra();
+
+const envStr = (v: unknown): string =>
+  v === undefined || v === null ? '' : String(v).trim();
+
 const supabaseUrl =
-  process.env.EXPO_PUBLIC_SUPABASE_URL ||
-  extraConfig.EXPO_PUBLIC_SUPABASE_URL ||
-  extraConfig.supabaseUrl ||
+  envStr(process.env.EXPO_PUBLIC_SUPABASE_URL) ||
+  envStr(extraConfig.EXPO_PUBLIC_SUPABASE_URL) ||
+  envStr(extraConfig.supabaseUrl) ||
   '';
 const supabaseAnonKey =
-  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
-  extraConfig.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
-  extraConfig.supabaseAnonKey ||
+  envStr(process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY) ||
+  envStr(extraConfig.EXPO_PUBLIC_SUPABASE_ANON_KEY) ||
+  envStr(extraConfig.supabaseAnonKey) ||
   '';
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);

@@ -1,19 +1,4 @@
-import Constants from "expo-constants";
-
-/** `expo-constants`: `extra` may live on `expoConfig`, legacy `manifest`, or `manifest2` (SDK-dependent). */
-function readExpoExtra(): Record<string, unknown> {
-  const c = Constants as {
-    expoConfig?: { extra?: Record<string, unknown> };
-    manifest?: { extra?: Record<string, unknown> };
-    manifest2?: { extra?: Record<string, unknown> };
-  };
-  return (
-    c.expoConfig?.extra ??
-    (c.manifest2 as { extra?: Record<string, unknown> } | undefined)?.extra ??
-    c.manifest?.extra ??
-    {}
-  );
-}
+import { getMergedExpoExtra } from "@/lib/expo-public-extra";
 
 function pickFirstNonEmpty(...candidates: unknown[]): string | undefined {
   for (const c of candidates) {
@@ -34,7 +19,7 @@ function normalizeApiBaseUrl(s: string): string {
 }
 
 export function getApiBaseUrl(): string {
-  const extraConfig = readExpoExtra();
+  const extraConfig = getMergedExpoExtra();
 
   // Prefer `extra` from app.config.ts (loads .env at config time). Metro may not inline
   // process.env.EXPO_PUBLIC_* the same way in all dev setups.

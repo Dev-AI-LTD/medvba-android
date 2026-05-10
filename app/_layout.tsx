@@ -302,13 +302,15 @@ export default function RootLayout() {
     );
   }
   return (
-    <KindeAuthProvider
-      config={{
-        domain: (kindeIssuerUrl || 'https://__configure_kinde__.kinde.com').replace(/\/+$/, ''),
-        clientId: kindeClientId || '__configure_kinde__',
-      }}
-    >
-      <AppProvidersTree />
-    </KindeAuthProvider>
+    <ErrorBoundary>
+      <KindeAuthProvider
+        config={{
+          domain: (kindeIssuerUrl || 'https://__configure_kinde__.kinde.com').replace(/\/+$/, ''),
+          clientId: kindeClientId || '__configure_kinde__',
+        }}
+      >
+        <AppProvidersTree />
+      </KindeAuthProvider>
+    </ErrorBoundary>
   );
 }

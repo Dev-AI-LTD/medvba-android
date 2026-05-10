@@ -6,6 +6,7 @@ import createContextHook from '@nkzw/create-context-hook';
 import { supabase } from '@/lib/supabase';
 import { useUserProfile } from '@/lib/supabase-hooks';
 import { AppState, Platform, Linking } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
 import { useKindeAuth } from '@kinde/expo';
 import {
   authenticateWithBiometric,
@@ -284,6 +285,8 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
         log.error('[Auth] init error:', e);
       } finally {
         if (mountedRef.current) setIsLoading(false);
+        // Native splash can stay white until first navigation; hide as soon as auth init finishes.
+        void SplashScreen.hideAsync().catch(() => {});
       }
     };
     init();

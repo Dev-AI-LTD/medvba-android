@@ -21,4 +21,6 @@ for (const dir of toRemove) {
     fs.rmSync(dir, { recursive: true, force: true });
     console.log("[postinstall] Removed:", path.relative(root, dir));
   }
+  // Metro's file watcher may still enumerate this path; an empty dir avoids ENOENT on `watch`.
+  fs.mkdirSync(dir, { recursive: true });
 }
