@@ -36,6 +36,8 @@ jest.mock('expo-constants', () => ({
     extra: { 
       EXPO_PUBLIC_API_BASE_URL: 'http://localhost:3000',
       apiBaseUrl: 'http://localhost:3000',
+      EXPO_PUBLIC_KINDE_ISSUER_URL: 'https://test.kinde.com',
+      EXPO_PUBLIC_KINDE_CLIENT_ID: 'test-client',
     } 
   },
   executionEnvironment: 'storeClient',
@@ -59,17 +61,6 @@ jest.mock('expo-haptics', () => ({
 
 jest.mock('expo-web-browser', () => ({
   openAuthSessionAsync: jest.fn().mockResolvedValue({ type: 'dismiss' }),
-}));
-
-jest.mock('@react-native-google-signin/google-signin', () => ({
-  GoogleSignin: {
-    configure: jest.fn(),
-    hasPlayServices: jest.fn().mockResolvedValue(true),
-    signIn: jest.fn(),
-    signOut: jest.fn().mockResolvedValue(undefined),
-    getTokens: jest.fn().mockResolvedValue({ idToken: null }),
-  },
-  statusCodes: { SIGN_IN_CANCELLED: 'SIGN_IN_CANCELLED' },
 }));
 
 jest.mock('@react-native-async-storage/async-storage', () => {
@@ -214,6 +205,28 @@ jest.mock('@/lib/monitoring', () => ({
   },
 }));
 
+jest.mock('@kinde/expo', () => {
+  const React = require('react');
+  return {
+    KindeAuthProvider: ({ children }) => React.createElement(React.Fragment, null, children),
+    useKindeAuth: () => ({
+      isAuthenticated: false,
+      isLoading: false,
+      login: jest.fn().mockResolvedValue({ success: false, errorMessage: 'cancelled' }),
+      register: jest.fn().mockResolvedValue({
+        success: true,
+        accessToken: 'mock-kinde-access',
+        idToken: 'mock-kinde-id',
+      }),
+      logout: jest.fn().mockResolvedValue({ success: true }),
+      getAccessToken: jest.fn().mockResolvedValue(null),
+      getIdToken: jest.fn().mockResolvedValue(null),
+      getUserProfile: jest.fn().mockResolvedValue({ email: 'user@example.com' }),
+      refreshToken: jest.fn(),
+    }),
+  };
+});
+
 // RN's default rAF uses jest.now(); deferred callbacks can run after Jest env teardown.
 // Microtask avoids leaving active timers (Jest worker "force exited" warnings).
 global.requestAnimationFrame = (callback) => {
@@ -221,3 +234,18 @@ global.requestAnimationFrame = (callback) => {
   return -1;
 };
 global.cancelAnimationFrame = jest.fn();
+
+global.fetch = jest.fn().mockImplementation((url) => {
+  const u = String(url);
+  if (u.includes('/api/auth/session')) {
+    return Promise.resolve({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        access_token: 'test-jwt',
+        profile_id: '11111111-1111-1111-1111-111111111111',
+      }),
+    });
+  }
+  return Promise.resolve({ ok: true, status: 200, json: async () => ({}) });
+});

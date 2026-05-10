@@ -25,27 +25,18 @@ const getSupabaseAdmin = () => {
 export const accountRouter = createTRPCRouter({
   deleteSelf: protectedProcedure.output(deleteSelfResultSchema).mutation(async ({ ctx }) => {
     const supabaseAdmin = getSupabaseAdmin();
+    const profileId = ctx.userId;
 
-    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(
-      ctx.token
-    );
+    await supabaseAdmin.auth.admin.deleteUser(profileId).catch(() => {
+      /* user may not exist in Supabase Auth (Kinde-only) */
+    });
 
-    if (userError || !userData?.user?.id) {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: "Invalid session. Please log in again.",
-        cause: userError,
-      });
-    }
-
-    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(
-      userData.user.id
-    );
+    const { error: deleteError } = await supabaseAdmin.from("profiles").delete().eq("id", profileId);
 
     if (deleteError) {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to delete user account.",
+        message: "Failed to delete account data.",
         cause: deleteError,
       });
     }

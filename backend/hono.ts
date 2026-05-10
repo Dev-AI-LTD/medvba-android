@@ -4,6 +4,7 @@ import { cors } from "hono/cors";
 
 import { appRouter } from "./trpc/app-router";
 import { createContext } from "./trpc/create-context";
+import { registerAuthSessionRoutes } from "./auth/session-routes";
 
 const app = new Hono();
 
@@ -47,6 +48,8 @@ app.use(
     credentials: true,
   }),
 );
+
+registerAuthSessionRoutes(app);
 
 app.use(
   "/api/trpc/*",

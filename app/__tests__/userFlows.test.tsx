@@ -1,9 +1,8 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native';
-import { Alert } from 'react-native';
+import { Alert, Linking } from 'react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '@/lib/supabase';
 import { AppTestProviders } from './testProviders';
 import LoginScreen from '@/app/(auth)/login';
 import SignUpScreen from '@/app/(auth)/signup';
@@ -24,21 +23,7 @@ describe('User flows (integration-style)', () => {
       return Promise.resolve(null);
     });
     (AsyncStorage.setItem as jest.Mock).mockResolvedValue(undefined);
-    (supabase.auth.getSession as jest.Mock).mockResolvedValue({
-      data: { session: null },
-    });
-    (supabase.auth.signInWithPassword as jest.Mock).mockResolvedValue({
-      data: {},
-      error: null,
-    });
-    (supabase.auth.signUp as jest.Mock).mockResolvedValue({
-      data: {},
-      error: null,
-    });
-    (supabase.auth.resetPasswordForEmail as jest.Mock).mockResolvedValue({
-      data: {},
-      error: null,
-    });
+    jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined as never);
   });
 
   describe('Login', () => {
@@ -53,7 +38,6 @@ describe('User flows (integration-style)', () => {
 
       expect(await findText('Email is required')).toBeTruthy();
       expect(screen.getByText('Password is required')).toBeTruthy();
-      expect(supabase.auth.signInWithPassword).not.toHaveBeenCalled();
     });
 
     it('navigates to tabs after successful email login when onboarding is complete', async () => {
@@ -71,10 +55,7 @@ describe('User flows (integration-style)', () => {
       await waitFor(() => {
         expect(router.replace).toHaveBeenCalledWith('/(tabs)');
       });
-      expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
-        email: 'user@example.com',
-        password: 'secret12',
-      });
+      expect(global.fetch).toHaveBeenCalled();
     });
 
     it('navigates to forgot password', async () => {
@@ -114,12 +95,9 @@ describe('User flows (integration-style)', () => {
 
       expect(await findText('Name is required')).toBeTruthy();
       expect(screen.getByText('Email is required')).toBeTruthy();
-      expect(supabase.auth.signUp).not.toHaveBeenCalled();
     });
 
-    it('submits sign up and shows success alert with route to login', async () => {
-      const alertSpy = jest.spyOn(Alert, 'alert');
-
+    it('submits sign up and navigates to tabs when Kinde returns a session', async () => {
       renderWithApp(<SignUpScreen />);
 
       expect(await findText('Join thousands of students')).toBeTruthy();
@@ -134,18 +112,8 @@ describe('User flows (integration-style)', () => {
       });
 
       await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalled();
+        expect(router.replace).toHaveBeenCalledWith('/(tabs)');
       });
-
-      const call = alertSpy.mock.calls.find((c) => c[0] === 'Account Created');
-      expect(call).toBeTruthy();
-      const buttons = call![2] as { text: string; onPress?: () => void }[];
-      await act(async () => {
-        buttons[0].onPress?.();
-      });
-
-      expect(router.replace).toHaveBeenCalledWith('/(auth)/login');
-      alertSpy.mockRestore();
     });
   });
 
@@ -160,10 +128,9 @@ describe('User flows (integration-style)', () => {
       });
 
       expect(await findText('Email is required')).toBeTruthy();
-      expect(supabase.auth.resetPasswordForEmail).not.toHaveBeenCalled();
     });
 
-    it('calls reset and shows success state', async () => {
+    it('opens Kinde password reset and shows success state', async () => {
       renderWithApp(<ForgotPasswordScreen />);
 
       expect(await findText('Send Reset Link')).toBeTruthy();
@@ -175,12 +142,7 @@ describe('User flows (integration-style)', () => {
       });
 
       await waitFor(() => {
-        expect(supabase.auth.resetPasswordForEmail).toHaveBeenCalledWith(
-          'recover@example.com',
-          expect.objectContaining({
-            redirectTo: expect.any(String),
-          }),
-        );
+        expect(Linking.openURL).toHaveBeenCalled();
       });
 
       expect(await findText('Check Your Email')).toBeTruthy();

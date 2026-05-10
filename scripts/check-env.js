@@ -17,13 +17,22 @@ const required = [
   'EXPO_PUBLIC_SUPABASE_ANON_KEY',
   'EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID',
   'EXPO_PUBLIC_PAYWALL_ENABLED',
+  'EXPO_PUBLIC_KINDE_ISSUER_URL',
+  'EXPO_PUBLIC_KINDE_CLIENT_ID',
 ];
 
 const optional = [
   'EXPO_PUBLIC_REVENUECAT_API_KEY_IOS',
   'EXPO_PUBLIC_API_BASE_URL',
+  'EXPO_PUBLIC_RORK_API_BASE_URL',
   'EXPO_PUBLIC_SENTRY_DSN',
 ];
+
+function hasApiBaseUrl(env) {
+  const a = env.EXPO_PUBLIC_API_BASE_URL;
+  const b = env.EXPO_PUBLIC_RORK_API_BASE_URL;
+  return (a !== undefined && a !== '') || (b !== undefined && b !== '');
+}
 
 function parseEnv(content) {
   const out = {};
@@ -70,6 +79,13 @@ optional.forEach((key) => {
     console.log('✅', key);
   }
 });
+
+if (!hasApiBaseUrl(env)) {
+  console.error('❌ Lipsește EXPO_PUBLIC_API_BASE_URL sau EXPO_PUBLIC_RORK_API_BASE_URL (obligatoriu la runtime pentru tRPC).');
+  failed = true;
+} else {
+  console.log('✅ EXPO_PUBLIC_API_BASE_URL sau EXPO_PUBLIC_RORK_API_BASE_URL');
+}
 
 if (failed) {
   console.error('\nCompletează variabilele obligatorii în .env (vezi .env.example).');

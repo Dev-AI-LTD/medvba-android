@@ -29,19 +29,36 @@ class MainActivity : ReactActivity() {
    */
   override fun getMainComponentName(): String = "main"
 
+  override fun onUserLeaveHint() {
+    try {
+      super.onUserLeaveHint()
+    } catch (_: NullPointerException) {
+      // ReactActivityDelegate can receive this before its host is ready under Android instrumentation.
+    }
+  }
+
   /**
    * Returns the instance of the [ReactActivityDelegate]. We use [DefaultReactActivityDelegate]
    * which allows you to enable New Architecture with a single boolean flags [fabricEnabled]
    */
   override fun createReactActivityDelegate(): ReactActivityDelegate {
+    // E2E builds may merge out DevLauncher activities; the Expo wrapper still tries to start them.
+    if (BuildConfig.BUILD_TYPE == "e2e") {
+      return DefaultReactActivityDelegate(
+        this,
+        mainComponentName,
+        fabricEnabled,
+      )
+    }
     return ReactActivityDelegateWrapper(
-          this,
-          BuildConfig.IS_NEW_ARCHITECTURE_ENABLED,
-          object : DefaultReactActivityDelegate(
-              this,
-              mainComponentName,
-              fabricEnabled
-          ){})
+      this,
+      BuildConfig.IS_NEW_ARCHITECTURE_ENABLED,
+      object : DefaultReactActivityDelegate(
+        this,
+        mainComponentName,
+        fabricEnabled,
+      ) {},
+    )
   }
 
   /**

@@ -9,6 +9,9 @@ def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
  * By default you don't need to apply any configuration, just uncomment the lines you need.
  */
 react {
+    // Keep Metro for debuggable e2e variant (Detox) instead of embedding a bundle at build time.
+    debuggableVariants = ["debug", "e2e"]
+
     entryFile = file(["node", "-e", "require('expo/scripts/resolveAppEntry')", projectRoot, "android", "absolute"].execute(null, rootDir).text.trim())
     reactNativeDir = new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()).getParentFile().getAbsoluteFile()
     hermesCommand = new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()).getParentFile().getAbsolutePath() + "/sdks/hermesc/%OS-BIN%/hermesc"
@@ -111,6 +114,13 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
+        }
+        // Debuggable variant for Detox: same as debug but BUILD_TYPE=e2e so MainActivity skips Dev Launcher delegate.
+        e2e {
+            initWith debug
+            signingConfig signingConfigs.debug
+            debuggable true
+            matchingFallbacks = ['debug']
         }
         release {
             // Caution! In production, you need to generate your own keystore file.

@@ -11,6 +11,13 @@ if (!process.env.SUPABASE_URL && process.env.EXPO_PUBLIC_SUPABASE_URL) {
   process.env.SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL.trim();
 }
 
+if (!process.env.KINDE_ISSUER_URL && process.env.EXPO_PUBLIC_KINDE_ISSUER_URL) {
+  process.env.KINDE_ISSUER_URL = process.env.EXPO_PUBLIC_KINDE_ISSUER_URL.trim();
+}
+if (!process.env.KINDE_CLIENT_ID && process.env.EXPO_PUBLIC_KINDE_CLIENT_ID) {
+  process.env.KINDE_CLIENT_ID = process.env.EXPO_PUBLIC_KINDE_CLIENT_ID.trim();
+}
+
 function trimKey(name: string) {
   const v = process.env[name];
   if (typeof v === "string") {

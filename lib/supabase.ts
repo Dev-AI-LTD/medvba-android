@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
+import { getMedvbaAccessToken } from '@/lib/medvba-access-token';
 
 const extraConfig = Constants.expoConfig?.extra ?? (Constants as any)?.manifest?.extra ?? {};
 const supabaseUrl =
@@ -24,7 +25,6 @@ if (!isSupabaseConfigured) {
   );
 }
 
-// Use placeholder values when env is missing so createClient() doesn't throw and the app can load (e.g. in Expo Go without .env)
 const effectiveUrl = supabaseUrl || 'https://placeholder.supabase.co';
 const effectiveKey = supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
 
@@ -64,13 +64,23 @@ const storage = {
   },
 };
 
+const authFetch: typeof fetch = (input, init) => {
+  const headers = new Headers(init?.headers ?? undefined);
+  const t = getMedvbaAccessToken();
+  if (t) {
+    headers.set('Authorization', `Bearer ${t}`);
+  }
+  return fetch(input, { ...init, headers });
+};
+
 export const supabase = createClient(effectiveUrl, effectiveKey, {
   auth: {
-    storage: storage,
-    autoRefreshToken: true,
-    persistSession: true,
+    storage,
+    persistSession: false,
+    autoRefreshToken: false,
     detectSessionInUrl: Platform.OS === 'web',
   },
+  global: { fetch: authFetch },
 });
 
 export type SupabaseUser = {

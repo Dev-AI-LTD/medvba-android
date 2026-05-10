@@ -61,7 +61,9 @@ function getAvdName() {
 /** Lazy avdName: nu apela getAvdName() la require() (ex. config android.attached fără AVD). */
 const androidEmulatorDevice = {};
 Object.defineProperty(androidEmulatorDevice, 'avdName', {
-  enumerable: true,
+  // Keep it non-enumerable so detox merge logic doesn't resolve it
+  // when running with the attached-device configuration.
+  enumerable: false,
   configurable: true,
   get() {
     return getAvdName();

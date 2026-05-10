@@ -1,31 +1,15 @@
 import { httpLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
-import Constants from "expo-constants";
 import superjson from "superjson";
 
 import type { AppRouter } from "@/backend/trpc/app-router";
-import { supabase } from "@/lib/supabase";
+import { getMedvbaAccessToken } from "@/lib/medvba-access-token";
+import { getApiBaseUrl } from "@/lib/api-base-url";
 
 export const trpc = createTRPCReact<AppRouter>();
 
-const extraConfig =
-  Constants.expoConfig?.extra ?? (Constants as any)?.manifest?.extra ?? {};
-
 const getBaseUrl = () => {
-  const raw =
-    process.env.EXPO_PUBLIC_API_BASE_URL ||
-    process.env.EXPO_PUBLIC_RORK_API_BASE_URL ||
-    extraConfig.EXPO_PUBLIC_API_BASE_URL ||
-    extraConfig.EXPO_PUBLIC_RORK_API_BASE_URL ||
-    extraConfig.apiBaseUrl;
-
-  if (!raw) {
-    throw new Error(
-      "Set EXPO_PUBLIC_API_BASE_URL (or EXPO_PUBLIC_RORK_API_BASE_URL) in .env and restart.",
-    );
-  }
-
-  const url = String(raw).trim().replace(/\/+$/, "");
+  const url = getApiBaseUrl();
 
   if (!__DEV__ && url.startsWith("http://")) {
     throw new Error(
@@ -36,16 +20,18 @@ const getBaseUrl = () => {
   return url;
 };
 
-export const trpcClient = trpc.createClient({
-  links: [
-    httpLink({
-      url: `${getBaseUrl()}/api/trpc`,
-      transformer: superjson,
-      async headers() {
-        const { data } = await supabase.auth.getSession();
-        const token = data?.session?.access_token;
-        return token ? { Authorization: `Bearer ${token}` } : {};
-      },
-    }),
-  ],
-});
+/** Create after app shell mounts so `expo-constants` extra (from app.config + .env) is available. */
+export function createMedvbaTrpcClient() {
+  return trpc.createClient({
+    links: [
+      httpLink({
+        url: `${getBaseUrl()}/api/trpc`,
+        transformer: superjson,
+        async headers() {
+          const token = getMedvbaAccessToken();
+          return token ? { Authorization: `Bearer ${token}` } : {};
+        },
+      }),
+    ],
+  });
+}

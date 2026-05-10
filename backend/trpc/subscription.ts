@@ -31,7 +31,7 @@ export const subscriptionRouter = createTRPCRouter({
       const { createClient } = await import("@supabase/supabase-js");
       const supabaseAdmin = createClient(url, serviceRoleKey);
 
-      const userId = ctx.token;
+      const userId = ctx.userId;
 
       // Verify user exists and get subscription status
       const { data: profile, error: profileError } = await supabaseAdmin
@@ -131,7 +131,7 @@ export const subscriptionRouter = createTRPCRouter({
     const { createClient } = await import("@supabase/supabase-js");
     const supabaseAdmin = createClient(url, serviceRoleKey);
 
-    const userId = ctx.token;
+    const userId = ctx.userId;
 
     const { data: profile, error } = await supabaseAdmin
       .from("profiles")

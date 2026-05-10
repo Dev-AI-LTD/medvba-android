@@ -2,13 +2,26 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import superjson from "superjson";
 
+import { verifyMedvbaRequestJwt } from "../auth/decode-request-jwt";
+
 export const createContext = async (opts: FetchCreateContextFnOptions) => {
   const authHeader = opts.req.headers.get("authorization");
-  const token = authHeader?.replace("Bearer ", "");
+  const token = authHeader?.replace(/^Bearer\s+/i, "").trim() ?? "";
+
+  let userId: string | null = null;
+  if (token) {
+    try {
+      const v = await verifyMedvbaRequestJwt(token);
+      userId = v.userId;
+    } catch {
+      userId = null;
+    }
+  }
 
   return {
     req: opts.req,
-    token,
+    token: token || null,
+    userId,
   };
 };
 
@@ -22,7 +35,7 @@ export const createTRPCRouter = t.router;
 export const publicProcedure = t.procedure;
 
 export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
-  if (!ctx.token) {
+  if (!ctx.token || !ctx.userId) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: "Authentication required",
@@ -32,7 +45,7 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
   return next({
     ctx: {
       ...ctx,
-      token: ctx.token,
+      userId: ctx.userId,
     },
   });
 });

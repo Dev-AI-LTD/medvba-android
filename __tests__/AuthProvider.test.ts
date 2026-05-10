@@ -50,26 +50,6 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn().mockResolvedValue(undefined),
 }));
 
-jest.mock('@react-native-google-signin/google-signin', () => ({
-  GoogleSignin: {
-    configure: jest.fn(),
-    signIn: jest.fn(),
-    signOut: jest.fn().mockResolvedValue(undefined),
-    hasPlayServices: jest.fn().mockResolvedValue(true),
-    getTokens: jest.fn(),
-  },
-  statusCodes: {
-    SIGN_IN_CANCELLED: 'SIGN_IN_CANCELLED',
-  },
-}));
-
-jest.mock('@/lib/appleAuth', () => ({
-  appleAuth: {
-    isSupported: false,
-    Scope: { FULL_NAME: 'full_name', EMAIL: 'email' },
-  },
-}));
-
 jest.mock('@/lib/biometric', () => ({
   authenticateWithBiometric: jest.fn().mockResolvedValue({ success: false }),
   isBiometricAvailable: jest.fn().mockResolvedValue(false),

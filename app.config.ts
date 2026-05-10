@@ -5,7 +5,7 @@ import path from 'path';
 type EnvMap = Record<string, string>;
 
 /** Keep in sync with store releases; bare workflow requires a string runtimeVersion (no policy). */
-const APP_VERSION = '1.0.20';
+const APP_VERSION = '1.0.21';
 
 const readEnvText = (filePath: string): string => {
   const buf = fs.readFileSync(filePath);
@@ -18,7 +18,7 @@ const readEnvText = (filePath: string): string => {
   return buf.toString('utf8');
 };
 
-const loadEnvFile = (filePath: string, target: EnvMap) => {
+const loadEnvFile = (filePath: string, target: EnvMap, options?: { override?: boolean }) => {
   if (!fs.existsSync(filePath)) return;
   const raw = readEnvText(filePath);
 
@@ -42,6 +42,17 @@ const loadEnvFile = (filePath: string, target: EnvMap) => {
       key = key.slice(1);
     }
 
+    // Skip empty values so a blank line does not block later files / app.config fallbacks.
+    if (value.trim() === '') {
+      return;
+    }
+
+    if (options?.override) {
+      target[key] = value;
+      process.env[key] = value;
+      return;
+    }
+
     if (!target[key]) {
       target[key] = value;
     }
@@ -55,14 +66,15 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
   const root = projectRoot || process.cwd();
   const envFromFile: EnvMap = {};
   loadEnvFile(path.join(root, '.env'), envFromFile);
-  loadEnvFile(path.join(root, '.env.local'), envFromFile);
+  loadEnvFile(path.join(root, '.env.local'), envFromFile, { override: true });
 
-  const facebookAppId =
-    envFromFile.EXPO_PUBLIC_FACEBOOK_APP_ID || process.env.EXPO_PUBLIC_FACEBOOK_APP_ID || '';
-  const facebookClientToken =
-    envFromFile.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN || process.env.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN || '';
-  const googleIosClientId =
-    envFromFile.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '';
+  const mergedPublicApiBase =
+    [envFromFile.EXPO_PUBLIC_API_BASE_URL, envFromFile.EXPO_PUBLIC_RORK_API_BASE_URL]
+      .map((s) => (s || '').trim())
+      .find(Boolean) ||
+    [process.env.EXPO_PUBLIC_API_BASE_URL, process.env.EXPO_PUBLIC_RORK_API_BASE_URL]
+      .map((s) => (s || '').trim())
+      .find(Boolean);
 
   const plugins: NonNullable<ExpoConfig['plugins']> = [
     [
@@ -108,32 +120,6 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     './plugins/withAndroidNativeDebugSymbols.js',
   ];
 
-  if (facebookAppId && facebookClientToken) {
-    plugins.push([
-      'react-native-fbsdk-next',
-      {
-        appID: facebookAppId,
-        clientToken: facebookClientToken,
-        displayName: 'MEDVBA',
-        scheme: `fb${facebookAppId}`,
-        isAutoInitEnabled: true,
-        advertiserIDCollectionEnabled: false,
-        autoLogAppEventsEnabled: false,
-      },
-    ]);
-  }
-
-  const firstIosClientId = googleIosClientId.split(',')[0].trim();
-  const googleIosClientIdMatch = firstIosClientId.match(/^(.+)\.apps\.googleusercontent\.com$/);
-  if (googleIosClientIdMatch) {
-    plugins.push([
-      '@react-native-google-signin/google-signin',
-      {
-        iosUrlScheme: `com.googleusercontent.apps.${googleIosClientIdMatch[1]}`,
-      },
-    ]);
-  }
-
   return {
     ...config,
     name: 'MEDVBA',
@@ -157,7 +143,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       supportsTablet: false,
       bundleIdentifier: 'com.devaieood.medvba',
       icon: './assets/images/icon.png',
-      buildNumber: '39',
+      buildNumber: '40',
       // Required for @invertase/react-native-apple-authentication (EAS / prebuild).
       entitlements: {
         'com.apple.developer.applesignin': ['Default'],
@@ -172,7 +158,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         foregroundImage: './assets/images/adaptive-icon.png',
         backgroundColor: '#000000',
       },
-      versionCode: 29,
+      versionCode: 30,
       package: 'com.devaieood.medvba',
       // Play: upload mapping.txt per release (Deobfuscation). Native: native-debug-symbols.zip (Symbols); both are buildArtifactPaths in eas.json.
       blockedPermissions: [
@@ -207,29 +193,23 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       EXPO_PUBLIC_SUPABASE_ANON_KEY:
         envFromFile.EXPO_PUBLIC_SUPABASE_ANON_KEY || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
       EXPO_PUBLIC_API_BASE_URL:
-        envFromFile.EXPO_PUBLIC_API_BASE_URL || process.env.EXPO_PUBLIC_API_BASE_URL,
+        mergedPublicApiBase ||
+        envFromFile.EXPO_PUBLIC_API_BASE_URL ||
+        process.env.EXPO_PUBLIC_API_BASE_URL,
+      EXPO_PUBLIC_RORK_API_BASE_URL:
+        mergedPublicApiBase ||
+        envFromFile.EXPO_PUBLIC_RORK_API_BASE_URL ||
+        process.env.EXPO_PUBLIC_RORK_API_BASE_URL,
       EXPO_PUBLIC_REVENUECAT_API_KEY_IOS:
         envFromFile.EXPO_PUBLIC_REVENUECAT_API_KEY_IOS || process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_IOS,
       EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID:
         envFromFile.EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID || process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID,
       EXPO_PUBLIC_PAYWALL_ENABLED:
         envFromFile.EXPO_PUBLIC_PAYWALL_ENABLED ?? process.env.EXPO_PUBLIC_PAYWALL_ENABLED ?? 'false',
-      EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID:
-        envFromFile.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-      EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID:
-        envFromFile.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-      EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID:
-        envFromFile.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-      EXPO_PUBLIC_FACEBOOK_APP_ID:
-        envFromFile.EXPO_PUBLIC_FACEBOOK_APP_ID || process.env.EXPO_PUBLIC_FACEBOOK_APP_ID,
-      EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN:
-        envFromFile.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN || process.env.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN,
-      EXPO_PUBLIC_APPLE_CLIENT_ID:
-        envFromFile.EXPO_PUBLIC_APPLE_CLIENT_ID ||
-        process.env.EXPO_PUBLIC_APPLE_CLIENT_ID ||
-        'com.devaieood.medvba.auth',
-      EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URI:
-        envFromFile.EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URI || process.env.EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URI || 'medvba://reset-password',
+      EXPO_PUBLIC_KINDE_ISSUER_URL:
+        envFromFile.EXPO_PUBLIC_KINDE_ISSUER_URL || process.env.EXPO_PUBLIC_KINDE_ISSUER_URL,
+      EXPO_PUBLIC_KINDE_CLIENT_ID:
+        envFromFile.EXPO_PUBLIC_KINDE_CLIENT_ID || process.env.EXPO_PUBLIC_KINDE_CLIENT_ID,
     },
     owner: 'devaieood79',
   };

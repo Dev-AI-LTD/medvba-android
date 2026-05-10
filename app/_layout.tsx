@@ -10,13 +10,14 @@ import Constants from "expo-constants";
 import { PaperProvider } from "react-native-paper";
 import { QuizProgressProvider } from "@/providers/QuizProgressProvider";
 import { LanguageProvider } from "@/providers/LanguageProvider";
+import { KindeAuthProvider } from "@kinde/expo";
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import { SubscriptionProvider } from "@/providers/SubscriptionProvider";
 import { ThemeProvider, useTheme } from "@/providers/ThemeProvider";
 import { getPaperTheme } from "@/theme/paperTheme";
 import { monitoring } from "@/lib/monitoring";
 import { log } from "@/lib/log";
-import { trpc, trpcClient } from "@/lib/trpc";
+import { trpc, createMedvbaTrpcClient } from "@/lib/trpc";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
@@ -29,12 +30,8 @@ try {
 monitoring.init();
 
 const extraConfig = Constants.expoConfig?.extra ?? {};
-const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || extraConfig.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '';
-const googleAndroidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || extraConfig.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '';
-const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || extraConfig.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || googleIosClientId || '';
-const facebookAppId = process.env.EXPO_PUBLIC_FACEBOOK_APP_ID || extraConfig.EXPO_PUBLIC_FACEBOOK_APP_ID || '';
-const appleClientId = process.env.EXPO_PUBLIC_APPLE_CLIENT_ID || extraConfig.EXPO_PUBLIC_APPLE_CLIENT_ID || '';
-const passwordResetRedirectUri = process.env.EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URI || extraConfig.EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URI || 'medvba://reset-password';
+const kindeIssuerUrl = process.env.EXPO_PUBLIC_KINDE_ISSUER_URL || extraConfig.EXPO_PUBLIC_KINDE_ISSUER_URL || '';
+const kindeClientId = process.env.EXPO_PUBLIC_KINDE_CLIENT_ID || extraConfig.EXPO_PUBLIC_KINDE_CLIENT_ID || '';
 
 const isAbortSignalError = (args: unknown[]): boolean => {
   return args.some(arg => {
@@ -129,8 +126,9 @@ function useProtectedRoute(splashAvailable: boolean) {
   useEffect(() => {
     if (isLoading) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
-    const isOnboarding = inAuthGroup && segments[1] === 'onboarding';
+    const segs = segments as readonly string[];
+    const inAuthGroup = segs[0] === '(auth)';
+    const isOnboarding = inAuthGroup && segs[1] === 'onboarding';
 
     if (!splashHidden && splashAvailable) {
       setSplashHidden(true);
@@ -270,7 +268,8 @@ function PaperProviderWrapper({ children }: { children: React.ReactNode }) {
   return <PaperProvider theme={paperTheme}>{children}</PaperProvider>;
 }
 
-export default function RootLayout() {
+function AppProvidersTree() {
+  const trpcClient = React.useMemo(() => createMedvbaTrpcClient(), []);
   return (
     <ErrorBoundary>
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
@@ -293,5 +292,23 @@ export default function RootLayout() {
         </QueryClientProvider>
       </trpc.Provider>
     </ErrorBoundary>
+  );
+}
+
+export default function RootLayout() {
+  if (!kindeIssuerUrl?.trim() || !kindeClientId?.trim()) {
+    console.warn(
+      '[Kinde] Set EXPO_PUBLIC_KINDE_ISSUER_URL and EXPO_PUBLIC_KINDE_CLIENT_ID (see .env.example). Using placeholders until configured.',
+    );
+  }
+  return (
+    <KindeAuthProvider
+      config={{
+        domain: (kindeIssuerUrl || 'https://__configure_kinde__.kinde.com').replace(/\/+$/, ''),
+        clientId: kindeClientId || '__configure_kinde__',
+      }}
+    >
+      <AppProvidersTree />
+    </KindeAuthProvider>
   );
 }

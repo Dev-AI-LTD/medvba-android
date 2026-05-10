@@ -23,7 +23,7 @@ export const tutorRouter = createTRPCRouter({
     .input(z.object({ messages: z.array(messageSchema) }))
     .mutation(async ({ ctx, input }) => {
       // Apply rate limiting per user
-      tutorRateLimiter(ctx.token);
+      tutorRateLimiter(ctx.userId);
 
       const fullMessages = [
         { role: "system" as const, content: SYSTEM_PROMPT },
