@@ -21,6 +21,6 @@ for (const dir of toRemove) {
     fs.rmSync(dir, { recursive: true, force: true });
     console.log("[postinstall] Removed:", path.relative(root, dir));
   }
-  // Metro's file watcher may still enumerate this path; an empty dir avoids ENOENT on `watch`.
+  // Metro may enumerate/watch these paths; keep an empty dir even when install never nested deps here.
   fs.mkdirSync(dir, { recursive: true });
 }
