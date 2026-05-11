@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleProp, TextStyle, ViewStyle } from 'react-native';
-import { TextInput as PaperTextInput, IconButton } from 'react-native-paper';
+import { TextInput as PaperTextInput } from 'react-native-paper';
 
 export type UITextFieldProps = {
   value?: string;

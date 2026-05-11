@@ -108,7 +108,8 @@ App scheme (Expo): **`medvba`** — see `scheme` in `app.config.ts`.
 - [ ] **Callback URLs** in Kinde include at least: `medvba://*` (or the exact redirect URIs `@kinde/expo` uses for your SDK version — often `medvba://<kinde-default-path>`). Add any **web** callback URL if you use web sign-in.
 - [ ] **Allowed logout redirect URLs** include the post-logout destination you use (e.g. `medvba://` or your hosted URL).
 - [ ] **Google / Facebook / Apple** enabled in Kinde with valid client IDs/secrets; Apple Sign In matches iOS bundle if used.
-- [ ] Password grant / hosted login flows match what you use (`backend/auth/session-routes.ts`).
+- [ ] Email/password: Kinde **password grant** enabled for the app client; Railway has `KINDE_CLIENT_SECRET` (and optional `KINDE_AUDIENCE`); app uses `POST /api/auth/session` JSON `{ email, password }` (no hosted Kinde for sign-in form).
+- [ ] Hosted Kinde still used where needed (e.g. `kinde.register` / social `kinde.login`); backend accepts `Authorization: Bearer <kinde_access_token>` on `/api/auth/session`.
 
 ## 3.5 Post-deploy smoke (see `docs/ANDROID_RELEASE_SMOKE_TEST.md`)
 

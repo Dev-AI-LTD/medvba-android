@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -21,6 +22,7 @@ import { trpc, createMedvbaTrpcClient } from "@/lib/trpc";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { BootstrapLoadingOverlay } from "@/components/BootstrapLoadingOverlay";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import { PUBLIC_APP_NAME } from "@/lib/public-brand";
 
 let splashScreenAvailable = true;
 try {
@@ -28,6 +30,7 @@ try {
 } catch {
   splashScreenAvailable = false;
 }
+WebBrowser.maybeCompleteAuthSession();
 monitoring.init();
 
 const extraConfig = Constants.expoConfig?.extra ?? {};
@@ -103,9 +106,9 @@ if (!__DEV__) {
 }
 
 /**
- * @kinde/expo renders `null` until Expo SecureStore + token bootstrap finish (`KindeAuthProvider`).
+ * The Expo auth SDK renders `null` until SecureStore + token bootstrap finish.
  * While null, no child (AuthProvider, etc.) mounts — so nothing calls `SplashScreen.hideAsync()`
- * and the native splash can stay forever. This failsafe always runs because it sits next to Kinde.
+ * and the native splash can stay forever. This failsafe always runs alongside the auth provider.
  */
 function NativeSplashFailsafe() {
   React.useEffect(() => {
@@ -357,11 +360,17 @@ function AppProvidersTree() {
   );
 }
 
-function KindeProviderBoundary({ children }: { children: React.ReactNode }) {
-  const webKindeAuth = React.useMemo(
+function ExternalAuthSdkBoundary({ children }: { children: React.ReactNode }) {
+  const webAuthStub = React.useMemo(
     () => ({
-      login: async () => ({ success: false, errorMessage: "Kinde web login is disabled in dev." }),
-      register: async () => ({ success: false, errorMessage: "Kinde web registration is disabled in dev." }),
+      login: async () => ({
+        success: false,
+        errorMessage: `${PUBLIC_APP_NAME} web login is disabled in this dev setup.`,
+      }),
+      register: async () => ({
+        success: false,
+        errorMessage: `${PUBLIC_APP_NAME} web registration is disabled in this dev setup.`,
+      }),
       logout: async () => ({ success: true }),
       portal: async () => {},
       getAccessToken: async () => null,
@@ -376,7 +385,10 @@ function KindeProviderBoundary({ children }: { children: React.ReactNode }) {
       getUserProfile: async () => null,
       getRoles: async () => [],
       getFlag: async () => null,
-      refreshToken: async () => ({ success: false, error: "Kinde web refresh is disabled in dev." }),
+      refreshToken: async () => ({
+        success: false,
+        error: `${PUBLIC_APP_NAME} web session refresh is disabled in this dev setup.`,
+      }),
       isAuthenticated: false,
       isLoading: false,
     }),
@@ -385,7 +397,7 @@ function KindeProviderBoundary({ children }: { children: React.ReactNode }) {
 
   if (Platform.OS === "web") {
     return (
-      <KindeAuthContext.Provider value={webKindeAuth as React.ContextType<typeof KindeAuthContext>}>
+      <KindeAuthContext.Provider value={webAuthStub as React.ContextType<typeof KindeAuthContext>}>
         {children}
       </KindeAuthContext.Provider>
     );
@@ -406,16 +418,16 @@ function KindeProviderBoundary({ children }: { children: React.ReactNode }) {
 export default function RootLayout() {
   if (!kindeIssuerUrl?.trim() || !kindeClientId?.trim()) {
     console.warn(
-      '[Kinde] Set EXPO_PUBLIC_KINDE_ISSUER_URL and EXPO_PUBLIC_KINDE_CLIENT_ID (see .env.example). Using placeholders until configured.',
+      `[${PUBLIC_APP_NAME}] Set EXPO_PUBLIC_KINDE_ISSUER_URL and EXPO_PUBLIC_KINDE_CLIENT_ID (see .env.example). Using placeholders until configured.`,
     );
   }
   return (
     <ErrorBoundary>
       <View style={{ flex: 1 }}>
         <NativeSplashFailsafe />
-        <KindeProviderBoundary>
+        <ExternalAuthSdkBoundary>
           <AppProvidersTree />
-        </KindeProviderBoundary>
+        </ExternalAuthSdkBoundary>
         <BootstrapLoadingOverlay />
       </View>
     </ErrorBoundary>

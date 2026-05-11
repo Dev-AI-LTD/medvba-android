@@ -5,6 +5,13 @@ import { readAsStringAsync, EncodingType } from 'expo-file-system/legacy';
 import { queryKeys } from './query-keys';
 import { supabase } from './supabase';
 import type { UserAccount } from '@/types/user';
+import { getMergedExpoExtra } from '@/lib/expo-public-extra';
+
+/** Profile “Zoom session requests” poll (`zoom_requests`). Off by default — no Supabase round-trip or console noise. */
+function fetchProfileZoomRequestsEnabled(): boolean {
+  const v = String(getMergedExpoExtra().EXPO_PUBLIC_FETCH_ZOOM_REQUESTS ?? '').trim().toLowerCase();
+  return v === 'true' || v === '1' || v === 'yes';
+}
 
 /** Maps file extensions to MIME types for profile photo uploads. Module-level to avoid per-call allocation. */
 const EXT_MIME_MAP: Record<string, string> = {
@@ -500,7 +507,6 @@ export function useZoomRequests(userId: string | undefined) {
     queryFn: async () => {
       if (!userId) return [];
 
-      console.log('[Supabase] Fetching zoom requests for user:', userId);
       const { data, error } = await supabase
         .from('zoom_requests')
         .select('*')
@@ -512,8 +518,6 @@ export function useZoomRequests(userId: string | undefined) {
         throw error;
       }
 
-      console.log('[Supabase] Fetched', data?.length || 0, 'zoom requests');
-
       return (data || []).map((req: any) => ({
         id: req.id.toString(),
         userId: req.user_id,
@@ -523,7 +527,7 @@ export function useZoomRequests(userId: string | undefined) {
         createdAt: req.created_at,
       })) as ZoomRequest[];
     },
-    enabled: !!userId,
+    enabled: !!userId && fetchProfileZoomRequestsEnabled(),
   });
 }
 

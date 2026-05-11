@@ -2,7 +2,7 @@ import { SignJWT } from "jose";
 
 /**
  * JWT accepted by Supabase PostgREST after JWT signing keys use the same HS256 secret
- * (Kinde client secret per https://docs.kinde.com/integrate/third-party-tools/kinde-supabase).
+ * See provider docs for aligning HS256 secrets with Supabase.
  */
 export async function mintSupabaseAccessJwt(input: {
   kindeSub: string;

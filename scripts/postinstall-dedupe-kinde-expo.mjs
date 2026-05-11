@@ -21,8 +21,8 @@ for (const dir of toRemove) {
     fs.rmSync(dir, { recursive: true, force: true });
     console.log("[postinstall] Removed:", path.relative(root, dir));
   }
-  // Metro may enumerate/watch these paths; keep an empty dir even when install never nested deps here.
-  fs.mkdirSync(dir, { recursive: true });
+  // Do not recreate empty `node_modules` here: on Windows Metro's watcher can still try to watch
+  // stale nested paths (e.g. …/dotenv/…) and crash with ENOENT (see expo start exit 7).
 }
 
 const kindeJsUtils = path.join(root, "node_modules", "@kinde", "js-utils", "dist", "js-utils.js");
@@ -127,4 +127,73 @@ async function __getKindeSecureStoreCtor() {
   source = source.replace("let t = new (await (e.default()))();", "let t = new (await __getKindeSecureStoreCtor())();");
   fs.writeFileSync(kindeExpoIndex, source);
   console.log("[postinstall] Patched @kinde/expo SecureStore fallback for Metro.");
+}
+
+/** @expo/vector-icons: Font.loadAsync can reject (empty asset URI, Metro hiccup) → uncaught promise / LogBox. */
+const vectorIconsCreateIconSet = path.join(
+  root,
+  "node_modules",
+  "@expo",
+  "vector-icons",
+  "build",
+  "createIconSet.js",
+);
+if (fs.existsSync(vectorIconsCreateIconSet)) {
+  const original = fs.readFileSync(vectorIconsCreateIconSet, "utf8");
+  let s = original;
+  const marker = "__MEDVBA_PATCH_VECTOR_ICONS_FONT_CATCH__";
+  if (!s.includes(marker)) {
+    const didMountBefore = `        async componentDidMount() {
+            this._mounted = true;
+            if (!this.state.fontIsLoaded) {
+                await Font.loadAsync(font);
+                /* eslint-disable react/no-did-mount-set-state */
+                this._mounted && this.setState({ fontIsLoaded: true });
+            }
+        }`;
+    const didMountAfter = `        async componentDidMount() {
+            this._mounted = true;
+            if (!this.state.fontIsLoaded) {
+                try {
+                    await Font.loadAsync(font);
+                } catch (e) {
+                    if (typeof __DEV__ !== "undefined" && __DEV__) {
+                        console.warn("${marker}:", e);
+                    }
+                }
+                /* eslint-disable react/no-did-mount-set-state */
+                this._mounted && this.setState({ fontIsLoaded: true });
+            }
+        }`;
+    if (s.includes(didMountBefore)) {
+      s = s.replace(didMountBefore, didMountAfter);
+    }
+    const loadFontBefore = `        static loadFont = () => Font.loadAsync(font);`;
+    const loadFontAfter = `        static loadFont = () => Font.loadAsync(font).catch((e) => {
+            if (typeof __DEV__ !== "undefined" && __DEV__) {
+                console.warn("${marker} loadFont:", e);
+            }
+        });`;
+    if (s.includes(loadFontBefore)) {
+      s = s.replace(loadFontBefore, loadFontAfter);
+    }
+    const getImageBefore = `            await Font.loadAsync(font);
+            const renderToImageResult = await Font.renderToImageAsync(String.fromCodePoint(glyphMap[name]), {`;
+    const getImageAfter = `            try {
+                await Font.loadAsync(font);
+            } catch (e) {
+                if (typeof __DEV__ !== "undefined" && __DEV__) {
+                    console.warn("${marker} getImageSource:", e);
+                }
+                return null;
+            }
+            const renderToImageResult = await Font.renderToImageAsync(String.fromCodePoint(glyphMap[name]), {`;
+    if (s.includes(getImageBefore)) {
+      s = s.replace(getImageBefore, getImageAfter);
+    }
+    if (s !== original) {
+      fs.writeFileSync(vectorIconsCreateIconSet, s);
+      console.log("[postinstall] Patched @expo/vector-icons createIconSet.js (font load errors are non-fatal).");
+    }
+  }
 }

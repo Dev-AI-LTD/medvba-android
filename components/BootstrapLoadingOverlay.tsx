@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+import { PUBLIC_APP_NAME } from '@/lib/public-brand';
+
 const READY_KEY = '__MEDVBA_AUTH_READY__';
 const POLL_MS = 150;
 const STUCK_AFTER_MS = 22_000;
@@ -10,7 +12,7 @@ function readReady(): boolean {
 }
 
 /**
- * Shown while @kinde/expo `KindeAuthProvider` still renders `null` (no children mounted).
+ * Shown while the Expo auth provider is still bootstrapping (no children mounted yet).
  * Also covers slow auth init so web/mobile are not a blank white screen.
  */
 export function BootstrapLoadingOverlay() {
@@ -51,9 +53,10 @@ export function BootstrapLoadingOverlay() {
         <>
           <Text style={styles.title}>Autentificarea nu pornește</Text>
           <Text style={styles.body}>
-            Verifică EXPO_PUBLIC_KINDE_ISSUER_URL, EXPO_PUBLIC_KINDE_CLIENT_ID și în Kinde: Callback URLs
-            (inclusiv medvba://). Dacă în consolă (F12) apare expoSecureStore și MIME text/html, oprește
-            Metro și pornește din nou cu bun run start:web. Altfel: erori de rețea în consolă.
+            Verifică în .env variabilele EXPO_PUBLIC_KINDE_ISSUER_URL și EXPO_PUBLIC_KINDE_CLIENT_ID, plus
+            URL-urile de returnare (callback) pentru {PUBLIC_APP_NAME} (inclusiv medvba://). Dacă în consolă
+            (F12) apare expoSecureStore și MIME text/html, oprește Metro și pornește din nou cu bun run
+            start:web. Altfel: erori de rețea în consolă.
           </Text>
           {Platform.OS === 'web' ? (
             <TouchableOpacity

@@ -83,7 +83,14 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         origin: 'https://medvba.app/',
       },
     ],
-    'expo-font',
+    [
+      'expo-font',
+      {
+        fonts: [
+          './node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.ttf',
+        ],
+      },
+    ],
     'expo-web-browser',
     [
       'expo-image-picker',
@@ -210,6 +217,20 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         envFromFile.EXPO_PUBLIC_KINDE_ISSUER_URL || process.env.EXPO_PUBLIC_KINDE_ISSUER_URL,
       EXPO_PUBLIC_KINDE_CLIENT_ID:
         envFromFile.EXPO_PUBLIC_KINDE_CLIENT_ID || process.env.EXPO_PUBLIC_KINDE_CLIENT_ID,
+      EXPO_PUBLIC_KINDE_GOOGLE_CONNECTION_ID:
+        envFromFile.EXPO_PUBLIC_KINDE_GOOGLE_CONNECTION_ID ||
+        process.env.EXPO_PUBLIC_KINDE_GOOGLE_CONNECTION_ID,
+      EXPO_PUBLIC_KINDE_FACEBOOK_CONNECTION_ID:
+        envFromFile.EXPO_PUBLIC_KINDE_FACEBOOK_CONNECTION_ID ||
+        process.env.EXPO_PUBLIC_KINDE_FACEBOOK_CONNECTION_ID,
+      EXPO_PUBLIC_SHOW_FACEBOOK_LOGIN:
+        envFromFile.EXPO_PUBLIC_SHOW_FACEBOOK_LOGIN || process.env.EXPO_PUBLIC_SHOW_FACEBOOK_LOGIN,
+      EXPO_PUBLIC_FACEBOOK_LOGIN_ENABLED:
+        envFromFile.EXPO_PUBLIC_FACEBOOK_LOGIN_ENABLED || process.env.EXPO_PUBLIC_FACEBOOK_LOGIN_ENABLED,
+      EXPO_PUBLIC_FETCH_ZOOM_REQUESTS:
+        envFromFile.EXPO_PUBLIC_FETCH_ZOOM_REQUESTS ??
+        process.env.EXPO_PUBLIC_FETCH_ZOOM_REQUESTS ??
+        'false',
     },
     owner: 'devaieood79',
   };

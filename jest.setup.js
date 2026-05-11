@@ -39,6 +39,7 @@ jest.mock('expo-constants', () => ({
       apiBaseUrl: 'http://localhost:3000',
       EXPO_PUBLIC_KINDE_ISSUER_URL: 'https://test.kinde.com',
       EXPO_PUBLIC_KINDE_CLIENT_ID: 'test-client',
+      EXPO_PUBLIC_SHOW_FACEBOOK_LOGIN: 'true',
     } 
   },
   executionEnvironment: 'storeClient',
@@ -62,6 +63,13 @@ jest.mock('expo-haptics', () => ({
 
 jest.mock('expo-web-browser', () => ({
   openAuthSessionAsync: jest.fn().mockResolvedValue({ type: 'dismiss' }),
+  maybeCompleteAuthSession: jest.fn(),
+}));
+
+jest.mock('expo-secure-store', () => ({
+  getItemAsync: jest.fn().mockResolvedValue(null),
+  setItemAsync: jest.fn().mockResolvedValue(undefined),
+  deleteItemAsync: jest.fn().mockResolvedValue(undefined),
 }));
 
 jest.mock('@react-native-async-storage/async-storage', () => {
@@ -213,7 +221,11 @@ jest.mock('@kinde/expo', () => {
     useKindeAuth: () => ({
       isAuthenticated: false,
       isLoading: false,
-      login: jest.fn().mockResolvedValue({ success: false, errorMessage: 'cancelled' }),
+      login: jest.fn().mockResolvedValue({
+        success: true,
+        accessToken: 'mock-kinde-access',
+        idToken: 'mock-kinde-id',
+      }),
       register: jest.fn().mockResolvedValue({
         success: true,
         accessToken: 'mock-kinde-access',
@@ -239,14 +251,17 @@ global.cancelAnimationFrame = jest.fn();
 global.fetch = jest.fn().mockImplementation((url) => {
   const u = String(url);
   if (u.includes('/api/auth/session')) {
+    const body = JSON.stringify({
+      access_token: 'test-jwt',
+      profile_id: '11111111-1111-1111-1111-111111111111',
+    });
     return Promise.resolve({
       ok: true,
       status: 200,
-      json: async () => ({
-        access_token: 'test-jwt',
-        profile_id: '11111111-1111-1111-1111-111111111111',
-      }),
+      text: async () => body,
+      json: async () => JSON.parse(body),
     });
   }
-  return Promise.resolve({ ok: true, status: 200, json: async () => ({}) });
+  const empty = JSON.stringify({});
+  return Promise.resolve({ ok: true, status: 200, text: async () => empty, json: async () => ({}) });
 });

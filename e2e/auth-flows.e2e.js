@@ -26,13 +26,13 @@ describe('Auth Flow Tests', () => {
       await expect(element(by.id('loginSubmit'))).toBeVisible();
     });
 
-    it('shows social login buttons', async () => {
+    it('shows Google social login', async () => {
       await waitFor(element(by.id('loginEmail')))
         .toBeVisible()
         .withTimeout(8000);
-      
+
       await expect(element(by.label('Sign in with Google'))).toBeVisible();
-      await expect(element(by.label('Sign in with Facebook'))).toBeVisible();
+      // Facebook appears only when EXPO_PUBLIC_KINDE_FACEBOOK_CONNECTION_ID or EXPO_PUBLIC_SHOW_FACEBOOK_LOGIN is set at build time.
     });
 
     it('validates empty email field', async () => {

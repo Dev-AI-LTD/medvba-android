@@ -13,7 +13,6 @@ import {
   getBiometricCapabilities,
   type BiometricCapabilities,
 } from '@/lib/biometric';
-import Constants from 'expo-constants';
 import { log } from '@/lib/log';
 import type { UserProfile } from '@/types/user';
 import {
@@ -21,13 +20,67 @@ import {
   exchangeKindeAccessToken,
 } from '@/lib/exchange-medvba-session';
 import { setMedvbaAccessToken, getMedvbaAccessToken } from '@/lib/medvba-access-token';
+import { loadMedvbaAccessToken, persistMedvbaAccessToken } from '@/lib/medvba-session-storage';
 import { withTimeout } from '@/lib/with-timeout';
+import { getMergedExpoExtra } from '@/lib/expo-public-extra';
+import { PUBLIC_APP_NAME } from '@/lib/public-brand';
+import { isFacebookLoginEnabledForBuild } from '@/lib/auth-facebook-visibility';
 
 const ONBOARDING_COMPLETE_KEY = '@medvba_onboarding_complete';
 
 export const AUTH_SIGN_IN_CANCELLED = 'SIGN_IN_CANCELLED';
 
-const extraConfig = Constants.expoConfig?.extra ?? {};
+const extraConfig = getMergedExpoExtra();
+
+/** High-resolution auth timings for Metro / Flipper (dev only). */
+type AuthPerfMark = (step: string) => void;
+
+function authPerfStep(flow: string): AuthPerfMark {
+  if (!__DEV__) {
+    return () => {};
+  }
+  const t0 = globalThis.performance?.now?.() ?? Date.now();
+  let last = t0;
+  return (step: string) => {
+    const now = globalThis.performance?.now?.() ?? Date.now();
+    const totalMs = (now - t0).toFixed(1);
+    const deltaMs = (now - last).toFixed(1);
+    last = now;
+    log.debug(
+      `[AuthPerf] ${flow} wall=${new Date().toISOString()} total=${totalMs}ms Δ=${deltaMs}ms → ${step}`,
+    );
+  };
+}
+
+/** True when the in-memory MEDVBA JWT exists and expires after the given buffer (seconds). */
+function medvbaJwtHasMinTtlSeconds(minSeconds: number): boolean {
+  const t = getMedvbaAccessToken();
+  if (!t) return false;
+  try {
+    const claims = decodeJwtClaims(t);
+    const exp = claims.exp;
+    return typeof exp === 'number' && exp * 1000 > Date.now() + minSeconds * 1000;
+  } catch {
+    return false;
+  }
+}
+
+function decodeJwtClaims(token: string): Record<string, unknown> {
+  const part = token.split('.')[1];
+  if (!part) throw new Error('Invalid JWT');
+  const base64 = part.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+  const binary =
+    typeof atob === 'function'
+      ? atob(padded)
+      : Buffer.from(padded, 'base64').toString('binary');
+  const json = decodeURIComponent(
+    Array.from(binary)
+      .map((ch) => `%${ch.charCodeAt(0).toString(16).padStart(2, '0')}`)
+      .join(''),
+  );
+  return JSON.parse(json) as Record<string, unknown>;
+}
 
 function buildSyntheticSession(accessToken: string, profileId: string, email?: string | null): Session {
   const now = Math.floor(Date.now() / 1000);
@@ -71,6 +124,8 @@ interface AuthState {
   hasCompletedOnboarding: boolean;
   biometricCapabilities: BiometricCapabilities | null;
   isBiometricEnabled: boolean;
+  /** False when Facebook login is hidden (e.g. email-only builds). */
+  isFacebookLoginEnabled: boolean;
 }
 
 interface AuthActions {
@@ -103,6 +158,9 @@ const BIOMETRIC_ENABLED_KEY = '@medvba_biometric_enabled';
 
 const AUTH_READY_GLOBAL = '__MEDVBA_AUTH_READY__';
 
+/** Skip redundant background fetch after the same profile was loaded (e.g. hosted login + syncFromKinde). */
+const RECENT_PROFILE_FETCH_SKIP_MS = 10_000;
+
 export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() => {
   const queryClient = useQueryClient();
   const kinde = useKindeAuth();
@@ -120,10 +178,15 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   const lastPresenceAtRef = useRef(0);
   const lastIsPublicRef = useRef<boolean | null>(null);
   const authInitSeqRef = useRef(0);
+  /** After first cold bootstrap, only reconcile Kinde ↔ MEDVBA (skip slow onboarding/bio/restore on every Kinde state flip). */
+  const coldStartAuthBootstrapDoneRef = useRef(false);
+  /** Last successful `fetchProfile` completion by `profile_id` (for deduping `syncFromKinde` background fetch). */
+  const recentProfileFetchRef = useRef<{ profileId: string; at: number } | null>(null);
 
   const applyMedvbaSession = useCallback(
     async (accessToken: string, profileId: string, email?: string | null) => {
       setMedvbaAccessToken(accessToken);
+      await persistMedvbaAccessToken(accessToken);
       const syn = buildSyntheticSession(accessToken, profileId, email);
       setSession(syn);
       setUser(syn.user as User);
@@ -133,9 +196,11 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
 
   const clearMedvbaSession = useCallback(() => {
     setMedvbaAccessToken(null);
+    void persistMedvbaAccessToken(null);
     setSession(null);
     setUser(null);
     setProfile(null);
+    recentProfileFetchRef.current = null;
   }, []);
 
   const ensureUserExists = useCallback(
@@ -163,23 +228,29 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   );
 
   const fetchProfile = useCallback(
-    async (userId: string, email: string | undefined, mounted: { current: boolean }) => {
+    async (
+      userId: string,
+      email: string | undefined,
+      mounted: { current: boolean },
+      perfFlowId?: string,
+    ) => {
+      const perf = authPerfStep(perfFlowId ? `fetchProfile:${perfFlowId}` : 'fetchProfile');
+      perf('start');
       await ensureUserExists(userId, email, undefined, mounted);
+      perf('after_ensureUserExists');
 
       try {
         if (!mounted.current) return;
-        const { data: result, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+        const [{ data: result, error: profileError }, { data: progressData }] = await Promise.all([
+          supabase.from('profiles').select('*').eq('id', userId).single(),
+          supabase.from('user_progress').select('*').eq('user_id', userId).single(),
+        ]);
 
         if (!mounted.current) return;
-        if (error) throw error;
+        if (profileError) throw profileError;
+        perf('after_profiles_user_progress');
 
         if (result) {
-          const { data: progressData } = await supabase
-            .from('user_progress')
-            .select('*')
-            .eq('user_id', userId)
-            .single();
-
           if (!mounted.current) return;
 
           const displayAvatar =
@@ -208,10 +279,13 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
             email: email ?? result.email ?? undefined,
           };
           setProfile(userProfileRow);
+          recentProfileFetchRef.current = { profileId: userId, at: Date.now() };
         }
+        perf('done');
       } catch (error) {
         if (isAbortError(error)) return;
         if (!mounted.current) return;
+        perf('catch_fallback_profile');
         setProfile({
           id: userId,
           name: 'Student',
@@ -227,32 +301,48 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
           isPublic: true,
           email: email ?? undefined,
         });
+        recentProfileFetchRef.current = { profileId: userId, at: Date.now() };
       }
     },
     [ensureUserExists],
   );
 
   const syncFromKinde = useCallback(async () => {
+    const perf = authPerfStep('syncFromKinde');
+    perf('enter');
     const k = kindeRef.current;
     if (!k.isAuthenticated) {
       clearMedvbaSession();
       return;
     }
     const kt = await k.getAccessToken();
+    perf('after_getAccessToken');
     if (!kt) {
       clearMedvbaSession();
       return;
     }
-    const ex = await exchangeKindeAccessToken(kt);
+    const [ex, up] = await Promise.all([exchangeKindeAccessToken(kt), k.getUserProfile()]);
+    perf('after_exchange_parallel_getUserProfile');
     if (!ex.ok) {
-      log.error('[Auth] Kinde exchange failed:', ex.error);
+      log.error('[Auth] Session exchange failed:', ex.error);
       clearMedvbaSession();
       return;
     }
-    const up = await k.getUserProfile();
     await applyMedvbaSession(ex.access_token, ex.profile_id, up?.email);
+    perf('after_applyMedvbaSession');
     const mountedRef = { current: true };
-    await fetchProfile(ex.profile_id, up?.email ?? undefined, mountedRef);
+    const recent = recentProfileFetchRef.current;
+    const skipBgFetch =
+      recent?.profileId === ex.profile_id &&
+      Date.now() - recent.at < RECENT_PROFILE_FETCH_SKIP_MS;
+    if (skipBgFetch) {
+      perf('skip_background_fetchProfile_recent');
+    } else {
+      void fetchProfile(ex.profile_id, up?.email ?? undefined, mountedRef, 'kindeSync').catch((err) => {
+        if (!isAbortError(err)) log.warn('[Auth] Background fetchProfile after Kinde sync:', err);
+      });
+      perf('scheduled_background_fetchProfile');
+    }
   }, [applyMedvbaSession, clearMedvbaSession, fetchProfile]);
 
   const checkOnboardingStatus = useCallback(async () => {
@@ -272,55 +362,130 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
       try {
         await withTimeout(
           (async () => {
-            try {
-              await withTimeout(checkOnboardingStatus(), 6000, 'Onboarding check');
-            } catch (obErr) {
-              log.warn('[Auth] Onboarding check slow or failed; continuing:', obErr);
-            }
+            const boot = authPerfStep('authBootstrap');
+            boot('inner_start');
+            let restoredMedvba = false;
 
-            if (Platform.OS !== 'web') {
-              let capabilities: BiometricCapabilities;
+            if (!coldStartAuthBootstrapDoneRef.current) {
               try {
-                capabilities = await withTimeout(
-                  getBiometricCapabilities(),
-                  8000,
-                  'Biometric capabilities',
-                );
-              } catch (bioErr) {
-                log.warn('[Auth] Biometric capabilities slow or failed; continuing:', bioErr);
-                capabilities = { hasHardware: false, isEnrolled: false, supportedTypes: [] };
+                await withTimeout(checkOnboardingStatus(), 6000, 'Onboarding check');
+              } catch (obErr) {
+                log.warn('[Auth] Onboarding check slow or failed; continuing:', obErr);
               }
-              if (mountedRef.current) setBiometricCapabilities(capabilities);
 
-              let biometricEnabled = 'false';
+              if (Platform.OS !== 'web') {
+                let capabilities: BiometricCapabilities;
+                try {
+                  capabilities = await withTimeout(
+                    getBiometricCapabilities(),
+                    8000,
+                    'Biometric capabilities',
+                  );
+                } catch (bioErr) {
+                  log.warn('[Auth] Biometric capabilities slow or failed; continuing:', bioErr);
+                  capabilities = { hasHardware: false, isEnrolled: false, supportedTypes: [] };
+                }
+                if (mountedRef.current) setBiometricCapabilities(capabilities);
+
+                let biometricEnabled = 'false';
+                try {
+                  const raw = await withTimeout(
+                    AsyncStorage.getItem(BIOMETRIC_ENABLED_KEY),
+                    4000,
+                    'Biometric preference read',
+                  );
+                  biometricEnabled = raw ?? 'false';
+                } catch (beErr) {
+                  log.warn('[Auth] Biometric preference read failed; continuing:', beErr);
+                }
+
+                if (mountedRef.current) {
+                  setIsBiometricEnabled(
+                    biometricEnabled === 'true' && capabilities.hasHardware && capabilities.isEnrolled,
+                  );
+                }
+              }
+
               try {
-                const raw = await withTimeout(
-                  AsyncStorage.getItem(BIOMETRIC_ENABLED_KEY),
-                  4000,
-                  'Biometric preference read',
-                );
-                biometricEnabled = raw ?? 'false';
-              } catch (beErr) {
-                log.warn('[Auth] Biometric preference read failed; continuing:', beErr);
+                const stored = await withTimeout(loadMedvbaAccessToken(), 5000, 'Load stored MEDVBA session');
+                if (stored) {
+                  try {
+                    const claims = decodeJwtClaims(stored);
+                    const exp = claims.exp;
+                    const profileId = typeof claims.profile_id === 'string' ? claims.profile_id : '';
+                    const okExp = typeof exp === 'number' && exp * 1000 > Date.now() + 30_000;
+                    if (okExp && profileId) {
+                      const emailClaim = typeof claims.email === 'string' ? claims.email : null;
+                      setMedvbaAccessToken(stored);
+                      const syn = buildSyntheticSession(stored, profileId, emailClaim);
+                      setSession(syn);
+                      setUser(syn.user as User);
+                      await withTimeout(
+                        fetchProfile(profileId, emailClaim ?? undefined, mountedRef, 'coldRestore'),
+                        20000,
+                        'Restore profile fetch',
+                      );
+                      restoredMedvba = true;
+                    } else {
+                      await persistMedvbaAccessToken(null);
+                    }
+                  } catch (restoreErr) {
+                    log.warn('[Auth] Stored MEDVBA session invalid; clearing:', restoreErr);
+                    await persistMedvbaAccessToken(null);
+                    clearMedvbaSession();
+                  }
+                }
+              } catch (loadErr) {
+                log.warn('[Auth] Could not load stored session:', loadErr);
               }
 
-              if (mountedRef.current) {
-                setIsBiometricEnabled(
-                  biometricEnabled === 'true' && capabilities.hasHardware && capabilities.isEnrolled,
-                );
+              coldStartAuthBootstrapDoneRef.current = true;
+              boot('after_cold_start_path');
+            } else {
+              try {
+                const stored = await loadMedvbaAccessToken();
+                if (stored) {
+                  try {
+                    const claims = decodeJwtClaims(stored);
+                    const exp = claims.exp;
+                    const profileId = typeof claims.profile_id === 'string' ? claims.profile_id : '';
+                    const okExp = typeof exp === 'number' && exp * 1000 > Date.now() + 30_000;
+                    if (okExp && profileId) restoredMedvba = true;
+                  } catch {
+                    /* ignore */
+                  }
+                }
+              } catch {
+                /* ignore */
               }
+              boot('after_warm_start_path');
             }
 
             if (!kinde.isLoading && kinde.isAuthenticated) {
+              // After hosted login we already exchanged in signInWithKindeHosted; awaiting sync again
+              // duplicates ~1–4s of backend + Kinde work. Defer when MEDVBA JWT is still fresh.
+              const deferSync = medvbaJwtHasMinTtlSeconds(60);
+              boot(`kinde_authenticated deferSync=${deferSync}`);
               try {
-                await withTimeout(syncFromKinde(), 25000, 'Kinde session sync');
+                if (deferSync) {
+                  void syncFromKinde().catch((syncErr) => {
+                    log.warn('[Auth] Background session sync failed:', syncErr);
+                  });
+                  boot('after_schedule_background_sync');
+                } else {
+                  await withTimeout(syncFromKinde(), 25000, `${PUBLIC_APP_NAME} session sync`);
+                  boot('after_await_syncFromKinde');
+                }
               } catch (syncErr) {
-                log.warn('[Auth] syncFromKinde failed or timed out:', syncErr);
+                log.warn('[Auth] session sync failed or timed out:', syncErr);
                 clearMedvbaSession();
               }
-            } else if (!kinde.isLoading) {
+            } else if (!kinde.isLoading && !restoredMedvba && !getMedvbaAccessToken()) {
+              // Do not clear an in-flight or just-applied MEDVBA session (e.g. email/password or
+              // post-hosted-login) when SecureStore restore hasn't run yet but memory already has the JWT.
               clearMedvbaSession();
             }
+            boot('inner_end');
           })(),
           45000,
           'Auth bootstrap',
@@ -332,7 +497,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
         if (initSeq !== authInitSeqRef.current) {
           return;
         }
-        // Only the latest auth init may mark the app ready; stale inits can finish after Kinde deps change.
+        // Only the latest auth init may mark the app ready; stale inits can finish after auth SDK deps change.
         setIsLoading(false);
         (globalThis as Record<string, unknown>)[AUTH_READY_GLOBAL] = true;
         void SplashScreen.hideAsync()?.catch(() => {});
@@ -342,7 +507,14 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     return () => {
       mountedRef.current = false;
     };
-  }, [kinde.isLoading, kinde.isAuthenticated, checkOnboardingStatus, syncFromKinde, clearMedvbaSession]);
+  }, [
+    kinde.isLoading,
+    kinde.isAuthenticated,
+    checkOnboardingStatus,
+    syncFromKinde,
+    clearMedvbaSession,
+    fetchProfile,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -353,22 +525,26 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   const signUp = useCallback(
     async (email: string, password: string, name: string) => {
       try {
-        const res = await kinde.register({ login_hint: email } as Record<string, unknown>);
+        const res = await kinde.register({ loginHint: email.trim().toLowerCase() } as never);
         if (!res.success) {
           return {
             error: { message: res.errorMessage || 'Registration failed' } as AuthError,
             session: null,
           };
         }
-        const ex = await exchangeKindeAccessToken(res.accessToken);
+        const [ex, up] = await Promise.all([
+          exchangeKindeAccessToken(res.accessToken),
+          kinde.getUserProfile(),
+        ]);
         if (!ex.ok) {
           return { error: { message: ex.error } as AuthError, session: null };
         }
-        await applyMedvbaSession(ex.access_token, ex.profile_id, email);
+        const sessionEmail = up?.email ?? email;
+        await applyMedvbaSession(ex.access_token, ex.profile_id, sessionEmail);
         const mountedRef = { current: true };
-        await ensureUserExists(ex.profile_id, email, name, mountedRef);
-        await fetchProfile(ex.profile_id, email, mountedRef);
-        const syn = buildSyntheticSession(ex.access_token, ex.profile_id, email);
+        await ensureUserExists(ex.profile_id, sessionEmail ?? undefined, name, mountedRef);
+        await fetchProfile(ex.profile_id, sessionEmail ?? undefined, mountedRef, 'signUp');
+        const syn = buildSyntheticSession(ex.access_token, ex.profile_id, sessionEmail);
         return { error: null, session: syn };
       } catch (error) {
         log.error('[Auth] signUp:', error);
@@ -385,9 +561,10 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
         if (!ex.ok) {
           return { error: { message: ex.error } as AuthError };
         }
-        await applyMedvbaSession(ex.access_token, ex.profile_id, email);
+        const sessionEmail = email.trim().toLowerCase();
+        await applyMedvbaSession(ex.access_token, ex.profile_id, sessionEmail);
         const mountedRef = { current: true };
-        await fetchProfile(ex.profile_id, email, mountedRef);
+        await fetchProfile(ex.profile_id, sessionEmail, mountedRef, 'emailPassword');
         return { error: null };
       } catch (error) {
         return { error: error as AuthError };
@@ -396,36 +573,71 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     [applyMedvbaSession, fetchProfile],
   );
 
-  const signInWithKindeHosted = useCallback(async () => {
-    try {
-      const res = await kinde.login();
-      if (!res.success) {
-        if (/cancel|dismiss|closed/i.test(res.errorMessage || '')) {
-          return { error: { message: AUTH_SIGN_IN_CANCELLED } as AuthError };
+  const signInWithKindeHosted = useCallback(
+    async (loginHint?: Record<string, unknown>) => {
+      const perf = authPerfStep('signInWithKindeHosted');
+      try {
+        perf('before_kinde.login');
+        const res = await kinde.login(loginHint as never);
+        perf('after_kinde.login');
+        if (!res.success) {
+          if (/cancel|dismiss|closed/i.test(res.errorMessage || '')) {
+            return { error: { message: AUTH_SIGN_IN_CANCELLED } as AuthError };
+          }
+          return { error: { message: res.errorMessage || 'Login failed' } as AuthError };
         }
-        return { error: { message: res.errorMessage || 'Login failed' } as AuthError };
+        const [ex, up] = await Promise.all([
+          exchangeKindeAccessToken(res.accessToken),
+          kinde.getUserProfile(),
+        ]);
+        perf('after_exchange_parallel_getUserProfile');
+        if (!ex.ok) {
+          return { error: { message: ex.error } as AuthError };
+        }
+        await applyMedvbaSession(ex.access_token, ex.profile_id, up?.email);
+        perf('after_applyMedvbaSession');
+        const mountedRef = { current: true };
+        await fetchProfile(ex.profile_id, up?.email ?? undefined, mountedRef, 'hosted');
+        perf('after_await_fetchProfile');
+        return { error: null };
+      } catch (error) {
+        return { error: error as AuthError };
       }
-      const ex = await exchangeKindeAccessToken(res.accessToken);
-      if (!ex.ok) {
-        return { error: { message: ex.error } as AuthError };
-      }
-      const up = await kinde.getUserProfile();
-      await applyMedvbaSession(ex.access_token, ex.profile_id, up?.email);
-      const mountedRef = { current: true };
-      await fetchProfile(ex.profile_id, up?.email ?? undefined, mountedRef);
-      return { error: null };
-    } catch (error) {
-      return { error: error as AuthError };
-    }
-  }, [kinde, applyMedvbaSession, fetchProfile]);
+    },
+    [kinde, applyMedvbaSession, fetchProfile],
+  );
 
-  const signInWithGoogle = signInWithKindeHosted;
-  const signInWithFacebook = signInWithKindeHosted;
+  const facebookConnectionId = String(
+    (extraConfig as Record<string, unknown>).EXPO_PUBLIC_KINDE_FACEBOOK_CONNECTION_ID ?? '',
+  ).trim();
+
+  const googleConnectionId = String(
+    (extraConfig as Record<string, unknown>).EXPO_PUBLIC_KINDE_GOOGLE_CONNECTION_ID ?? '',
+  ).trim();
+
+  const isFacebookLoginEnabled = isFacebookLoginEnabledForBuild(extraConfig);
+
+  const signInWithGoogle = useCallback(async () => {
+    const hint = googleConnectionId ? { connectionId: googleConnectionId } : undefined;
+    return signInWithKindeHosted(hint);
+  }, [googleConnectionId, signInWithKindeHosted]);
+
+  const signInWithFacebook = useCallback(async () => {
+    if (!isFacebookLoginEnabled) {
+      return {
+        error: { message: 'Facebook sign-in is not enabled for this app.' } as AuthError,
+      };
+    }
+    const hint = facebookConnectionId
+      ? { connectionId: facebookConnectionId }
+      : undefined;
+    return signInWithKindeHosted(hint);
+  }, [facebookConnectionId, isFacebookLoginEnabled, signInWithKindeHosted]);
   const signInWithApple = useCallback(async () => {
     if (Platform.OS !== 'ios') {
       return { error: { message: 'Apple Sign-In is not available on this device' } as AuthError };
     }
-    return signInWithKindeHosted();
+    return signInWithKindeHosted(undefined);
   }, [signInWithKindeHosted]);
 
   const signInWithBiometric = useCallback(async () => {
@@ -462,8 +674,9 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     try {
       await kinde.logout({ revokeToken: true });
     } catch (e) {
-      log.warn('[Auth] Kinde logout:', e);
+      log.warn('[Auth] Logout:', e);
     }
+    coldStartAuthBootstrapDoneRef.current = false;
     clearMedvbaSession();
     queryClient.clear();
   }, [kinde, clearMedvbaSession, queryClient]);
@@ -509,7 +722,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   const refreshProfile = useCallback(async () => {
     if (user) {
       const mountedRef = { current: true };
-      await fetchProfile(user.id, user.email, mountedRef);
+      await fetchProfile(user.id, user.email, mountedRef, 'refreshProfile');
     }
   }, [user, fetchProfile]);
 
@@ -586,6 +799,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     hasCompletedOnboarding,
     biometricCapabilities,
     isBiometricEnabled,
+    isFacebookLoginEnabled,
     signUp,
     signIn,
     signInWithBiometric,

@@ -253,7 +253,7 @@ Implement user authentication:
 **Native Authentication (requires Custom Development Build):**
 
 - **Apple Sign In** - Native Apple authentication - [Implementation Guide](https://docs.expo.dev/versions/latest/sdk/apple-authentication/)
-- **Google Sign In** - Native Google authentication - [Setup Guide](https://docs.expo.dev/guides/google-authentication/)
+- **Google Sign In** - Via hosted social login (`@kinde/expo`), not standalone Google OAuth in the app.
 
 ### **Add Push Notifications**
 

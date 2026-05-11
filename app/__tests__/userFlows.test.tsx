@@ -97,7 +97,7 @@ describe('User flows (integration-style)', () => {
       expect(screen.getByText('Email is required')).toBeTruthy();
     });
 
-    it('submits sign up and navigates to tabs when Kinde returns a session', async () => {
+    it('submits sign up and navigates to tabs when auth returns a session', async () => {
       renderWithApp(<SignUpScreen />);
 
       expect(await findText('Join thousands of students')).toBeTruthy();
@@ -130,7 +130,7 @@ describe('User flows (integration-style)', () => {
       expect(await findText('Email is required')).toBeTruthy();
     });
 
-    it('opens Kinde password reset and shows success state', async () => {
+    it('opens password reset and shows success state', async () => {
       renderWithApp(<ForgotPasswordScreen />);
 
       expect(await findText('Send Reset Link')).toBeTruthy();

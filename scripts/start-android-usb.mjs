@@ -3,9 +3,13 @@
  * Avoids shell `&&` quirks on Windows (PowerShell/cmd) so adb reverse failure is visible before Expo starts.
  */
 import { spawn, spawnSync } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import process from 'node:process';
 
 const shell = process.platform === 'win32';
+/** Repo root (parent of `scripts/`) so Expo always loads `app.config.ts` + `.env` from this project. */
+const projectRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const adb = spawnSync('adb', ['reverse', 'tcp:8081', 'tcp:8081'], { stdio: 'inherit', shell });
 if (adb.error) {
@@ -23,6 +27,7 @@ if (adb.status !== 0) {
 const child = spawn('bunx', ['expo', 'start', '--localhost', '--clear'], {
   stdio: 'inherit',
   shell,
+  cwd: projectRoot,
   env: process.env,
 });
 

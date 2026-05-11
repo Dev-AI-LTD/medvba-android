@@ -32,12 +32,13 @@ function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-   const { 
-     signIn, 
-     signInWithGoogle, 
-     signInWithFacebook, 
-     signInWithApple,
-   } = useAuth();
+  const {
+    signIn,
+    signInWithGoogle,
+    signInWithFacebook,
+    signInWithApple,
+    isFacebookLoginEnabled,
+  } = useAuth();
   const { t } = useLanguage();
 
   const validateForm = useCallback((): boolean => {
@@ -82,6 +83,7 @@ function LoginScreen() {
           errorMessage = t('auth.emailNotConfirmed');
         } else if (
           error.message.includes('Invalid login credentials') ||
+          error.message.includes('Invalid email or password') ||
           code === 'invalid_credentials'
         ) {
           errorMessage = t('auth.invalidCredentials');
@@ -219,15 +221,18 @@ function LoginScreen() {
                       >
                         <Text style={[styles.socialButtonText, { color: theme.colors.onSurface }]}>G</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
-                        onPress={() => handleSocialLogin('facebook')}
-                        disabled={isLoading}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('auth.signInWithFacebook')}
-                      >
-                        <Text style={[styles.socialButtonText, { color: theme.colors.onSurface }]}>f</Text>
-                      </TouchableOpacity>
+                      {isFacebookLoginEnabled ? (
+                        <TouchableOpacity
+                          testID="loginFacebookButton"
+                          style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
+                          onPress={() => handleSocialLogin('facebook')}
+                          disabled={isLoading}
+                          accessibilityRole="button"
+                          accessibilityLabel={t('auth.signInWithFacebook')}
+                        >
+                          <Text style={[styles.socialButtonText, { color: theme.colors.onSurface }]}>f</Text>
+                        </TouchableOpacity>
+                      ) : null}
                       {Platform.OS === 'ios' ? (
                         <TouchableOpacity
                           style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}

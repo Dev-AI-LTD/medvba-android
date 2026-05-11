@@ -21,7 +21,7 @@ function displayNameFromKinde(p: KindeUserProfile): string {
 }
 
 /**
- * Ensures a profiles row exists for this Kinde user. Links legacy rows by email when kinde_sub is null.
+ * Ensures a profiles row exists for this identity user. Links legacy rows by email when kinde_sub is null.
  */
 export async function resolveOrCreateProfileId(
   admin: SupabaseClient,

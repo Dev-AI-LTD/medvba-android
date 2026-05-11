@@ -1,5 +1,5 @@
 /**
- * Fetch current user from Kinde using an access token.
+ * Fetch current user from the identity provider userinfo endpoint using an access token.
  * @see https://docs.kinde.com/api/oauth2/user-profile/
  */
 export async function fetchKindeUserProfile(

@@ -28,7 +28,7 @@ export const accountRouter = createTRPCRouter({
     const profileId = ctx.userId;
 
     await supabaseAdmin.auth.admin.deleteUser(profileId).catch(() => {
-      /* user may not exist in Supabase Auth (Kinde-only) */
+      /* user may not exist in Supabase Auth (external IdP only) */
     });
 
     const { error: deleteError } = await supabaseAdmin.from("profiles").delete().eq("id", profileId);

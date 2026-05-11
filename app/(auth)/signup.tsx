@@ -40,7 +40,7 @@ export default function SignUpScreen() {
     password?: string;
     confirmPassword?: string;
   }>({});
-  const { signUp, signInWithGoogle, signInWithFacebook, signInWithApple } = useAuth();
+  const { signUp, signInWithGoogle, signInWithFacebook, signInWithApple, isFacebookLoginEnabled } = useAuth();
   const { t } = useLanguage();
 
   const validateForm = useCallback((): boolean => {
@@ -238,15 +238,18 @@ export default function SignUpScreen() {
                       >
                         <Text style={[styles.socialButtonText, { color: theme.colors.onSurface }]}>G</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
-                        onPress={() => handleSocialSignUp('facebook')}
-                        disabled={isLoading}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('auth.signInWithFacebook')}
-                      >
-                        <Text style={[styles.socialButtonText, { color: theme.colors.onSurface }]}>f</Text>
-                      </TouchableOpacity>
+                      {isFacebookLoginEnabled ? (
+                        <TouchableOpacity
+                          testID="signupFacebookButton"
+                          style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
+                          onPress={() => handleSocialSignUp('facebook')}
+                          disabled={isLoading}
+                          accessibilityRole="button"
+                          accessibilityLabel={t('auth.signInWithFacebook')}
+                        >
+                          <Text style={[styles.socialButtonText, { color: theme.colors.onSurface }]}>f</Text>
+                        </TouchableOpacity>
+                      ) : null}
                       {Platform.OS === 'ios' ? (
                         <TouchableOpacity
                           style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
