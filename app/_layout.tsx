@@ -276,13 +276,58 @@ const styles = StyleSheet.create({
   },
 });
 
+const paperIconFallbacks: Record<string, string> = {
+  "arrow-left": "<",
+  "chevron-left": "<",
+  "content-save": "OK",
+  "eye": "show",
+  "eye-off": "hide",
+  "email-outline": "@",
+  "magnify": "?",
+  "cog-outline": "*",
+  "close": "x",
+};
+
+function PaperIconFallback({
+  color,
+  name,
+  size,
+}: {
+  color?: string;
+  name: string;
+  size: number;
+}) {
+  const label = paperIconFallbacks[name] ?? name.slice(0, 1).toUpperCase();
+  return (
+    <Text
+      style={{
+        color: color ?? "#64748b",
+        fontSize: Math.max(11, Math.round(size * 0.55)),
+        fontWeight: "700",
+      }}
+    >
+      {label}
+    </Text>
+  );
+}
+
 function PaperProviderWrapper({ children }: { children: React.ReactNode }) {
   const { colors, colorScheme } = useTheme();
   const paperTheme = React.useMemo(
     () => getPaperTheme(colors, colorScheme === "dark"),
     [colors, colorScheme]
   );
-  return <PaperProvider theme={paperTheme}>{children}</PaperProvider>;
+  return (
+    <PaperProvider
+      theme={paperTheme}
+      settings={{
+        // Avoid vector-icon font asset downloads in dev clients; missing font URLs crash ExpoAsset.
+        icon: PaperIconFallback,
+      }}
+    >
+      {children}
+    </PaperProvider>
+  );
 }
 
 function AppProvidersTree() {

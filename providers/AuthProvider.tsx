@@ -107,12 +107,6 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   const queryClient = useQueryClient();
   const kinde = useKindeAuth();
 
-  useEffect(() => {
-    (globalThis as Record<string, unknown>)[AUTH_READY_GLOBAL] = true;
-    return () => {
-      delete (globalThis as Record<string, unknown>)[AUTH_READY_GLOBAL];
-    };
-  }, []);
   const kindeRef = useRef(kinde);
   kindeRef.current = kinde;
   const [session, setSession] = useState<Session | null>(null);
@@ -125,6 +119,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   const { data: userProfile } = useUserProfile(user?.id);
   const lastPresenceAtRef = useRef(0);
   const lastIsPublicRef = useRef<boolean | null>(null);
+  const authInitSeqRef = useRef(0);
 
   const applyMedvbaSession = useCallback(
     async (accessToken: string, profileId: string, email?: string | null) => {
@@ -272,6 +267,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
 
   useEffect(() => {
     const mountedRef = { current: true };
+    const initSeq = ++authInitSeqRef.current;
     const init = async () => {
       try {
         await withTimeout(
@@ -333,10 +329,13 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
         log.error('[Auth] init error:', e);
         clearMedvbaSession();
       } finally {
-        // Do not gate on mountedRef: when Kinde deps change, cleanup sets mountedRef false while an older
-        // async init's finally would otherwise skip this — leaving isLoading true forever (stuck splash).
+        if (initSeq !== authInitSeqRef.current) {
+          return;
+        }
+        // Only the latest auth init may mark the app ready; stale inits can finish after Kinde deps change.
         setIsLoading(false);
-        void SplashScreen.hideAsync?.()?.catch(() => {});
+        (globalThis as Record<string, unknown>)[AUTH_READY_GLOBAL] = true;
+        void SplashScreen.hideAsync()?.catch(() => {});
       }
     };
     init();
@@ -344,6 +343,12 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
       mountedRef.current = false;
     };
   }, [kinde.isLoading, kinde.isAuthenticated, checkOnboardingStatus, syncFromKinde, clearMedvbaSession]);
+
+  useEffect(() => {
+    return () => {
+      delete (globalThis as Record<string, unknown>)[AUTH_READY_GLOBAL];
+    };
+  }, []);
 
   const signUp = useCallback(
     async (email: string, password: string, name: string) => {

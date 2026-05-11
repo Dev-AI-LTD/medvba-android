@@ -7,6 +7,12 @@ export type ExchangeSessionResult =
 
 const SESSION_FETCH_TIMEOUT_MS = 22_000;
 
+type SessionResponseJson = {
+  access_token?: string;
+  profile_id?: string;
+  error?: string;
+};
+
 function isAbortError(e: unknown): boolean {
   if (e instanceof Error && e.name === "AbortError") return true;
   if (e && typeof e === "object" && "name" in e && (e as { name: string }).name === "AbortError") {
@@ -33,6 +39,17 @@ async function fetchSession(
   }
 }
 
+async function parseSessionJson(res: Response): Promise<
+  | { ok: true; json: SessionResponseJson }
+  | { ok: false; error: string }
+> {
+  try {
+    return { ok: true, json: (await res.json()) as SessionResponseJson };
+  } catch {
+    return { ok: false, error: "Invalid JSON response from session server." };
+  }
+}
+
 /**
  * Exchange a Kinde access token for a Supabase-compatible JWT (HS256, minted by backend).
  */
@@ -53,11 +70,11 @@ export async function exchangeKindeAccessToken(
     const msg = e instanceof Error ? e.message : "Network error";
     return { ok: false, error: msg };
   }
-  const json = (await res.json().catch(() => ({}))) as {
-    access_token?: string;
-    profile_id?: string;
-    error?: string;
-  };
+  const parsed = await parseSessionJson(res);
+  if (!parsed.ok) {
+    return { ok: false, error: parsed.error, status: res.status };
+  }
+  const json = parsed.json;
   if (!res.ok) {
     return { ok: false, error: json.error || res.statusText, status: res.status };
   }
@@ -87,11 +104,11 @@ export async function exchangeEmailPasswordSession(
     const msg = e instanceof Error ? e.message : "Network error";
     return { ok: false, error: msg };
   }
-  const json = (await res.json().catch(() => ({}))) as {
-    access_token?: string;
-    profile_id?: string;
-    error?: string;
-  };
+  const parsed = await parseSessionJson(res);
+  if (!parsed.ok) {
+    return { ok: false, error: parsed.error, status: res.status };
+  }
+  const json = parsed.json;
   if (!res.ok) {
     return { ok: false, error: json.error || res.statusText, status: res.status };
   }
