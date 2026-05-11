@@ -4,13 +4,13 @@ import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
-import { View, ActivityIndicator, StyleSheet, Text } from "react-native";
+import { View, ActivityIndicator, Platform, StyleSheet, Text } from "react-native";
 import Constants from "expo-constants";
 
 import { PaperProvider } from "react-native-paper";
 import { QuizProgressProvider } from "@/providers/QuizProgressProvider";
 import { LanguageProvider } from "@/providers/LanguageProvider";
-import { KindeAuthProvider } from "@kinde/expo";
+import { KindeAuthContext, KindeAuthProvider } from "@kinde/expo";
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import { SubscriptionProvider } from "@/providers/SubscriptionProvider";
 import { ThemeProvider, useTheme } from "@/providers/ThemeProvider";
@@ -19,6 +19,7 @@ import { monitoring } from "@/lib/monitoring";
 import { log } from "@/lib/log";
 import { trpc, createMedvbaTrpcClient } from "@/lib/trpc";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { BootstrapLoadingOverlay } from "@/components/BootstrapLoadingOverlay";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
 let splashScreenAvailable = true;
@@ -99,6 +100,22 @@ console.debug = (...args: unknown[]) => {
 
 if (!__DEV__) {
   console.log = () => {};
+}
+
+/**
+ * @kinde/expo renders `null` until Expo SecureStore + token bootstrap finish (`KindeAuthProvider`).
+ * While null, no child (AuthProvider, etc.) mounts — so nothing calls `SplashScreen.hideAsync()`
+ * and the native splash can stay forever. This failsafe always runs because it sits next to Kinde.
+ */
+function NativeSplashFailsafe() {
+  React.useEffect(() => {
+    const ms = __DEV__ ? 5500 : 8500;
+    const id = setTimeout(() => {
+      void SplashScreen.hideAsync().catch(() => {});
+    }, ms);
+    return () => clearTimeout(id);
+  }, []);
+  return null;
 }
 
 const queryClient = new QueryClient({
@@ -295,6 +312,52 @@ function AppProvidersTree() {
   );
 }
 
+function KindeProviderBoundary({ children }: { children: React.ReactNode }) {
+  const webKindeAuth = React.useMemo(
+    () => ({
+      login: async () => ({ success: false, errorMessage: "Kinde web login is disabled in dev." }),
+      register: async () => ({ success: false, errorMessage: "Kinde web registration is disabled in dev." }),
+      logout: async () => ({ success: true }),
+      portal: async () => {},
+      getAccessToken: async () => null,
+      getIdToken: async () => null,
+      getDecodedToken: async () => null,
+      getPermission: async () => ({ isGranted: false, permissionKey: "", orgCode: null }),
+      getPermissions: async () => ({ permissions: [], orgCode: null }),
+      getClaims: async () => null,
+      getClaim: async () => null,
+      getCurrentOrganization: async () => null,
+      getUserOrganizations: async () => null,
+      getUserProfile: async () => null,
+      getRoles: async () => [],
+      getFlag: async () => null,
+      refreshToken: async () => ({ success: false, error: "Kinde web refresh is disabled in dev." }),
+      isAuthenticated: false,
+      isLoading: false,
+    }),
+    [],
+  );
+
+  if (Platform.OS === "web") {
+    return (
+      <KindeAuthContext.Provider value={webKindeAuth as React.ContextType<typeof KindeAuthContext>}>
+        {children}
+      </KindeAuthContext.Provider>
+    );
+  }
+
+  return (
+    <KindeAuthProvider
+      config={{
+        domain: (kindeIssuerUrl || 'https://__configure_kinde__.kinde.com').replace(/\/+$/, ''),
+        clientId: kindeClientId || '__configure_kinde__',
+      }}
+    >
+      {children}
+    </KindeAuthProvider>
+  );
+}
+
 export default function RootLayout() {
   if (!kindeIssuerUrl?.trim() || !kindeClientId?.trim()) {
     console.warn(
@@ -303,14 +366,13 @@ export default function RootLayout() {
   }
   return (
     <ErrorBoundary>
-      <KindeAuthProvider
-        config={{
-          domain: (kindeIssuerUrl || 'https://__configure_kinde__.kinde.com').replace(/\/+$/, ''),
-          clientId: kindeClientId || '__configure_kinde__',
-        }}
-      >
-        <AppProvidersTree />
-      </KindeAuthProvider>
+      <View style={{ flex: 1 }}>
+        <NativeSplashFailsafe />
+        <KindeProviderBoundary>
+          <AppProvidersTree />
+        </KindeProviderBoundary>
+        <BootstrapLoadingOverlay />
+      </View>
     </ErrorBoundary>
   );
 }

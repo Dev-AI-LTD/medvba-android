@@ -5,6 +5,34 @@ export type ExchangeSessionResult =
   | { ok: true; access_token: string; profile_id: string }
   | { ok: false; error: string; status?: number };
 
+const SESSION_FETCH_TIMEOUT_MS = 22_000;
+
+function isAbortError(e: unknown): boolean {
+  if (e instanceof Error && e.name === "AbortError") return true;
+  if (e && typeof e === "object" && "name" in e && (e as { name: string }).name === "AbortError") {
+    return true;
+  }
+  return false;
+}
+
+async function fetchSession(
+  url: string,
+  init: Omit<RequestInit, "signal">,
+): Promise<Response> {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), SESSION_FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (e) {
+    if (isAbortError(e)) {
+      throw new Error("Connection timed out. Check network and EXPO_PUBLIC_API_BASE_URL.");
+    }
+    throw e;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 /**
  * Exchange a Kinde access token for a Supabase-compatible JWT (HS256, minted by backend).
  */
@@ -12,13 +40,19 @@ export async function exchangeKindeAccessToken(
   kindeAccessToken: string,
 ): Promise<ExchangeSessionResult> {
   const base = getApiBaseUrl();
-  const res = await fetch(`${base}/api/auth/session`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${kindeAccessToken}`,
-      Accept: "application/json",
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetchSession(`${base}/api/auth/session`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${kindeAccessToken}`,
+        Accept: "application/json",
+      },
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Network error";
+    return { ok: false, error: msg };
+  }
   const json = (await res.json().catch(() => ({}))) as {
     access_token?: string;
     profile_id?: string;
@@ -39,14 +73,20 @@ export async function exchangeEmailPasswordSession(
   password: string,
 ): Promise<ExchangeSessionResult> {
   const base = getApiBaseUrl();
-  const res = await fetch(`${base}/api/auth/session`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify({ email: email.trim(), password }),
-  });
+  let res: Response;
+  try {
+    res = await fetchSession(`${base}/api/auth/session`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ email: email.trim(), password }),
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Network error";
+    return { ok: false, error: msg };
+  }
   const json = (await res.json().catch(() => ({}))) as {
     access_token?: string;
     profile_id?: string;

@@ -16,7 +16,6 @@ import { Appbar, Text, Card, useTheme } from 'react-native-paper';
 import { UIButton, UITextField } from '@/ui';
 import { useAuth, AUTH_SIGN_IN_CANCELLED } from '@/providers/AuthProvider';
 import { AuthError } from '@supabase/supabase-js';
-import { Ionicons } from '@expo/vector-icons';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -237,7 +236,7 @@ export default function SignUpScreen() {
                         accessibilityRole="button"
                         accessibilityLabel={t('auth.signInWithGoogle')}
                       >
-                        <Ionicons name="logo-google" size={24} color={theme.colors.onSurface} />
+                        <Text style={[styles.socialButtonText, { color: theme.colors.onSurface }]}>G</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
@@ -246,7 +245,7 @@ export default function SignUpScreen() {
                         accessibilityRole="button"
                         accessibilityLabel={t('auth.signInWithFacebook')}
                       >
-                        <Ionicons name="logo-facebook" size={24} color={theme.colors.onSurface} />
+                        <Text style={[styles.socialButtonText, { color: theme.colors.onSurface }]}>f</Text>
                       </TouchableOpacity>
                       {Platform.OS === 'ios' ? (
                         <TouchableOpacity
@@ -256,7 +255,7 @@ export default function SignUpScreen() {
                           accessibilityRole="button"
                           accessibilityLabel={t('auth.signInWithApple')}
                         >
-                          <Ionicons name="logo-apple" size={24} color={theme.colors.onSurface} />
+                          <Text style={[styles.socialButtonText, { color: theme.colors.onSurface }]}>Apple</Text>
                         </TouchableOpacity>
                       ) : null}
                     </View>
@@ -446,6 +445,10 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  socialButtonText: {
+    fontSize: 18,
+    fontWeight: '700',
   },
   dividerRow: {
     flexDirection: 'row',

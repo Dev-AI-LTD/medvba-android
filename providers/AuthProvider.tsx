@@ -21,6 +21,7 @@ import {
   exchangeKindeAccessToken,
 } from '@/lib/exchange-medvba-session';
 import { setMedvbaAccessToken, getMedvbaAccessToken } from '@/lib/medvba-access-token';
+import { withTimeout } from '@/lib/with-timeout';
 
 const ONBOARDING_COMPLETE_KEY = '@medvba_onboarding_complete';
 
@@ -100,9 +101,18 @@ type AuthContextValue = AuthState & AuthActions;
 
 const BIOMETRIC_ENABLED_KEY = '@medvba_biometric_enabled';
 
+const AUTH_READY_GLOBAL = '__MEDVBA_AUTH_READY__';
+
 export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() => {
   const queryClient = useQueryClient();
   const kinde = useKindeAuth();
+
+  useEffect(() => {
+    (globalThis as Record<string, unknown>)[AUTH_READY_GLOBAL] = true;
+    return () => {
+      delete (globalThis as Record<string, unknown>)[AUTH_READY_GLOBAL];
+    };
+  }, []);
   const kindeRef = useRef(kinde);
   kindeRef.current = kinde;
   const [session, setSession] = useState<Session | null>(null);
@@ -264,28 +274,68 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     const mountedRef = { current: true };
     const init = async () => {
       try {
-        await checkOnboardingStatus();
-        if (Platform.OS !== 'web') {
-          const capabilities = await getBiometricCapabilities();
-          if (mountedRef.current) setBiometricCapabilities(capabilities);
-          const biometricEnabled = await AsyncStorage.getItem(BIOMETRIC_ENABLED_KEY);
-          if (mountedRef.current) {
-            setIsBiometricEnabled(
-              biometricEnabled === 'true' && capabilities.hasHardware && capabilities.isEnrolled,
-            );
-          }
-        }
+        await withTimeout(
+          (async () => {
+            try {
+              await withTimeout(checkOnboardingStatus(), 6000, 'Onboarding check');
+            } catch (obErr) {
+              log.warn('[Auth] Onboarding check slow or failed; continuing:', obErr);
+            }
 
-        if (!kinde.isLoading && kinde.isAuthenticated) {
-          await syncFromKinde();
-        } else if (!kinde.isLoading) {
-          clearMedvbaSession();
-        }
+            if (Platform.OS !== 'web') {
+              let capabilities: BiometricCapabilities;
+              try {
+                capabilities = await withTimeout(
+                  getBiometricCapabilities(),
+                  8000,
+                  'Biometric capabilities',
+                );
+              } catch (bioErr) {
+                log.warn('[Auth] Biometric capabilities slow or failed; continuing:', bioErr);
+                capabilities = { hasHardware: false, isEnrolled: false, supportedTypes: [] };
+              }
+              if (mountedRef.current) setBiometricCapabilities(capabilities);
+
+              let biometricEnabled = 'false';
+              try {
+                const raw = await withTimeout(
+                  AsyncStorage.getItem(BIOMETRIC_ENABLED_KEY),
+                  4000,
+                  'Biometric preference read',
+                );
+                biometricEnabled = raw ?? 'false';
+              } catch (beErr) {
+                log.warn('[Auth] Biometric preference read failed; continuing:', beErr);
+              }
+
+              if (mountedRef.current) {
+                setIsBiometricEnabled(
+                  biometricEnabled === 'true' && capabilities.hasHardware && capabilities.isEnrolled,
+                );
+              }
+            }
+
+            if (!kinde.isLoading && kinde.isAuthenticated) {
+              try {
+                await withTimeout(syncFromKinde(), 25000, 'Kinde session sync');
+              } catch (syncErr) {
+                log.warn('[Auth] syncFromKinde failed or timed out:', syncErr);
+                clearMedvbaSession();
+              }
+            } else if (!kinde.isLoading) {
+              clearMedvbaSession();
+            }
+          })(),
+          45000,
+          'Auth bootstrap',
+        );
       } catch (e) {
         log.error('[Auth] init error:', e);
+        clearMedvbaSession();
       } finally {
-        if (mountedRef.current) setIsLoading(false);
-        // Native splash can stay white until first navigation; hide as soon as auth init finishes.
+        // Do not gate on mountedRef: when Kinde deps change, cleanup sets mountedRef false while an older
+        // async init's finally would otherwise skip this — leaving isLoading true forever (stuck splash).
+        setIsLoading(false);
         void SplashScreen.hideAsync?.()?.catch(() => {});
       }
     };

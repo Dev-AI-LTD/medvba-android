@@ -22,6 +22,7 @@ export async function mintSupabaseAccessJwt(input: {
   const claims: Record<string, unknown> = {
     role: "authenticated",
     profile_id: input.profileId,
+    kinde_sub: input.kindeSub,
   };
   if (input.email) {
     claims.email = input.email;
@@ -29,7 +30,7 @@ export async function mintSupabaseAccessJwt(input: {
 
   return await new SignJWT(claims)
     .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-    .setSubject(input.kindeSub)
+    .setSubject(input.profileId)
     .setIssuedAt()
     .setExpirationTime("15m")
     .setAudience("authenticated")

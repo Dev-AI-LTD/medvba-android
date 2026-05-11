@@ -8,7 +8,8 @@
   "scripts": {
     "start": "bunx rork start -p jf700h5s63mnlvb27w3pp --tunnel",
     "start:local": "npx expo start",
-    "start:android:usb": "adb reverse tcp:8081 tcp:8081 && bunx expo start --localhost --clear",
+    "start:web": "bunx expo start --web --port 8081 --clear",
+    "start:android:usb": "node scripts/start-android-usb.mjs",
     "start:dev:tunnel": "bunx expo start --tunnel --clear",
     "start-web": "bunx rork start -p jf700h5s63mnlvb27w3pp --web --tunnel",
     "start-web-dev": "DEBUG=expo* bunx rork start -p jf700h5s63mnlvb27w3pp --web --tunnel",
