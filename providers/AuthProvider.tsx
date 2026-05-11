@@ -286,7 +286,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
       } finally {
         if (mountedRef.current) setIsLoading(false);
         // Native splash can stay white until first navigation; hide as soon as auth init finishes.
-        void SplashScreen.hideAsync().catch(() => {});
+        void SplashScreen.hideAsync?.()?.catch(() => {});
       }
     };
     init();

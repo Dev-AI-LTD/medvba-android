@@ -27,8 +27,9 @@ jest.mock('expo-router', () => {
 });
 
 jest.mock('expo-splash-screen', () => ({
-  preventAutoHideAsync: jest.fn(),
-  hideAsync: jest.fn(),
+  // Match Expo: both return Promises (default jest.fn() is undefined → breaks .catch / await chains).
+  preventAutoHideAsync: jest.fn().mockResolvedValue(true),
+  hideAsync: jest.fn().mockResolvedValue(undefined),
 }));
 
 jest.mock('expo-constants', () => ({
