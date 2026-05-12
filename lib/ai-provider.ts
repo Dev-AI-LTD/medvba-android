@@ -94,3 +94,24 @@ Formatting guidelines:
 - End with a follow-up question or offer to explain more
 
 Topics you cover: Anatomy, Physiology, Pathology, Pharmacology, Biochemistry, Microbiology, Immunology, Histology, Embryology, and clinical medicine.`;
+
+export type TutorLocale = 'en' | 'ro';
+
+/** System prompt plus explicit response language for the AI tutor. */
+export function getTutorSystemPrompt(locale: TutorLocale): string {
+  if (locale === 'ro') {
+    return `${SYSTEM_PROMPT}
+
+IMPORTANT — LIMBĂ: Răspunde întotdeauna în limba română. Folosește terminologie medicală corectă în română.`;
+  }
+  return `${SYSTEM_PROMPT}
+
+IMPORTANT — LANGUAGE: Always respond in English.`;
+}
+
+export function getTutorAssistantPreamble(locale: TutorLocale): string {
+  if (locale === 'ro') {
+    return 'Înțeleg. Sunt gata să ajut studenții la medicină cu explicații precise și detaliate.';
+  }
+  return 'I understand. I am ready to help medical students with accurate, detailed explanations.';
+}

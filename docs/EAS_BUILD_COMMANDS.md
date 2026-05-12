@@ -43,8 +43,8 @@ EXPO_PUBLIC_REVENUECAT_API_KEY_IOS=goog_xxxxxxxxxxxxx
 # Paywall activ în build (true = da, false = nu)
 EXPO_PUBLIC_PAYWALL_ENABLED=true
 
-# Opțional – Rork/backend
-EXPO_PUBLIC_RORK_API_BASE_URL=https://your-api.example.com
+# Opțional – URL backend tRPC (alias istoric EXPO_PUBLIC_RORK_API_BASE_URL = același lucru)
+EXPO_PUBLIC_API_BASE_URL=https://your-api.example.com
 ```
 
 **Unde găsești valorile:**

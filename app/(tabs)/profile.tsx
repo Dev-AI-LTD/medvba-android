@@ -333,7 +333,7 @@ export default function ProfileScreen() {
                 </View>
               </View>
               <View style={styles.profileInfo}>
-                <Text style={styles.profileName}>{profile?.name || 'Student'}</Text>
+                <Text style={styles.profileName}>{profile?.name || t('common.student')}</Text>
                 <View style={styles.profileStats}>
                   <View style={styles.streakBadgeSmall}>
                     <Flame color={colors.streakOrange} size={14} fill={colors.streakOrange} />

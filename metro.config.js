@@ -1,12 +1,10 @@
 const path = require("path");
 const { getDefaultConfig } = require("expo/metro-config");
-const { withRorkMetro } = require("@rork-ai/toolkit-sdk/metro");
 
 const config = getDefaultConfig(__dirname);
-const merged = withRorkMetro(config);
-const upstreamResolve = merged.resolver.resolveRequest;
+const upstreamResolve = config.resolver.resolveRequest;
 
-merged.resolver.resolveRequest = (context, moduleName, platform) => {
+config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (/^\.\/expoSecureStore-.+\.(cjs|js)$/.test(moduleName)) {
     return {
       filePath: path.resolve(__dirname, "polyfills/kinde-expo-secure-store.js"),
@@ -19,4 +17,4 @@ merged.resolver.resolveRequest = (context, moduleName, platform) => {
   return context.resolveRequest(context, moduleName, platform);
 };
 
-module.exports = merged;
+module.exports = config;

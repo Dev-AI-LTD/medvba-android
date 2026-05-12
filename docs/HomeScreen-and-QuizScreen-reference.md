@@ -31,7 +31,7 @@ import ProgressRing from '@/components/ProgressRing';
 import PremiumBadge from '@/components/PremiumBadge';
 import { categories } from '@/mocks/questions';
 import { useQuizProgress } from '@/providers/QuizProgressProvider';
-import { FREE_DAILY_QUIZ_LIMIT } from '@/constants/subscription';
+import { FREE_QUIZ_ANSWER_LIMIT } from '@/constants/subscription';
 import { SPACING } from '@/theme/paperTheme';
 
 export default function HomeScreen() {

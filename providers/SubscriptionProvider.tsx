@@ -5,14 +5,18 @@ import Constants from 'expo-constants';
 import createContextHook from '@nkzw/create-context-hook';
 import Purchases from 'react-native-purchases';
 import type { CustomerInfo } from 'react-native-purchases';
-import { ENTITLEMENT_ID, FREE_DAILY_QUIZ_LIMIT } from '@/constants/subscription';
+import { ENTITLEMENT_ID, FREE_AI_LIMIT, FREE_QUIZ_ANSWER_LIMIT } from '@/constants/subscription';
 import { useAuth } from '@/providers/AuthProvider';
 import { useUpdateSubscription } from '@/lib/supabase-hooks';
 import { log } from '@/lib/log';
 import { trpc } from '@/lib/trpc';
-import { TRPCClientError } from '@trpc/client';
 
-const FREE_AI_LIMIT = 1;
+/** Per-calendar-day free quiz answers used toward paywall; scoped per user id when logged in. */
+const FREE_QUIZ_DAILY_KEY_PREFIX = 'medvba_free_quiz_answers_daily_v1_';
+
+function freeQuizAnswersDailyStorageKey(userId: string, dateKey: string): string {
+  return `${FREE_QUIZ_DAILY_KEY_PREFIX}${userId}_${dateKey}`;
+}
 
 function getPaywallConfig() {
   const extra = Constants.expoConfig?.extra ?? (Constants as any)?.manifest?.extra ?? {};
@@ -36,11 +40,6 @@ type Offerings = {
   availablePackages: OfferingPackage[];
 } | null;
 
-type IncrementAiQuestionResult = {
-  allowed: boolean;
-  reason: 'allowed' | 'limit_reached' | 'network_error' | 'server_validation_error';
-};
-
 function getTodayKey(): string {
   const today = new Date();
   return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -49,7 +48,11 @@ function getTodayKey(): string {
 interface SubscriptionState {
   isPremium: boolean;
   freeQuizzesToday: number;
+  /** Legacy AsyncStorage counter (device-global, unused for paywall). */
   freeQuestionsAnsweredToday: number;
+  /** Today's count toward FREE_QUIZ_ANSWER_LIMIT (all chapters; resets each calendar day). */
+  freeQuestionsAnsweredTotal: number;
+  /** When paywall is on: count of free AI messages already used in the server rolling window (synced via tRPC). When off: legacy calendar-day cache from AsyncStorage. */
   freeAiQuestionsToday: number;
   isLoading: boolean;
   offerings: Offerings;
@@ -58,6 +61,20 @@ interface SubscriptionState {
 function isPremiumFromCustomerInfo(info: CustomerInfo | null): boolean {
   if (!info?.entitlements?.active) return false;
   return Boolean(info.entitlements.active[ENTITLEMENT_ID]);
+}
+
+function inferSubscriptionTypeFromCustomerInfo(info: CustomerInfo | null): 'yearly' | 'monthly' {
+  const ent = info?.entitlements?.active?.[ENTITLEMENT_ID] as { productIdentifier?: string } | undefined;
+  const pid = String(ent?.productIdentifier ?? '').toLowerCase();
+  if (
+    pid.includes('annual') ||
+    pid.includes('year') ||
+    pid.includes('yearly') ||
+    pid === '$rc_annual'
+  ) {
+    return 'yearly';
+  }
+  return 'monthly';
 }
 
 function isRevenueCatConfigurationError(error: unknown): boolean {
@@ -75,11 +92,14 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
   const { paywallEnabled: PAYWALL_ENABLED, apiKey: REVENUECAT_API_KEY, isNative: IS_NATIVE } = useMemo(getPaywallConfig, []);
   const { user } = useAuth();
   const updateSubscriptionMutation = useUpdateSubscription();
+  const updateSubscriptionMutateAsyncRef = useRef(updateSubscriptionMutation.mutateAsync);
+  updateSubscriptionMutateAsyncRef.current = updateSubscriptionMutation.mutateAsync;
 
   const [state, setState] = useState<SubscriptionState>({
     isPremium: false,
     freeQuizzesToday: 0,
     freeQuestionsAnsweredToday: 0,
+    freeQuestionsAnsweredTotal: 0,
     freeAiQuestionsToday: 0,
     isLoading: true,
     offerings: null,
@@ -87,37 +107,217 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
 
   const currentOfferingRef = useRef<any>(null);
   const didLogRevenueCatConfigErrorRef = useRef(false);
+  /** Tracks last premium state synced to Supabase (subscriptions row) for this session. */
+  const lastSupabasePremiumSyncRef = useRef<boolean | null>(null);
 
   const todayKey = getTodayKey();
 
-  const loadDailyUsage = useCallback(async () => {
+  const loadSubscriptionUsage = useCallback(async () => {
     try {
-      log.debug('[Subscription] Loading daily usage for', todayKey);
+      log.debug('[Subscription] Loading subscription usage for', todayKey, 'user', user?.id ?? '(none)');
 
-      const [quizCount, questionsAnsweredCount, aiCount] = await Promise.all([
+      const [quizCount, questionsAnsweredCount, aiCountRaw, paywallDailyRaw] = await Promise.all([
         AsyncStorage.getItem(`free_quiz_count_${todayKey}`),
         AsyncStorage.getItem(`free_questions_answered_${todayKey}`),
-        AsyncStorage.getItem(`free_ai_questions_${todayKey}`),
+        PAYWALL_ENABLED
+          ? Promise.resolve(null)
+          : AsyncStorage.getItem(`free_ai_questions_${todayKey}`),
+        user?.id ? AsyncStorage.getItem(freeQuizAnswersDailyStorageKey(user.id, todayKey)) : Promise.resolve(null),
       ]);
+
+      let freeQuestionsAnsweredTotal = 0;
+      if (user?.id) {
+        if (paywallDailyRaw != null && paywallDailyRaw !== '') {
+          freeQuestionsAnsweredTotal = Math.max(0, parseInt(paywallDailyRaw, 10) || 0);
+        } else {
+          const legacyLifetimeRaw = await AsyncStorage.getItem(`medvba_free_quiz_answers_total_v1_${user.id}`);
+          if (legacyLifetimeRaw != null && legacyLifetimeRaw !== '') {
+            freeQuestionsAnsweredTotal = Math.min(
+              FREE_QUIZ_ANSWER_LIMIT,
+              Math.max(0, parseInt(legacyLifetimeRaw, 10) || 0),
+            );
+            await AsyncStorage.setItem(
+              freeQuizAnswersDailyStorageKey(user.id, todayKey),
+              String(freeQuestionsAnsweredTotal),
+            );
+            await AsyncStorage.removeItem(`medvba_free_quiz_answers_total_v1_${user.id}`);
+          }
+        }
+      }
 
       setState((prev) => ({
         ...prev,
         freeQuizzesToday: quizCount ? parseInt(quizCount, 10) : 0,
         freeQuestionsAnsweredToday: questionsAnsweredCount ? parseInt(questionsAnsweredCount, 10) : 0,
-        freeAiQuestionsToday: aiCount ? parseInt(aiCount, 10) : 0,
+        freeAiQuestionsToday: PAYWALL_ENABLED ? 0 : (aiCountRaw ? parseInt(aiCountRaw, 10) : 0),
+        freeQuestionsAnsweredTotal,
         ...(prev.isLoading && !PAYWALL_ENABLED ? { isLoading: false } : {}),
       }));
 
-      log.debug('[Subscription] Loaded usage - Quizzes: ' + (quizCount || 0) + ' AI: ' + (aiCount || 0));
+      log.debug(
+        '[Subscription] Loaded usage — quizStartsToday:',
+        quizCount || 0,
+        'freePaywallAnswersToday:',
+        freeQuestionsAnsweredTotal,
+        'AI:',
+        PAYWALL_ENABLED ? '(server sync)' : aiCountRaw || 0,
+      );
     } catch (error) {
-      log.error('[Subscription] Error loading daily usage:', error);
+      log.error('[Subscription] Error loading subscription usage:', error);
       setState((prev) => ({ ...prev, isLoading: false }));
     }
-  }, [todayKey, PAYWALL_ENABLED]);
+  }, [todayKey, PAYWALL_ENABLED, user?.id]);
 
   useEffect(() => {
-    loadDailyUsage();
-  }, [loadDailyUsage]);
+    void loadSubscriptionUsage();
+  }, [loadSubscriptionUsage]);
+
+  useEffect(() => {
+    lastSupabasePremiumSyncRef.current = null;
+  }, [user?.id]);
+
+  const canStartQuiz = useCallback((): boolean => {
+    if (!PAYWALL_ENABLED) return true;
+    if (state.isPremium) return true;
+    if (!user?.id) return false;
+    return state.freeQuestionsAnsweredTotal < FREE_QUIZ_ANSWER_LIMIT;
+  }, [PAYWALL_ENABLED, state.isPremium, state.freeQuestionsAnsweredTotal, user?.id]);
+
+  const canAskAiQuestion = useCallback((): boolean => {
+    if (!PAYWALL_ENABLED) return true;
+    if (state.isPremium) return true;
+    return state.freeAiQuestionsToday < FREE_AI_LIMIT;
+  }, [PAYWALL_ENABLED, state.isPremium, state.freeAiQuestionsToday]);
+
+  const incrementQuizCount = useCallback(async (): Promise<boolean> => {
+    if (!PAYWALL_ENABLED) {
+      log.debug('[Subscription] Paywall disabled - skipping quiz limit');
+      return true;
+    }
+    if (state.isPremium) {
+      log.debug('[Subscription] Premium user - no quiz limit');
+      return true;
+    }
+    if (!user?.id) {
+      log.debug('[Subscription] No user id - cannot start counted free quiz');
+      return false;
+    }
+
+    if (state.freeQuestionsAnsweredTotal >= FREE_QUIZ_ANSWER_LIMIT) {
+      log.debug('[Subscription] Daily free quiz answer limit reached');
+      return false;
+    }
+
+    return true;
+  }, [PAYWALL_ENABLED, state.isPremium, state.freeQuestionsAnsweredTotal, user?.id]);
+
+  const incrementQuestionAnsweredCount = useCallback(async (): Promise<boolean> => {
+    if (!PAYWALL_ENABLED) {
+      return true;
+    }
+    if (state.isPremium) {
+      return true;
+    }
+
+    if (!user?.id) {
+      log.warn('[Subscription] incrementQuestionAnsweredCount: no user id; refusing free-tier increment');
+      return false;
+    }
+
+    const newTotal = state.freeQuestionsAnsweredTotal + 1;
+    try {
+      const key = freeQuizAnswersDailyStorageKey(user.id, todayKey);
+      await AsyncStorage.setItem(key, String(newTotal));
+      setState((prev) => ({ ...prev, freeQuestionsAnsweredTotal: newTotal }));
+      log.debug('[Subscription] Free quiz answers for today incremented to', newTotal);
+      return newTotal <= FREE_QUIZ_ANSWER_LIMIT;
+    } catch (error) {
+      log.error('[Subscription] Error incrementing free quiz daily count:', error);
+      return true;
+    }
+  }, [PAYWALL_ENABLED, state.isPremium, state.freeQuestionsAnsweredTotal, user?.id, todayKey]);
+
+  const validateAiQuestionMutation = trpc.subscription.validateAiQuestion.useMutation();
+  const validateAiMutateAsyncRef = useRef(validateAiQuestionMutation.mutateAsync);
+  validateAiMutateAsyncRef.current = validateAiQuestionMutation.mutateAsync;
+
+  const getRemainingQuizzes = useCallback((): number => {
+    if (!PAYWALL_ENABLED) return Infinity;
+    if (state.isPremium) return Infinity;
+    if (!user?.id) return 0;
+    return Math.max(0, FREE_QUIZ_ANSWER_LIMIT - state.freeQuestionsAnsweredTotal);
+  }, [PAYWALL_ENABLED, state.isPremium, state.freeQuestionsAnsweredTotal, user?.id]);
+
+  const getRemainingAiQuestions = useCallback((): number => {
+    if (!PAYWALL_ENABLED) return Infinity;
+    if (state.isPremium) return Infinity;
+    return Math.max(0, FREE_AI_LIMIT - state.freeAiQuestionsToday);
+  }, [PAYWALL_ENABLED, state.isPremium, state.freeAiQuestionsToday]);
+
+  const syncAiQuestionCountFromServer = useCallback(async (): Promise<void> => {
+    if (!PAYWALL_ENABLED || state.isPremium) return;
+
+    try {
+      const result = await validateAiMutateAsyncRef.current({ increment: false });
+      if (result.isPremium) {
+        setState((prev) => ({ ...prev, freeAiQuestionsToday: 0 }));
+        return;
+      }
+      const remaining = result.remaining;
+      if (typeof remaining !== 'number' || remaining < 0) {
+        setState((prev) => ({ ...prev, freeAiQuestionsToday: 0 }));
+        return;
+      }
+      const serverCount = Math.min(FREE_AI_LIMIT, Math.max(0, FREE_AI_LIMIT - remaining));
+      setState((prev) => ({ ...prev, freeAiQuestionsToday: serverCount }));
+      log.debug('[Subscription] Synced AI count from server:', serverCount);
+    } catch (error) {
+      log.debug('[Subscription] Could not sync AI count from server');
+    }
+  }, [PAYWALL_ENABLED, state.isPremium]);
+
+  /** Paywall on: AI usage is server rolling window — sync when user logs in or returns to free tier. */
+  useEffect(() => {
+    if (!PAYWALL_ENABLED || !user?.id || state.isPremium) return;
+    void syncAiQuestionCountFromServer();
+  }, [PAYWALL_ENABLED, user?.id, state.isPremium, syncAiQuestionCountFromServer]);
+
+  const syncPremiumToSupabase = useCallback(
+    (type: 'yearly' | 'monthly') => {
+      if (!user?.id) return;
+      // May fail if Supabase RLS blocks self-serve premium (009 migration); DB is updated by RevenueCat webhook + REST sync.
+      updateSubscriptionMutateAsyncRef
+        .current({ userId: user.id, status: 'premium', type })
+        .catch((err) => {
+        log.warn('[Subscription] Supabase premium sync failed (expected if RLS enforced):', err);
+      });
+    },
+    [user?.id],
+  );
+
+  const syncFreeToSupabase = useCallback(() => {
+    if (!user?.id) return;
+    updateSubscriptionMutateAsyncRef
+      .current({ userId: user.id, status: 'free', type: null, expiresAt: null })
+      .catch((err) => {
+        log.warn('[Subscription] Supabase free-tier sync failed:', err);
+      });
+  }, [user?.id]);
+
+  const applyRevenueCatPremiumToSupabase = useCallback(
+    (info: CustomerInfo, force: boolean) => {
+      if (!PAYWALL_ENABLED || !user?.id) return;
+      const premium = isPremiumFromCustomerInfo(info);
+      if (!force && lastSupabasePremiumSyncRef.current === premium) return;
+      lastSupabasePremiumSyncRef.current = premium;
+      if (premium) {
+        syncPremiumToSupabase(inferSubscriptionTypeFromCustomerInfo(info));
+      } else {
+        syncFreeToSupabase();
+      }
+    },
+    [PAYWALL_ENABLED, user?.id, syncPremiumToSupabase, syncFreeToSupabase],
+  );
 
   useEffect(() => {
     if (!PAYWALL_ENABLED || !REVENUECAT_API_KEY) {
@@ -125,7 +325,6 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       return;
     }
 
-    // Skip RevenueCat SDK on web (no native IAP); paywall UI still shows fallback message
     if (!IS_NATIVE) {
       setState((prev) => ({ ...prev, isLoading: false }));
       return;
@@ -144,7 +343,9 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
           }
         } else {
           const { customerInfo } = await Purchases.logIn(user.id);
-          setState((prev) => ({ ...prev, isPremium: isPremiumFromCustomerInfo(customerInfo) }));
+          const premium = isPremiumFromCustomerInfo(customerInfo);
+          setState((prev) => ({ ...prev, isPremium: premium }));
+          applyRevenueCatPremiumToSupabase(customerInfo, true);
         }
 
         const offerings = await Purchases.getOfferings();
@@ -161,15 +362,19 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
         }
 
         const customerInfo = await Purchases.getCustomerInfo();
-        setState((prev) => ({ ...prev, isPremium: isPremiumFromCustomerInfo(customerInfo), isLoading: false }));
+        const ciPremium = isPremiumFromCustomerInfo(customerInfo);
+        setState((prev) => ({ ...prev, isPremium: ciPremium, isLoading: false }));
+        if (user?.id) {
+          applyRevenueCatPremiumToSupabase(customerInfo, true);
+        }
 
         listener = (info: CustomerInfo) => {
           setState((prev) => ({ ...prev, isPremium: isPremiumFromCustomerInfo(info) }));
+          applyRevenueCatPremiumToSupabase(info, false);
         };
         Purchases.addCustomerInfoUpdateListener(listener);
       } catch (error) {
         if (isRevenueCatConfigurationError(error)) {
-          // Common on new installs until Play products / RevenueCat offerings are fully wired.
           if (!didLogRevenueCatConfigErrorRef.current) {
             didLogRevenueCatConfigErrorRef.current = true;
             log.warn(
@@ -183,185 +388,14 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       }
     };
 
-    initRevenueCat();
+    void initRevenueCat();
 
     return () => {
       if (listener) {
         Purchases.removeCustomerInfoUpdateListener(listener);
       }
     };
-  }, [PAYWALL_ENABLED, REVENUECAT_API_KEY, IS_NATIVE, user?.id]);
-
-  const canStartQuiz = useCallback((): boolean => {
-    if (!PAYWALL_ENABLED) return true;
-    if (state.isPremium) return true;
-    return state.freeQuestionsAnsweredToday < FREE_DAILY_QUIZ_LIMIT;
-  }, [PAYWALL_ENABLED, state.isPremium, state.freeQuestionsAnsweredToday]);
-
-  const canAskAiQuestion = useCallback((): boolean => {
-    if (!PAYWALL_ENABLED) return true;
-    if (state.isPremium) return true;
-    return state.freeAiQuestionsToday < FREE_AI_LIMIT;
-  }, [PAYWALL_ENABLED, state.isPremium, state.freeAiQuestionsToday]);
-
-  const incrementQuizCount = useCallback(async (): Promise<boolean> => {
-    if (!PAYWALL_ENABLED) {
-      log.debug('[Subscription] Paywall disabled - skipping quiz limit');
-      return true;
-    }
-    if (state.isPremium) {
-      log.debug('[Subscription] Premium user - no quiz limit');
-      return true;
-    }
-
-    if (state.freeQuizzesToday >= FREE_DAILY_QUIZ_LIMIT) {
-      log.debug('[Subscription] Quiz limit reached');
-      return false;
-    }
-
-    const newCount = state.freeQuizzesToday + 1;
-    try {
-      await AsyncStorage.setItem(`free_quiz_count_${todayKey}`, String(newCount));
-      setState((prev) => ({ ...prev, freeQuizzesToday: newCount }));
-      log.debug('[Subscription] Quiz count incremented to', newCount);
-      return true;
-    } catch (error) {
-      log.error('[Subscription] Error incrementing quiz count:', error);
-      return false;
-    }
-  }, [PAYWALL_ENABLED, state.isPremium, state.freeQuizzesToday, todayKey]);
-
-  const incrementQuestionAnsweredCount = useCallback(async (): Promise<boolean> => {
-    if (!PAYWALL_ENABLED) {
-      return true;
-    }
-    if (state.isPremium) {
-      return true;
-    }
-
-    const newCount = state.freeQuestionsAnsweredToday + 1;
-    try {
-      await AsyncStorage.setItem(`free_questions_answered_${todayKey}`, String(newCount));
-      setState((prev) => ({ ...prev, freeQuestionsAnsweredToday: newCount }));
-      log.debug('[Subscription] Questions answered count incremented to', newCount);
-      return newCount <= FREE_DAILY_QUIZ_LIMIT;
-    } catch (error) {
-      log.error('[Subscription] Error incrementing questions answered count:', error);
-      return true;
-    }
-  }, [PAYWALL_ENABLED, state.isPremium, state.freeQuestionsAnsweredToday, todayKey]);
-
-  const validateAiQuestionMutation = trpc.subscription.validateAiQuestion.useMutation();
-
-  const incrementAiQuestionCount = useCallback(async (): Promise<IncrementAiQuestionResult> => {
-    if (!PAYWALL_ENABLED) {
-      log.debug('[Subscription] Paywall disabled - skipping AI limit');
-      return { allowed: true, reason: 'allowed' };
-    }
-    if (state.isPremium) {
-      log.debug('[Subscription] Premium user - no AI limit');
-      return { allowed: true, reason: 'allowed' };
-    }
-
-    // First check client-side limit
-    if (state.freeAiQuestionsToday >= FREE_AI_LIMIT) {
-      log.debug('[Subscription] Client-side AI question limit reached');
-      return { allowed: false, reason: 'limit_reached' };
-    }
-
-    try {
-      // Server-side validation - this is the secure check
-      await validateAiQuestionMutation.mutateAsync({ increment: true });
-      
-      // Update local state to match server
-      const newCount = state.freeAiQuestionsToday + 1;
-      await AsyncStorage.setItem(`free_ai_questions_${todayKey}`, String(newCount));
-      setState((prev) => ({ ...prev, freeAiQuestionsToday: newCount }));
-      
-      log.debug('[Subscription] AI question count incremented (server validated) to', newCount);
-      return { allowed: true, reason: 'allowed' };
-    } catch (error) {
-      // If server rejects due to limit, update local state
-      if (error instanceof TRPCClientError) {
-        const isLimitError = error.message?.includes('limit reached') || 
-                            error.message?.includes('AI question limit');
-        if (isLimitError) {
-          log.debug('[Subscription] Server rejected: AI question limit reached');
-          // Update local state to reflect server-side limit
-          await AsyncStorage.setItem(`free_ai_questions_${todayKey}`, String(FREE_AI_LIMIT));
-          setState((prev) => ({ ...prev, freeAiQuestionsToday: FREE_AI_LIMIT }));
-          return { allowed: false, reason: 'limit_reached' };
-        }
-      }
-
-      const message = String((error as any)?.message ?? error ?? '').toLowerCase();
-      const isNetworkError =
-        message.includes('fetch') ||
-        message.includes('network') ||
-        message.includes('connection') ||
-        message.includes('timed out');
-
-      const isProcedureMissing =
-        error instanceof TRPCClientError &&
-        (error.data?.code === 'NOT_FOUND' || message.includes('no procedure found'));
-
-      // If backend validation is temporarily unavailable, don't silently block sending.
-      if (isNetworkError) {
-        log.warn('[Subscription] Network issue during AI limit validation; allowing send.');
-        return { allowed: true, reason: 'network_error' };
-      }
-
-      if (isProcedureMissing) {
-        log.warn(
-          '[Subscription] API is missing subscription.validateAiQuestion (redeploy backend with latest tRPC router). Allowing send until then.'
-        );
-        return { allowed: true, reason: 'server_validation_error' };
-      }
-
-      log.error('[Subscription] Server validation error during AI limit check; allowing send:', error);
-      return { allowed: true, reason: 'server_validation_error' };
-    }
-  }, [PAYWALL_ENABLED, state.isPremium, state.freeAiQuestionsToday, todayKey, validateAiQuestionMutation]);
-
-  const getRemainingQuizzes = useCallback((): number => {
-    if (!PAYWALL_ENABLED) return Infinity;
-    if (state.isPremium) return Infinity;
-    return Math.max(0, FREE_DAILY_QUIZ_LIMIT - state.freeQuestionsAnsweredToday);
-  }, [PAYWALL_ENABLED, state.isPremium, state.freeQuestionsAnsweredToday]);
-
-  const getRemainingAiQuestions = useCallback((): number => {
-    if (!PAYWALL_ENABLED) return Infinity;
-    if (state.isPremium) return Infinity;
-    return Math.max(0, FREE_AI_LIMIT - state.freeAiQuestionsToday);
-  }, [PAYWALL_ENABLED, state.isPremium, state.freeAiQuestionsToday]);
-
-  const syncAiQuestionCountFromServer = useCallback(async (): Promise<void> => {
-    if (!PAYWALL_ENABLED || state.isPremium) return;
-
-    try {
-      const result = await validateAiQuestionMutation.mutateAsync({ increment: false });
-      const serverCount = FREE_AI_LIMIT - result.remaining;
-      
-      // Update local state to match server
-      await AsyncStorage.setItem(`free_ai_questions_${todayKey}`, String(serverCount));
-      setState((prev) => ({ ...prev, freeAiQuestionsToday: serverCount }));
-      log.debug('[Subscription] Synced AI count from server:', serverCount);
-    } catch (error) {
-      // Silently fail - we'll use local state as fallback
-      log.debug('[Subscription] Could not sync AI count from server');
-    }
-  }, [PAYWALL_ENABLED, state.isPremium, todayKey, validateAiQuestionMutation]);
-
-  const syncPremiumToSupabase = useCallback(
-    (type: 'yearly' | 'monthly') => {
-      if (user?.id) {
-        updateSubscriptionMutation.mutateAsync({ userId: user.id, status: 'premium', type }).catch((err) => {
-          log.warn('[Subscription] Supabase sync failed:', err);
-        });
-      }
-    },
-    [user?.id, updateSubscriptionMutation]
-  );
+  }, [PAYWALL_ENABLED, REVENUECAT_API_KEY, IS_NATIVE, user?.id, applyRevenueCatPremiumToSupabase]);
 
   const purchasePackage = useCallback(
     async (packageId: string): Promise<boolean> => {
@@ -388,6 +422,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
         if (premium) {
           const isYearly = packageId === '$rc_annual' || packageId === 'yearly' || String(packageId).toLowerCase().includes('annual');
           syncPremiumToSupabase(isYearly ? 'yearly' : 'monthly');
+          lastSupabasePremiumSyncRef.current = true;
         }
         return premium;
       } catch (error: any) {
@@ -410,15 +445,13 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     try {
       const customerInfo = await Purchases.restorePurchases();
       const premium = isPremiumFromCustomerInfo(customerInfo);
-      if (premium) {
-        syncPremiumToSupabase('yearly');
-      }
+      applyRevenueCatPremiumToSupabase(customerInfo, true);
       return premium;
     } catch (error) {
       log.error('[Subscription] Restore error:', error);
       return false;
     }
-  }, [PAYWALL_ENABLED, REVENUECAT_API_KEY, syncPremiumToSupabase]);
+  }, [PAYWALL_ENABLED, REVENUECAT_API_KEY, applyRevenueCatPremiumToSupabase]);
 
   const effectivePremium = PAYWALL_ENABLED ? state.isPremium : true;
 
@@ -429,19 +462,19 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       isLoading: state.isLoading,
       freeQuizzesToday: state.freeQuizzesToday,
       freeQuestionsAnsweredToday: state.freeQuestionsAnsweredToday,
+      freeQuestionsAnsweredTotal: state.freeQuestionsAnsweredTotal,
       freeAiQuestionsToday: state.freeAiQuestionsToday,
       offerings: state.offerings,
       canStartQuiz,
       canAskAiQuestion,
       incrementQuizCount,
       incrementQuestionAnsweredCount,
-      incrementAiQuestionCount,
       getRemainingQuizzes,
       getRemainingAiQuestions,
       purchasePackage,
       restorePurchases,
       syncAiQuestionCountFromServer,
-      FREE_QUIZ_LIMIT: FREE_DAILY_QUIZ_LIMIT,
+      FREE_QUIZ_LIMIT: FREE_QUIZ_ANSWER_LIMIT,
       FREE_AI_LIMIT,
     }),
     [
@@ -450,13 +483,13 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       state.isLoading,
       state.freeQuizzesToday,
       state.freeQuestionsAnsweredToday,
+      state.freeQuestionsAnsweredTotal,
       state.freeAiQuestionsToday,
       state.offerings,
       canStartQuiz,
       canAskAiQuestion,
       incrementQuizCount,
       incrementQuestionAnsweredCount,
-      incrementAiQuestionCount,
       getRemainingQuizzes,
       getRemainingAiQuestions,
       purchasePackage,

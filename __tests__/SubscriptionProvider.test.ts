@@ -86,12 +86,13 @@ describe('SubscriptionProvider', () => {
 
   describe('Constants', () => {
     it('should have correct FREE_AI_LIMIT', () => {
-      const FREE_AI_LIMIT = 1;
-      expect(FREE_AI_LIMIT).toBe(1);
+      const { FREE_AI_LIMIT } = require('@/constants/subscription');
+      expect(FREE_AI_LIMIT).toBe(10);
     });
 
-    it('should have correct FREE_DAILY_QUIZ_LIMIT', () => {
-      const FREE_DAILY_QUIZ_LIMIT = 10;
+    it('should have correct FREE_QUIZ_ANSWER_LIMIT and legacy alias', () => {
+      const { FREE_QUIZ_ANSWER_LIMIT, FREE_DAILY_QUIZ_LIMIT } = require('@/constants/subscription');
+      expect(FREE_QUIZ_ANSWER_LIMIT).toBe(10);
       expect(FREE_DAILY_QUIZ_LIMIT).toBe(10);
     });
   });
@@ -123,7 +124,7 @@ describe('SubscriptionProvider', () => {
     });
   });
 
-  describe('Quiz Limit Logic', () => {
+  describe('Quiz Limit Logic (daily free pool)', () => {
     it('should return true when paywall is disabled', () => {
       const canStartQuiz = (paywallEnabled: boolean, isPremium: boolean, questionsAnswered: number, limit: number) => {
         if (!paywallEnabled) return true;
@@ -147,14 +148,14 @@ describe('SubscriptionProvider', () => {
         return questionsToday < limit;
       };
 
-      expect(canAskAiQuestion(false, false, 0, 1)).toBe(true);
-      expect(canAskAiQuestion(true, true, 100, 1)).toBe(true);
-      expect(canAskAiQuestion(true, false, 0, 1)).toBe(true);
-      expect(canAskAiQuestion(true, false, 1, 1)).toBe(false);
+      expect(canAskAiQuestion(false, false, 0, 10)).toBe(true);
+      expect(canAskAiQuestion(true, true, 100, 10)).toBe(true);
+      expect(canAskAiQuestion(true, false, 0, 10)).toBe(true);
+      expect(canAskAiQuestion(true, false, 10, 10)).toBe(false);
     });
   });
 
-  describe('Remaining Questions Calculation', () => {
+  describe('Remaining free questions (daily pool)', () => {
     it('should calculate remaining quizzes correctly', () => {
       const getRemainingQuizzes = (paywallEnabled: boolean, isPremium: boolean, answered: number, limit: number) => {
         if (!paywallEnabled) return Infinity;
@@ -176,10 +177,10 @@ describe('SubscriptionProvider', () => {
         return Math.max(0, limit - questionsToday);
       };
 
-      expect(getRemainingAiQuestions(false, false, 0, 1)).toBe(Infinity);
-      expect(getRemainingAiQuestions(true, true, 100, 1)).toBe(Infinity);
-      expect(getRemainingAiQuestions(true, false, 0, 1)).toBe(1);
-      expect(getRemainingAiQuestions(true, false, 1, 1)).toBe(0);
+      expect(getRemainingAiQuestions(false, false, 0, 10)).toBe(Infinity);
+      expect(getRemainingAiQuestions(true, true, 100, 10)).toBe(Infinity);
+      expect(getRemainingAiQuestions(true, false, 0, 10)).toBe(10);
+      expect(getRemainingAiQuestions(true, false, 10, 10)).toBe(0);
     });
   });
 

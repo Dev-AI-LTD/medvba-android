@@ -28,3 +28,7 @@ function trimKey(name: string) {
 
 trimKey("AI_API_KEY");
 trimKey("OPENAI_API_KEY");
+trimKey("REVENUECAT_WEBHOOK_AUTHORIZATION");
+trimKey("REVENUECAT_ENTITLEMENT_ID");
+trimKey("REVENUECAT_SECRET_API_KEY");
+trimKey("REVENUECAT_API_SECRET_KEY");

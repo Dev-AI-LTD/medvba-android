@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import type { Session, User, AuthError } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQueryClient } from '@tanstack/react-query';
@@ -120,6 +120,11 @@ interface AuthState {
   user: User | null;
   profile: UserProfile | null;
   isLoading: boolean;
+  /**
+   * True while Kinde is loading, hosted OAuth is in progress, or Kinde reports authenticated
+   * but the MEDVBA session is not yet applied — avoids protected-route flashes to login on return from browser.
+   */
+  isAuthBusy: boolean;
   isAuthenticated: boolean;
   hasCompletedOnboarding: boolean;
   biometricCapabilities: BiometricCapabilities | null;
@@ -161,6 +166,24 @@ const AUTH_READY_GLOBAL = '__MEDVBA_AUTH_READY__';
 /** Skip redundant background fetch after the same profile was loaded (e.g. hosted login + syncFromKinde). */
 const RECENT_PROFILE_FETCH_SKIP_MS = 10_000;
 
+/** Minted MEDVBA JWT TTL is 15m (backend); refresh before expiry so Supabase queries do not hit PGRST303. */
+const MEDVBA_JWT_REFRESH_BUFFER_MS = 3 * 60 * 1000;
+const MEDVBA_SESSION_POLL_MS = 2 * 60 * 1000;
+
+/** True when missing, invalid, expired, or expiring within buffer (ms). */
+function shouldRefreshMedvbaAccessToken(bufferMs: number): boolean {
+  const t = getMedvbaAccessToken();
+  if (!t) return true;
+  try {
+    const c = decodeJwtClaims(t);
+    const exp = c.exp;
+    if (typeof exp !== 'number') return true;
+    return exp * 1000 <= Date.now() + bufferMs;
+  } catch {
+    return true;
+  }
+}
+
 export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() => {
   const queryClient = useQueryClient();
   const kinde = useKindeAuth();
@@ -182,6 +205,10 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   const coldStartAuthBootstrapDoneRef = useRef(false);
   /** Last successful `fetchProfile` completion by `profile_id` (for deduping `syncFromKinde` background fetch). */
   const recentProfileFetchRef = useRef<{ profileId: string; at: number } | null>(null);
+  /** Avoid overlapping Kinde→MEDVBA refresh runs (interval + AppState). */
+  const sessionRefreshInFlightRef = useRef(false);
+  /** Hosted Kinde OAuth in progress (state so navigators re-render; ref alone would not). */
+  const [hostedOAuthInFlight, setHostedOAuthInFlight] = useState(false);
 
   const applyMedvbaSession = useCallback(
     async (accessToken: string, profileId: string, email?: string | null) => {
@@ -201,6 +228,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     setUser(null);
     setProfile(null);
     recentProfileFetchRef.current = null;
+    setHostedOAuthInFlight(false);
   }, []);
 
   const ensureUserExists = useCallback(
@@ -344,6 +372,43 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
       perf('scheduled_background_fetchProfile');
     }
   }, [applyMedvbaSession, clearMedvbaSession, fetchProfile]);
+
+  const refreshMedvbaIfNeeded = useCallback(async () => {
+    const k = kindeRef.current;
+    if (!k.isAuthenticated) return;
+    if (sessionRefreshInFlightRef.current) return;
+    if (!shouldRefreshMedvbaAccessToken(MEDVBA_JWT_REFRESH_BUFFER_MS)) return;
+
+    sessionRefreshInFlightRef.current = true;
+    try {
+      await syncFromKinde();
+      if (getMedvbaAccessToken()) {
+        await queryClient.invalidateQueries();
+      }
+    } catch (err) {
+      log.warn('[Auth] MEDVBA session refresh failed:', err);
+    } finally {
+      sessionRefreshInFlightRef.current = false;
+    }
+  }, [syncFromKinde, queryClient]);
+
+  useEffect(() => {
+    if (!session || !kinde.isAuthenticated) return undefined;
+    const id = setInterval(() => {
+      void refreshMedvbaIfNeeded();
+    }, MEDVBA_SESSION_POLL_MS);
+    void refreshMedvbaIfNeeded();
+    return () => clearInterval(id);
+  }, [session, kinde.isAuthenticated, refreshMedvbaIfNeeded]);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active' && session && kindeRef.current.isAuthenticated) {
+        void refreshMedvbaIfNeeded();
+      }
+    });
+    return () => sub.remove();
+  }, [session, refreshMedvbaIfNeeded]);
 
   const checkOnboardingStatus = useCallback(async () => {
     try {
@@ -576,6 +641,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   const signInWithKindeHosted = useCallback(
     async (loginHint?: Record<string, unknown>) => {
       const perf = authPerfStep('signInWithKindeHosted');
+      setHostedOAuthInFlight(true);
       try {
         perf('before_kinde.login');
         const res = await kinde.login(loginHint as never);
@@ -602,6 +668,8 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
         return { error: null };
       } catch (error) {
         return { error: error as AuthError };
+      } finally {
+        setHostedOAuthInFlight(false);
       }
     },
     [kinde, applyMedvbaSession, fetchProfile],
@@ -790,12 +858,22 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     };
   }, [user?.id, userProfile?.is_public]);
 
+  const isAuthenticated = !!getMedvbaAccessToken() && !!session;
+  const isAuthBusy = useMemo(
+    () =>
+      kinde.isLoading ||
+      hostedOAuthInFlight ||
+      (kinde.isAuthenticated && !isAuthenticated),
+    [kinde.isLoading, kinde.isAuthenticated, hostedOAuthInFlight, isAuthenticated],
+  );
+
   return {
     session,
     user,
     profile,
     isLoading,
-    isAuthenticated: !!getMedvbaAccessToken() && !!session,
+    isAuthBusy,
+    isAuthenticated,
     hasCompletedOnboarding,
     biometricCapabilities,
     isBiometricEnabled,

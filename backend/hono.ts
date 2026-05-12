@@ -5,6 +5,7 @@ import { cors } from "hono/cors";
 import { appRouter } from "./trpc/app-router";
 import { createContext } from "./trpc/create-context";
 import { registerAuthSessionRoutes } from "./auth/session-routes";
+import { registerRevenueCatWebhookRoutes } from "./webhooks/revenuecat-webhook";
 
 const app = new Hono();
 
@@ -50,6 +51,7 @@ app.use(
 );
 
 registerAuthSessionRoutes(app);
+registerRevenueCatWebhookRoutes(app);
 
 app.use(
   "/api/trpc/*",
@@ -87,6 +89,8 @@ app.get("/health", (c) => {
       hasAiBaseUrl: !!(process.env.AI_BASE_URL || process.env.EXPO_PUBLIC_AI_BASE_URL),
       aiModel: process.env.AI_MODEL || process.env.EXPO_PUBLIC_AI_MODEL || '(not set, defaults to gpt-4o-mini)',
       hasCorsOrigins: !!process.env.CORS_ALLOWED_ORIGINS,
+      revenueCatWebhook: !!process.env.REVENUECAT_WEBHOOK_AUTHORIZATION?.trim(),
+      revenueCatRestSecret: !!(process.env.REVENUECAT_SECRET_API_KEY?.trim() || process.env.REVENUECAT_API_SECRET_KEY?.trim()),
     }
   });
 });

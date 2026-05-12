@@ -1,6 +1,7 @@
-import { generateObject } from "@rork-ai/toolkit-sdk";
+import "dotenv/config";
 import { z } from "zod";
 import { sampleQuestions, Question } from "@/mocks/questions";
+import { llmGenerateObjectJson } from "@/lib/llm-generate-object-json";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -95,10 +96,7 @@ ${JSON.stringify(questionsForTranslation, null, 2)}
 
 Return the translations in the same JSON structure with all fields translated.`;
 
-  const translation = await generateObject({
-    messages: [{ role: "user", content: prompt }],
-    schema: translationSchema,
-  });
+  const translation = await llmGenerateObjectJson(prompt, translationSchema);
 
   return translation.translations;
 }

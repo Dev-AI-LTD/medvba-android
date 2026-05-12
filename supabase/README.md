@@ -88,6 +88,7 @@ You can find these in Supabase Dashboard:
 | `direct_chat_messages` | Chat messages |
 | `activity_feed` | Social activity feed |
 | `subscriptions` | User subscription info |
+| `ai_question_usage` | Free-tier AI tutor usage (rolling window); **writes server-only** (see migration `010`) |
 | `user_presence` | Online status tracking |
 
 ## Functions
@@ -104,8 +105,7 @@ All tables have RLS enabled with appropriate policies:
 - Study rooms: Public read, authenticated create
 - Progress: Private to each user
 - Chat: Participants only
-
-## Troubleshooting
+- **`ai_question_usage`:** authenticated users may **SELECT** their own row only; **INSERT/UPDATE/DELETE** are not granted via RLS to the user JWT — only the **service role** (MEDVBA backend / tRPC) can mutate counts. Apply migration `010_ai_question_usage_server_writes_only.sql` in production after `008`.
 
 ### "relation does not exist" error
 Make sure you've run the schema.sql in your Supabase SQL Editor.

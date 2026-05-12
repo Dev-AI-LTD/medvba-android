@@ -1,4 +1,11 @@
-export const FREE_DAILY_QUIZ_LIMIT = 10;
+/** Free quiz answers per calendar day before paywall (one pool across all chapters; resets at local midnight). */
+export const FREE_QUIZ_ANSWER_LIMIT = 10;
+
+/** Free AI tutor messages per rolling 24h window (`ai_question_usage` on server; keep in sync with backend). */
+export const FREE_AI_LIMIT = 10;
+
+/** Alias for clarity in UI copy and docs. */
+export const FREE_DAILY_QUIZ_LIMIT = FREE_QUIZ_ANSWER_LIMIT;
 
 /** Entitlement identifier in RevenueCat dashboard - "Dev AI LTD. EOOD Pro" */
 export const ENTITLEMENT_ID = 'pro';
@@ -6,6 +13,22 @@ export const ENTITLEMENT_ID = 'pro';
 /** Package identifiers for Monthly and Yearly products */
 export const PACKAGE_MONTHLY = 'monthly';
 export const PACKAGE_YEARLY = 'yearly';
+
+/** i18n keys for free-tier feature bullets (`getFreeFeatureLines` + `useLanguage().t`). */
+export const FREE_FEATURE_KEYS = [
+  'subscription.freeFeature1',
+  'subscription.freeFeature2',
+  'subscription.freeFeature3',
+  'subscription.freeFeature4',
+] as const;
+
+export type FreeFeatureKey = (typeof FREE_FEATURE_KEYS)[number];
+
+/** Resolved free-tier bullet strings for the current locale. */
+export function getFreeFeatureLines(t: (key: string) => string): string[] {
+  const count = String(FREE_QUIZ_ANSWER_LIMIT);
+  return FREE_FEATURE_KEYS.map((key) => t(key).replace(/\{count\}/g, count));
+}
 
 export const PREMIUM_FEATURE_KEYS = [
   'premium.feature1',
@@ -34,12 +57,3 @@ export const PRICING = {
     savingsText: 'Economisești 17% (100 RON/an)',
   },
 };
-
-// TODO: Replace hardcoded English strings with i18n keys (e.g. t('subscription.free.questions'))
-// and resolve via the i18n system before this array is rendered in localised UI.
-export const FREE_FEATURES = [
-  '10 free questions per day',
-  'Access to all 30,000+ questions',
-  'Basic statistics',
-  'Learning community',
-];

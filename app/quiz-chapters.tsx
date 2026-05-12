@@ -28,10 +28,6 @@ export default function QuizChaptersScreen() {
   const moduleName = category ? getModuleName(category) : '';
 
   const startQuiz = async (chapterId: string) => {
-    if (isPaywallEnabled && !isPremium) {
-      router.push('/paywall');
-      return;
-    }
     if (isPaywallEnabled && !canStartQuiz()) {
       router.push('/paywall');
       return;

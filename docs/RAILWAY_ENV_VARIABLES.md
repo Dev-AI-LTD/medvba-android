@@ -41,19 +41,16 @@ railway variables
 | **PORT** | Setat de Railway | Railway îl setează automat la deploy. Nu e nevoie să îl pui tu. |
 | **SUPABASE_URL** | Da | URL proiect Supabase: `https://xxxxx.supabase.co` (același proiect ca în app; numele variabilei **fără** prefix `EXPO_PUBLIC_`). |
 | **SUPABASE_SERVICE_ROLE_KEY** | Da | Cheia **service_role** (secret) din Supabase → Settings → API. **Nu** folosi anon/publishable aici. |
-| **AI_API_KEY** sau **OPENAI_API_KEY** | Da, dacă folosești Tutor cu `AI_PROVIDER=openai` (implicit) | Cheie OpenAI (`sk-...`). **Preferă aceste nume**; `lib/ai-provider.ts` le citește direct. |
-| **AI_PROVIDER** | Opțional | `openai` (implicit) sau `rork`. |
-| **AI_BASE_URL** | Opțional | URL compatibil OpenAI (ex. `https://api.openai.com/v1`). Implicit în cod: `https://api.openai.com/v1` dacă lipsește în fluxul OpenAI. |
+| **AI_API_KEY** sau **OPENAI_API_KEY** | Da, dacă folosești Tutor | Cheie OpenAI (`sk-...`). **`lib/ai-provider.ts`** le citește direct pe server. |
+| **AI_BASE_URL** | Opțional | URL compatibil OpenAI (ex. `https://api.openai.com/v1`). Implicit în cod: `https://api.openai.com/v1`. |
 | **AI_MODEL** | Opțional | Model chat (implicit `gpt-4o-mini`). |
 | **CORS_ALLOWED_ORIGINS** | Opțional | Origini extra permise (separate prin virgulă). |
 
-### Fallback-uri din cod (evită duplicate; folosește variabilele de mai sus)
+### Fallback-uri (doar afișare în `/health`)
 
-În `lib/ai-provider.ts`, pentru **provider**, **baseUrl** și **model** există și fallback la `EXPO_PUBLIC_AI_PROVIDER`, `EXPO_PUBLIC_AI_BASE_URL`, `EXPO_PUBLIC_AI_MODEL` dacă ar fi setate în mediul procesului. **Nu** documentăm chei `EXPO_PUBLIC_AI_API_KEY` — **nu există** în cod pentru API key; cheia rămâne `AI_API_KEY` / `OPENAI_API_KEY`.
+`backend/hono.ts` poate raporta în `/health` și variabile `EXPO_PUBLIC_AI_PROVIDER`, `EXPO_PUBLIC_AI_BASE_URL`, `EXPO_PUBLIC_AI_MODEL` dacă există în mediu — **doar pentru diagnostic**. **`lib/ai-provider.ts`** (Tutor) folosește pentru apeluri **`AI_API_KEY` / `OPENAI_API_KEY`**, **`AI_BASE_URL`**, **`AI_MODEL`** (fără cheie în `EXPO_PUBLIC_*`). **Nu** documentăm `EXPO_PUBLIC_AI_API_KEY` pentru backend — **nu există** în cod pentru cheie; folosește `AI_API_KEY` / `OPENAI_API_KEY`.
 
-### Provider `rork`
-
-În `callRork`, baza URL este `process.env.EXPO_PUBLIC_RORK_API_BASE_URL`. Dacă rulezi backend doar pe Railway, poți seta **aceeași** variabilă acolo (nume istoric, dar e ce citește codul). Asigură-te că valoarea e corectă pentru integrarea Rork.
+**Notă:** `EXPO_PUBLIC_RORK_API_BASE_URL` rămâne un **nume istoric** în client pentru URL-ul API tRPC (același rol ca `EXPO_PUBLIC_API_BASE_URL`), nu pentru Tutor.
 
 ---
 
@@ -63,7 +60,6 @@ railway variables
 
 - `SUPABASE_URL` = `https://your-project.supabase.co`
 - `SUPABASE_SERVICE_ROLE_KEY` = cheia **service_role** din Supabase (Settings → API)
-- `AI_PROVIDER` = `openai`
 - `AI_API_KEY` = `sk-proj-...` (cheie OpenAI)
 - `AI_BASE_URL` = `https://api.openai.com/v1` (opțional)
 - `AI_MODEL` = `gpt-4o-mini` (opțional)

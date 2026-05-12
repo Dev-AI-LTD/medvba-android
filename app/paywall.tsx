@@ -7,6 +7,7 @@ import { useThemeSafe } from '@/providers/ThemeProvider';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import { presentPaywall, PAYWALL_RESULT } from '@/lib/revenuecat';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { FREE_FEATURE_KEYS, getFreeFeatureLines } from '@/constants/subscription';
 
 const IS_NATIVE = Platform.OS === 'ios' || Platform.OS === 'android';
 // Expo Go = storeClient; real builds = standalone
@@ -96,22 +97,37 @@ export default function PaywallScreen() {
         <SafeAreaView style={styles.content} edges={['bottom']}>
           <Text style={[styles.webMessage, { color: colors.text }]}>
             {status === 'error'
-              ? (t('paywall.errorMessage') || 'Subscriptions are temporarily unavailable. Please try again later.')
+              ? t('paywall.errorMessage')
               : IS_EXPO_GO
-              ? (t('paywall.expoGoMessage') || 'Subscriptions require a development build. Build with EAS to test purchases.')
-              : (t('paywall.webMessage') || 'Subscriptions are available in the iOS and Android app. Download the app to upgrade to Pro.')}
+                ? t('paywall.expoGoMessage')
+                : t('paywall.webMessage')}
           </Text>
           <Text style={[styles.webSubtext, { color: colors.textSecondary }]}>
-            {t('paywall.webSubtext') || 'Your subscription will sync across all your devices.'}
+            {t('paywall.webSubtext')}
           </Text>
+          <Text style={[styles.freeTierHeading, { color: colors.text }]} accessibilityRole="header">
+            {t('paywall.freeTierHeading')}
+          </Text>
+          <View style={styles.freeTierList} accessibilityRole="list">
+            {getFreeFeatureLines(t).map((line, i) => (
+              <Text
+                key={FREE_FEATURE_KEYS[i]}
+                style={[styles.freeTierBullet, { color: colors.textSecondary }]}
+                accessibilityRole="text"
+              >
+                {'\u2022 '}
+                {line}
+              </Text>
+            ))}
+          </View>
           <TouchableOpacity
             style={[styles.goBackButton, { backgroundColor: colors.primary }]}
             onPress={() => router.back()}
             accessibilityRole="button"
-            accessibilityLabel={t('paywall.goBack') || 'Go back'}
+            accessibilityLabel={t('paywall.goBack')}
           >
             <Text style={[styles.goBackButtonText, { color: colors.background }]}>
-              {t('paywall.goBack') || 'Go Back'}
+              {t('paywall.goBack')}
             </Text>
           </TouchableOpacity>
         </SafeAreaView>
@@ -156,6 +172,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  freeTierList: {
+    alignSelf: 'stretch',
+    maxWidth: 420,
+    marginTop: 12,
+    paddingHorizontal: 8,
+  },
+  freeTierHeading: {
+    alignSelf: 'stretch',
+    maxWidth: 420,
+    marginTop: 24,
+    paddingHorizontal: 8,
+    fontSize: 16,
+    fontWeight: '600' as const,
+    textAlign: 'left',
+  },
+  freeTierBullet: {
+    fontSize: 14,
+    lineHeight: 22,
+    marginBottom: 10,
+    textAlign: 'left',
   },
   goBackButton: {
     marginTop: 28,

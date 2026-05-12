@@ -1,8 +1,10 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "./create-context";
-import { generateText, SYSTEM_PROMPT } from "../../lib/ai-provider";
+import { generateText, getTutorAssistantPreamble, getTutorSystemPrompt, type TutorLocale } from "../../lib/ai-provider";
 import { tutorRateLimiter } from "./rate-limiter";
+import { decrementFreeAiUsage, incrementFreeAiUsage } from "../lib/free-ai-usage";
+import { userHasActivePremiumAccess } from "../lib/premium-access";
 
 const messageSchema = z.object({
   role: z.enum(["user", "assistant"]),
@@ -18,37 +20,74 @@ function isAiMissingConfigError(message: string): boolean {
   );
 }
 
+function getSupabaseAdminOrThrow() {
+  const url = process.env.SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !serviceRoleKey) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Server configuration error",
+    });
+  }
+
+  return { url, serviceRoleKey };
+}
+
 export const tutorRouter = createTRPCRouter({
   chat: protectedProcedure
-    .input(z.object({ messages: z.array(messageSchema) }))
+    .input(
+      z.object({
+        messages: z.array(messageSchema),
+        locale: z.enum(["en", "ro"]).default("en"),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
-      // Apply rate limiting per user
       tutorRateLimiter(ctx.userId);
 
-      const fullMessages = [
-        { role: "system" as const, content: SYSTEM_PROMPT },
-        {
-          role: "assistant" as const,
-          content:
-            "I understand. I am ready to help medical students with accurate, detailed explanations.",
-        },
-        ...input.messages.map((m) => ({
-          role: m.role as "user" | "assistant",
-          content: m.content,
-        })),
-      ];
+      const { url, serviceRoleKey } = getSupabaseAdminOrThrow();
+      const { createClient } = await import("@supabase/supabase-js");
+      const supabaseAdmin = createClient(url, serviceRoleKey);
+
+      const locale = input.locale as TutorLocale;
+      const isPremium = await userHasActivePremiumAccess(supabaseAdmin, ctx.userId);
+      let reservedFreeSlot = false;
 
       try {
+        if (!isPremium) {
+          await incrementFreeAiUsage(supabaseAdmin, ctx.userId);
+          reservedFreeSlot = true;
+        }
+
+        const fullMessages = [
+          { role: "system" as const, content: getTutorSystemPrompt(locale) },
+          {
+            role: "assistant" as const,
+            content: getTutorAssistantPreamble(locale),
+          },
+          ...input.messages.map((m) => ({
+            role: m.role as "user" | "assistant",
+            content: m.content,
+          })),
+        ];
+
         const response = await generateText({ messages: fullMessages });
         return { response };
       } catch (err) {
+        if (reservedFreeSlot) {
+          await decrementFreeAiUsage(supabaseAdmin, ctx.userId);
+        }
+
+        if (err instanceof TRPCError) {
+          throw err;
+        }
+
         const message = err instanceof Error ? err.message : String(err);
 
         if (isAiMissingConfigError(message)) {
           throw new TRPCError({
             code: "PRECONDITION_FAILED",
-            message:
-              "AI tutor is not configured. Please contact support.",
+            message: "AI tutor is not configured. Please contact support.",
           });
         }
 

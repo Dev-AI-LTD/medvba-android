@@ -22,7 +22,20 @@ import { useLanguage } from '@/providers/LanguageProvider';
 
 const { width } = Dimensions.get('window');
 
-const APP_ICON = require('@/assets/images/icon.png');
+/** Local asset path — Metro resolves `require` reliably; `@/` alias can fail for some native bundles. */
+const APP_ICON_SOURCE = require('../../assets/images/icon.png');
+
+function OnboardingAppLogo() {
+  return (
+    <View style={styles.onboardingLogoOuter} collapsable={false}>
+      <Image
+        source={APP_ICON_SOURCE}
+        style={styles.onboardingLogoImage}
+        resizeMode="contain"
+      />
+    </View>
+  );
+}
 
 interface OnboardingSlide {
   id: string;
@@ -48,7 +61,7 @@ const slidesData: SlideData[] = [
     titleKey: 'onboarding.slide1.title',
     subtitleKey: 'onboarding.slide1.subtitle',
     descriptionKey: 'onboarding.slide1.description',
-    icon: <Image source={APP_ICON} style={{ width: 120, height: 120, borderRadius: 60 }} />,
+    icon: <OnboardingAppLogo />,
     gradient: [colors.primary, colors.primaryDark],
   },
   {
@@ -318,6 +331,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: colors.glassBorder,
+    overflow: 'hidden',
+  },
+  onboardingLogoOuter: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    overflow: 'hidden',
+  },
+  onboardingLogoImage: {
+    width: '100%',
+    height: '100%',
   },
   textContainer: {
     alignItems: 'center',

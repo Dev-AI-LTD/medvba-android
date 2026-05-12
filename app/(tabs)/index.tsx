@@ -22,7 +22,7 @@ import ProgressRing from '@/components/ProgressRing';
 import PremiumBadge from '@/components/PremiumBadge';
 import { categories } from '@/mocks/questions';
 import { useQuizProgress } from '@/providers/QuizProgressProvider';
-import { FREE_DAILY_QUIZ_LIMIT } from '@/constants/subscription';
+import { FREE_QUIZ_ANSWER_LIMIT } from '@/constants/subscription';
 import { SPACING } from '@/theme/paperTheme';
 import { log } from '@/lib/log';
 
@@ -31,7 +31,7 @@ export default function HomeScreen() {
   const { t, getModuleName } = useLanguage();
   const { colors } = useTheme();
   const { profile } = useAuth();
-  const { isPremium, isPaywallEnabled } = useSubscription();
+  const { isPremium, isPaywallEnabled, getRemainingQuizzes } = useSubscription();
   const { dailyProgress, hasActiveSession, sessionState, lastSessionInfo, accuracy, formattedQuestionsCount, formattedStudyTime } = useQuizProgress();
 
   const totalQuestions = categories.reduce((sum, cat) => sum + cat.questionCount, 0);
@@ -41,7 +41,7 @@ export default function HomeScreen() {
   const todayGoal = dailyProgress.goal;
   const todayProgress = dailyProgress.questionsAnswered;
 
-  const hasReachedDailyLimit = isPaywallEnabled && !isPremium && todayProgress >= FREE_DAILY_QUIZ_LIMIT;
+  const hasReachedFreeQuizLimit = isPaywallEnabled && !isPremium && getRemainingQuizzes() === 0;
 
   const handleUpgradePress = useCallback(() => {
     if (!isPaywallEnabled) return;
@@ -50,10 +50,10 @@ export default function HomeScreen() {
   }, [router, isPaywallEnabled]);
 
   const handleContinueLearning = useCallback(() => {
-    if (hasReachedDailyLimit) {
+    if (hasReachedFreeQuizLimit) {
       Alert.alert(
-        `📚 ${t('home.dailyLimitTitle')}`,
-        t('home.dailyLimitMessage').replace('{count}', String(FREE_DAILY_QUIZ_LIMIT)),
+        `📚 ${t('home.freeQuizLimitTitle')}`,
+        t('home.freeQuizLimitMessage').replace('{count}', String(FREE_QUIZ_ANSWER_LIMIT)),
         [
           { text: t('home.later'), style: 'cancel' },
           { text: `⭐ ${t('home.upgradePremiumShort')}`, onPress: handleUpgradePress, style: 'default' },
@@ -91,7 +91,7 @@ export default function HomeScreen() {
         }
       });
     }
-  }, [hasActiveSession, sessionState, lastSessionInfo, router, hasReachedDailyLimit, handleUpgradePress, t]);
+  }, [hasActiveSession, sessionState, lastSessionInfo, router, hasReachedFreeQuizLimit, handleUpgradePress, t]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -107,7 +107,7 @@ export default function HomeScreen() {
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <Image
-                source={require('@/assets/images/icon.png')}
+                source={require('../../assets/images/icon.png')}
                 style={styles.appIcon}
               />
               <View style={styles.headerTextWrap}>
@@ -134,7 +134,7 @@ export default function HomeScreen() {
                   </TouchableOpacity>
                 </View>
                 <Text style={[styles.userName, { color: colors.text }]} numberOfLines={1} ellipsizeMode="tail">
-                  {profile?.name?.split(' ')[0] || profile?.email || 'Student'}
+                  {profile?.name?.split(' ')[0] || profile?.email || t('common.student')}
                 </Text>
               </View>
             </View>
@@ -164,7 +164,7 @@ export default function HomeScreen() {
                 <PremiumBadge size="small" />
               </View>
             )}
-            {hasReachedDailyLimit && (
+            {hasReachedFreeQuizLimit && (
               <TouchableOpacity
                 activeOpacity={1}
                 style={[StyleSheet.absoluteFill, { backgroundColor: colors.background + 'E6', borderRadius: 16, zIndex: 5 }]}
@@ -172,9 +172,9 @@ export default function HomeScreen() {
               >
               <View style={styles.limitOverlay}>
                 <Lock size={32} color={colors.warning} strokeWidth={2} />
-                <Text style={[styles.limitTitle, { color: colors.text }]}>{t('home.dailyLimitTitle')}</Text>
+                <Text style={[styles.limitTitle, { color: colors.text }]}>{t('home.freeQuizLimitTitle')}</Text>
                 <Text style={[styles.limitText, { color: colors.textSecondary }]}>
-                  {t('home.dailyLimitMessage').replace('{count}', String(FREE_DAILY_QUIZ_LIMIT))}
+                  {t('home.freeQuizLimitMessage').replace('{count}', String(FREE_QUIZ_ANSWER_LIMIT))}
                 </Text>
                 <View style={styles.limitUpgradeButton}>
                   <UIButton variant="borderedProminent" onPress={handleUpgradePress} color={colors.warning}>
@@ -367,13 +367,13 @@ export default function HomeScreen() {
                       {isLocked && (
                         <View style={[styles.premiumTag, { backgroundColor: colors.warning + '20' }]}>
                           <Sparkles size={10} color={colors.warning} strokeWidth={2.5} />
-                          <Text style={[styles.premiumTagText, { color: colors.warning }]}>Premium</Text>
+                          <Text style={[styles.premiumTagText, { color: colors.warning }]}>{t('tutor.premium')}</Text>
                         </View>
                       )}
                     </View>
                     <Text style={[styles.categoryProgress, { color: colors.textSecondary }]} numberOfLines={1}>
                       {isLocked
-                        ? 'Unlock premium to access'
+                        ? t('home.categoryLockedSubtitle')
                         : t('home.categoryQuestions')
                             .replace('{current}', category.completedCount.toLocaleString())
                             .replace('{total}', category.questionCount.toLocaleString())

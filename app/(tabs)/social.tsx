@@ -366,7 +366,7 @@ export default function SocialScreen() {
       {
       name: newRoomName.trim(),
       hostId: user?.id || '',
-      hostName: profile?.name || 'You',
+      hostName: profile?.name || t('common.you'),
       hostAvatar: profile?.avatar || `https://api.dicebear.com/7.x/avataaars/png?seed=${user?.id}`,
       category: newRoomCategory,
         maxParticipants: maxParts,
@@ -436,7 +436,7 @@ export default function SocialScreen() {
       scheduledFor,
       durationMinutes: parseInt(sessionDuration, 10),
       hostId: user?.id || '',
-      hostName: profile?.name || 'You',
+      hostName: profile?.name || t('common.you'),
       hostAvatar: profile?.avatar || `https://api.dicebear.com/7.x/avataaars/png?seed=${user?.id}`,
         category: selectedRoom.category,
         meetingUrl: meetingUrl.trim() || undefined,

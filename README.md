@@ -8,6 +8,10 @@ Native mobile app for medical exam preparation (quizzes, progress, study feature
 
 Configuration in this repo matches `app.config.ts` (e.g. `name`, `slug`, `scheme`, bundle IDs, Expo `extra`).
 
+**Current stack** (see `package.json` for exact ranges): **Expo SDK 54**, **React Native 0.81**, **React 19**. Package manager: **Bun** (`bun.lock`).
+
+**README last updated:** 12 May 2026.
+
 ---
 
 ## License and copyright
@@ -99,21 +103,18 @@ Internal checklist for Play / EAS lives in [`.cursor/rules/eas-android-release.m
 
 ---
 
-## Rork toolkit (`@rork-ai/toolkit-sdk`)
+## Batch translation (OpenAI, no Rork SDK)
 
-The dependency **`@rork-ai/toolkit-sdk`** is still wired into this repo in a few places:
+Structured question translation uses **`lib/llm-generate-object-json.ts`**: OpenAI Chat Completions with `response_format: json_object` and Zod validation. It is used from **`lib/batch-translate.ts`** (in-app **`app/batch-translate.tsx`**) and **`scripts/translate-questions.ts`** (CLI).
 
-| Location | Usage |
-|----------|--------|
-| **`metro.config.js`** | `withRorkMetro(config)` — wraps the Metro bundler config for every dev/production bundle. |
-| **`lib/batch-translate.ts`** | `generateObject` from the SDK — used by **`app/batch-translate.tsx`** (batch translation UI). |
-| **`scripts/translate-questions.ts`** | Same `generateObject` — CLI helper for question translation. |
-| **`package.json`** | Declares the dependency; some scripts still call **`bunx rork start`** (`start`, `start-web`, `start-web-dev`). Prefer **`bun run start:local`** / **`start:web`** for plain Expo if you are not using that flow. |
-| **`jest.config.js`** | `@rork-ai` is listed in `transformIgnorePatterns` so Jest can transpile the package. |
+**Keys (see also `lib/llm-generate-object-json.ts`):**
 
-**Environment name only (not the AI SDK):** `EXPO_PUBLIC_RORK_API_BASE_URL` in `app.config.ts`, `lib/api-base-url.ts`, and `scripts/check-env.js` is a **legacy alias** for the same API base URL as `EXPO_PUBLIC_API_BASE_URL` (tRPC client), not a separate “Rork cloud” requirement by itself.
+- **Scripts / CI:** set **`OPENAI_API_KEY`** or **`AI_API_KEY`** in `.env` (loaded via `dotenv` for the CLI script). Optional: **`AI_BASE_URL`**, **`AI_MODEL`**.
+- **Expo dev only:** the in-app screen can fall back to **`EXPO_PUBLIC_OPENAI_API_KEY`** if secret env vars are unset. **Do not** put real production secrets in public env for store builds.
 
-To remove Rork entirely you would need to replace `withRorkMetro`, migrate `start` scripts to `expo start`, and swap or drop `generateObject` in the batch-translate path (or remove that tooling if unused).
+**Legacy env name:** `EXPO_PUBLIC_RORK_API_BASE_URL` in `app.config.ts`, `lib/api-base-url.ts`, and `scripts/check-env.js` is only a **legacy alias** for the same API base URL as `EXPO_PUBLIC_API_BASE_URL` (tRPC), not the translation stack.
+
+Metro uses the standard **`expo/metro-config`** setup in **`metro.config.js`**, with a small resolver override for Kinde / `expo-secure-store` (see that file).
 
 ---
 

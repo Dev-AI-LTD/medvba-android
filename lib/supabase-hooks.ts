@@ -1854,6 +1854,13 @@ export function useUpdateSubscription() {
         updateData.started_at = new Date().toISOString();
       }
 
+      if (input.status === 'free') {
+        updateData.type = null;
+        if (input.expiresAt === undefined) {
+          updateData.expires_at = null;
+        }
+      }
+
       const { data, error } = await supabase
         .from('subscriptions')
         .upsert({

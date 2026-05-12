@@ -51,6 +51,12 @@ function isTrpcPreconditionFailed(error: unknown): boolean {
   return httpStatus === 412;
 }
 
+function isTrpcForbidden(error: unknown): boolean {
+  if (!(error instanceof TRPCClientError)) return false;
+  const code = (error.data as { code?: string } | undefined)?.code;
+  return code === 'FORBIDDEN';
+}
+
 function getTutorErrorContent(error: unknown, t: (key: string) => string): string {
   if (isTrpcPreconditionFailed(error)) {
     return t('tutor.serverConfigError');
@@ -85,13 +91,19 @@ export default function TutorScreen() {
     isPremium,
     isPaywallEnabled,
     canAskAiQuestion,
-    incrementAiQuestionCount,
     getRemainingAiQuestions,
     FREE_AI_LIMIT,
+    syncAiQuestionCountFromServer,
   } = useSubscription();
 
   const remainingAiQuestions = getRemainingAiQuestions();
-  const { t } = useLanguage();
+  const { t, currentLanguage } = useLanguage();
+
+  const tutorLocale = currentLanguage === 'ro' ? 'ro' : 'en';
+
+  useEffect(() => {
+    void syncAiQuestionCountFromServer();
+  }, [syncAiQuestionCountFromServer]);
 
   const suggestedQuestions = getSuggestedQuestions(t);
 
@@ -108,16 +120,19 @@ export default function TutorScreen() {
 
   const chatMutation = trpc.tutor.chat.useMutation();
 
-  const generateAIResponse = useCallback(async (conversationHistory: Message[]): Promise<string> => {
+  const generateAIResponse = useCallback(
+    async (conversationHistory: Message[], locale: 'en' | 'ro'): Promise<string> => {
     const historyForBackend = conversationHistory
       .filter(m => m.role === 'user' || m.role === 'assistant')
       .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
 
     log.debug('[Tutor] Sending request to backend with ' + historyForBackend.length + ' messages');
-    const result = await chatMutation.mutateAsync({ messages: historyForBackend });
+    const result = await chatMutation.mutateAsync({ messages: historyForBackend, locale });
     log.debug('[Tutor] Received AI response from backend');
     return result.response;
-  }, [chatMutation]);
+  },
+    [chatMutation],
+  );
 
   const openPaywallWithFallback = useCallback(() => {
     try {
@@ -146,19 +161,6 @@ export default function TutorScreen() {
       return;
     }
 
-    // Increment AI question count for free users
-    const aiQuestionValidation = await incrementAiQuestionCount();
-    if (isPaywallEnabled && !aiQuestionValidation.allowed && !isPremium) {
-      openPaywallWithFallback();
-      return;
-    }
-
-    if (aiQuestionValidation.reason === 'network_error') {
-      log.warn('[Tutor] AI limit validation skipped because of network issue; continuing send.');
-    } else if (aiQuestionValidation.reason === 'server_validation_error') {
-      log.warn('[Tutor] AI limit validation skipped because of server error; continuing send.');
-    }
-    
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -177,7 +179,7 @@ export default function TutorScreen() {
     }, 100);
     
     try {
-      const aiResponseText = await generateAIResponse(updatedMessages);
+      const aiResponseText = await generateAIResponse(updatedMessages, tutorLocale);
       const trimmed = (aiResponseText ?? '').trim();
       const content = trimmed.length > 0 ? trimmed : t('tutor.emptyResponse');
 
@@ -188,6 +190,7 @@ export default function TutorScreen() {
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, aiResponse]);
+      void syncAiQuestionCountFromServer();
     } catch (error) {
       const errStr = error instanceof Error ? error.message : String(error);
       log.debug('[Tutor] Failed to get AI response:', errStr);
@@ -200,6 +203,11 @@ export default function TutorScreen() {
         errStr.toLowerCase().includes('not authenticated')
       ) {
         router.push('/(auth)/login');
+        return;
+      }
+
+      if (isTrpcForbidden(error)) {
+        openPaywallWithFallback();
         return;
       }
 
@@ -252,7 +260,7 @@ export default function TutorScreen() {
 
     try {
       const messagesForRetry = messages.filter(m => !m.isError);
-      const aiResponseText = await generateAIResponse(messagesForRetry);
+      const aiResponseText = await generateAIResponse(messagesForRetry, tutorLocale);
       const trimmed = (aiResponseText ?? '').trim();
       const content = trimmed.length > 0 ? trimmed : t('tutor.emptyResponse');
       const aiResponse: Message = {
@@ -262,7 +270,12 @@ export default function TutorScreen() {
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, aiResponse]);
+      void syncAiQuestionCountFromServer();
     } catch (error) {
+      if (isTrpcForbidden(error)) {
+        openPaywallWithFallback();
+        return;
+      }
       log.debug('[Tutor] Retry failed:', String(error));
       const errorMessage: Message = {
         id: Date.now().toString(),
@@ -278,7 +291,7 @@ export default function TutorScreen() {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
     }
-  }, [isTyping, messages, generateAIResponse, t]);
+  }, [isTyping, messages, generateAIResponse, t, tutorLocale, openPaywallWithFallback, syncAiQuestionCountFromServer]);
 
   const handleSuggestion = (text: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

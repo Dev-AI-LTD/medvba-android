@@ -325,13 +325,13 @@ export default function SettingsScreen() {
               <View style={[styles.profileInputGroup, { borderBottomColor: colors.glassBorder }]}>
                 <View style={styles.inputLabel}>
                   <School color={colors.secondary} size={18} />
-                  <Text style={[styles.inputLabelText, { color: colors.textSecondary }]}>University/Faculty</Text>
+                  <Text style={[styles.inputLabelText, { color: colors.textSecondary }]}>{t('editProfile.universityFacultyLabel')}</Text>
                 </View>
                 <TextInput
                   style={[styles.profileTextInput, { backgroundColor: 'rgba(255,255,255,0.06)', color: colors.text, borderColor: colors.glassBorder }]}
                   value={university}
                   onChangeText={setUniversity}
-                  placeholder="e.g., Carol Davila University"
+                  placeholder={t('editProfile.universityExamplePlaceholder')}
                   placeholderTextColor={colors.textMuted}
                   maxLength={200}
                 />
@@ -340,7 +340,7 @@ export default function SettingsScreen() {
               <View style={[styles.profileInputGroup, { borderBottomColor: colors.glassBorder }]}>
                 <View style={styles.inputLabel}>
                   <School color={colors.warning} size={18} />
-                  <Text style={[styles.inputLabelText, { color: colors.textSecondary }]}>Year of Study</Text>
+                  <Text style={[styles.inputLabelText, { color: colors.textSecondary }]}>{t('editProfile.yearLabel')}</Text>
                 </View>
                 <View style={styles.yearSelector}>
                   {[1, 2, 3, 4, 5, 6].map((year) => (
@@ -365,13 +365,13 @@ export default function SettingsScreen() {
               <View style={[styles.profileInputGroup, { borderBottomColor: colors.glassBorder }]}>
                 <View style={styles.inputLabel}>
                   <AlignLeft color={colors.accentPink} size={18} />
-                  <Text style={[styles.inputLabelText, { color: colors.textSecondary }]}>Bio</Text>
+                  <Text style={[styles.inputLabelText, { color: colors.textSecondary }]}>{t('editProfile.bioLabel')}</Text>
                 </View>
                 <TextInput
                   style={[styles.profileTextInput, styles.textArea, { backgroundColor: 'rgba(255,255,255,0.06)', color: colors.text, borderColor: colors.glassBorder }]}
                   value={bio}
                   onChangeText={setBio}
-                  placeholder="Tell others about yourself, your interests, study goals..."
+                  placeholder={t('editProfile.bioPlaceholder')}
                   placeholderTextColor={colors.textMuted}
                   multiline
                   numberOfLines={4}
@@ -385,11 +385,9 @@ export default function SettingsScreen() {
                   {isPublic ? <Eye color={colors.success} size={22} /> : <EyeOff color={colors.textMuted} size={22} />}
                 </View>
                 <View style={styles.privacyInfo}>
-                  <Text style={styles.settingsItemTitle}>Public Profile</Text>
+                  <Text style={styles.settingsItemTitle}>{t('editProfile.publicProfile')}</Text>
                   <Text style={styles.settingsItemSubtitle}>
-                    {isPublic
-                      ? 'Other students can find and connect with you'
-                      : 'Your profile is hidden from study partner search'}
+                    {isPublic ? t('editProfile.publicProfileOn') : t('editProfile.publicProfileOff')}
                   </Text>
                 </View>
                 <Switch
@@ -609,7 +607,7 @@ export default function SettingsScreen() {
 
           {isPaywallEnabled && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Abonament</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('settings.subscriptionSection')}</Text>
               <View style={[styles.sectionCard, { borderColor: colors.glassBorder }]}>
                 <LinearGradient
                   colors={['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.04)']}
@@ -618,8 +616,8 @@ export default function SettingsScreen() {
                 {isPremium ? (
                   <SettingsItem
                     icon={<CreditCard color={colors.success} size={22} />}
-                    title={t('settings.manageSubscription') || 'Manage Subscription'}
-                    subtitle={t('settings.manageSubscriptionSubtitle') || 'Change plan, cancel, or restore purchases'}
+                    title={t('settings.manageSubscription')}
+                    subtitle={t('settings.manageSubscriptionSubtitle')}
                     onPress={() => presentCustomerCenter()}
                     showBorder={false}
                   />

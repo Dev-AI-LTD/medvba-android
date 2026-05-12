@@ -32,7 +32,7 @@ Verificări pentru a te asigura că aplicația respectă cerințele și nu crap�
 
 **Acțiuni:**
 - [ ] Parcurge fluxul **fără cont** (dacă e posibil) și **cu cont**
-- [ ] După 10 întrebări (sau limita din `FREE_DAILY_QUIZ_LIMIT`) apare paywall sau mesaj de upgrade
+- [ ] După 10 întrebări pe zi (sau limita din `FREE_QUIZ_ANSWER_LIMIT` — piscină zilnică, orice capitol) apare paywall sau mesaj de upgrade
 - [ ] Buton „Restore purchases” funcționează (test cu cont care a cumpărat)
 
 ---

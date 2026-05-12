@@ -96,7 +96,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       'expo-image-picker',
       {
         photosPermission:
-          'The app accesses your photos to let you share them with your friends.',
+          'MEDVBA accesses your photo library so you can choose or update your profile picture.',
       },
     ],
     // react-native-edge-to-edge: prevents react-native-screens from using deprecated setStatusBarColor/setNavigationBarColor APIs
@@ -156,7 +156,8 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         'com.apple.developer.applesignin': ['Default'],
       },
       infoPlist: {
-        NSPhotoLibraryUsageDescription: 'Allow $(PRODUCT_NAME) to access your photos',
+        NSPhotoLibraryUsageDescription:
+          'MEDVBA accesses your photo library so you can choose or update your profile picture.',
         ITSAppUsesNonExemptEncryption: false,
       },
     },
@@ -211,8 +212,12 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         envFromFile.EXPO_PUBLIC_REVENUECAT_API_KEY_IOS || process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_IOS,
       EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID:
         envFromFile.EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID || process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID,
+      // Local / USB dev: default on so limits + paywall can be tested without forgetting .env.
+      // EAS cloud & local EAS builds set EAS_BUILD=true → default off unless secret / .env sets true.
       EXPO_PUBLIC_PAYWALL_ENABLED:
-        envFromFile.EXPO_PUBLIC_PAYWALL_ENABLED ?? process.env.EXPO_PUBLIC_PAYWALL_ENABLED ?? 'false',
+        envFromFile.EXPO_PUBLIC_PAYWALL_ENABLED ??
+        process.env.EXPO_PUBLIC_PAYWALL_ENABLED ??
+        (process.env.EAS_BUILD === 'true' ? 'false' : 'true'),
       EXPO_PUBLIC_KINDE_ISSUER_URL:
         envFromFile.EXPO_PUBLIC_KINDE_ISSUER_URL || process.env.EXPO_PUBLIC_KINDE_ISSUER_URL,
       EXPO_PUBLIC_KINDE_CLIENT_ID:

@@ -9,7 +9,7 @@
 | **EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID** | Da (pentru abonamente) | RevenueCat → API Keys → aplicația **Android** (Google Play) → Public key | de obicei `goog_...` |
 | **EXPO_PUBLIC_REVENUECAT_API_KEY_IOS** | Doar dacă faci build iOS | RevenueCat → API Keys → aplicația **iOS** (App Store) → Public key | de obicei `appl_...` |
 | **EXPO_PUBLIC_PAYWALL_ENABLED** | Da | Tu decizi | `true` sau `false` |
-| EXPO_PUBLIC_RORK_API_BASE_URL | Nu | Dacă folosești backend Rork | `https://api.example.com` |
+| EXPO_PUBLIC_RORK_API_BASE_URL | Nu | Alias istoric pentru același URL ca **EXPO_PUBLIC_API_BASE_URL** (tRPC); poți folosi unul singur | `https://api.example.com` |
 | EXPO_PUBLIC_SENTRY_DSN | Nu | Sentry → Project Settings → DSN | `https://xxx@sentry.io/xxx` |
 
 ---

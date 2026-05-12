@@ -1,7 +1,7 @@
-import { generateObject } from "@rork-ai/toolkit-sdk";
 import { z } from "zod";
 import { sampleQuestions } from "@/mocks/questions";
 import { questionTranslations, QuestionTranslation } from "@/locales/questionTranslations";
+import { llmGenerateObjectJson } from "@/lib/llm-generate-object-json";
 
 const BATCH_SIZE = 10;
 const DELAY_MS = 1000;
@@ -80,10 +80,7 @@ Important:
 - Make sure explanations are clear and educational
 - The translations should be identical for each requested language`;
 
-      const translation = await generateObject({
-        messages: [{ role: "user", content: prompt }],
-        schema: translationSchema,
-      });
+      const translation = await llmGenerateObjectJson(prompt, translationSchema);
 
       for (const t of translation.translations) {
         if (!result[t.id]) {
@@ -185,10 +182,7 @@ Important:
 - Make sure explanations are clear and educational
 - The translations should be identical for each requested language`;
 
-      const translation = await generateObject({
-        messages: [{ role: "user", content: prompt }],
-        schema: translationSchema,
-      });
+      const translation = await llmGenerateObjectJson(prompt, translationSchema);
 
       for (const t of translation.translations) {
         if (!result[t.id]) {

@@ -23,6 +23,7 @@ describe('AuthProvider (session)', () => {
       expect(result.current.isLoading).toBe(false);
     });
     expect(result.current.isAuthenticated).toBe(false);
+    expect(result.current.isAuthBusy).toBe(false);
   });
 
   it('tracks onboarding completion', async () => {

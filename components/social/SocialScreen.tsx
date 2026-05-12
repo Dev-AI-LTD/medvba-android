@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, SafeAreaView, Modal, TextInput, FlatList } from 'react-native';
+import { View, StyleSheet, SafeAreaView, Modal, TextInput } from 'react-native';
 import { Text, IconButton } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { router } from 'expo-router';
 import { spacing } from '@/constants/design';
 import Button from '../Button';
 import AvatarImage from '../AvatarImage';
@@ -11,10 +10,8 @@ import { AllChannelView } from './AllChannelView';
 import { OnlineListView } from './OnlineListView';
 import { PrivateChatsView } from './PrivateChatsView';
 import { useTheme } from '@/providers/ThemeProvider';
-import type { SocialStackParamList } from '@/lib/navigation';
 
 type TabKey = 'all' | 'online' | 'private';
-type Nav = NativeStackNavigationProp<SocialStackParamList, 'SocialMain'>;
 
 interface SocialScreenProps {
   userAvatar?: string;
@@ -30,7 +27,6 @@ export function SocialScreen({
   const [activeTab, setActiveTab] = useState<TabKey>('all');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const navigation = useNavigation<Nav>();
   const { colors } = useTheme();
 
   const getTabVariant = (tab: TabKey) => {
@@ -47,7 +43,7 @@ export function SocialScreen({
   };
 
   const handleSettings = () => {
-    // TODO: Navigate to settings
+    router.push('/settings');
   };
 
   return (
