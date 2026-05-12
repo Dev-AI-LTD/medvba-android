@@ -33,7 +33,9 @@ export async function userHasActivePremiumAccess(
     console.error("[Premium] Error reading subscriptions:", subErr);
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
-      message: "Failed to verify subscription status",
+      message:
+        "Failed to verify subscription status (subscriptions). Check SUPABASE_* on the server, that table public.subscriptions exists, and PostgREST logs.",
+      cause: subErr,
     });
   }
 
@@ -51,7 +53,9 @@ export async function userHasActivePremiumAccess(
     console.error("[Premium] Error reading profiles:", profileError);
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
-      message: "Failed to verify subscription status",
+      message:
+        "Failed to verify subscription status (profiles). Ensure columns is_premium and subscription_status exist on public.profiles (see supabase/migrations/003_ai_question_usage.sql).",
+      cause: profileError,
     });
   }
 

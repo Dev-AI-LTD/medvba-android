@@ -22,8 +22,8 @@ Creează în root-ul proiectului fișierul **`.env`** (nu se pune în git):
 EXPO_PUBLIC_SUPABASE_URL=https://TAU_PROIECT_ID.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.TAU_CHEIE_ANON
 
-EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID=appl_TEACHEIA_ANDROID_DIN_REVENUECAT
-EXPO_PUBLIC_REVENUECAT_API_KEY_IOS=goog_TEACHEIA_IOS_DIN_REVENUECAT
+EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID=goog_TEACHEIA_ANDROID_DIN_REVENUECAT
+EXPO_PUBLIC_REVENUECAT_API_KEY_IOS=appl_TEACHEIA_IOS_DIN_REVENUECAT
 
 EXPO_PUBLIC_PAYWALL_ENABLED=true
 ```
@@ -67,7 +67,7 @@ Poți folosi `--environment production` sau `--environment preview` după cum bu
 2. Tab **Secrets** (sau **Project settings** → **Secrets**).
 3. **Create secret**:
    - **Name:** exact numele variabilei, e.g. `EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID`
-   - **Value:** valoarea (fără ghilimele), e.g. `appl_xxxxxxxxxxxx`
+   - **Value:** valoarea (fără ghilimele), e.g. pentru Android de obicei `goog_xxxxxxxxxxxx`, pentru iOS de obicei `appl_xxxxxxxxxxxx`
 
 Repeti pentru fiecare variabilă din tabelul de mai sus.
 
@@ -119,7 +119,7 @@ Apoi creezi din nou cu `eas env:create`.
 ## 5. Rezumat rapid
 
 - **Pe PC (develop):** completezi **`.env`** cu toate variabilele; folosești pentru `expo start` / build local.
-- **Pentru Google Play (EAS Build în cloud):** pui **EAS Secrets** cu aceleași nume și valori (fie din terminal cu `eas secret:create`, fie din Expo Dashboard → Secrets).
+- **Pentru Google Play (EAS Build în cloud):** pui **Environment variables** / secretele EAS cu aceleași nume și valori (fie din terminal cu `eas env:create`, fie din Expo Dashboard → Environment variables).
 - **RevenueCat:** în app și în EAS pui doar **Public API key** – pentru Android cea din RevenueCat pentru aplicația Android (de obicei `goog_...`), pentru iOS cea pentru aplicația iOS (de obicei `appl_...`). Copiezi exact ce îți arată RevenueCat.
 
 După ce setezi secrets, rulezi `eas build --platform android --profile production` și build-ul va avea toate variabilele necesare pentru Google Play.

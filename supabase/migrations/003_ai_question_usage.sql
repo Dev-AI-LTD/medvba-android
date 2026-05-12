@@ -21,20 +21,23 @@ CREATE INDEX IF NOT EXISTS idx_ai_question_usage_created_at ON public.ai_questio
 -- Enable RLS
 ALTER TABLE public.ai_question_usage ENABLE ROW LEVEL SECURITY;
 
--- Users can only see and modify their own usage records
-CREATE POLICY "Users can view own AI usage" 
-    ON public.ai_question_usage 
-    FOR SELECT 
+-- Users can only see and modify their own usage records (idempotent re-run)
+DROP POLICY IF EXISTS "Users can view own AI usage" ON public.ai_question_usage;
+CREATE POLICY "Users can view own AI usage"
+    ON public.ai_question_usage
+    FOR SELECT
     USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can update own AI usage" 
-    ON public.ai_question_usage 
-    FOR UPDATE 
+DROP POLICY IF EXISTS "Users can update own AI usage" ON public.ai_question_usage;
+CREATE POLICY "Users can update own AI usage"
+    ON public.ai_question_usage
+    FOR UPDATE
     USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can insert own AI usage" 
-    ON public.ai_question_usage 
-    FOR INSERT 
+DROP POLICY IF EXISTS "Users can insert own AI usage" ON public.ai_question_usage;
+CREATE POLICY "Users can insert own AI usage"
+    ON public.ai_question_usage
+    FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
 -- Service role bypass for admin operations (tRPC procedures use service role)
