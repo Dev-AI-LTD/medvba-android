@@ -8,6 +8,7 @@ import {
   Image,
   ActivityIndicator,
   Platform,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -62,6 +63,12 @@ export default function ProfileDetailScreen() {
       router.push(`/direct-chat?chatId=${result.id}`);
     } catch (error) {
       console.error('Error starting chat:', error);
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+      Alert.alert(t('userProfile.startChatErrorTitle'), t('userProfile.startChatErrorMessage'), [
+        { text: t('common.ok') },
+      ]);
     }
   };
 

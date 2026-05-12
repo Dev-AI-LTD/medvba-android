@@ -13,7 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter, Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import {
   X,
   AlertTriangle,
@@ -57,22 +57,28 @@ export default function DeleteAccountScreen() {
   const deleteAccountMutation = trpc.account.deleteSelf.useMutation();
 
   const clearLocalData = async () => {
-    console.log('[DeleteAccount] Clearing local data...');
+    if (__DEV__) {
+      console.log('[DeleteAccount] Clearing local data...');
+    }
     try {
       await AsyncStorage.multiRemove(STORAGE_KEYS_TO_CLEAR);
-      console.log('[DeleteAccount] Local data cleared successfully');
+      if (__DEV__) {
+        console.log('[DeleteAccount] Local data cleared successfully');
+      }
     } catch (error) {
       console.error('[DeleteAccount] Error clearing local data:', error);
     }
   };
 
   const handleDeleteAccount = useCallback(async () => {
-    console.log('[DeleteAccount] handleDeleteAccount called');
-    console.log('[DeleteAccount] User:', user?.id ? 'Logged in' : 'Not logged in');
-    console.log('[DeleteAccount] Confirm text:', confirmText);
+    if (__DEV__) {
+      console.log('[DeleteAccount] handleDeleteAccount called');
+    }
 
     if (confirmText.toUpperCase() !== 'DELETE') {
-      console.log('[DeleteAccount] Confirmation text does not match DELETE');
+      if (__DEV__) {
+        console.log('[DeleteAccount] Confirmation text does not match DELETE');
+      }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert(t('deleteAccount.alertConfirmTitle'), t('deleteAccount.alertConfirmMessage'), [
         { text: t('common.ok') },
@@ -83,7 +89,9 @@ export default function DeleteAccountScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     setStep('deleting');
 
-    console.log('[DeleteAccount] Initiating account deletion...');
+    if (__DEV__) {
+      console.log('[DeleteAccount] Initiating account deletion...');
+    }
     if (!user?.id) {
       console.error('[DeleteAccount] No user ID found');
       Alert.alert(t('deleteAccount.alertErrorTitle'), t('deleteAccount.alertMustBeLoggedIn'), [
@@ -94,17 +102,24 @@ export default function DeleteAccountScreen() {
     }
 
     try {
-      console.log('[DeleteAccount] Calling deleteAccountMutation...');
-      console.log('[DeleteAccount] Backend URL:', process.env.EXPO_PUBLIC_API_BASE_URL);
+      if (__DEV__) {
+        console.log('[DeleteAccount] Calling deleteAccountMutation...');
+      }
 
       const result = await deleteAccountMutation.mutateAsync();
-      console.log('[DeleteAccount] Backend deletion result:', result);
+      if (__DEV__) {
+        console.log('[DeleteAccount] Backend deletion result:', result);
+      }
 
       await clearLocalData();
-      console.log('[DeleteAccount] Local data cleared');
+      if (__DEV__) {
+        console.log('[DeleteAccount] Local data cleared');
+      }
 
       await signOut();
-      console.log('[DeleteAccount] Session cleared via AuthProvider');
+      if (__DEV__) {
+        console.log('[DeleteAccount] Session cleared via AuthProvider');
+      }
 
       try {
         const allKeys = await AsyncStorage.getAllKeys();
@@ -118,7 +133,9 @@ export default function DeleteAccountScreen() {
         );
         if (keysToRemove.length > 0) {
           await AsyncStorage.multiRemove(keysToRemove);
-          console.log('[DeleteAccount] Cleared additional keys:', keysToRemove);
+          if (__DEV__) {
+            console.log('[DeleteAccount] Cleared additional keys:', keysToRemove);
+          }
         }
       } catch (e) {
         console.error('[DeleteAccount] Error clearing additional keys:', e);
@@ -126,7 +143,9 @@ export default function DeleteAccountScreen() {
 
       setStep('success');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      console.log('[DeleteAccount] Account deletion process completed');
+      if (__DEV__) {
+        console.log('[DeleteAccount] Account deletion process completed');
+      }
     } catch (error: unknown) {
       console.error('[DeleteAccount] Deletion failed:', error);
       setStep('confirm');
@@ -250,9 +269,13 @@ export default function DeleteAccountScreen() {
             </View>
             <Text style={styles.retentionNote}>
               {t('deleteAccount.retentionNoteBeforeLink')}
-              <Link href="/legal/privacy-policy" asChild>
-                <Text style={styles.retentionNoteLink}>{t('auth.privacyPolicy')}</Text>
-              </Link>
+              <Text
+                style={styles.retentionNoteLink}
+                accessibilityRole="link"
+                onPress={() => router.push('/legal/privacy-policy')}
+              >
+                {t('auth.privacyPolicy')}
+              </Text>
               {t('deleteAccount.retentionNoteAfterLink')}
             </Text>
           </View>

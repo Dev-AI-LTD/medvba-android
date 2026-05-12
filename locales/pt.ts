@@ -314,6 +314,8 @@ export const pt: Record<string, string> = {
   'userProfile.joined': 'Membro desde {date}',
   'userProfile.yearOfStudySuffix': ' • Ano {year}',
   'userProfile.studyHours': 'Horas de estudo',
+  'userProfile.startChatErrorTitle': 'Não foi possível abrir o chat',
+  'userProfile.startChatErrorMessage': 'Algo correu mal. Por favor, tente novamente.',
 
   // 404 / dev modal
   'notFound.title': 'Página não encontrada',

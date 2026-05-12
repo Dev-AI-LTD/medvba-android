@@ -337,6 +337,8 @@ export const ro: Record<string, string> = {
   'userProfile.joined': 'Membru din {date}',
   'userProfile.yearOfStudySuffix': ' • Anul {year}',
   'userProfile.studyHours': 'Ore de studiu',
+  'userProfile.startChatErrorTitle': 'Nu s-a putut deschide conversația',
+  'userProfile.startChatErrorMessage': 'A apărut o problemă. Încearcă din nou.',
 
   // 404 / dev modal
   'notFound.title': 'Pagină negăsită',
