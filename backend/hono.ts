@@ -6,6 +6,7 @@ import { appRouter } from "./trpc/app-router";
 import { createContext } from "./trpc/create-context";
 import { registerAuthSessionRoutes } from "./auth/session-routes";
 import { registerRevenueCatWebhookRoutes } from "./webhooks/revenuecat-webhook";
+import { probeSupabaseServiceRole } from "./lib/health-supabase";
 
 const app = new Hono();
 
@@ -74,6 +75,8 @@ app.get("/health", (c) => {
   return c.json({
     status: "ok",
     timestamp: new Date().toISOString(),
+    /** Live Supabase service-role probe (subscriptions SELECT limit 1). */
+    liveSupabaseProbe: "/api/health",
     env: {
       hasSupabaseUrl: !!process.env.SUPABASE_URL,
       hasServiceRoleKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -93,6 +96,38 @@ app.get("/health", (c) => {
       revenueCatRestSecret: !!(process.env.REVENUECAT_SECRET_API_KEY?.trim() || process.env.REVENUECAT_API_SECRET_KEY?.trim()),
     }
   });
+});
+
+/** Live probe: Supabase service role can read `subscriptions` (same path as premium checks). */
+app.get("/api/health", async (c) => {
+  const verbose =
+    process.env.NODE_ENV !== "production" || process.env.HEALTHCHECK_VERBOSE === "true";
+
+  const supabaseEnvConfigured =
+    !!process.env.SUPABASE_URL?.trim() && !!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+
+  const probe = await probeSupabaseServiceRole();
+
+  const ai = process.env.AI_API_KEY?.trim();
+  const openai = process.env.OPENAI_API_KEY?.trim();
+
+  const body: Record<string, unknown> = {
+    status: probe.ok ? "ok" : "degraded",
+    timestamp: new Date().toISOString(),
+    checks: {
+      supabaseEnvConfigured,
+      supabaseServiceRoleSubscriptionsSelect: probe.ok ? "ok" : "error",
+    },
+    hints: {
+      aiApiKeyConfigured: !!(ai || openai),
+    },
+  };
+
+  if (verbose && !probe.ok) {
+    body.supabaseError = probe.error;
+  }
+
+  return c.json(body, probe.ok ? 200 : 503);
 });
 
 // Error handler

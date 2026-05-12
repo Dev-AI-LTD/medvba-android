@@ -16,6 +16,23 @@ function subscriptionRowIsPremium(row: SubscriptionRow | null | undefined): bool
   return true;
 }
 
+const GENERIC_SUBSCRIPTION_VERIFY =
+  "Failed to verify subscription status";
+
+/** Richer TRPC message off-production (or when MEDVBA_VERBOSE_ERRORS=true) so mobile LogBox matches Supabase/PostgREST hints. */
+function subscriptionVerifyTrpcMessage(
+  scope: "subscriptions" | "profiles",
+  err: { code?: string; message: string },
+): string {
+  const prodSilent =
+    process.env.NODE_ENV === "production" && process.env.MEDVBA_VERBOSE_ERRORS !== "true";
+  if (prodSilent) {
+    return GENERIC_SUBSCRIPTION_VERIFY;
+  }
+  const code = err.code ?? "unknown";
+  return `${GENERIC_SUBSCRIPTION_VERIFY} (${scope}: ${code} — ${err.message})`;
+}
+
 /**
  * Premium for server-side limits: `subscriptions` (webhook + service role) then `profiles` fallback.
  */
@@ -33,8 +50,7 @@ export async function userHasActivePremiumAccess(
     console.error("[Premium] Error reading subscriptions:", subErr);
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
-      message:
-        "Failed to verify subscription status (subscriptions). Check SUPABASE_* on the server, that table public.subscriptions exists, and PostgREST logs.",
+      message: subscriptionVerifyTrpcMessage("subscriptions", subErr),
       cause: subErr,
     });
   }
@@ -53,8 +69,7 @@ export async function userHasActivePremiumAccess(
     console.error("[Premium] Error reading profiles:", profileError);
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
-      message:
-        "Failed to verify subscription status (profiles). Ensure columns is_premium and subscription_status exist on public.profiles (see supabase/migrations/003_ai_question_usage.sql).",
+      message: subscriptionVerifyTrpcMessage("profiles", profileError),
       cause: profileError,
     });
   }
