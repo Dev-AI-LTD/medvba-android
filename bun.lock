@@ -84,6 +84,7 @@
         "detox": "^20.50.1",
         "eslint": "^9.31.0",
         "eslint-config-expo": "~10.0.0",
+        "expo-doctor": "1.18.21",
         "openapi-typescript": "^7.10.1",
         "react-test-renderer": "19.1.0",
         "typescript": "~5.9.2",
@@ -1297,6 +1298,8 @@
     "expo-dev-menu": ["expo-dev-menu@7.0.19", "", { "dependencies": { "expo-dev-menu-interface": "2.0.0" }, "peerDependencies": { "expo": "*" } }, "sha512-ju5MZiBCPhUKKvHy0ElZdnlhq01mkEEiR8jfrgQVvW26aWjzjLiOhppNAyXtvGbhk7WxJim3wYMiqFFrjGdfKA=="],
 
     "expo-dev-menu-interface": ["expo-dev-menu-interface@2.0.0", "", { "peerDependencies": { "expo": "*" } }, "sha512-BvAMPt6x+vyXpThsyjjOYyjwfjREV4OOpQkZ0tNl+nGpsPfcY9mc6DRACoWnH9KpLzyIt3BOgh3cuy/h/OxQjw=="],
+
+    "expo-doctor": ["expo-doctor@1.18.21", "", { "bin": { "expo-doctor": "build/index.js" } }, "sha512-PYyQNnIqLKdoc+K9VeB9VZjBkjFh22MCd3EZ6LTYRtDhBwVEErJa3ejzUoySethHD0TgnrFS+L6xByITVgLgoQ=="],
 
     "expo-eas-client": ["expo-eas-client@1.0.8", "", {}, "sha512-5or11NJhSeDoHHI6zyvQDW2cz/yFyE+1Cz8NTs5NK8JzC7J0JrkUgptWtxyfB6Xs/21YRNifd3qgbBN3hfKVgA=="],
 

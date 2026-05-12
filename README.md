@@ -71,7 +71,7 @@ bunx tsc --noEmit
 
 ## Android production builds (MEDVBA)
 
-Internal checklist for Play / EAS lives in [`.cursor/rules/eas-android-release.mdc`](./.cursor/rules/eas-android-release.mdc) (Bun-only lockfile, `expo-doctor`, versionCode, `mapping.txt`, etc.).
+Internal checklist for Play / EAS lives in [`.cursor/rules/eas-android-release.mdc`](./.cursor/rules/eas-android-release.mdc) (Bun-only lockfile, `bun run doctor`, versionCode, `mapping.txt`, etc.).
 
 ---
 

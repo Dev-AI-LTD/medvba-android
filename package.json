@@ -31,7 +31,8 @@
     "db:migrate:clear": "tsx scripts/migrate-questions-to-supabase.ts --clear",
     "apple:jwt-supabase": "node scripts/generate-apple-jwt-supabase.mjs",
     "release:decode-jwt": "node scripts/decode-jwt-payload.mjs",
-    "release:preflight": "bun install --frozen-lockfile && npx expo-doctor && bunx tsc --noEmit",
+    "doctor": "node scripts/postinstall-dedupe-kinde-expo.mjs && expo-doctor",
+    "release:preflight": "bun install --frozen-lockfile && bun run doctor && bunx tsc --noEmit",
     "release:android": "npx eas-cli build --platform android --profile production --non-interactive --no-wait",
     "postinstall": "node scripts/postinstall-dedupe-kinde-expo.mjs"
   },
@@ -115,6 +116,7 @@
     "detox": "^20.50.1",
     "eslint": "^9.31.0",
     "eslint-config-expo": "~10.0.0",
+    "expo-doctor": "1.18.21",
     "openapi-typescript": "^7.10.1",
     "react-test-renderer": "19.1.0",
     "typescript": "~5.9.2"

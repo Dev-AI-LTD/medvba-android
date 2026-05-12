@@ -8,12 +8,12 @@ alwaysApply: true
 ## Package manager (obligatoriu)
 
 - Folosește **doar Bun** pentru dependențe: `bun install`. Comite **`bun.lock`**.
-- **Nu** comite `package-lock.json` (e în `.gitignore`). Două lockfile-uri fac **`npx expo-doctor`** și uneori EAS să eșueze.
+- **Nu** comite `package-lock.json` (e în `.gitignore`). Două lockfile-uri fac **`bun run doctor`** / **`npx expo-doctor`** și uneori EAS să eșueze.
 - După ce modifici `package.json`: rulează `bun install`, apoi verifică `bun install --frozen-lockfile` (trebuie să treacă înainte de push/build).
 
 ## Înainte de fiecare release Android
 
-1. **`npx expo-doctor`** — trebuie **0 failed** (rulează din `medvba-android`).
+1. **`bun run doctor`** (sau după `bun install`: `npx expo-doctor` din rădăcina proiectului) — trebuie **0 failed**. Nu folosi `npx -y expo-doctor` fără proiect: instalează alt pachet / versiune decât cea pinuită în `devDependencies`. Scriptul `doctor` rulează întâi dedupe-ul Kinde (evită duplicate native modules).
 2. **`app.config.ts`**: crește **`version`** (semver), **`android.versionCode`** (+1 față de ultimul din Play), **`ios.buildNumber`** (aliniat sau +1).
 3. **`eas.json`**: păstrează `buildType: app-bundle` și `buildArtifactPaths` cu `android/app/build/outputs/mapping/release/mapping.txt` pentru **mapping / deobfuscare R8**.
 4. **`app.config.ts`**: `expo-build-properties` → `enableMinifyInReleaseBuilds: true` (necesar pentru `mapping.txt`).
@@ -24,7 +24,7 @@ alwaysApply: true
 ```bash
 cd medvba-android
 bun install --frozen-lockfile
-npx expo-doctor
+bun run doctor
 npx eas-cli build --platform android --profile production --non-interactive --no-wait
 ```
 

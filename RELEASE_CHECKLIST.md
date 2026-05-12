@@ -207,7 +207,7 @@ After `bun install`, **`postinstall`** removes nested `@kinde/expo` / `expo-auth
 ```bash
 cd "C:\Users\octav\Desktop\MEDVBA3\medvba-android" \
 && bun install --frozen-lockfile \
-&& npx expo-doctor \
+&& bun run doctor \
 && bunx tsc --noEmit \
 && bun run test:ci \
 && npx eas-cli build --platform android --profile production --non-interactive --no-wait
@@ -217,7 +217,7 @@ PowerShell (same steps):
 
 ```powershell
 Set-Location "C:\Users\octav\Desktop\MEDVBA3\medvba-android"
-bun install --frozen-lockfile; npx expo-doctor; bunx tsc --noEmit; bun run test:ci; npx eas-cli build --platform android --profile production --non-interactive --no-wait
+bun install --frozen-lockfile; bun run doctor; bunx tsc --noEmit; bun run test:ci; npx eas-cli build --platform android --profile production --non-interactive --no-wait
 ```
 
 Or: `bun run release:preflight` then `bun run release:android`.
