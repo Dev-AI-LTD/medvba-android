@@ -27,21 +27,32 @@ for (const dir of toRemove) {
 
 const kindeJsUtils = path.join(root, "node_modules", "@kinde", "js-utils", "dist", "js-utils.js");
 if (fs.existsSync(kindeJsUtils)) {
-  const source = fs.readFileSync(kindeJsUtils, "utf8");
-  const before = `  default: async () => (await import(
+  let source = fs.readFileSync(kindeJsUtils, "utf8");
+  /** Original upstream (dynamic import). */
+  const beforeDynamic = `  default: async () => (await import(
     /* webpackIgnore: true */
     "./expoSecureStore-D7t_Z1p2.js"
   )).ExpoSecureStore`;
-  const after = `  default: async () => {
+  /** Our older Metro patch — Hermes release compile rejects \`yield import()\` from this shape. */
+  const beforeAwaitImport = `  default: async () => {
     const mod = await import(
       /* webpackIgnore: true */
       "./expoSecureStore-D7t_Z1p2.js"
     );
     return mod.ExpoSecureStore ?? mod.default?.ExpoSecureStore ?? mod.default?.default?.ExpoSecureStore;
   }`;
-  if (source.includes(before)) {
-    fs.writeFileSync(kindeJsUtils, source.replace(before, after));
-    console.log("[postinstall] Patched @kinde/js-utils ExpoSecureStore import for Metro.");
+  /** Metro + Hermes: synchronous require of the CJS chunk (no dynamic import in async). */
+  const afterRequire = `  default: async () => {
+    const mod = require("./expoSecureStore-D7t_Z1p2.js");
+    return mod.ExpoSecureStore ?? mod.default?.ExpoSecureStore ?? mod.default?.default?.ExpoSecureStore;
+  }`;
+  if (source.includes(beforeAwaitImport)) {
+    source = source.replace(beforeAwaitImport, afterRequire);
+    fs.writeFileSync(kindeJsUtils, source);
+    console.log("[postinstall] Patched @kinde/js-utils ExpoSecureStore → require() for Hermes release bundle.");
+  } else if (source.includes(beforeDynamic)) {
+    fs.writeFileSync(kindeJsUtils, source.replace(beforeDynamic, afterRequire));
+    console.log("[postinstall] Patched @kinde/js-utils ExpoSecureStore import for Metro/Hermes.");
   }
 }
 
