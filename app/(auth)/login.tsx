@@ -102,7 +102,7 @@ function LoginScreen() {
       }
     } catch (error) {
       log.error('[Login] Unexpected error:', error);
-      Alert.alert('Error', t('auth.unexpectedError'));
+      Alert.alert(t('common.error'), t('auth.unexpectedError'));
     } finally {
       setIsLoading(false);
     }
@@ -162,7 +162,7 @@ function LoginScreen() {
       }
     } catch (error) {
       log.error('[Login] Social login error:', error);
-      Alert.alert('Error', t('auth.unexpectedError'));
+      Alert.alert(t('common.error'), t('auth.unexpectedError'));
     } finally {
       setIsLoading(false);
     }
@@ -326,7 +326,7 @@ function LoginScreen() {
                     color={theme.colors.primary}
                     testID="loginSubmit"
                   >
-                    {isLoading ? (t('auth.loading') ?? '...') : t('auth.signIn')}
+                    {isLoading ? t('auth.loading') : t('auth.signIn')}
                   </UIButton>
                 </View>
               </Card.Content>

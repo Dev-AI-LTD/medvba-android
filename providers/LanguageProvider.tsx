@@ -8,24 +8,44 @@ import { log } from '@/lib/log';
 
 export type Language = 'en' | 'ro';
 
-const LANGUAGE_STORAGE_KEY = '@medvba_language';
+/** Canonical AsyncStorage key for UI language (`en` default until user picks another in Settings). */
+export const APP_LANGUAGE_STORAGE_KEY = '@medvba_language';
+
+/** Older builds used this key; we read once and migrate to {@link APP_LANGUAGE_STORAGE_KEY}. */
+export const LEGACY_APP_LANGUAGE_STORAGE_KEY = '@medvba_app_language';
+
+/** Default UI language on first install and after account deletion clears storage. */
+export const DEFAULT_APP_LANGUAGE: Language = 'en';
 
 const translations: Record<Language, Record<string, string>> = {
   en,
   ro,
 };
 
+function isSupportedLanguage(value: string | null): value is Language {
+  return value === 'en' || value === 'ro';
+}
+
 export const [LanguageProvider, useLanguage] = createContextHook(() => {
-  const [currentLanguage, setCurrentLanguage] = useState<Language>('en');
+  const [currentLanguage, setCurrentLanguage] = useState<Language>(DEFAULT_APP_LANGUAGE);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadLanguage = async () => {
       try {
-        const storedLanguage = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
-        if (storedLanguage && ['en', 'ro'].includes(storedLanguage)) {
-          setCurrentLanguage(storedLanguage as Language);
-          log.debug('Loaded language from storage:', storedLanguage);
+        let stored = await AsyncStorage.getItem(APP_LANGUAGE_STORAGE_KEY);
+        if (!isSupportedLanguage(stored)) {
+          const legacy = await AsyncStorage.getItem(LEGACY_APP_LANGUAGE_STORAGE_KEY);
+          if (isSupportedLanguage(legacy)) {
+            stored = legacy;
+            await AsyncStorage.setItem(APP_LANGUAGE_STORAGE_KEY, legacy);
+            await AsyncStorage.removeItem(LEGACY_APP_LANGUAGE_STORAGE_KEY);
+            log.debug('Migrated UI language from legacy storage key:', legacy);
+          }
+        }
+        if (isSupportedLanguage(stored)) {
+          setCurrentLanguage(stored);
+          log.debug('Loaded language from storage:', stored);
         }
       } catch (error) {
         log.error('Error loading language:', error);
@@ -39,7 +59,8 @@ export const [LanguageProvider, useLanguage] = createContextHook(() => {
   const changeLanguage = useCallback(async (lang: Language) => {
     try {
       setCurrentLanguage(lang);
-      await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+      await AsyncStorage.setItem(APP_LANGUAGE_STORAGE_KEY, lang);
+      await AsyncStorage.removeItem(LEGACY_APP_LANGUAGE_STORAGE_KEY);
       log.debug('Language changed and saved:', lang);
     } catch (error) {
       log.error('Error saving language:', error);

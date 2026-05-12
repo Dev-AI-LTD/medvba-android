@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { Appbar, Text, Card, useTheme } from 'react-native-paper';
+import { Appbar, Text, Card, useTheme, IconButton } from 'react-native-paper';
 import { UIButton, UITextField } from '@/ui';
 import { useAuth, AUTH_SIGN_IN_CANCELLED } from '@/providers/AuthProvider';
 import { AuthError } from '@supabase/supabase-js';
@@ -114,7 +114,7 @@ export default function SignUpScreen() {
       }
     } catch (error) {
       log.error('[SignUp] Unexpected error:', error);
-      Alert.alert('Error', t('auth.unexpectedError'));
+      Alert.alert(t('common.error'), t('auth.unexpectedError'));
     } finally {
       setIsLoading(false);
     }
@@ -172,7 +172,7 @@ export default function SignUpScreen() {
         }
       } catch (error) {
         log.error('[SignUp] Social sign-up error:', error);
-        Alert.alert('Error', t('auth.unexpectedError'));
+        Alert.alert(t('common.error'), t('auth.unexpectedError'));
       } finally {
         setIsLoading(false);
       }
@@ -322,6 +322,13 @@ export default function SignUpScreen() {
                     placeholder={t('auth.createPasswordPlaceholder')}
                     secureTextEntry={!showPassword}
                     style={styles.input}
+                    right={
+                      <IconButton
+                        icon={showPassword ? 'eye-off' : 'eye'}
+                        onPress={() => setShowPassword(!showPassword)}
+                        accessibilityLabel={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+                      />
+                    }
                   />
                 </View>
                 {errors.password ? (
@@ -341,6 +348,15 @@ export default function SignUpScreen() {
                     placeholder={t('auth.confirmPasswordPlaceholder')}
                     secureTextEntry={!showConfirmPassword}
                     style={styles.input}
+                    right={
+                      <IconButton
+                        icon={showConfirmPassword ? 'eye-off' : 'eye'}
+                        onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                        accessibilityLabel={
+                          showConfirmPassword ? t('auth.hidePassword') : t('auth.showPassword')
+                        }
+                      />
+                    }
                   />
                 </View>
                 {errors.confirmPassword ? (
@@ -361,7 +377,7 @@ export default function SignUpScreen() {
                     disabled={isLoading || !isSupabaseConfigured}
                     color={theme.colors.primary}
                   >
-                    {isLoading ? (t('auth.loading') ?? '...') : t('auth.createAccount')}
+                    {isLoading ? t('auth.loading') : t('auth.createAccount')}
                   </UIButton>
                 </View>
               </Card.Content>

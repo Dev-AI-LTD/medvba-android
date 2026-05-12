@@ -41,6 +41,7 @@ export const ro: Record<string, string> = {
   'auth.resetFailed': 'Trimiterea emailului a eșuat. Încearcă din nou.',
   'auth.error': 'Eroare',
   'auth.signIn': 'Autentificare',
+  'auth.loading': 'Se încarcă…',
   'auth.signUp': 'Înregistrare',
   'auth.signInWithGoogle': 'Autentificare cu Google',
   'auth.signInWithFacebook': 'Autentificare cu Facebook',
@@ -48,6 +49,8 @@ export const ro: Record<string, string> = {
   'auth.orContinueWithEmail': 'sau continuă cu email',
   'auth.dontHaveAccount': 'Nu ai cont?',
   'auth.alreadyHaveAccount': 'Ai deja cont?',
+  'auth.showPassword': 'Arată parola',
+  'auth.hidePassword': 'Ascunde parola',
   'auth.agreeToTerms': 'Prin crearea unui cont, ești de acord cu',
   'auth.termsOfService': 'Termenii și Condițiile',
   'auth.and': 'și',
@@ -101,8 +104,12 @@ export const ro: Record<string, string> = {
   'home.quickStartAnatomy': 'Start rapid - Anatomie',
   'home.seeAll': 'Vezi tot',
   'home.categoryQuestions': '{current} / {total} întrebări',
+  'home.categoryLockedSubtitle': 'Treci la Premium pentru acces',
   'home.dailyLimitTitle': 'Limită zilnică atinsă',
   'home.dailyLimitMessage': 'Ai răspuns la {count} întrebări astăzi. Treci la Premium pentru acces nelimitat!',
+  'home.freeQuizLimitTitle': 'Întrebări gratuite epuizate',
+  'home.freeQuizLimitMessage':
+    'Ai folosit cele {count} întrebări gratuite pentru astăzi (din orice capitol). Treci la Premium pentru acces nelimitat.',
   'home.later': 'Mai târziu',
   'home.upgradePremiumShort': 'Treci la Premium',
   'home.premiumFeatureTitle': 'Funcție Premium',
@@ -130,8 +137,8 @@ export const ro: Record<string, string> = {
   'quiz.languages': 'Limba itemilor',
   'quiz.difficultyLevels': 'Nivel de dificultate',
   'quiz.practiceUnlimited': 'Antrenament nelimitat',
-  'quiz.freeQuizzesRemaining': '{remaining}/{total} teste gratuite rămase azi',
-  'quiz.dailyLimitReached': 'Limita zilnică de teste atinsă',
+  'quiz.freeQuizzesRemaining': '{remaining}/{total} întrebări gratuite rămase astăzi (orice capitol)',
+  'quiz.dailyLimitReached': 'Limită întrebări gratuite atinsă',
   'quiz.chaptersSubtitle': 'Alege un capitol pentru un test rapid de 10 întrebări.',
   'quiz.allChapters': 'Toate capitolele',
   'quiz.questionsShort': 'Q',
@@ -190,6 +197,18 @@ export const ro: Record<string, string> = {
   'study.room': 'Sală de studiu',
   'study.mcq': 'Test grilă',
 
+  // Tab bar (main navigation)
+  'tabs.home': 'Acasă',
+  'tabs.homeIconA11y': 'Filă Acasă',
+  'tabs.quiz': 'Quiz',
+  'tabs.quizIconA11y': 'Filă Quiz',
+  'tabs.social': 'Social',
+  'tabs.socialIconA11y': 'Filă Social',
+  'tabs.tutor': 'Tutor AI',
+  'tabs.tutorIconA11y': 'Filă Tutor AI',
+  'tabs.profile': 'Profil',
+  'tabs.profileIconA11y': 'Filă Profil',
+
   // Edit Profile
   'editProfile.title': 'Editează Profilul',
   'editProfile.loadingProfile': 'Se încarcă profilul...',
@@ -204,7 +223,9 @@ export const ro: Record<string, string> = {
   'editProfile.cityLabel': 'Oraș',
   'editProfile.cityPlaceholder': 'Orașul tău',
   'editProfile.universityLabel': 'Universitate',
+  'editProfile.universityFacultyLabel': 'Universitate / Facultate',
   'editProfile.universityPlaceholder': 'Universitatea ta',
+  'editProfile.universityExamplePlaceholder': 'ex.: Universitatea de Medicină și Farmacie Carol Davila',
   'editProfile.yearLabel': 'Anul de Studiu',
   'editProfile.yearPlaceholder': '1-6',
   'editProfile.publicProfile': 'Profil Public',
@@ -213,6 +234,9 @@ export const ro: Record<string, string> = {
   'editProfile.nameRequired': 'Te rog introdu numele tău',
   'editProfile.uploadError': 'Nu s-a putut încărca fotografia. Încearcă din nou.',
   'editProfile.updateError': 'Nu s-a putut actualiza profilul. Încearcă din nou.',
+  'editProfile.photoResetTitle': 'Poză resetată',
+  'editProfile.photoResetMessage': 'Poza de profil a fost resetată la avatarul implicit.',
+  'editProfile.photoResetFailed': 'Nu s-a putut reseta poza ({error})',
 
   // Direct Chat
   'chat.loadingChat': 'Se încarcă conversația...',
@@ -258,6 +282,9 @@ export const ro: Record<string, string> = {
   'common.of': 'din',
   'common.cancel': 'Anulează',
   'common.ok': 'OK',
+  'common.error': 'Eroare',
+  'common.you': 'Tu',
+  'common.student': 'Student',
 
   // Profile
   'profile': 'Profil',
@@ -303,6 +330,20 @@ export const ro: Record<string, string> = {
   'profile.motivational.goodStart': 'Start bun! Construiește momentum!',
   'profile.motivational.getStarted': 'Hai să începem săptămâna asta!',
 
+  // User profile detail (/profile/[userId])
+  'userProfile.notFound': 'Profil negăsit',
+  'userProfile.studyStatistics': 'Statistici studiu',
+  'userProfile.sendMessage': 'Trimite mesaj',
+  'userProfile.joined': 'Membru din {date}',
+  'userProfile.yearOfStudySuffix': ' • Anul {year}',
+  'userProfile.studyHours': 'Ore de studiu',
+
+  // 404 / dev modal
+  'notFound.title': 'Pagină negăsită',
+  'notFound.subtitle': 'Pagina pe care o cauți nu există.',
+  'notFound.goHome': 'Acasă',
+  'modal.devTitle': 'Modal',
+
   // AI Tutor
   'tutor.title': 'Tutor AI',
   'tutor.subtitle': 'Pune întrebări de anatomie, fiziologie, patologie și farmacologie.',
@@ -316,15 +357,16 @@ export const ro: Record<string, string> = {
   'tutor.thinking': 'Tutorul analizează întrebarea…',
   'tutor.error': 'A apărut o eroare la generarea răspunsului.',
   'tutor.tryAgain': 'Încearcă din nou',
-  'tutor.freeLimitReachedTitle': 'Limită zilnică AI atinsă',
-  'tutor.freeLimitReachedMessage': 'Planul gratuit include 1 întrebare pe zi pentru Tutorul AI. Trece la Premium pentru întrebări nelimitate, inclusiv cazuri clinice și întrebări tip examen.',
+  'tutor.freeLimitReachedTitle': 'Limită AI gratuită atinsă',
+  'tutor.freeLimitReachedMessage':
+    'Planul gratuit include până la {limit} mesaje Tutor AI într-o fereastră glisantă de 24 de ore. Treci la Premium pentru mesaje nelimitate.',
   'tutor.upgradeButton': 'Treci la Premium',
   'tutor.disclaimerShort': 'Explicațiile AI sunt pentru studiu și nu înlocuiesc raționamentul clinic.',
   'tutor.alwaysAvailable': 'Întotdeauna disponibil',
   'tutor.premium': 'Premium',
   'tutor.upgrade': 'Treci la Premium',
-  'tutor.freeQuestionRemaining': '{remaining}/{total} întrebare gratuită rămasă azi',
-  'tutor.dailyLimitReached': 'Limită zilnică AI atinsă',
+  'tutor.freeQuestionRemaining': '{remaining}/{total} mesaje AI gratuite rămase (fereastră 24 h)',
+  'tutor.dailyLimitReached': 'Limită mesaje AI gratuite atinsă',
   'tutor.tryAsking': 'Încearcă să întrebi:',
   'tutor.welcomeMessage': 'Salut! Sunt tutorul tău AI 🎓 Sunt aici să te ajut să înțelegi concepte complexe, să explic mecanisme și să răspund la orice întrebări despre materia ta. Ce ai vrea să înveți azi?',
   'tutor.suggestion1': 'Explică ciclul cardiac',
@@ -506,7 +548,7 @@ export const ro: Record<string, string> = {
   'settings.title': 'Setări',
   'settings.preferences': 'Preferințe',
   'settings.language': 'Limbă',
-  'settings.languageSubtitle': 'Alege limba preferată',
+  'settings.languageSubtitle': 'Aplicația pornește în engleză. Alege alta mai jos oricând.',
   'settings.notifications': 'Notificări',
   'settings.notificationsSubtitle': 'Gestionează notificările push',
   'settings.appearance': 'Aspect',
@@ -527,6 +569,7 @@ export const ro: Record<string, string> = {
   'settings.contactSupportSubtitle': 'contact@devaieood.com',
   'settings.manageSubscription': 'Gestionează Abonamentul',
   'settings.manageSubscriptionSubtitle': 'Modifică planul, anulează sau restaurează achizițiile',
+  'settings.subscriptionSection': 'Abonament',
   'settings.upgradeTitle': 'Treci la Premium',
   'support.helpCenterTitle': 'Centru de ajutor',
   'support.helpCenterSubtitle': 'Răspunsuri rapide la întrebări frecvente.',
@@ -590,6 +633,40 @@ export const ro: Record<string, string> = {
   'settings.unblockButton': 'Deblochează',
   'settings.blockedDate': 'Blocat pe {date}',
   'settings.cancel': 'Anulează',
+
+  // Delete account
+  'deleteAccount.title': 'Șterge contul',
+  'deleteAccount.alertConfirmTitle': 'Confirmare necesară',
+  'deleteAccount.alertConfirmMessage': 'Te rugăm să scrii DELETE (cu majuscule) pentru a confirma.',
+  'deleteAccount.alertErrorTitle': 'Eroare',
+  'deleteAccount.alertMustBeLoggedIn': 'Trebuie să fii autentificat pentru a șterge contul.',
+  'deleteAccount.alertDeletionFailed': 'Ștergerea a eșuat',
+  'deleteAccount.alertDeletionFailedGeneric':
+    'A apărut o problemă la ștergerea contului. Te rugăm să încerci din nou.',
+  'deleteAccount.successTitle': 'Cont șters',
+  'deleteAccount.successBody':
+    'Contul tău a fost șters definitiv. Îți mulțumim că ai folosit MEDVBA.',
+  'deleteAccount.continue': 'Continuă',
+  'deleteAccount.deletingTitle': 'Se șterge contul…',
+  'deleteAccount.deletingSubtext': 'Poate dura câteva momente',
+  'deleteAccount.warningTitle': 'Acțiune ireversibilă',
+  'deleteAccount.warningBody':
+    'Ștergerea contului MEDVBA elimină definitiv profilul, istoricul la quiz, sălile de studiu pe care le găzduiești și toate datele asociate. Nu se poate anula.',
+  'deleteAccount.sectionWhatDeleted': 'Ce se șterge',
+  'deleteAccount.itemProfile': 'Profil și avatar',
+  'deleteAccount.itemQuizStats': 'Statistici quiz, progres și streak-uri',
+  'deleteAccount.itemStudyRooms': 'Sălile de studiu pe care le găzduiești și sesiunile lor',
+  'deleteAccount.itemReports': 'Raportările trimise de tine și despre tine',
+  'deleteAccount.retentionNoteBeforeLink':
+    'Notă: anumite înregistrări neidentificabile sau cerute legal (de ex. plăți, fiscalitate sau analize agregate care nu te pot identifica) pot fi păstrate de Dev AI LTD în scopuri de conformitate și audit, conform ',
+  'deleteAccount.retentionNoteAfterLink': '.',
+  'deleteAccount.confirmSectionTitle': 'Confirmă ștergerea',
+  'deleteAccount.confirmInstructions':
+    'Scrie cuvântul DELETE mai jos pentru a confirma că vrei să îți ștergi definitiv contul.',
+  'deleteAccount.confirmPlaceholder': 'Scrie DELETE pentru a confirma',
+  'deleteAccount.deleteButton': 'Șterge contul meu',
+  'deleteAccount.footerNote':
+    'Continuând, confirmi că acțiunea este ireversibilă și că toate datele vor fi eliminate definitiv de pe serverele noastre.',
 
   // Notifications Settings
   'notifications.title': 'Notificări',
@@ -815,6 +892,7 @@ export const ro: Record<string, string> = {
   'paywall.subtitle': 'Accesează toate funcțiile premium și accelerează-ți progresul',
   'paywall.loading': 'Se încarcă opțiunile...',
   'paywall.choosePlan': 'Alege Planul Tău',
+  'paywall.errorMessage': 'Abonamentele nu sunt temporar disponibile. Te rugăm să încerci din nou mai târziu.',
   'paywall.yearly': 'Anual',
   'paywall.monthly': 'Lunar',
   'paywall.recommended': 'Recomandat',
@@ -842,7 +920,14 @@ export const ro: Record<string, string> = {
   'paywall.webMessage': 'Abonamentele sunt disponibile în aplicația iOS și Android. Descarcă aplicația pentru a trece la Pro.',
   'paywall.expoGoMessage': 'Abonamentele necesită un build de dezvoltare. Construiește cu EAS pentru a testa achizițiile.',
   'paywall.webSubtext': 'Abonamentul tău se va sincroniza pe toate dispozitivele.',
+  'paywall.freeTierHeading': 'Ce primești în planul gratuit',
   'paywall.goBack': 'Înapoi',
+
+  // Free tier (included with account)
+  'subscription.freeFeature1': '{count} răspunsuri gratuite la quiz pe zi, din orice capitol alegi',
+  'subscription.freeFeature2': 'Acces la toate cele peste 30.000 de întrebări',
+  'subscription.freeFeature3': 'Statistici de bază',
+  'subscription.freeFeature4': 'Comunitate de învățare',
 
   // Premium Features
   'premium.feature1': 'Toate cele 30.000+ întrebări de anatomie',

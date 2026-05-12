@@ -101,9 +101,13 @@ export const es: Record<string, string> = {
   'home.quickStartAnatomy': 'Inicio rápido - Anatomía',
   'home.seeAll': 'Ver todo',
   'home.categoryQuestions': '{current} / {total} preguntas',
+  'home.categoryLockedSubtitle': 'Actualiza a Premium para acceder',
   'home.quickQuiz': 'Cuestionario rápido',
   'home.practiceMode': 'Práctica',
   'home.examMode': 'Simulación de examen',
+  'home.freeQuizLimitTitle': 'Preguntas gratuitas agotadas',
+  'home.freeQuizLimitMessage':
+    'Has usado tus {count} preguntas gratuitas de hoy (en cualquier capítulo). Pasa a Premium para acceso ilimitado.',
 
   // Quiz Screen
   'quiz.title': 'Test de tipo test',
@@ -122,8 +126,8 @@ export const es: Record<string, string> = {
   'quiz.languages': 'Idioma de las preguntas',
   'quiz.difficultyLevels': 'Niveles de dificultad',
   'quiz.practiceUnlimited': 'Práctica ilimitada',
-  'quiz.freeQuizzesRemaining': '{remaining}/{total} tests gratuitos restantes hoy',
-  'quiz.dailyLimitReached': 'Límite diario de tests alcanzado',
+  'quiz.freeQuizzesRemaining': '{remaining}/{total} preguntas gratuitas restantes hoy (cualquier capítulo)',
+  'quiz.dailyLimitReached': 'Límite de preguntas gratuitas alcanzado',
 
   // Quiz Session
   'session.loading': 'Cargando preguntas…',
@@ -171,6 +175,18 @@ export const es: Record<string, string> = {
   'study.room': 'Sala de estudio',
   'study.mcq': 'Cuestionario de opción múltiple',
 
+  // Tab bar (main navigation)
+  'tabs.home': 'Inicio',
+  'tabs.homeIconA11y': 'Pestaña de inicio',
+  'tabs.quiz': 'Quiz',
+  'tabs.quizIconA11y': 'Pestaña de quiz',
+  'tabs.social': 'Social',
+  'tabs.socialIconA11y': 'Pestaña social',
+  'tabs.tutor': 'Tutor IA',
+  'tabs.tutorIconA11y': 'Pestaña del tutor IA',
+  'tabs.profile': 'Perfil',
+  'tabs.profileIconA11y': 'Pestaña de perfil',
+
   // Edit Profile
   'editProfile.title': 'Editar Perfil',
   'editProfile.loadingProfile': 'Cargando perfil...',
@@ -185,7 +201,9 @@ export const es: Record<string, string> = {
   'editProfile.cityLabel': 'Ciudad',
   'editProfile.cityPlaceholder': 'Tu ciudad',
   'editProfile.universityLabel': 'Universidad',
+  'editProfile.universityFacultyLabel': 'Universidad / Facultad',
   'editProfile.universityPlaceholder': 'Tu universidad',
+  'editProfile.universityExamplePlaceholder': 'p. ej., Universidad de Medicina Carol Davila',
   'editProfile.yearLabel': 'Año de Estudio',
   'editProfile.yearPlaceholder': '1-6',
   'editProfile.publicProfile': 'Perfil Público',
@@ -194,6 +212,9 @@ export const es: Record<string, string> = {
   'editProfile.nameRequired': 'Por favor ingresa tu nombre',
   'editProfile.uploadError': 'No se pudo subir la foto. Por favor intenta de nuevo.',
   'editProfile.updateError': 'No se pudo actualizar el perfil. Por favor intenta de nuevo.',
+  'editProfile.photoResetTitle': 'Foto restablecida',
+  'editProfile.photoResetMessage': 'Tu foto de perfil se ha restablecido al avatar predeterminado.',
+  'editProfile.photoResetFailed': 'No se pudo restablecer la foto ({error})',
 
   // Direct Chat
   'chat.loadingChat': 'Cargando chat...',
@@ -239,6 +260,9 @@ export const es: Record<string, string> = {
   'common.of': 'de',
   'common.cancel': 'Cancelar',
   'common.ok': 'OK',
+  'common.error': 'Error',
+  'common.you': 'Tú',
+  'common.student': 'Estudiante',
 
   // Profile
   'profile': 'Perfil',
@@ -283,6 +307,20 @@ export const es: Record<string, string> = {
   'profile.motivational.goodStart': '¡Buen comienzo! ¡Genera impulso!',
   'profile.motivational.getStarted': '¡Comencemos esta semana!',
 
+  // User profile detail (/profile/[userId])
+  'userProfile.notFound': 'Perfil no encontrado',
+  'userProfile.studyStatistics': 'Estadísticas de estudio',
+  'userProfile.sendMessage': 'Enviar mensaje',
+  'userProfile.joined': 'Se unió en {date}',
+  'userProfile.yearOfStudySuffix': ' • Año {year}',
+  'userProfile.studyHours': 'Horas de estudio',
+
+  // 404 / dev modal
+  'notFound.title': 'Página no encontrada',
+  'notFound.subtitle': 'La página que buscas no existe.',
+  'notFound.goHome': 'Ir al inicio',
+  'modal.devTitle': 'Modal',
+
   // AI Tutor
   'tutor.title': 'Tutor IA',
   'tutor.subtitle': 'Haz preguntas de anatomía, fisiología, patología y farmacología.',
@@ -296,15 +334,16 @@ export const es: Record<string, string> = {
   'tutor.thinking': 'El tutor está analizando tu pregunta…',
   'tutor.error': 'Se ha producido un error al generar la respuesta.',
   'tutor.tryAgain': 'Intentar de nuevo',
-  'tutor.freeLimitReachedTitle': 'Límite diario de IA alcanzado',
-  'tutor.freeLimitReachedMessage': 'El plan gratuito incluye 1 pregunta al día para el Tutor IA. Pasa a Premium para preguntas ilimitadas, incluidos casos clínicos y preguntas tipo examen.',
+  'tutor.freeLimitReachedTitle': 'Límite de IA gratuita alcanzado',
+  'tutor.freeLimitReachedMessage':
+    'El plan gratuito incluye hasta {limit} mensajes del Tutor IA por periodo móvil de 24 horas. Pasa a Premium para mensajes ilimitados.',
   'tutor.upgradeButton': 'Pasar a Premium',
   'tutor.disclaimerShort': 'Las explicaciones de la IA son para apoyo al estudio y no sustituyen el juicio clínico.',
   'tutor.alwaysAvailable': 'Siempre disponible',
   'tutor.premium': 'Premium',
   'tutor.upgrade': 'Upgrade',
-  'tutor.freeQuestionRemaining': '{remaining}/{total} pregunta gratuita restante hoy',
-  'tutor.dailyLimitReached': 'Límite diario de IA alcanzado',
+  'tutor.freeQuestionRemaining': '{remaining}/{total} mensajes de IA gratis restantes (ventana móvil de 24 h)',
+  'tutor.dailyLimitReached': 'Límite de mensajes de IA gratuita alcanzado',
   'tutor.tryAsking': 'Prueba a preguntar:',
   'tutor.welcomeMessage': '¡Hola! Soy tu tutor IA 🎓 Estoy aquí para ayudarte a entender conceptos complejos, explicar mecanismos y responder cualquier pregunta sobre tu temario. ¿Qué te gustaría aprender hoy?',
   'tutor.suggestion1': 'Explica el ciclo cardíaco',
@@ -473,7 +512,7 @@ export const es: Record<string, string> = {
   'settings.title': 'Configuración',
   'settings.preferences': 'Preferencias',
   'settings.language': 'Idioma',
-  'settings.languageSubtitle': 'Elige tu idioma preferido',
+  'settings.languageSubtitle': 'La app abre en inglés. Cambia el idioma abajo cuando quieras.',
   'settings.notifications': 'Notificaciones',
   'settings.notificationsSubtitle': 'Gestionar notificaciones push',
   'settings.appearance': 'Apariencia',
@@ -494,6 +533,7 @@ export const es: Record<string, string> = {
   'settings.contactSupportSubtitle': 'contact@devaieood.com',
   'settings.manageSubscription': 'Gestionar suscripción',
   'settings.manageSubscriptionSubtitle': 'Cambiar plan, cancelar o restaurar compras',
+  'settings.subscriptionSection': 'Suscripción',
   'support.helpCenterTitle': 'Centro de ayuda',
   'support.helpCenterSubtitle': 'Respuestas rápidas a preguntas comunes.',
   'support.contactSupport': 'Contactar soporte',
@@ -556,6 +596,40 @@ export const es: Record<string, string> = {
   'settings.unblockButton': 'Desbloquear',
   'settings.blockedDate': 'Bloqueado el {date}',
   'settings.cancel': 'Cancelar',
+
+  // Delete account
+  'deleteAccount.title': 'Eliminar cuenta',
+  'deleteAccount.alertConfirmTitle': 'Confirmación necesaria',
+  'deleteAccount.alertConfirmMessage': 'Escribe DELETE (en mayúsculas) para confirmar.',
+  'deleteAccount.alertErrorTitle': 'Error',
+  'deleteAccount.alertMustBeLoggedIn': 'Debes iniciar sesión para eliminar tu cuenta.',
+  'deleteAccount.alertDeletionFailed': 'No se pudo eliminar',
+  'deleteAccount.alertDeletionFailedGeneric':
+    'Algo salió mal al eliminar tu cuenta. Por favor intenta de nuevo.',
+  'deleteAccount.successTitle': 'Cuenta eliminada',
+  'deleteAccount.successBody':
+    'Tu cuenta se ha eliminado de forma permanente. Gracias por usar MEDVBA.',
+  'deleteAccount.continue': 'Continuar',
+  'deleteAccount.deletingTitle': 'Eliminando tu cuenta…',
+  'deleteAccount.deletingSubtext': 'Esto puede tardar unos momentos',
+  'deleteAccount.warningTitle': 'Esta acción es permanente',
+  'deleteAccount.warningBody':
+    'Eliminar tu cuenta de MEDVBA borrará de forma permanente tu perfil, historial de cuestionarios, las salas de estudio que hospedas y todos los datos asociados. No se puede deshacer.',
+  'deleteAccount.sectionWhatDeleted': 'Qué se eliminará',
+  'deleteAccount.itemProfile': 'Perfil y avatar',
+  'deleteAccount.itemQuizStats': 'Estadísticas de quiz, progreso y rachas',
+  'deleteAccount.itemStudyRooms': 'Las salas de estudio que hospedas y sus sesiones',
+  'deleteAccount.itemReports': 'Reportes que enviaste y reportes sobre ti',
+  'deleteAccount.retentionNoteBeforeLink':
+    'Nota: ciertos registros no identificables o legalmente requeridos (por ejemplo, pagos, impuestos o analíticas agregadas que no permiten identificarte) pueden conservarse por Dev AI LTD para cumplimiento y auditoría, según se describe en nuestra ',
+  'deleteAccount.retentionNoteAfterLink': '.',
+  'deleteAccount.confirmSectionTitle': 'Confirmar eliminación',
+  'deleteAccount.confirmInstructions':
+    'Escribe la palabra DELETE abajo para confirmar que quieres eliminar tu cuenta de forma permanente.',
+  'deleteAccount.confirmPlaceholder': 'Escribe DELETE para confirmar',
+  'deleteAccount.deleteButton': 'Eliminar mi cuenta',
+  'deleteAccount.footerNote':
+    'Al continuar, reconoces que esta acción es irreversible y que todos tus datos se eliminarán de forma permanente de nuestros servidores.',
 
   // Permissions
   'permissions.zoom.title': 'Unirse a sala de estudio',
@@ -808,7 +882,14 @@ export const es: Record<string, string> = {
   'paywall.webMessage': 'Las suscripciones están disponibles en la aplicación iOS y Android. Descarga la aplicación para actualizar a Pro.',
   'paywall.expoGoMessage': 'Las suscripciones requieren un build de desarrollo. Construye con EAS para probar compras.',
   'paywall.webSubtext': 'Tu suscripción se sincronizará en todos tus dispositivos.',
+  'paywall.freeTierHeading': 'Qué incluye el plan gratuito',
   'paywall.goBack': 'Volver',
+
+  // Free tier (included with account)
+  'subscription.freeFeature1': '{count} respuestas gratis al cuestionario por día, de cualquier capítulo que elijas',
+  'subscription.freeFeature2': 'Acceso a más de 30.000 preguntas',
+  'subscription.freeFeature3': 'Estadísticas básicas',
+  'subscription.freeFeature4': 'Comunidad de aprendizaje',
 
   // Premium Features
   'premium.feature1': 'Todas las 30,000+ preguntas de anatomía',

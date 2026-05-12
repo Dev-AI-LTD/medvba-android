@@ -10,7 +10,7 @@ import Constants from "expo-constants";
 
 import { PaperProvider } from "react-native-paper";
 import { QuizProgressProvider } from "@/providers/QuizProgressProvider";
-import { LanguageProvider } from "@/providers/LanguageProvider";
+import { LanguageProvider, useLanguage } from "@/providers/LanguageProvider";
 import { KindeAuthContext, KindeAuthProvider } from "@kinde/expo";
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import { SubscriptionProvider } from "@/providers/SubscriptionProvider";
@@ -137,16 +137,20 @@ const queryClient = new QueryClient({
   },
 });
 
-function useProtectedRoute(splashAvailable: boolean) {
-  const { isAuthenticated, isLoading, hasCompletedOnboarding } = useAuth();
+function useProtectedRoute(splashAvailable: boolean, languageBootstrap: boolean) {
+  const { isAuthenticated, isLoading, isAuthBusy, hasCompletedOnboarding } = useAuth();
   const segments = useSegments();
   const router = useRouter();
   const [splashHidden, setSplashHidden] = React.useState(false);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || isAuthBusy || languageBootstrap) return;
 
     const segs = segments as readonly string[];
+    if (segs.length === 0 || segs[0] === undefined) {
+      return;
+    }
+
     const inAuthGroup = segs[0] === '(auth)';
     const isOnboarding = inAuthGroup && segs[1] === 'onboarding';
 
@@ -176,24 +180,28 @@ function useProtectedRoute(splashAvailable: boolean) {
       log.info('[Auth] Redirecting to tabs');
       router.replace('/(tabs)');
     }
-  }, [isAuthenticated, isLoading, hasCompletedOnboarding, segments, router, splashHidden, splashAvailable]);
+  }, [
+    isAuthenticated,
+    isLoading,
+    isAuthBusy,
+    hasCompletedOnboarding,
+    segments,
+    router,
+    splashHidden,
+    splashAvailable,
+    languageBootstrap,
+  ]);
 
-  return isLoading;
+  return isLoading || isAuthBusy || languageBootstrap;
 }
 
 function RootLayoutNav({ splashAvailable }: { splashAvailable: boolean }) {
-  const isLoading = useProtectedRoute(splashAvailable);
+  const { isLoading: isLanguageBootstrapping } = useLanguage();
+  /** Auth bootstrap overlay — Stack stays mounted so `Redirect` / `router.replace` to `(auth)` always has a navigator. */
+  const showAuthBootstrapOverlay = useProtectedRoute(splashAvailable, isLanguageBootstrapping);
   const segments = useSegments();
   const { colors, colorScheme } = useTheme();
   const inAuthGroup = segments[0] === "(auth)";
-
-  if (isLoading) {
-    return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
 
   const envSource = Constants.executionEnvironment ? ` (${Constants.executionEnvironment})` : "";
   const showEnvBanner = !isSupabaseConfigured && __DEV__ && !inAuthGroup;
@@ -208,6 +216,7 @@ function RootLayoutNav({ splashAvailable }: { splashAvailable: boolean }) {
           </Text>
         </View>
       )}
+      <View style={{ flex: 1 }}>
       <Stack
         key={colorScheme}
         screenOptions={{ 
@@ -255,9 +264,23 @@ function RootLayoutNav({ splashAvailable }: { splashAvailable: boolean }) {
           animation: 'slide_from_bottom',
           headerShown: true,
           headerShadowVisible: false,
-        }} 
+        }}
       />
     </Stack>
+      {showAuthBootstrapOverlay && (
+        <View
+          style={[
+            StyleSheet.absoluteFillObject,
+            styles.loadingContainer,
+            { backgroundColor: colors.background, zIndex: 100 },
+          ]}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      )}
+      </View>
     </>
   );
 }

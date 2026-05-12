@@ -41,6 +41,7 @@ export const en: Record<string, string> = {
   'auth.resetFailed': 'Failed to send reset email. Please try again.',
   'auth.error': 'Error',
   'auth.signIn': 'Sign In',
+  'auth.loading': 'Loading…',
   'auth.signUp': 'Sign Up',
   'auth.signInWithGoogle': 'Sign in with Google',
   'auth.signInWithFacebook': 'Sign in with Facebook',
@@ -103,8 +104,12 @@ export const en: Record<string, string> = {
   'home.quickStartAnatomy': 'Quick Start - Anatomy',
   'home.seeAll': 'See all',
   'home.categoryQuestions': '{current} / {total} questions',
+  'home.categoryLockedSubtitle': 'Upgrade to Premium to access',
   'home.dailyLimitTitle': 'Daily Limit Reached',
   'home.dailyLimitMessage': 'You have answered {count} questions today. Upgrade to Premium for unlimited access!',
+  'home.freeQuizLimitTitle': 'Free questions used',
+  'home.freeQuizLimitMessage':
+    'You have used your {count} free questions for today (any chapter). Upgrade to Premium for unlimited access.',
   'home.later': 'Later',
   'home.upgradePremiumShort': 'Upgrade Premium',
   'home.premiumFeatureTitle': 'Premium Feature',
@@ -132,8 +137,8 @@ export const en: Record<string, string> = {
   'quiz.languages': 'Question languages',
   'quiz.difficultyLevels': 'Difficulty levels',
   'quiz.practiceUnlimited': 'Unlimited practice',
-  'quiz.freeQuizzesRemaining': '{remaining}/{total} free quizzes remaining today',
-  'quiz.dailyLimitReached': 'Daily quiz limit reached',
+  'quiz.freeQuizzesRemaining': '{remaining}/{total} free questions left today (any chapter)',
+  'quiz.dailyLimitReached': 'Free question limit reached',
   'quiz.chaptersSubtitle': 'Choose a chapter for a 10-question quick quiz.',
   'quiz.allChapters': 'All chapters',
   'quiz.questionsShort': 'Q',
@@ -193,7 +198,9 @@ export const en: Record<string, string> = {
   'editProfile.cityLabel': 'City',
   'editProfile.cityPlaceholder': 'Your city',
   'editProfile.universityLabel': 'University',
+  'editProfile.universityFacultyLabel': 'University / Faculty',
   'editProfile.universityPlaceholder': 'Your university',
+  'editProfile.universityExamplePlaceholder': 'e.g., Carol Davila University of Medicine and Pharmacy',
   'editProfile.yearLabel': 'Year of Study',
   'editProfile.yearPlaceholder': '1-6',
   'editProfile.publicProfile': 'Public Profile',
@@ -202,6 +209,9 @@ export const en: Record<string, string> = {
   'editProfile.nameRequired': 'Please enter your name',
   'editProfile.uploadError': 'Failed to upload photo. Please try again.',
   'editProfile.updateError': 'Failed to update profile. Please try again.',
+  'editProfile.photoResetTitle': 'Photo reset',
+  'editProfile.photoResetMessage': 'Your profile photo has been reset to the default avatar.',
+  'editProfile.photoResetFailed': 'Could not reset photo ({error})',
 
   // Direct Chat
   'chat.loadingChat': 'Loading chat...',
@@ -247,6 +257,9 @@ export const en: Record<string, string> = {
   'common.of': 'of',
   'common.cancel': 'Cancel',
   'common.ok': 'OK',
+  'common.error': 'Error',
+  'common.you': 'You',
+  'common.student': 'Student',
 
   // Medical Subjects
   'subject.anatomy': 'Anatomy',
@@ -260,6 +273,18 @@ export const en: Record<string, string> = {
   'study.session': 'Study Session',
   'study.room': 'Study Room',
   'study.mcq': 'MCQ',
+
+  // Tab bar (main navigation)
+  'tabs.home': 'Home',
+  'tabs.homeIconA11y': 'Home tab',
+  'tabs.quiz': 'Quiz',
+  'tabs.quizIconA11y': 'Quiz tab',
+  'tabs.social': 'Social',
+  'tabs.socialIconA11y': 'Social tab',
+  'tabs.tutor': 'AI Tutor',
+  'tabs.tutorIconA11y': 'AI Tutor tab',
+  'tabs.profile': 'Profile',
+  'tabs.profileIconA11y': 'Profile tab',
 
   // Profile
   'profile': 'Profile',
@@ -305,6 +330,20 @@ export const en: Record<string, string> = {
   'profile.motivational.goodStart': 'Good start! Build momentum!',
   'profile.motivational.getStarted': 'Let\'s get started this week!',
 
+  // User profile detail (/profile/[userId])
+  'userProfile.notFound': 'Profile not found',
+  'userProfile.studyStatistics': 'Study Statistics',
+  'userProfile.sendMessage': 'Send Message',
+  'userProfile.joined': 'Joined {date}',
+  'userProfile.yearOfStudySuffix': ' • Year {year}',
+  'userProfile.studyHours': 'Study Hours',
+
+  // 404 / dev modal
+  'notFound.title': 'Page not found',
+  'notFound.subtitle': 'The page you are looking for does not exist.',
+  'notFound.goHome': 'Go home',
+  'modal.devTitle': 'Modal',
+
   // AI Tutor
   'tutor.title': 'AI Tutor',
   'tutor.subtitle': 'Ask questions about anatomy, physiology, pathology, and pharmacology.',
@@ -318,15 +357,16 @@ export const en: Record<string, string> = {
   'tutor.thinking': 'The tutor is analyzing your question…',
   'tutor.error': 'Something went wrong while generating the answer.',
   'tutor.tryAgain': 'Try again',
-  'tutor.freeLimitReachedTitle': 'Daily AI limit reached',
-  'tutor.freeLimitReachedMessage': 'Free plan includes 1 AI Tutor question per day. Upgrade to continue asking clinical and exam-style questions.',
+  'tutor.freeLimitReachedTitle': 'Free AI limit reached',
+  'tutor.freeLimitReachedMessage':
+    'The free plan includes up to {limit} AI Tutor messages per rolling 24-hour period. Upgrade to Premium for unlimited messages.',
   'tutor.upgradeButton': 'Upgrade to Premium',
   'tutor.disclaimerShort': 'AI explanations are for study support and do not replace clinical judgment.',
   'tutor.alwaysAvailable': 'Always available',
   'tutor.premium': 'Premium',
   'tutor.upgrade': 'Upgrade',
-  'tutor.freeQuestionRemaining': '{remaining}/{total} free question remaining today',
-  'tutor.dailyLimitReached': 'Daily AI question limit reached',
+  'tutor.freeQuestionRemaining': '{remaining}/{total} free AI messages left (rolling 24 hours)',
+  'tutor.dailyLimitReached': 'Free AI message limit reached',
   'tutor.tryAsking': 'Try asking:',
   'tutor.welcomeMessage': "Hello! I'm your AI tutor 🎓 I'm here to help you understand complex concepts, explain mechanisms, and answer any questions about your coursework. What would you like to learn about today?",
   'tutor.suggestion1': 'Explain the cardiac cycle',
@@ -508,7 +548,7 @@ export const en: Record<string, string> = {
   'settings.title': 'Settings',
   'settings.preferences': 'Preferences',
   'settings.language': 'Language',
-  'settings.languageSubtitle': 'Choose your preferred language',
+  'settings.languageSubtitle': 'The app opens in English. Pick another language anytime below.',
   'settings.notifications': 'Notifications',
   'settings.notificationsSubtitle': 'Manage push notifications',
   'settings.appearance': 'Appearance',
@@ -529,6 +569,7 @@ export const en: Record<string, string> = {
   'settings.contactSupportSubtitle': 'contact@devaieood.com',
   'settings.manageSubscription': 'Manage Subscription',
   'settings.manageSubscriptionSubtitle': 'Change plan, cancel, or restore purchases',
+  'settings.subscriptionSection': 'Subscription',
   'settings.upgradeTitle': 'Upgrade to Premium',
   'support.helpCenterTitle': 'Help Center',
   'support.helpCenterSubtitle': 'Quick answers to common questions.',
@@ -592,6 +633,40 @@ export const en: Record<string, string> = {
   'settings.unblockButton': 'Unblock',
   'settings.blockedDate': 'Blocked {date}',
   'settings.cancel': 'Cancel',
+
+  // Delete account
+  'deleteAccount.title': 'Delete Account',
+  'deleteAccount.alertConfirmTitle': 'Confirmation required',
+  'deleteAccount.alertConfirmMessage': 'Please type DELETE (in capital letters) to confirm.',
+  'deleteAccount.alertErrorTitle': 'Error',
+  'deleteAccount.alertMustBeLoggedIn': 'You must be logged in to delete your account.',
+  'deleteAccount.alertDeletionFailed': 'Deletion failed',
+  'deleteAccount.alertDeletionFailedGeneric':
+    'Something went wrong while deleting your account. Please try again.',
+  'deleteAccount.successTitle': 'Account deleted',
+  'deleteAccount.successBody':
+    'Your account has been permanently deleted. Thank you for using MEDVBA.',
+  'deleteAccount.continue': 'Continue',
+  'deleteAccount.deletingTitle': 'Deleting your account…',
+  'deleteAccount.deletingSubtext': 'This may take a moment',
+  'deleteAccount.warningTitle': 'This action is permanent',
+  'deleteAccount.warningBody':
+    'Deleting your MEDVBA account will permanently remove your profile, quiz history, study rooms you host, and all associated data. This action cannot be undone.',
+  'deleteAccount.sectionWhatDeleted': 'What will be deleted',
+  'deleteAccount.itemProfile': 'Profile and avatar',
+  'deleteAccount.itemQuizStats': 'Quiz stats, progress, and streaks',
+  'deleteAccount.itemStudyRooms': 'Study rooms you host and their sessions',
+  'deleteAccount.itemReports': 'Reports you sent and reports about you',
+  'deleteAccount.retentionNoteBeforeLink':
+    'Note: Certain non-identifiable or legally required records (for example, payment or tax records, or aggregated analytics that cannot be linked back to you) may be retained by Dev AI LTD for compliance and auditing purposes, as described in our ',
+  'deleteAccount.retentionNoteAfterLink': '.',
+  'deleteAccount.confirmSectionTitle': 'Confirm deletion',
+  'deleteAccount.confirmInstructions':
+    'Type the word DELETE below to confirm you want to permanently delete your account.',
+  'deleteAccount.confirmPlaceholder': 'Type DELETE to confirm',
+  'deleteAccount.deleteButton': 'Delete my account',
+  'deleteAccount.footerNote':
+    'By proceeding, you acknowledge that this action is irreversible and all your data will be permanently removed from our servers.',
 
   // Notifications Settings
   'notifications.title': 'Notifications',
@@ -845,7 +920,14 @@ export const en: Record<string, string> = {
   'paywall.webMessage': 'Subscriptions are available in the iOS and Android app. Download the app to upgrade to Pro.',
   'paywall.expoGoMessage': 'Subscriptions require a development build. Build with EAS to test purchases.',
   'paywall.webSubtext': 'Your subscription will sync across all your devices.',
+  'paywall.freeTierHeading': 'What you get on the Free plan',
   'paywall.goBack': 'Go Back',
+
+  // Free tier (included with account)
+  'subscription.freeFeature1': '{count} free quiz answers per day, from any chapter you choose',
+  'subscription.freeFeature2': 'Access to all 30,000+ questions',
+  'subscription.freeFeature3': 'Basic statistics',
+  'subscription.freeFeature4': 'Learning community',
 
   // Premium Features
   'premium.feature1': 'All 30,000+ anatomy questions',

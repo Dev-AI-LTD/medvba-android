@@ -88,15 +88,18 @@ export default function EditProfileScreen() {
       });
       await queryClient.refetchQueries({ queryKey: ['userProfile', user.id] });
       if (Platform.OS !== 'web') {
-        Alert.alert('Photo Reset', 'Your profile photo has been reset to the default avatar.');
+        Alert.alert(t('editProfile.photoResetTitle'), t('editProfile.photoResetMessage'));
       }
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : String(error) || 'Unknown error';
-      Alert.alert('Error', `Failed to reset photo (${errorMsg})`);
+      Alert.alert(
+        t('common.error'),
+        t('editProfile.photoResetFailed').replace('{error}', errorMsg),
+      );
     } finally {
       setIsUploadingPhoto(false);
     }
-  }, [user?.id, updateProfileMutation, refreshProfile, queryClient, applyServerProfilePatch]);
+  }, [user?.id, updateProfileMutation, refreshProfile, queryClient, applyServerProfilePatch, t]);
 
   const handlePhotoSelected = useCallback(async (uri: string) => {
     // Ultimate guard - if picker isn't active, ignore

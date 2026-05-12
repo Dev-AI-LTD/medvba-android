@@ -14,8 +14,8 @@ import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, Link } from 'expo-router';
-import { 
-  X, 
+import {
+  X,
   AlertTriangle,
   User,
   BarChart3,
@@ -24,9 +24,15 @@ import {
   Trash2,
   CheckCircle,
 } from 'lucide-react-native';
+import { TRPCClientError } from '@trpc/client';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
 import { trpc } from '@/lib/trpc';
+import {
+  useLanguage,
+  APP_LANGUAGE_STORAGE_KEY,
+  LEGACY_APP_LANGUAGE_STORAGE_KEY,
+} from '@/providers/LanguageProvider';
 
 const STORAGE_KEYS_TO_CLEAR = [
   'quiz_daily_progress',
@@ -36,19 +42,19 @@ const STORAGE_KEYS_TO_CLEAR = [
   'quiz_weekly_history',
   '@medvba_blocked_users',
   '@medvba_user_reports',
-  '@medvba_app_language',
+  APP_LANGUAGE_STORAGE_KEY,
+  LEGACY_APP_LANGUAGE_STORAGE_KEY,
 ];
 
 type DeletionStep = 'confirm' | 'deleting' | 'success';
 
 export default function DeleteAccountScreen() {
   const router = useRouter();
+  const { t } = useLanguage();
   const { user, signOut } = useAuth();
   const [confirmText, setConfirmText] = useState('');
   const [step, setStep] = useState<DeletionStep>('confirm');
   const deleteAccountMutation = trpc.account.deleteSelf.useMutation();
-  
-
 
   const clearLocalData = async () => {
     console.log('[DeleteAccount] Clearing local data...');
@@ -64,21 +70,25 @@ export default function DeleteAccountScreen() {
     console.log('[DeleteAccount] handleDeleteAccount called');
     console.log('[DeleteAccount] User:', user?.id ? 'Logged in' : 'Not logged in');
     console.log('[DeleteAccount] Confirm text:', confirmText);
-    
+
     if (confirmText.toUpperCase() !== 'DELETE') {
       console.log('[DeleteAccount] Confirmation text does not match DELETE');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Confirmation Required', 'Please type DELETE to confirm.');
+      Alert.alert(t('deleteAccount.alertConfirmTitle'), t('deleteAccount.alertConfirmMessage'), [
+        { text: t('common.ok') },
+      ]);
       return;
     }
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     setStep('deleting');
-    
+
     console.log('[DeleteAccount] Initiating account deletion...');
     if (!user?.id) {
       console.error('[DeleteAccount] No user ID found');
-      Alert.alert('Error', 'You must be logged in to delete your account.');
+      Alert.alert(t('deleteAccount.alertErrorTitle'), t('deleteAccount.alertMustBeLoggedIn'), [
+        { text: t('common.ok') },
+      ]);
       setStep('confirm');
       return;
     }
@@ -90,22 +100,21 @@ export default function DeleteAccountScreen() {
       const result = await deleteAccountMutation.mutateAsync();
       console.log('[DeleteAccount] Backend deletion result:', result);
 
-      // Continue only after backend confirms permanent deletion
       await clearLocalData();
       console.log('[DeleteAccount] Local data cleared');
-      
+
       await signOut();
       console.log('[DeleteAccount] Session cleared via AuthProvider');
-      
-      // Clear any remaining AsyncStorage items
+
       try {
         const allKeys = await AsyncStorage.getAllKeys();
-        const keysToRemove = allKeys.filter(key => 
-          key.includes('supabase') || 
-          key.includes('auth') || 
-          key.includes('session') ||
-          key.includes('quiz') ||
-          key.includes('medvba')
+        const keysToRemove = allKeys.filter(
+          (key) =>
+            key.includes('supabase') ||
+            key.includes('auth') ||
+            key.includes('session') ||
+            key.includes('quiz') ||
+            key.includes('medvba'),
         );
         if (keysToRemove.length > 0) {
           await AsyncStorage.multiRemove(keysToRemove);
@@ -114,23 +123,23 @@ export default function DeleteAccountScreen() {
       } catch (e) {
         console.error('[DeleteAccount] Error clearing additional keys:', e);
       }
-      
+
       setStep('success');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       console.log('[DeleteAccount] Account deletion process completed');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[DeleteAccount] Deletion failed:', error);
-      console.error('[DeleteAccount] Error message:', error?.message);
-      console.error('[DeleteAccount] Error code:', error?.code);
-      console.error('[DeleteAccount] Error data:', error?.data);
       setStep('confirm');
-      Alert.alert(
-        'Deletion Failed',
-        error?.message || 'Something went wrong while deleting your account. Please try again.',
-        [{ text: 'OK' }]
-      );
+      let message = t('deleteAccount.alertDeletionFailedGeneric');
+      if (error instanceof TRPCClientError) {
+        const m = error.message?.trim();
+        if (m) message = m;
+      } else if (error instanceof Error && error.message?.trim()) {
+        message = error.message.trim();
+      }
+      Alert.alert(t('deleteAccount.alertDeletionFailed'), message, [{ text: t('common.ok') }]);
     }
-  }, [confirmText, user?.id, deleteAccountMutation, signOut]);
+  }, [confirmText, user?.id, deleteAccountMutation, signOut, t]);
 
   const handleFinish = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -152,16 +161,10 @@ export default function DeleteAccountScreen() {
             <View style={styles.successIconWrapper}>
               <CheckCircle color={Colors.success} size={64} />
             </View>
-            <Text style={styles.successTitle}>Account Deleted</Text>
-            <Text style={styles.successText}>
-              Your account has been permanently deleted. Thank you for using MEDVBA.
-            </Text>
-            <TouchableOpacity
-              style={styles.finishButton}
-              onPress={handleFinish}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.finishButtonText}>Continue</Text>
+            <Text style={styles.successTitle}>{t('deleteAccount.successTitle')}</Text>
+            <Text style={styles.successText}>{t('deleteAccount.successBody')}</Text>
+            <TouchableOpacity style={styles.finishButton} onPress={handleFinish} activeOpacity={0.8}>
+              <Text style={styles.finishButtonText}>{t('deleteAccount.continue')}</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -180,8 +183,8 @@ export default function DeleteAccountScreen() {
         <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={Colors.error} />
-            <Text style={styles.loadingText}>Deleting your account...</Text>
-            <Text style={styles.loadingSubtext}>This may take a moment</Text>
+            <Text style={styles.loadingText}>{t('deleteAccount.deletingTitle')}</Text>
+            <Text style={styles.loadingSubtext}>{t('deleteAccount.deletingSubtext')}</Text>
           </View>
         </SafeAreaView>
       </View>
@@ -197,21 +200,14 @@ export default function DeleteAccountScreen() {
       />
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.closeButton} 
-            onPress={() => router.back()}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity style={styles.closeButton} onPress={() => router.back()} activeOpacity={0.7}>
             <X color={Colors.text} size={24} />
           </TouchableOpacity>
-          <Text style={styles.title}>Delete Account</Text>
+          <Text style={styles.title}>{t('deleteAccount.title')}</Text>
           <View style={styles.headerSpacer} />
         </View>
 
-        <ScrollView 
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           <View style={styles.warningCard}>
             <LinearGradient
               colors={['rgba(255, 71, 87, 0.15)', 'rgba(255, 71, 87, 0.05)']}
@@ -220,57 +216,53 @@ export default function DeleteAccountScreen() {
             <View style={styles.warningIconWrapper}>
               <AlertTriangle color={Colors.error} size={32} />
             </View>
-            <Text style={styles.warningTitle}>This action is permanent</Text>
-            <Text style={styles.warningText}>
-              Deleting your MEDVBA account will permanently remove your profile, 
-              quiz history, study rooms you host, and all associated data. This action cannot be undone.
-            </Text>
+            <Text style={styles.warningTitle}>{t('deleteAccount.warningTitle')}</Text>
+            <Text style={styles.warningText}>{t('deleteAccount.warningBody')}</Text>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>What will be deleted</Text>
+            <Text style={styles.sectionTitle}>{t('deleteAccount.sectionWhatDeleted')}</Text>
             <View style={styles.deletionList}>
               <View style={styles.deletionItem}>
                 <View style={styles.deletionIconWrapper}>
                   <User color={Colors.textSecondary} size={20} />
                 </View>
-                <Text style={styles.deletionItemText}>Profile and avatar</Text>
+                <Text style={styles.deletionItemText}>{t('deleteAccount.itemProfile')}</Text>
               </View>
               <View style={styles.deletionItem}>
                 <View style={styles.deletionIconWrapper}>
                   <BarChart3 color={Colors.textSecondary} size={20} />
                 </View>
-                <Text style={styles.deletionItemText}>Quiz stats, progress, and streaks</Text>
+                <Text style={styles.deletionItemText}>{t('deleteAccount.itemQuizStats')}</Text>
               </View>
               <View style={styles.deletionItem}>
                 <View style={styles.deletionIconWrapper}>
                   <Users color={Colors.textSecondary} size={20} />
                 </View>
-                <Text style={styles.deletionItemText}>Study rooms you host and their sessions</Text>
+                <Text style={styles.deletionItemText}>{t('deleteAccount.itemStudyRooms')}</Text>
               </View>
               <View style={[styles.deletionItem, styles.deletionItemLast]}>
                 <View style={styles.deletionIconWrapper}>
                   <Flag color={Colors.textSecondary} size={20} />
                 </View>
-                <Text style={styles.deletionItemText}>Reports you sent and reports about you</Text>
+                <Text style={styles.deletionItemText}>{t('deleteAccount.itemReports')}</Text>
               </View>
             </View>
             <Text style={styles.retentionNote}>
-              Note: Certain non-identifiable or legally required records (for example, payment or tax records, or aggregated analytics that cannot be linked back to you) may be retained by Dev AI LTD for compliance and auditing purposes, as described in our{' '}
+              {t('deleteAccount.retentionNoteBeforeLink')}
               <Link href="/legal/privacy-policy" asChild>
-                <Text style={styles.retentionNoteLink}>Privacy Policy</Text>
-              </Link>.
+                <Text style={styles.retentionNoteLink}>{t('auth.privacyPolicy')}</Text>
+              </Link>
+              {t('deleteAccount.retentionNoteAfterLink')}
             </Text>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Confirm deletion</Text>
-            <Text style={styles.confirmInstructions}>
-              Type <Text style={styles.deleteKeyword}>DELETE</Text> below to confirm you want to permanently delete your account.
-            </Text>
+            <Text style={styles.sectionTitle}>{t('deleteAccount.confirmSectionTitle')}</Text>
+            <Text style={styles.confirmInstructions}>{t('deleteAccount.confirmInstructions')}</Text>
             <TextInput
               style={styles.confirmInput}
-              placeholder="Type DELETE to confirm"
+              placeholder={t('deleteAccount.confirmPlaceholder')}
               placeholderTextColor={Colors.textMuted}
               value={confirmText}
               onChangeText={setConfirmText}
@@ -280,21 +272,16 @@ export default function DeleteAccountScreen() {
           </View>
 
           <TouchableOpacity
-            style={[
-              styles.deleteButton,
-              !isDeleteEnabled && styles.deleteButtonDisabled
-            ]}
+            style={[styles.deleteButton, !isDeleteEnabled && styles.deleteButtonDisabled]}
             onPress={handleDeleteAccount}
             disabled={!isDeleteEnabled}
             activeOpacity={0.8}
           >
             <Trash2 color="#FFFFFF" size={20} />
-            <Text style={styles.deleteButtonText}>Delete my account</Text>
+            <Text style={styles.deleteButtonText}>{t('deleteAccount.deleteButton')}</Text>
           </TouchableOpacity>
 
-          <Text style={styles.footerNote}>
-            By proceeding, you acknowledge that this action is irreversible and all your data will be permanently removed from our servers.
-          </Text>
+          <Text style={styles.footerNote}>{t('deleteAccount.footerNote')}</Text>
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -431,10 +418,6 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     marginBottom: 12,
     lineHeight: 22,
-  },
-  deleteKeyword: {
-    color: Colors.error,
-    fontWeight: '700' as const,
   },
   confirmInput: {
     backgroundColor: 'rgba(255,255,255,0.06)',

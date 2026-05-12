@@ -27,6 +27,7 @@ import {
 } from 'lucide-react-native';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useAuth } from '@/providers/AuthProvider';
+import { useLanguage } from '@/providers/LanguageProvider';
 import GlassCard from '@/components/GlassCard';
 import { useUserProfile, useGetOrCreateDirectChat, useUserProgress } from '@/lib/supabase-hooks';
 
@@ -35,12 +36,15 @@ export default function ProfileDetailScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const { user } = useAuth();
   const { colors } = useTheme();
+  const { t, currentLanguage } = useLanguage();
 
   const { data: profile, isLoading: isLoadingProfile } = useUserProfile(userId);
   const { data: progress } = useUserProgress(userId);
   const createOrGetChatMutation = useGetOrCreateDirectChat();
 
   const isOwnProfile = user?.id === userId;
+
+  const dateLocale = currentLanguage === 'ro' ? 'ro-RO' : 'en-US';
 
   const handleStartChat = async () => {
     if (!user?.id || !userId || isOwnProfile) return;
@@ -79,12 +83,12 @@ export default function ProfileDetailScreen() {
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
               <ArrowLeft color={colors.text} size={24} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Profile</Text>
+            <Text style={styles.headerTitle}>{t('profile')}</Text>
             <View style={styles.backButton} />
           </View>
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.loadingText}>Loading profile...</Text>
+            <Text style={styles.loadingText}>{t('editProfile.loadingProfile')}</Text>
           </View>
         </SafeAreaView>
       </View>
@@ -100,19 +104,37 @@ export default function ProfileDetailScreen() {
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
               <ArrowLeft color={colors.text} size={24} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Profile</Text>
+            <Text style={styles.headerTitle}>{t('profile')}</Text>
             <View style={styles.backButton} />
           </View>
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Profile not found</Text>
+            <Text style={styles.emptyText}>{t('userProfile.notFound')}</Text>
           </View>
         </SafeAreaView>
       </View>
     );
   }
 
-  const accuracy = progress ? (progress.totalQuestionsAnswered > 0 ? (progress.correctAnswers / progress.totalQuestionsAnswered) * 100 : 0) : 0;
+  const accuracy = progress
+    ? progress.totalQuestionsAnswered > 0
+      ? (progress.correctAnswers / progress.totalQuestionsAnswered) * 100
+      : 0
+    : 0;
   const studyHours = progress ? progress.studyTimeSeconds / 3600 : 0;
+
+  const joinedDateStr = new Intl.DateTimeFormat(dateLocale, {
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(profile.created_at));
+  const joinedText = t('userProfile.joined').replace('{date}', joinedDateStr);
+
+  const universityLine =
+    profile.university &&
+    `${profile.university}${
+      profile.year_of_study
+        ? t('userProfile.yearOfStudySuffix').replace('{year}', String(profile.year_of_study))
+        : ''
+    }`;
 
   return (
     <View style={styles.container}>
@@ -122,7 +144,7 @@ export default function ProfileDetailScreen() {
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
             <ArrowLeft color={colors.text} size={24} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={styles.headerTitle}>{t('profile')}</Text>
           <View style={styles.backButton} />
         </View>
 
@@ -131,7 +153,7 @@ export default function ProfileDetailScreen() {
             <View style={styles.profileHeader}>
               <Image source={{ uri: profile.avatar }} style={styles.avatar} />
               <Text style={styles.name}>{profile.name}</Text>
-              
+
               {profile.city && (
                 <View style={styles.locationRow}>
                   <MapPin color={colors.accent} size={16} />
@@ -144,10 +166,7 @@ export default function ProfileDetailScreen() {
                   <View style={styles.infoIcon}>
                     <School color={colors.secondary} size={18} />
                   </View>
-                  <Text style={styles.infoText}>
-                    {profile.university}
-                    {profile.year_of_study && ` • Year ${profile.year_of_study}`}
-                  </Text>
+                  <Text style={styles.infoText}>{universityLine}</Text>
                 </View>
               )}
 
@@ -159,24 +178,22 @@ export default function ProfileDetailScreen() {
 
               <View style={styles.joinedRow}>
                 <Calendar color={colors.textMuted} size={14} />
-                <Text style={styles.joinedText}>
-                  Joined {new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                </Text>
+                <Text style={styles.joinedText}>{joinedText}</Text>
               </View>
             </View>
           </GlassCard>
 
           {progress && (
             <GlassCard style={styles.statsCard}>
-              <Text style={styles.sectionTitle}>Study Statistics</Text>
-              
+              <Text style={styles.sectionTitle}>{t('userProfile.studyStatistics')}</Text>
+
               <View style={styles.statsGrid}>
                 <View style={styles.statItem}>
                   <View style={[styles.statIcon, { backgroundColor: colors.primary + '20' }]}>
                     <Target color={colors.primary} size={20} />
                   </View>
                   <Text style={styles.statValue}>{progress.totalQuestionsAnswered}</Text>
-                  <Text style={styles.statLabel}>Questions</Text>
+                  <Text style={styles.statLabel}>{t('profile.questions')}</Text>
                 </View>
 
                 <View style={styles.statItem}>
@@ -184,7 +201,7 @@ export default function ProfileDetailScreen() {
                     <TrendingUp color={colors.success} size={20} />
                   </View>
                   <Text style={styles.statValue}>{accuracy.toFixed(1)}%</Text>
-                  <Text style={styles.statLabel}>Accuracy</Text>
+                  <Text style={styles.statLabel}>{t('profile.accuracy')}</Text>
                 </View>
 
                 <View style={styles.statItem}>
@@ -192,7 +209,7 @@ export default function ProfileDetailScreen() {
                     <Award color={colors.accent} size={20} />
                   </View>
                   <Text style={styles.statValue}>{progress.currentStreak}</Text>
-                  <Text style={styles.statLabel}>Day Streak</Text>
+                  <Text style={styles.statLabel}>{t('profile.dayStreak')}</Text>
                 </View>
 
                 <View style={styles.statItem}>
@@ -200,7 +217,7 @@ export default function ProfileDetailScreen() {
                     <Clock color={colors.secondary} size={20} />
                   </View>
                   <Text style={styles.statValue}>{studyHours.toFixed(1)}</Text>
-                  <Text style={styles.statLabel}>Study Hours</Text>
+                  <Text style={styles.statLabel}>{t('userProfile.studyHours')}</Text>
                 </View>
               </View>
             </GlassCard>
@@ -224,7 +241,7 @@ export default function ProfileDetailScreen() {
               ) : (
                 <>
                   <MessageCircle color={colors.text} size={20} />
-                  <Text style={styles.messageButtonText}>Send Message</Text>
+                  <Text style={styles.messageButtonText}>{t('userProfile.sendMessage')}</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -234,7 +251,7 @@ export default function ProfileDetailScreen() {
             <TouchableOpacity style={styles.editButton} onPress={handleEditProfile} activeOpacity={0.8}>
               <View style={styles.editButtonContent}>
                 <BookOpen color={colors.primary} size={20} />
-                <Text style={styles.editButtonText}>Edit Profile</Text>
+                <Text style={styles.editButtonText}>{t('editProfile.title')}</Text>
               </View>
             </TouchableOpacity>
           )}

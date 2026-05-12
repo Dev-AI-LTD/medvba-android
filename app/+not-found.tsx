@@ -4,9 +4,11 @@ import { useRouter } from 'expo-router';
 import { Home } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '@/constants/colors';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 export default function NotFoundScreen() {
   const router = useRouter();
+  const { t } = useLanguage();
 
   return (
     <View style={styles.container}>
@@ -15,16 +17,11 @@ export default function NotFoundScreen() {
         style={StyleSheet.absoluteFill}
       />
       <Text style={styles.emoji}>🔍</Text>
-      <Text style={styles.title}>Page Not Found</Text>
-      <Text style={styles.subtitle}>
-        The page you are looking for does not exist.
-      </Text>
-      <TouchableOpacity 
-        style={styles.button}
-        onPress={() => router.replace('/')}
-      >
+      <Text style={styles.title}>{t('notFound.title')}</Text>
+      <Text style={styles.subtitle}>{t('notFound.subtitle')}</Text>
+      <TouchableOpacity style={styles.button} onPress={() => router.replace('/')} activeOpacity={0.85}>
         <Home color={Colors.text} size={20} />
-        <Text style={styles.buttonText}>Go Home</Text>
+        <Text style={styles.buttonText}>{t('notFound.goHome')}</Text>
       </TouchableOpacity>
     </View>
   );

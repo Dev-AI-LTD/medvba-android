@@ -4,9 +4,11 @@ import { useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 export default function ModalScreen() {
   const router = useRouter();
+  const { t } = useLanguage();
 
   return (
     <View style={styles.container}>
@@ -17,7 +19,7 @@ export default function ModalScreen() {
           </TouchableOpacity>
         </View>
         <View style={styles.content}>
-          <Text style={styles.title}>Modal</Text>
+          <Text style={styles.title}>{t('modal.devTitle')}</Text>
         </View>
       </SafeAreaView>
     </View>
