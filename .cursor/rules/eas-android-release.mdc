@@ -9,7 +9,7 @@ alwaysApply: true
 
 - Folosește **doar Bun** pentru dependențe: `bun install`. Comite **`bun.lock`**.
 - **Nu** comite `package-lock.json` (e în `.gitignore`). Două lockfile-uri fac **`bun run doctor`** / **`npx expo-doctor`** și uneori EAS să eșueze.
-- După ce modifici `package.json`: rulează `bun install`, apoi verifică `bun install --frozen-lockfile` (trebuie să treacă înainte de push/build).
+- După ce modifici `package.json`: rulează `bun install`, apoi verifică `bun install --frozen-lockfile` (trebuie să treacă înainte de push/build). `postinstall` rescrie `node_modules/.bin/expo-doctor*` ca să ruleze dedupe + doctor pinuit — astfel și `npx -y expo-doctor` din rădăcina repo-ului trece aceleași verificări ca `bun run doctor`.
 
 ## Înainte de fiecare release Android
 
