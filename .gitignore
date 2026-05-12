@@ -12,6 +12,7 @@ web-build/
 expo-env.d.ts
 
 # Native (iOS generated locally / CI; Android is versioned for bare workflow)
+android/.kotlin/
 ios/
 *.orig.*
 *.jks

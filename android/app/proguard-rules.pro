@@ -18,3 +18,11 @@
 -keep class com.swmansion.rnscreens.** { *; }
 -keepattributes SourceFile,LineNumberTable
 # @generated end expo-build-properties
+
+# RevenueCat (release / R8)
+-keep class com.revenuecat.purchases.** { *; }
+-dontwarn com.revenuecat.purchases.**
+
+# Sentry Android NDK / JNI
+-keep class io.sentry.** { *; }
+-dontwarn io.sentry.**
