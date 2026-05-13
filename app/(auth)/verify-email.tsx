@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import type { LoginMethodParams } from '@kinde/js-utils';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Appbar, Text, Card, useTheme } from 'react-native-paper';
@@ -41,23 +42,18 @@ export default function VerifyEmailScreen() {
     return fromParam.trim().toLowerCase();
   }, [params.email]);
 
+  /** Pre-fill email on Kinde hosted page (see Kinde `login_hint` / authUrlParams). */
+  const hostedLoginHint = useMemo((): LoginMethodParams | undefined => {
+    if (!emailParam.includes('@')) return undefined;
+    return { authUrlParams: { login_hint: emailParam } } as LoginMethodParams;
+  }, [emailParam]);
+
   const handleBack = useCallback(() => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     router.back();
   }, []);
-
-  const goToLogin = useCallback(() => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    if (emailParam.includes('@')) {
-      router.replace(`/(auth)/login?email=${encodeURIComponent(emailParam)}`);
-    } else {
-      router.replace('/(auth)/login');
-    }
-  }, [emailParam]);
 
   const handleContinueInBrowser = useCallback(async () => {
     if (!isSupabaseConfigured) {
@@ -66,7 +62,7 @@ export default function VerifyEmailScreen() {
     }
     setHostedLoading(true);
     try {
-      const { error } = await signInWithKindeHosted(undefined);
+      const { error } = await signInWithKindeHosted(hostedLoginHint);
       if (error) {
         if (error.message === AUTH_SIGN_IN_CANCELLED) return;
         if (Platform.OS !== 'web') {
@@ -85,7 +81,7 @@ export default function VerifyEmailScreen() {
     } finally {
       setHostedLoading(false);
     }
-  }, [signInWithKindeHosted, t]);
+  }, [hostedLoginHint, signInWithKindeHosted, t]);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -147,17 +143,6 @@ export default function VerifyEmailScreen() {
                   {t('auth.verifyEmail.continueAuthLink')}
                 </Text>
               </Pressable>
-
-              <Pressable
-                accessibilityRole="link"
-                disabled={hostedLoading}
-                onPress={goToLogin}
-                style={({ pressed }) => [styles.secondaryLink, pressed ? { opacity: 0.7 } : null]}
-              >
-                <Text style={{ color: theme.colors.onSurfaceVariant, textDecorationLine: 'underline' }}>
-                  {t('auth.goToSignIn')}
-                </Text>
-              </Pressable>
             </Card.Content>
           </Card>
         </ScrollView>
@@ -201,9 +186,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     textDecorationLine: 'underline',
-  },
-  secondaryLink: {
-    alignSelf: 'flex-start',
-    paddingVertical: SPACING.x1,
   },
 });
