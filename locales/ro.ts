@@ -73,7 +73,11 @@ export const ro: Record<string, string> = {
   'auth.verifyEmailMessage':
     'Ți-am trimis un link de confirmare pe email. Deschide-l pentru a activa contul, apoi autentifică-te aici.',
   'auth.signUpKindeVerifyThenSignIn':
-    'Contul a fost creat. Verifică emailul primit de la Kinde și finalizează verificarea, apoi autentifică-te cu emailul și parola.',
+    'Contul a fost creat. Verifică emailul, finalizează confirmarea, apoi autentifică-te cu emailul și parola.',
+  'auth.verifyEmail.title': 'Verifică emailul',
+  'auth.verifyEmail.body':
+    'Contul este pregătit. Deschide mesajul trimis de noi și folosește linkul de confirmare. Dacă mai trebuie să finalizezi autentificarea, folosește linkul de mai jos în browser; după aceea revii în aplicație.',
+  'auth.verifyEmail.continueAuthLink': 'Continuă autentificarea în browser',
   'auth.goToSignIn': 'Merg la autentificare',
   'auth.ok': 'OK',
   'auth.unexpectedError': 'A apărut o eroare neașteptată. Te rog încearcă din nou.',

@@ -1,6 +1,8 @@
 import type { Question } from '@/mocks/questions';
 import { questionTranslations } from '@/locales/questionTranslations';
-import type { Language } from './i18n';
+
+/** Locales supported for per-question translations (questionTranslations + embedded ro fields). */
+export type QuestionTranslateLanguage = 'en' | 'ro' | 'es' | 'pt';
 
 /** Fisher–Yates shuffle so answer order (A/B/C/D/E) is unbiased per question */
 function shuffleArray<T>(array: T[]): { shuffled: T[]; indices: number[] } {
@@ -24,7 +26,7 @@ export function shuffleQuestionOptions(question: Question): Question {
   return { ...question, options: shuffled, correctAnswer: newCorrect };
 }
 
-export function translateQuestion(question: Question, language: Language): Question {
+export function translateQuestion(question: Question, language: QuestionTranslateLanguage): Question {
   if (language === 'en') {
     return question;
   }
@@ -56,11 +58,14 @@ export function translateQuestion(question: Question, language: Language): Quest
   return translated;
 }
 
-export function translateQuestions(questions: Question[], language: Language): Question[] {
+export function translateQuestions(questions: Question[], language: QuestionTranslateLanguage): Question[] {
   return questions.map(q => translateQuestion(q, language));
 }
 
 /** Translate and shuffle options for each question (fair distribution of correct answer position) */
-export function translateAndShuffleQuestions(questions: Question[], language: Language): Question[] {
+export function translateAndShuffleQuestions(
+  questions: Question[],
+  language: QuestionTranslateLanguage,
+): Question[] {
   return questions.map(q => shuffleQuestionOptions(translateQuestion(q, language)));
 }

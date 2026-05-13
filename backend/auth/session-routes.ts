@@ -24,7 +24,13 @@ type KindeTokenPair = { access_token: string; refresh_token?: string };
 
 type KindePasswordTokenResult =
   | { ok: true; tokens: KindeTokenPair }
-  | { ok: false; code: "missing_env" | "token_error"; detail?: string };
+  | {
+      ok: false;
+      code: "missing_env" | "token_error";
+      detail?: string;
+      /** Set when Kinde returned a non-2xx from /oauth2/token (for clearer client hints). */
+      upstreamStatus?: number;
+    };
 
 async function kindePasswordToken(email: string, password: string): Promise<KindePasswordTokenResult> {
   const issuer = trimEnvValue(process.env.KINDE_ISSUER_URL).replace(/\/+$/, "");
@@ -67,6 +73,7 @@ async function kindePasswordToken(email: string, password: string): Promise<Kind
       ok: false,
       code: "token_error",
       detail: `HTTP ${res.status} ${issuer}/oauth2/token. ${hint}`,
+      upstreamStatus: res.status,
     };
   }
   const json = (await res.json()) as { access_token?: string; refresh_token?: string };
@@ -523,11 +530,16 @@ export function registerAuthSessionRoutes(app: Hono) {
               503,
             );
           }
+          const st = kindeTokensRes.upstreamStatus;
+          const kinde5xx =
+            typeof st === "number" && st >= 500 && st <= 599
+              ? "Kinde returned a server error (5xx) at the token URL — usually a temporary outage or gateway issue on Kinde’s side, not wrong email/password. Retry in a few minutes; check https://status.kinde.com/ ; try another network (Wi‑Fi vs mobile data)."
+              : "In Kinde: Applications → your native app → enable Password / Resource Owner grant. Turn on Email + password for that app. If KINDE_AUDIENCE is set on Railway, remove it unless your Kinde app requires a specific audience for password grant. Ensure the user email is verified if your tenant requires it.";
           return c.json(
             {
               error: "Email/password login failed.",
               detail: kindeTokensRes.detail,
-              hint: "In Kinde: Applications → your native app → enable Password / Resource Owner grant. Turn on Email + password for that app. If KINDE_AUDIENCE is set on Railway, remove it unless your Kinde app requires a specific audience for password grant. Ensure the user email is verified if your tenant requires it.",
+              hint: kinde5xx,
             },
             401,
           );

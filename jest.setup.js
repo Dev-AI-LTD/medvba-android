@@ -32,6 +32,10 @@ jest.mock('expo-splash-screen', () => ({
   hideAsync: jest.fn().mockResolvedValue(undefined),
 }));
 
+jest.mock('expo-system-ui', () => ({
+  setBackgroundColorAsync: jest.fn().mockResolvedValue(undefined),
+}));
+
 jest.mock('expo-constants', () => ({
   expoConfig: { 
     extra: { 
@@ -250,7 +254,7 @@ global.cancelAnimationFrame = jest.fn();
 
 global.fetch = jest.fn().mockImplementation((url) => {
   const u = String(url);
-  if (u.includes('/api/auth/session')) {
+  if (u.includes('/api/auth/session') || u.includes('/api/auth/register')) {
     const body = JSON.stringify({
       access_token: 'test-jwt',
       profile_id: '11111111-1111-1111-1111-111111111111',

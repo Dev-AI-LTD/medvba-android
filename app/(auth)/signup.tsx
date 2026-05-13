@@ -21,7 +21,7 @@ import { isSupabaseConfigured } from '@/lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SPACING } from '@/theme/paperTheme';
 import { log } from '@/lib/log';
-import { validateSignUpForm, clearError, hasErrors, type FormErrors } from '@/lib/validation';
+import { validateSignUpForm, hasErrors, type FormErrors } from '@/lib/validation';
 
 const ONBOARDING_COMPLETE_KEY = '@medvba_onboarding_complete';
 
@@ -100,15 +100,13 @@ export default function SignUpScreen() {
           errorMessage = t('auth.emailAlreadyRegistered');
         } else if (isPostSignUpEmailVerificationCase(msg)) {
           const emailForLogin = email.trim().toLowerCase();
-          Alert.alert(t('auth.accountCreated'), t('auth.signUpKindeVerifyThenSignIn'), [
-            { text: t('auth.ok'), style: 'cancel' },
-            {
-              text: t('auth.goToSignIn'),
-              onPress: () => {
-                router.replace(`/(auth)/login?email=${encodeURIComponent(emailForLogin)}`);
-              },
-            },
-          ]);
+          if (Platform.OS !== 'web') {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          }
+          router.replace({
+            pathname: '/(auth)/verify-email',
+            params: { email: emailForLogin },
+          });
           return;
         } else if (msg.includes('Password')) {
           errorMessage = msg;
@@ -128,11 +126,10 @@ export default function SignUpScreen() {
         if (Platform.OS !== 'web') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
-        Alert.alert(
-          t('auth.accountCreated'),
-          t('auth.verifyEmailMessage'),
-          [{ text: t('auth.ok'), onPress: () => router.replace('/(auth)/login') }]
-        );
+        router.replace({
+          pathname: '/(auth)/verify-email',
+          params: { email: email.trim().toLowerCase() },
+        });
       }
     } catch (error) {
       log.error('[SignUp] Unexpected error:', error);

@@ -6,7 +6,6 @@ import {
   TextInput,
   TouchableOpacity,
   FlatList,
-  Image,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,

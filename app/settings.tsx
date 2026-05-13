@@ -10,7 +10,6 @@ import {
   Platform,
   TextInput,
   Switch,
-  ActivityIndicator,
 } from 'react-native';
 import { Appbar, Button } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -21,7 +20,6 @@ import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  X,
   Shield,
   FileText,
   Heart,
@@ -42,7 +40,6 @@ import {
   AlignLeft,
   Eye,
   EyeOff,
-  Save,
   Crown,
   CreditCard,
   BookOpen,

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Play, TrendingUp, Target, Clock, ChevronRight, Bone, Heart, User, Brain, Stethoscope, Sparkles, Lock, EyeOff, Crown } from 'lucide-react-native';
+import { TrendingUp, Target, Clock, ChevronRight, Bone, Heart, User, Brain, Stethoscope, Sparkles, Lock, EyeOff, Crown } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { Card, Button } from 'react-native-paper';
 import { UIButton } from '@/ui';

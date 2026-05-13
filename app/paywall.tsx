@@ -32,7 +32,7 @@ export default function PaywallScreen() {
       headerStyle: { backgroundColor: colors.background },
       headerTintColor: colors.text,
     }),
-    [colors.background, colors.text, t('paywall.title')]
+    [colors.background, colors.text, t]
   );
 
   useEffect(() => {

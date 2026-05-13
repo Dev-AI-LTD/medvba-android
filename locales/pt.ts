@@ -70,7 +70,11 @@ export const pt: Record<string, string> = {
   'auth.verifyEmailMessage':
     'Enviámos uma ligação de confirmação para o seu e-mail. Abra-a para ativar a conta e depois inicie sessão aqui.',
   'auth.signUpKindeVerifyThenSignIn':
-    'A sua conta foi criada. Verifique o e-mail da Kinde e conclua a verificação, depois inicie sessão com o e-mail e a palavra-passe.',
+    'A sua conta foi criada. Verifique o seu e-mail, conclua a verificação e depois inicie sessão com o e-mail e a palavra-passe.',
+  'auth.verifyEmail.title': 'Verifique o seu e-mail',
+  'auth.verifyEmail.body':
+    'A sua conta está pronta. Abra a mensagem que enviámos e use a ligação de confirmação. Se ainda precisar de concluir o início de sessão, use a ligação abaixo no navegador; depois regressará à aplicação.',
+  'auth.verifyEmail.continueAuthLink': 'Continuar o início de sessão no navegador',
   'auth.goToSignIn': 'Ir para iniciar sessão',
   'auth.ok': 'OK',
   'auth.unexpectedError': 'Ocorreu um erro inesperado. Por favor tente novamente.',

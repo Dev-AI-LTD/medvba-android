@@ -21,7 +21,7 @@ import { SPACING } from '@/theme/paperTheme';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { log } from '@/lib/log';
 import { AuthError } from '@supabase/supabase-js';
-import { validateLoginForm, clearError, hasErrors, type FormErrors } from '@/lib/validation';
+import { validateLoginForm, hasErrors, type FormErrors } from '@/lib/validation';
 
 const ONBOARDING_COMPLETE_KEY = '@medvba_onboarding_complete';
 

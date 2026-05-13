@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, FlatList, StyleSheet, TextInput, KeyboardAvoidingView, Platform, ListRenderItem } from 'react-native';
+import { View, FlatList, StyleSheet, TextInput, ListRenderItem } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';

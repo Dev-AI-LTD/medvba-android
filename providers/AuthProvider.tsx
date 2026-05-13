@@ -165,6 +165,7 @@ interface AuthActions {
   signInWithGoogle: () => Promise<{ error: AuthError | null }>;
   signInWithFacebook: () => Promise<{ error: AuthError | null }>;
   signInWithApple: () => Promise<{ error: AuthError | null }>;
+  signInWithKindeHosted: (loginHint?: LoginMethodParams) => Promise<{ error: AuthError | null }>;
 }
 
 type AuthContextValue = AuthState & AuthActions;
@@ -921,6 +922,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     signInWithGoogle,
     signInWithFacebook,
     signInWithApple,
+    signInWithKindeHosted,
   };
 });
 

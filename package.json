@@ -32,6 +32,8 @@
     "apple:jwt-supabase": "node scripts/generate-apple-jwt-supabase.mjs",
     "release:decode-jwt": "node scripts/decode-jwt-payload.mjs",
     "verify:auth-session": "node scripts/verify-auth-session.mjs",
+    "audit:head-neck-i18n": "tsx scripts/audit-head-neck-i18n.ts",
+    "audit:locales-en-ro": "tsx scripts/audit-locale-en-ro.ts",
     "doctor": "node scripts/postinstall-dedupe-kinde-expo.mjs && expo-doctor",
     "release:preflight": "bun install --frozen-lockfile && bun run doctor && bunx tsc --noEmit",
     "release:android": "npx eas-cli build --platform android --profile production --non-interactive --no-wait",

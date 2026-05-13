@@ -78,7 +78,7 @@ export default function QuizScreen() {
     };
     
     checkOldSession();
-  }, [hasActiveSession, sessionState, clearSessionState]);
+  }, [hasActiveSession, sessionState, clearSessionState, t]);
 
   const handleCategorySelect = (categoryId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

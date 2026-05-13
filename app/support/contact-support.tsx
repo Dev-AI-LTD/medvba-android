@@ -116,7 +116,7 @@ export default function ContactSupportScreen() {
       if (result.status === MailComposer.MailComposerStatus.SENT) {
         Alert.alert(t('support.sentTitle'), t('support.sentMessage'));
       }
-    } catch (error) {
+    } catch {
       setShowFallback(true);
     } finally {
       setIsSending(false);

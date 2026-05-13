@@ -73,7 +73,11 @@ export const en: Record<string, string> = {
   'auth.verifyEmailMessage':
     'We sent a confirmation link to your email. Open it to activate your account, then sign in here.',
   'auth.signUpKindeVerifyThenSignIn':
-    'Your account was created. Check your email from Kinde and complete verification, then sign in with your email and password.',
+    'Your account was created. Check your email, complete verification, then sign in with your email and password.',
+  'auth.verifyEmail.title': 'Check your email',
+  'auth.verifyEmail.body':
+    'Your account is ready. Open the message we sent and use the confirmation link. If you still need to finish signing in, use the link below to continue in the browser—you will return to the app afterward.',
+  'auth.verifyEmail.continueAuthLink': 'Continue signing in in the browser',
   'auth.goToSignIn': 'Go to sign in',
   'auth.ok': 'OK',
   'auth.unexpectedError': 'An unexpected error occurred. Please try again.',

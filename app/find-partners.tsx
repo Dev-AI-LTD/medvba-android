@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Image,
   RefreshControl,
   ActivityIndicator,
   Platform,
