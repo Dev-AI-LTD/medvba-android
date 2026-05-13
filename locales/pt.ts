@@ -69,6 +69,9 @@ export const pt: Record<string, string> = {
   'auth.accountCreated': 'Conta criada',
   'auth.verifyEmailMessage':
     'Enviámos uma ligação de confirmação para o seu e-mail. Abra-a para ativar a conta e depois inicie sessão aqui.',
+  'auth.signUpKindeVerifyThenSignIn':
+    'A sua conta foi criada. Verifique o e-mail da Kinde e conclua a verificação, depois inicie sessão com o e-mail e a palavra-passe.',
+  'auth.goToSignIn': 'Ir para iniciar sessão',
   'auth.ok': 'OK',
   'auth.unexpectedError': 'Ocorreu um erro inesperado. Por favor tente novamente.',
   'auth.supabaseNotConfigured': 'Login não disponível: Supabase não está configurado. Defina EXPO_PUBLIC_SUPABASE_URL e EXPO_PUBLIC_SUPABASE_ANON_KEY no .env',

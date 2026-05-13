@@ -4,17 +4,35 @@ import { mintSupabaseAccessJwt } from "./mint-supabase-jwt";
 import { fetchKindeUserProfile } from "./kinde-user-profile";
 import { getSupabaseAdmin, resolveOrCreateProfileId, type KindeUserProfile } from "./resolve-profile";
 
+/** Strip wrapping quotes often pasted into Railway / .env by mistake. */
+function trimEnvValue(s: string | undefined): string {
+  let t = (s ?? "").trim();
+  if (
+    (t.startsWith('"') && t.endsWith('"')) ||
+    (t.startsWith("'") && t.endsWith("'"))
+  ) {
+    t = t.slice(1, -1).trim();
+  }
+  return t;
+}
+
 /**
  * Resource Owner Password Credentials (identity server) — server only (never expose client_secret to the app).
  * Enable password grant for the app client in the identity provider admin console.
  */
 type KindeTokenPair = { access_token: string; refresh_token?: string };
 
-async function kindePasswordToken(email: string, password: string): Promise<KindeTokenPair | null> {
-  const issuer = (process.env.KINDE_ISSUER_URL || "").trim().replace(/\/+$/, "");
-  const clientId = process.env.KINDE_CLIENT_ID?.trim();
-  const clientSecret = process.env.KINDE_CLIENT_SECRET?.trim();
-  if (!issuer || !clientId || !clientSecret) return null;
+type KindePasswordTokenResult =
+  | { ok: true; tokens: KindeTokenPair }
+  | { ok: false; code: "missing_env" | "token_error"; detail?: string };
+
+async function kindePasswordToken(email: string, password: string): Promise<KindePasswordTokenResult> {
+  const issuer = trimEnvValue(process.env.KINDE_ISSUER_URL).replace(/\/+$/, "");
+  const clientId = trimEnvValue(process.env.KINDE_CLIENT_ID);
+  const clientSecret = trimEnvValue(process.env.KINDE_CLIENT_SECRET);
+  if (!issuer || !clientId || !clientSecret) {
+    return { ok: false, code: "missing_env" };
+  }
 
   const body = new URLSearchParams({
     grant_type: "password",
@@ -23,7 +41,7 @@ async function kindePasswordToken(email: string, password: string): Promise<Kind
     client_id: clientId,
     client_secret: clientSecret,
   });
-  const aud = process.env.KINDE_AUDIENCE?.trim();
+  const aud = trimEnvValue(process.env.KINDE_AUDIENCE);
   if (aud) {
     body.set("audience", aud);
   }
@@ -35,24 +53,42 @@ async function kindePasswordToken(email: string, password: string): Promise<Kind
   });
   if (!res.ok) {
     const t = await res.text().catch(() => "");
-    console.warn("[auth] Password grant token failed:", res.status, t.slice(0, 200));
-    return null;
+    console.warn("[auth] Password grant token failed:", res.status, t.slice(0, 400));
+    let hint = t.slice(0, 500);
+    try {
+      const errJson = JSON.parse(t) as { error?: string; error_description?: string };
+      if (errJson.error_description) {
+        hint = `${errJson.error ?? "error"}: ${errJson.error_description}`;
+      }
+    } catch {
+      /* plain text */
+    }
+    return {
+      ok: false,
+      code: "token_error",
+      detail: `HTTP ${res.status} ${issuer}/oauth2/token. ${hint}`,
+    };
   }
   const json = (await res.json()) as { access_token?: string; refresh_token?: string };
   const access_token = json.access_token;
-  if (!access_token) return null;
+  if (!access_token) {
+    return { ok: false, code: "token_error", detail: "Token response had no access_token." };
+  }
   return {
-    access_token,
-    ...(typeof json.refresh_token === "string" && json.refresh_token.length > 0
-      ? { refresh_token: json.refresh_token }
-      : {}),
+    ok: true,
+    tokens: {
+      access_token,
+      ...(typeof json.refresh_token === "string" && json.refresh_token.length > 0
+        ? { refresh_token: json.refresh_token }
+        : {}),
+    },
   };
 }
 
 async function kindeRefreshAccessToken(refreshToken: string): Promise<KindeTokenPair | null> {
-  const issuer = (process.env.KINDE_ISSUER_URL || "").trim().replace(/\/+$/, "");
-  const clientId = process.env.KINDE_CLIENT_ID?.trim();
-  const clientSecret = process.env.KINDE_CLIENT_SECRET?.trim();
+  const issuer = trimEnvValue(process.env.KINDE_ISSUER_URL).replace(/\/+$/, "");
+  const clientId = trimEnvValue(process.env.KINDE_CLIENT_ID);
+  const clientSecret = trimEnvValue(process.env.KINDE_CLIENT_SECRET);
   if (!issuer || !clientId || !clientSecret) return null;
 
   const body = new URLSearchParams({
@@ -61,7 +97,7 @@ async function kindeRefreshAccessToken(refreshToken: string): Promise<KindeToken
     client_id: clientId,
     client_secret: clientSecret,
   });
-  const aud = process.env.KINDE_AUDIENCE?.trim();
+  const aud = trimEnvValue(process.env.KINDE_AUDIENCE);
   if (aud) {
     body.set("audience", aud);
   }
@@ -139,24 +175,12 @@ async function sessionFromKindeAccessToken(kindeAccessToken: string) {
 }
 
 function getKindeIssuerBase(): string {
-  return (process.env.KINDE_ISSUER_URL || "").trim().replace(/\/+$/, "");
-}
-
-/** Strip wrapping quotes often pasted into Railway / .env by mistake. */
-function trimEnvValue(s: string | undefined): string {
-  let t = (s ?? "").trim();
-  if (
-    (t.startsWith('"') && t.endsWith('"')) ||
-    (t.startsWith("'") && t.endsWith("'"))
-  ) {
-    t = t.slice(1, -1).trim();
-  }
-  return t;
+  return trimEnvValue(process.env.KINDE_ISSUER_URL).replace(/\/+$/, "");
 }
 
 function getKindeManagementAudience(issuer: string): string {
   const explicit =
-    (process.env.KINDE_MANAGEMENT_AUDIENCE || process.env.KINDE_AUDIENCE || "").trim() || "";
+    trimEnvValue(process.env.KINDE_MANAGEMENT_AUDIENCE) || trimEnvValue(process.env.KINDE_AUDIENCE) || "";
   if (explicit) return explicit.replace(/\/+$/, "");
   return `${issuer}/api`;
 }
@@ -388,16 +412,27 @@ export function registerAuthSessionRoutes(app: Hono) {
         );
       }
 
-      const kindeTokens = await kindePasswordToken(email, password);
-      if (!kindeTokens) {
+      const kindeTokensRes = await kindePasswordToken(email, password);
+      if (!kindeTokensRes.ok) {
+        if (kindeTokensRes.code === "missing_env") {
+          return c.json(
+            {
+              error:
+                "Account was created but automatic sign-in is not configured. Set KINDE_ISSUER_URL, KINDE_CLIENT_ID, and KINDE_CLIENT_SECRET on the API server (same native Kinde app as the mobile client).",
+            },
+            503,
+          );
+        }
         return c.json(
           {
             error:
-              "Account was created but sign-in failed. If email verification is required in Kinde, disable it for password users or complete verification, then try logging in.",
+              "Account was created but sign-in failed. If email verification is required in Kinde, complete verification from your inbox, then try logging in. Otherwise check the detail below (e.g. password grant disabled in Kinde).",
+            detail: kindeTokensRes.detail,
           },
           401,
         );
       }
+      const kindeTokens = kindeTokensRes.tokens;
 
       const out = await sessionFromKindeAccessToken(kindeTokens.access_token);
       if (!out.ok) {
@@ -477,16 +512,27 @@ export function registerAuthSessionRoutes(app: Hono) {
           return c.json({ error: "email and password are required." }, 400);
         }
 
-        const kindeTokens = await kindePasswordToken(email, password);
-        if (!kindeTokens) {
+        const kindeTokensRes = await kindePasswordToken(email, password);
+        if (!kindeTokensRes.ok) {
+          if (kindeTokensRes.code === "missing_env") {
+            return c.json(
+              {
+                error:
+                  "Email/password login is not configured on the API server. Set KINDE_ISSUER_URL, KINDE_CLIENT_ID, and KINDE_CLIENT_SECRET on Railway (same native Kinde application as EXPO_PUBLIC_KINDE_CLIENT_ID), then redeploy.",
+              },
+              503,
+            );
+          }
           return c.json(
             {
-              error:
-                "Email/password login failed. Enable the password grant for this application on the identity server and set KINDE_ISSUER_URL, KINDE_CLIENT_ID, KINDE_CLIENT_SECRET on the backend.",
+              error: "Email/password login failed.",
+              detail: kindeTokensRes.detail,
+              hint: "In Kinde: Applications → your native app → enable Password / Resource Owner grant. Turn on Email + password for that app. If KINDE_AUDIENCE is set on Railway, remove it unless your Kinde app requires a specific audience for password grant. Ensure the user email is verified if your tenant requires it.",
             },
             401,
           );
         }
+        const kindeTokens = kindeTokensRes.tokens;
 
         const out = await sessionFromKindeAccessToken(kindeTokens.access_token);
         if (!out.ok) {

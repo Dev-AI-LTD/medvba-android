@@ -25,6 +25,16 @@ import { validateSignUpForm, clearError, hasErrors, type FormErrors } from '@/li
 
 const ONBOARDING_COMPLETE_KEY = '@medvba_onboarding_complete';
 
+function isPostSignUpEmailVerificationCase(message: string): boolean {
+  const m = message.toLowerCase();
+  return (
+    m.includes('account was created') ||
+    m.includes('email verification') ||
+    m.includes('complete verification') ||
+    m.includes('verify your email')
+  );
+}
+
 export default function SignUpScreen() {
   const theme = useTheme();
   const [name, setName] = useState('');
@@ -88,6 +98,18 @@ export default function SignUpScreen() {
           errCode === 'user_already_exists'
         ) {
           errorMessage = t('auth.emailAlreadyRegistered');
+        } else if (isPostSignUpEmailVerificationCase(msg)) {
+          const emailForLogin = email.trim().toLowerCase();
+          Alert.alert(t('auth.accountCreated'), t('auth.signUpKindeVerifyThenSignIn'), [
+            { text: t('auth.ok'), style: 'cancel' },
+            {
+              text: t('auth.goToSignIn'),
+              onPress: () => {
+                router.replace(`/(auth)/login?email=${encodeURIComponent(emailForLogin)}`);
+              },
+            },
+          ]);
+          return;
         } else if (msg.includes('Password')) {
           errorMessage = msg;
         } else if (msg) {

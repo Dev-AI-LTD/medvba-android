@@ -14,6 +14,7 @@ type SessionResponseJson = {
   error?: string;
   detail?: unknown;
   issues?: unknown;
+  hint?: string;
 };
 
 function isAbortError(e: unknown): boolean {
@@ -86,18 +87,22 @@ async function parseSessionJson(res: Response): Promise<
 function formatApiErrorMessage(json: SessionResponseJson, fallback: string): string {
   const base = (typeof json.error === "string" && json.error.trim()) || fallback;
   const detail = json.detail;
+  let body = base;
   if (typeof detail === "string" && detail.trim()) {
-    return `${base}\n\n${detail.trim()}`;
-  }
-  if (detail != null && typeof detail !== "string") {
+    body = `${base}\n\n${detail.trim()}`;
+  } else if (detail != null && typeof detail !== "string") {
     try {
       const s = JSON.stringify(detail);
-      if (s && s !== "{}") return `${base}\n\n${s.slice(0, 400)}${s.length > 400 ? "…" : ""}`;
+      if (s && s !== "{}") body = `${base}\n\n${s.slice(0, 400)}${s.length > 400 ? "…" : ""}`;
     } catch {
       /* ignore */
     }
   }
-  return base;
+  const hint = typeof json.hint === "string" ? json.hint.trim() : "";
+  if (hint) {
+    body = `${body}\n\n${hint}`;
+  }
+  return body;
 }
 
 /**

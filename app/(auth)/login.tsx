@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Appbar, Text, Card, useTheme, IconButton } from 'react-native-paper';
 import { UIButton, UITextField } from '@/ui';
@@ -27,6 +27,7 @@ const ONBOARDING_COMPLETE_KEY = '@medvba_onboarding_complete';
 
 function LoginScreen() {
   const theme = useTheme();
+  const params = useLocalSearchParams<{ email?: string | string[] }>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -40,6 +41,16 @@ function LoginScreen() {
     isFacebookLoginEnabled,
   } = useAuth();
   const { t } = useLanguage();
+
+  useEffect(() => {
+    const raw = params.email;
+    const fromParam =
+      typeof raw === 'string' ? raw : Array.isArray(raw) && raw.length > 0 ? String(raw[0]) : '';
+    const trimmed = fromParam.trim().toLowerCase();
+    if (trimmed.includes('@')) {
+      setEmail(trimmed);
+    }
+  }, [params.email]);
 
   const validateForm = useCallback((): boolean => {
     const validationErrors = validateLoginForm({ email, password });

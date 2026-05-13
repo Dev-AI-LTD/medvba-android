@@ -72,6 +72,9 @@ export const ro: Record<string, string> = {
   'auth.accountCreated': 'Cont creat',
   'auth.verifyEmailMessage':
     'Ți-am trimis un link de confirmare pe email. Deschide-l pentru a activa contul, apoi autentifică-te aici.',
+  'auth.signUpKindeVerifyThenSignIn':
+    'Contul a fost creat. Verifică emailul primit de la Kinde și finalizează verificarea, apoi autentifică-te cu emailul și parola.',
+  'auth.goToSignIn': 'Merg la autentificare',
   'auth.ok': 'OK',
   'auth.unexpectedError': 'A apărut o eroare neașteptată. Te rog încearcă din nou.',
   'auth.supabaseNotConfigured': 'Autentificarea nu este disponibilă: Supabase nu este configurat. Setează EXPO_PUBLIC_SUPABASE_URL și EXPO_PUBLIC_SUPABASE_ANON_KEY în .env',
