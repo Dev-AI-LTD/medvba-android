@@ -16,6 +16,32 @@ function trimEnvValue(s: string | undefined): string {
   return t;
 }
 
+const KINDE_OAUTH2_TOKEN_MAX_ATTEMPTS = 3;
+const TRANSIENT_KINDE_TOKEN_STATUSES = new Set([502, 503, 504]);
+
+function sleepMs(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+/** Kinde `/oauth2/token` sometimes returns transient gateway errors; retry with short backoff. */
+async function fetchKindeOAuth2Token(url: string, init: RequestInit, logLabel: string): Promise<Response> {
+  let attempt = 0;
+  while (true) {
+    attempt += 1;
+    const res = await fetch(url, init);
+    if (res.ok) return res;
+    const canRetry =
+      TRANSIENT_KINDE_TOKEN_STATUSES.has(res.status) && attempt < KINDE_OAUTH2_TOKEN_MAX_ATTEMPTS;
+    if (!canRetry) return res;
+    await res.text().catch(() => {});
+    const delayMs = 300 * attempt;
+    console.warn(
+      `[auth] ${logLabel}: HTTP ${res.status} from oauth2/token, retry ${attempt}/${KINDE_OAUTH2_TOKEN_MAX_ATTEMPTS} after ${delayMs}ms`,
+    );
+    await sleepMs(delayMs);
+  }
+}
+
 /**
  * Resource Owner Password Credentials (identity server) — server only (never expose client_secret to the app).
  * Enable password grant for the app client in the identity provider admin console.
@@ -52,11 +78,15 @@ async function kindePasswordToken(email: string, password: string): Promise<Kind
     body.set("audience", aud);
   }
 
-  const res = await fetch(`${issuer}/oauth2/token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
-  });
+  const res = await fetchKindeOAuth2Token(
+    `${issuer}/oauth2/token`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+    },
+    "Password grant",
+  );
   if (!res.ok) {
     const t = await res.text().catch(() => "");
     console.warn("[auth] Password grant token failed:", res.status, t.slice(0, 400));
@@ -109,11 +139,15 @@ async function kindeRefreshAccessToken(refreshToken: string): Promise<KindeToken
     body.set("audience", aud);
   }
 
-  const res = await fetch(`${issuer}/oauth2/token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
-  });
+  const res = await fetchKindeOAuth2Token(
+    `${issuer}/oauth2/token`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+    },
+    "Refresh token grant",
+  );
   if (!res.ok) {
     const t = await res.text().catch(() => "");
     console.warn("[auth] Refresh token grant failed:", res.status, t.slice(0, 200));
@@ -216,11 +250,15 @@ async function kindeManagementAccessToken(): Promise<KindeM2mTokenResult> {
     body.set("scope", scope);
   }
 
-  const res = await fetch(`${issuer}/oauth2/token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
-  });
+  const res = await fetchKindeOAuth2Token(
+    `${issuer}/oauth2/token`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+    },
+    "Kinde M2M token",
+  );
   if (!res.ok) {
     const t = await res.text().catch(() => "");
     console.warn("[auth] Kinde M2M token failed:", res.status, t.slice(0, 400));
