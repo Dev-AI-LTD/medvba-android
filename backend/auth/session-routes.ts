@@ -149,11 +149,17 @@ function getKindeManagementAudience(issuer: string): string {
   return `${issuer}/api`;
 }
 
-async function kindeManagementAccessToken(): Promise<string | null> {
+type KindeM2mTokenResult =
+  | { ok: true; token: string }
+  | { ok: false; code: "missing_env" | "token_error"; detail?: string };
+
+async function kindeManagementAccessToken(): Promise<KindeM2mTokenResult> {
   const issuer = getKindeIssuerBase();
   const m2mId = process.env.KINDE_M2M_CLIENT_ID?.trim();
   const m2mSecret = process.env.KINDE_M2M_CLIENT_SECRET?.trim();
-  if (!issuer || !m2mId || !m2mSecret) return null;
+  if (!issuer || !m2mId || !m2mSecret) {
+    return { ok: false, code: "missing_env" };
+  }
 
   const audience = getKindeManagementAudience(issuer);
   const body = new URLSearchParams({
@@ -171,10 +177,18 @@ async function kindeManagementAccessToken(): Promise<string | null> {
   if (!res.ok) {
     const t = await res.text().catch(() => "");
     console.warn("[auth] Kinde M2M token failed:", res.status, t.slice(0, 200));
-    return null;
+    return {
+      ok: false,
+      code: "token_error",
+      detail: `HTTP ${res.status} from ${issuer}/oauth2/token (audience: ${audience}). ${t.slice(0, 180)}`,
+    };
   }
   const json = (await res.json()) as { access_token?: string };
-  return json.access_token ?? null;
+  const token = json.access_token;
+  if (!token) {
+    return { ok: false, code: "token_error", detail: "Token response had no access_token." };
+  }
+  return { ok: true, token };
 }
 
 function splitDisplayName(name: string): { given_name: string; family_name: string } {
@@ -302,16 +316,27 @@ export function registerAuthSessionRoutes(app: Hono) {
         return c.json({ error: "Name is required." }, 400);
       }
 
-      const m2m = await kindeManagementAccessToken();
-      if (!m2m) {
+      const m2mRes = await kindeManagementAccessToken();
+      if (!m2mRes.ok) {
+        if (m2mRes.code === "missing_env") {
+          return c.json(
+            {
+              error:
+                "Registration is not configured. Set KINDE_M2M_CLIENT_ID and KINDE_M2M_CLIENT_SECRET on the API server (Railway), redeploy, and authorize the M2M app for the Kinde Management API.",
+            },
+            503,
+          );
+        }
         return c.json(
           {
             error:
-              "Registration is not configured. Set KINDE_M2M_CLIENT_ID, KINDE_M2M_CLIENT_SECRET, and authorize the M2M app for the Kinde Management API (see project docs).",
+              "Kinde M2M login failed. In Kinde: open the Machine to machine app → APIs → authorize Kinde Management API (create/read users, set password). Check KINDE_ISSUER_URL matches your tenant. Optional: set KINDE_MANAGEMENT_AUDIENCE if your tenant uses a custom audience.",
+            detail: m2mRes.detail,
           },
           503,
         );
       }
+      const m2m = m2mRes.token;
 
       const created = await kindeManagementCreateUser(m2m, email, name);
       if (!created.ok) {
