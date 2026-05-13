@@ -142,6 +142,18 @@ function getKindeIssuerBase(): string {
   return (process.env.KINDE_ISSUER_URL || "").trim().replace(/\/+$/, "");
 }
 
+/** Strip wrapping quotes often pasted into Railway / .env by mistake. */
+function trimEnvValue(s: string | undefined): string {
+  let t = (s ?? "").trim();
+  if (
+    (t.startsWith('"') && t.endsWith('"')) ||
+    (t.startsWith("'") && t.endsWith("'"))
+  ) {
+    t = t.slice(1, -1).trim();
+  }
+  return t;
+}
+
 function getKindeManagementAudience(issuer: string): string {
   const explicit =
     (process.env.KINDE_MANAGEMENT_AUDIENCE || process.env.KINDE_AUDIENCE || "").trim() || "";
@@ -155,8 +167,8 @@ type KindeM2mTokenResult =
 
 async function kindeManagementAccessToken(): Promise<KindeM2mTokenResult> {
   const issuer = getKindeIssuerBase();
-  const m2mId = process.env.KINDE_M2M_CLIENT_ID?.trim();
-  const m2mSecret = process.env.KINDE_M2M_CLIENT_SECRET?.trim();
+  const m2mId = trimEnvValue(process.env.KINDE_M2M_CLIENT_ID);
+  const m2mSecret = trimEnvValue(process.env.KINDE_M2M_CLIENT_SECRET);
   if (!issuer || !m2mId || !m2mSecret) {
     return { ok: false, code: "missing_env" };
   }
@@ -168,6 +180,10 @@ async function kindeManagementAccessToken(): Promise<KindeM2mTokenResult> {
     client_secret: m2mSecret,
     audience,
   });
+  const scope = trimEnvValue(process.env.KINDE_M2M_TOKEN_SCOPE);
+  if (scope) {
+    body.set("scope", scope);
+  }
 
   const res = await fetch(`${issuer}/oauth2/token`, {
     method: "POST",
@@ -176,11 +192,20 @@ async function kindeManagementAccessToken(): Promise<KindeM2mTokenResult> {
   });
   if (!res.ok) {
     const t = await res.text().catch(() => "");
-    console.warn("[auth] Kinde M2M token failed:", res.status, t.slice(0, 200));
+    console.warn("[auth] Kinde M2M token failed:", res.status, t.slice(0, 400));
+    let hint = t.slice(0, 500);
+    try {
+      const errJson = JSON.parse(t) as { error?: string; error_description?: string };
+      if (errJson.error_description) {
+        hint = `${errJson.error ?? "error"}: ${errJson.error_description}`;
+      }
+    } catch {
+      /* plain text body */
+    }
     return {
       ok: false,
       code: "token_error",
-      detail: `HTTP ${res.status} from ${issuer}/oauth2/token (audience: ${audience}). ${t.slice(0, 180)}`,
+      detail: `HTTP ${res.status} ${issuer}/oauth2/token (audience: ${audience}). ${hint}`,
     };
   }
   const json = (await res.json()) as { access_token?: string };
