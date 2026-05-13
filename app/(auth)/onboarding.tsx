@@ -3,14 +3,14 @@ import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
   TouchableOpacity,
   Animated,
   FlatList,
   ViewToken,
   Platform,
-  Image,
+  useWindowDimensions,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,22 +20,30 @@ import colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
 
-const { width } = Dimensions.get('window');
-
 /** Local asset path — Metro resolves `require` reliably; `@/` alias can fail for some native bundles. */
 const APP_ICON_SOURCE = require('../../assets/images/icon.png');
 
+const LOGO_SIZE = 120;
+
 function OnboardingAppLogo() {
   return (
-    <View style={styles.onboardingLogoOuter} collapsable={false}>
-      <Image
-        source={APP_ICON_SOURCE}
-        style={styles.onboardingLogoImage}
-        resizeMode="contain"
-      />
-    </View>
+    <Image
+      source={APP_ICON_SOURCE}
+      style={onboardingLogoStyles.image}
+      contentFit="cover"
+      cachePolicy="memory-disk"
+      transition={0}
+    />
   );
 }
+
+const onboardingLogoStyles = StyleSheet.create({
+  image: {
+    width: LOGO_SIZE,
+    height: LOGO_SIZE,
+    borderRadius: LOGO_SIZE / 2,
+  },
+});
 
 interface OnboardingSlide {
   id: string;
@@ -61,7 +69,7 @@ const slidesData: SlideData[] = [
     titleKey: 'onboarding.slide1.title',
     subtitleKey: 'onboarding.slide1.subtitle',
     descriptionKey: 'onboarding.slide1.description',
-    icon: <OnboardingAppLogo />,
+    icon: null,
     gradient: [colors.primary, colors.primaryDark],
   },
   {
@@ -91,20 +99,26 @@ const slidesData: SlideData[] = [
 ];
 
 export default function OnboardingScreen() {
+  const { width: windowWidth } = useWindowDimensions();
+  const slideWidth = Math.max(1, windowWidth);
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList<OnboardingSlide> | null>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
   const { completeOnboarding, isAuthenticated } = useAuth();
   const { t } = useLanguage();
 
-  const slides: OnboardingSlide[] = useMemo(() => slidesData.map(slide => ({
-    id: slide.id,
-    title: t(slide.titleKey),
-    subtitle: t(slide.subtitleKey),
-    description: t(slide.descriptionKey),
-    icon: slide.icon,
-    gradient: slide.gradient,
-  })), [t]);
+  const slides: OnboardingSlide[] = useMemo(
+    () =>
+      slidesData.map((slide) => ({
+        id: slide.id,
+        title: t(slide.titleKey),
+        subtitle: t(slide.subtitleKey),
+        description: t(slide.descriptionKey),
+        icon: slide.id === '1' ? <OnboardingAppLogo /> : slide.icon,
+        gradient: slide.gradient,
+      })),
+    [t],
+  );
 
   const handleGetStarted = useCallback(async () => {
     if (Platform.OS !== 'web') {
@@ -126,13 +140,13 @@ export default function OnboardingScreen() {
       // `scrollToIndex` can fail on some targets if layout isn't measurable yet.
       // `scrollToOffset` works reliably with paging + fixed-width items.
       flatListRef.current?.scrollToOffset({
-        offset: nextIndex * width,
+        offset: nextIndex * slideWidth,
         animated: true,
       });
     } else {
       handleGetStarted();
     }
-  }, [currentIndex, slides.length, handleGetStarted]);
+  }, [currentIndex, slides.length, handleGetStarted, slideWidth]);
 
   const handleSkip = useCallback(async () => {
     if (Platform.OS !== 'web') {
@@ -156,9 +170,9 @@ export default function OnboardingScreen() {
 
   const renderSlide = ({ item, index }: { item: OnboardingSlide; index: number }) => {
     const inputRange = [
-      (index - 1) * width,
-      index * width,
-      (index + 1) * width,
+      (index - 1) * slideWidth,
+      index * slideWidth,
+      (index + 1) * slideWidth,
     ];
 
     const scale = scrollX.interpolate({
@@ -173,18 +187,29 @@ export default function OnboardingScreen() {
       extrapolate: 'clamp',
     });
 
+    /** Welcome slide uses a local bitmap; Android often fails to composite it under native-driven opacity. */
+    const isWelcomeSlide = item.id === '1';
+
+    const iconGradient = (
+      <LinearGradient
+        colors={[`${item.gradient[0]}20`, `${item.gradient[1]}10`]}
+        style={styles.iconGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        {item.icon}
+      </LinearGradient>
+    );
+
     return (
-      <View style={styles.slide}>
-        <Animated.View style={[styles.iconContainer, { transform: [{ scale }], opacity }]}>
-          <LinearGradient
-            colors={[`${item.gradient[0]}20`, `${item.gradient[1]}10`]}
-            style={styles.iconGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            {item.icon}
-          </LinearGradient>
-        </Animated.View>
+      <View style={[styles.slide, { width: slideWidth }]}>
+        {isWelcomeSlide ? (
+          <View style={styles.iconContainer}>{iconGradient}</View>
+        ) : (
+          <Animated.View style={[styles.iconContainer, { transform: [{ scale }], opacity }]}>
+            {iconGradient}
+          </Animated.View>
+        )}
 
         <Animated.View style={[styles.textContainer, { opacity }]}>
           <Text style={styles.title}>{item.title}</Text>
@@ -200,9 +225,9 @@ export default function OnboardingScreen() {
       <View style={styles.pagination}>
         {slides.map((_, index) => {
           const inputRange = [
-            (index - 1) * width,
-            index * width,
-            (index + 1) * width,
+            (index - 1) * slideWidth,
+            index * slideWidth,
+            (index + 1) * slideWidth,
           ];
 
           const dotScale = scrollX.interpolate({
@@ -258,9 +283,10 @@ export default function OnboardingScreen() {
           pagingEnabled
           showsHorizontalScrollIndicator={false}
           bounces={false}
+          removeClippedSubviews={false}
           getItemLayout={(_, index) => ({
-            length: width,
-            offset: width * index,
+            length: slideWidth,
+            offset: slideWidth * index,
             index,
           })}
           onScroll={Animated.event(
@@ -314,7 +340,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   slide: {
-    width,
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -332,16 +357,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.glassBorder,
     overflow: 'hidden',
-  },
-  onboardingLogoOuter: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    overflow: 'hidden',
-  },
-  onboardingLogoImage: {
-    width: '100%',
-    height: '100%',
   },
   textContainer: {
     alignItems: 'center',

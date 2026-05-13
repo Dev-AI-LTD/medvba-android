@@ -1,7 +1,8 @@
 import { getApiBaseUrl } from "@/lib/api-base-url";
+import { log } from "@/lib/log";
 
 export type ExchangeSessionResult =
-  | { ok: true; access_token: string; profile_id: string }
+  | { ok: true; access_token: string; profile_id: string; refresh_token?: string }
   | { ok: false; error: string; status?: number };
 
 const SESSION_FETCH_TIMEOUT_MS = 22_000;
@@ -9,6 +10,7 @@ const SESSION_FETCH_TIMEOUT_MS = 22_000;
 type SessionResponseJson = {
   access_token?: string;
   profile_id?: string;
+  refresh_token?: string;
   error?: string;
   detail?: unknown;
   issues?: unknown;
@@ -38,6 +40,10 @@ async function fetchSession(
   } finally {
     clearTimeout(t);
   }
+}
+
+function authEndpointNotFoundMessage(base: string, path: string): string {
+  return `Backend returned HTTP 404 for POST ${path}. Use EXPO_PUBLIC_API_BASE_URL as the API root only (example: https://your-service.up.railway.app — not …/api). Restart Expo with --clear, redeploy backend/server.ts if this route is missing, or run the API locally. Current base: ${base}`;
 }
 
 function formatSessionParseFailure(res: Response, raw: string): string {
@@ -114,6 +120,9 @@ export async function exchangeKindeAccessToken(
     const msg = e instanceof Error ? e.message : "Network error";
     return { ok: false, error: msg };
   }
+  if (res.status === 404) {
+    return { ok: false, error: authEndpointNotFoundMessage(base, "/api/auth/session"), status: 404 };
+  }
   const parsed = await parseSessionJson(res);
   if (!parsed.ok) {
     return { ok: false, error: parsed.error, status: res.status };
@@ -125,7 +134,65 @@ export async function exchangeKindeAccessToken(
   if (!json.access_token || !json.profile_id) {
     return { ok: false, error: formatApiErrorMessage(json, "Invalid session response from server.") };
   }
-  return { ok: true, access_token: json.access_token, profile_id: json.profile_id };
+  const refresh_token =
+    typeof json.refresh_token === "string" && json.refresh_token.length > 0
+      ? json.refresh_token
+      : undefined;
+  return {
+    ok: true,
+    access_token: json.access_token,
+    profile_id: json.profile_id,
+    ...(refresh_token ? { refresh_token } : {}),
+  };
+}
+
+/**
+ * Mint a new MEDVBA JWT using a stored Kinde refresh_token (server-side; email/password flow).
+ */
+export async function exchangeKindeRefreshToken(refreshToken: string): Promise<ExchangeSessionResult> {
+  const base = getApiBaseUrl();
+  let res: Response;
+  try {
+    res = await fetchSession(`${base}/api/auth/session/refresh`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Network error";
+    return { ok: false, error: msg };
+  }
+  if (res.status === 404) {
+    return {
+      ok: false,
+      error: authEndpointNotFoundMessage(base, "/api/auth/session/refresh"),
+      status: 404,
+    };
+  }
+  const parsed = await parseSessionJson(res);
+  if (!parsed.ok) {
+    return { ok: false, error: parsed.error, status: res.status };
+  }
+  const json = parsed.json;
+  if (!res.ok) {
+    return { ok: false, error: formatApiErrorMessage(json, res.statusText), status: res.status };
+  }
+  if (!json.access_token || !json.profile_id) {
+    return { ok: false, error: formatApiErrorMessage(json, "Invalid session response from server.") };
+  }
+  const nextRefresh =
+    typeof json.refresh_token === "string" && json.refresh_token.length > 0
+      ? json.refresh_token
+      : refreshToken;
+  return {
+    ok: true,
+    access_token: json.access_token,
+    profile_id: json.profile_id,
+    refresh_token: nextRefresh,
+  };
 }
 
 /**
@@ -150,7 +217,20 @@ export async function exchangeEmailPasswordSession(
     const msg = e instanceof Error ? e.message : "Network error";
     return { ok: false, error: msg };
   }
+  if (res.status === 404) {
+    return { ok: false, error: authEndpointNotFoundMessage(base, "/api/auth/session"), status: 404 };
+  }
   const parsed = await parseSessionJson(res);
+  if (__DEV__) {
+    try {
+      const u = new URL(`${base}/api/auth/session`);
+      log.debug(
+        `[exchangeEmailPasswordSession] ${u.origin}/api/auth/session → HTTP ${res.status}`,
+      );
+    } catch {
+      log.debug(`[exchangeEmailPasswordSession] HTTP ${res.status}`);
+    }
+  }
   if (!parsed.ok) {
     return { ok: false, error: parsed.error, status: res.status };
   }
@@ -161,5 +241,67 @@ export async function exchangeEmailPasswordSession(
   if (!json.access_token || !json.profile_id) {
     return { ok: false, error: formatApiErrorMessage(json, "Login failed.") };
   }
-  return { ok: true, access_token: json.access_token, profile_id: json.profile_id };
+  const refresh_token =
+    typeof json.refresh_token === "string" && json.refresh_token.length > 0
+      ? json.refresh_token
+      : undefined;
+  return {
+    ok: true,
+    access_token: json.access_token,
+    profile_id: json.profile_id,
+    ...(refresh_token ? { refresh_token } : {}),
+  };
+}
+
+/**
+ * Email + password + display name — server creates the Kinde user (Management API) and returns a MEDVBA session (no hosted browser).
+ */
+export async function registerEmailPasswordSession(
+  email: string,
+  password: string,
+  name: string,
+): Promise<ExchangeSessionResult> {
+  const base = getApiBaseUrl();
+  let res: Response;
+  try {
+    res = await fetchSession(`${base}/api/auth/register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+        password,
+        name: name.trim(),
+      }),
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Network error";
+    return { ok: false, error: msg };
+  }
+  if (res.status === 404) {
+    return { ok: false, error: authEndpointNotFoundMessage(base, "/api/auth/register"), status: 404 };
+  }
+  const parsed = await parseSessionJson(res);
+  if (!parsed.ok) {
+    return { ok: false, error: parsed.error, status: res.status };
+  }
+  const json = parsed.json;
+  if (!res.ok) {
+    return { ok: false, error: formatApiErrorMessage(json, res.statusText), status: res.status };
+  }
+  if (!json.access_token || !json.profile_id) {
+    return { ok: false, error: formatApiErrorMessage(json, "Registration failed.") };
+  }
+  const refresh_token =
+    typeof json.refresh_token === "string" && json.refresh_token.length > 0
+      ? json.refresh_token
+      : undefined;
+  return {
+    ok: true,
+    access_token: json.access_token,
+    profile_id: json.profile_id,
+    ...(refresh_token ? { refresh_token } : {}),
+  };
 }

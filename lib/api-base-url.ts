@@ -11,11 +11,14 @@ function pickFirstNonEmpty(...candidates: unknown[]): string | undefined {
 
 /** Fix common typo: `https:/host` → `https://host` (missing slash after scheme). */
 function normalizeApiBaseUrl(s: string): string {
-  return s
+  let out = s
     .trim()
     .replace(/^https:\/(?!\/)/, "https://")
     .replace(/^http:\/(?!\/)/, "http://")
     .replace(/\/+$/, "");
+  // Avoid `https://host/api` + `/api/auth/register` → `/api/api/auth/...` (404).
+  out = out.replace(/\/api\/?$/i, "");
+  return out.replace(/\/+$/, "");
 }
 
 export function getApiBaseUrl(): string {

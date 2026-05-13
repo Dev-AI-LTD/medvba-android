@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { useUserProfile } from '@/lib/supabase-hooks';
 import { AppState, Platform, Linking } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
+import type { LoginMethodParams } from '@kinde/js-utils';
 import { useKindeAuth } from '@kinde/expo';
 import {
   authenticateWithBiometric,
@@ -17,10 +18,17 @@ import { log } from '@/lib/log';
 import type { UserProfile } from '@/types/user';
 import {
   exchangeEmailPasswordSession,
-  exchangeKindeAccessToken,
+  exchangeKindeRefreshToken,
+  registerEmailPasswordSession,
 } from '@/lib/exchange-medvba-session';
+import { resolveMedvbaSessionFromKindeAccessToken } from '@/lib/kinde-medvba-session';
 import { setMedvbaAccessToken, getMedvbaAccessToken } from '@/lib/medvba-access-token';
-import { loadMedvbaAccessToken, persistMedvbaAccessToken } from '@/lib/medvba-session-storage';
+import {
+  loadMedvbaAccessToken,
+  loadMedvbaKindeRefreshToken,
+  persistMedvbaAccessToken,
+  persistMedvbaKindeRefreshToken,
+} from '@/lib/medvba-session-storage';
 import { withTimeout } from '@/lib/with-timeout';
 import { getMergedExpoExtra } from '@/lib/expo-public-extra';
 import { PUBLIC_APP_NAME } from '@/lib/public-brand';
@@ -146,6 +154,8 @@ interface AuthActions {
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
   completeOnboarding: () => Promise<void>;
   resetOnboarding: () => Promise<void>;
+  /** Refresh MEDVBA JWT before sensitive API calls (e.g. delete account). No-op if token is still fresh. */
+  refreshMedvbaSession: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   applyServerProfilePatch: (row: {
     profile_photo_url?: string | null;
@@ -224,6 +234,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   const clearMedvbaSession = useCallback(() => {
     setMedvbaAccessToken(null);
     void persistMedvbaAccessToken(null);
+    void persistMedvbaKindeRefreshToken(null);
     setSession(null);
     setUser(null);
     setProfile(null);
@@ -349,24 +360,24 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
       clearMedvbaSession();
       return;
     }
-    const [ex, up] = await Promise.all([exchangeKindeAccessToken(kt), k.getUserProfile()]);
+    const resolved = await resolveMedvbaSessionFromKindeAccessToken(kt, () => k.getUserProfile());
     perf('after_exchange_parallel_getUserProfile');
-    if (!ex.ok) {
-      log.error('[Auth] Session exchange failed:', ex.error);
+    if (!resolved.ok) {
+      log.error('[Auth] Session exchange failed:', resolved.error);
       clearMedvbaSession();
       return;
     }
-    await applyMedvbaSession(ex.access_token, ex.profile_id, up?.email);
+    await applyMedvbaSession(resolved.access_token, resolved.profile_id, resolved.email);
     perf('after_applyMedvbaSession');
     const mountedRef = { current: true };
     const recent = recentProfileFetchRef.current;
     const skipBgFetch =
-      recent?.profileId === ex.profile_id &&
+      recent?.profileId === resolved.profile_id &&
       Date.now() - recent.at < RECENT_PROFILE_FETCH_SKIP_MS;
     if (skipBgFetch) {
       perf('skip_background_fetchProfile_recent');
     } else {
-      void fetchProfile(ex.profile_id, up?.email ?? undefined, mountedRef, 'kindeSync').catch((err) => {
+      void fetchProfile(resolved.profile_id, resolved.email, mountedRef, 'kindeSync').catch((err) => {
         if (!isAbortError(err)) log.warn('[Auth] Background fetchProfile after Kinde sync:', err);
       });
       perf('scheduled_background_fetchProfile');
@@ -374,14 +385,34 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   }, [applyMedvbaSession, clearMedvbaSession, fetchProfile]);
 
   const refreshMedvbaIfNeeded = useCallback(async () => {
-    const k = kindeRef.current;
-    if (!k.isAuthenticated) return;
     if (sessionRefreshInFlightRef.current) return;
     if (!shouldRefreshMedvbaAccessToken(MEDVBA_JWT_REFRESH_BUFFER_MS)) return;
 
+    const k = kindeRef.current;
     sessionRefreshInFlightRef.current = true;
     try {
-      await syncFromKinde();
+      if (k.isAuthenticated) {
+        await syncFromKinde();
+      } else {
+        const rt = await loadMedvbaKindeRefreshToken();
+        if (!rt) return;
+        const ex = await exchangeKindeRefreshToken(rt);
+        if (!ex.ok) {
+          log.warn('[Auth] MEDVBA refresh (Kinde refresh_token) failed:', ex.error);
+          await persistMedvbaKindeRefreshToken(null);
+          clearMedvbaSession();
+          return;
+        }
+        let emailFromJwt: string | null = null;
+        try {
+          const c = decodeJwtClaims(ex.access_token);
+          if (typeof c.email === 'string' && c.email.length > 0) emailFromJwt = c.email;
+        } catch {
+          /* ignore */
+        }
+        await applyMedvbaSession(ex.access_token, ex.profile_id, emailFromJwt ?? undefined);
+        await persistMedvbaKindeRefreshToken(ex.refresh_token ?? rt);
+      }
       if (getMedvbaAccessToken()) {
         await queryClient.invalidateQueries();
       }
@@ -390,20 +421,20 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     } finally {
       sessionRefreshInFlightRef.current = false;
     }
-  }, [syncFromKinde, queryClient]);
+  }, [syncFromKinde, queryClient, applyMedvbaSession, clearMedvbaSession]);
 
   useEffect(() => {
-    if (!session || !kinde.isAuthenticated) return undefined;
+    if (!session) return undefined;
     const id = setInterval(() => {
       void refreshMedvbaIfNeeded();
     }, MEDVBA_SESSION_POLL_MS);
     void refreshMedvbaIfNeeded();
     return () => clearInterval(id);
-  }, [session, kinde.isAuthenticated, refreshMedvbaIfNeeded]);
+  }, [session, refreshMedvbaIfNeeded]);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next) => {
-      if (next === 'active' && session && kindeRef.current.isAuthenticated) {
+      if (next === 'active' && session) {
         void refreshMedvbaIfNeeded();
       }
     });
@@ -493,6 +524,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
                       restoredMedvba = true;
                     } else {
                       await persistMedvbaAccessToken(null);
+                      await persistMedvbaKindeRefreshToken(null);
                     }
                   } catch (restoreErr) {
                     log.warn('[Auth] Stored MEDVBA session invalid; clearing:', restoreErr);
@@ -590,25 +622,18 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   const signUp = useCallback(
     async (email: string, password: string, name: string) => {
       try {
-        const res = await kinde.register({ loginHint: email.trim().toLowerCase() } as never);
-        if (!res.success) {
-          return {
-            error: { message: res.errorMessage || 'Registration failed' } as AuthError,
-            session: null,
-          };
-        }
-        const [ex, up] = await Promise.all([
-          exchangeKindeAccessToken(res.accessToken),
-          kinde.getUserProfile(),
-        ]);
+        const ex = await registerEmailPasswordSession(email, password, name);
         if (!ex.ok) {
           return { error: { message: ex.error } as AuthError, session: null };
         }
-        const sessionEmail = up?.email ?? email;
+        const sessionEmail = email.trim().toLowerCase();
         await applyMedvbaSession(ex.access_token, ex.profile_id, sessionEmail);
+        if (ex.refresh_token) {
+          await persistMedvbaKindeRefreshToken(ex.refresh_token);
+        }
         const mountedRef = { current: true };
-        await ensureUserExists(ex.profile_id, sessionEmail ?? undefined, name, mountedRef);
-        await fetchProfile(ex.profile_id, sessionEmail ?? undefined, mountedRef, 'signUp');
+        await ensureUserExists(ex.profile_id, sessionEmail, name.trim(), mountedRef);
+        await fetchProfile(ex.profile_id, sessionEmail, mountedRef, 'signUp');
         const syn = buildSyntheticSession(ex.access_token, ex.profile_id, sessionEmail);
         return { error: null, session: syn };
       } catch (error) {
@@ -616,7 +641,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
         return { error: error as AuthError, session: null };
       }
     },
-    [kinde, applyMedvbaSession, ensureUserExists, fetchProfile],
+    [applyMedvbaSession, ensureUserExists, fetchProfile],
   );
 
   const signIn = useCallback(
@@ -628,6 +653,9 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
         }
         const sessionEmail = email.trim().toLowerCase();
         await applyMedvbaSession(ex.access_token, ex.profile_id, sessionEmail);
+        if (ex.refresh_token) {
+          await persistMedvbaKindeRefreshToken(ex.refresh_token);
+        }
         const mountedRef = { current: true };
         await fetchProfile(ex.profile_id, sessionEmail, mountedRef, 'emailPassword');
         return { error: null };
@@ -639,12 +667,12 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   );
 
   const signInWithKindeHosted = useCallback(
-    async (loginHint?: Record<string, unknown>) => {
+    async (loginHint?: LoginMethodParams) => {
       const perf = authPerfStep('signInWithKindeHosted');
       setHostedOAuthInFlight(true);
       try {
         perf('before_kinde.login');
-        const res = await kinde.login(loginHint as never);
+        const res = await kinde.login(loginHint);
         perf('after_kinde.login');
         if (!res.success) {
           if (/cancel|dismiss|closed/i.test(res.errorMessage || '')) {
@@ -652,18 +680,17 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
           }
           return { error: { message: res.errorMessage || 'Login failed' } as AuthError };
         }
-        const [ex, up] = await Promise.all([
-          exchangeKindeAccessToken(res.accessToken),
+        const resolved = await resolveMedvbaSessionFromKindeAccessToken(res.accessToken, () =>
           kinde.getUserProfile(),
-        ]);
+        );
         perf('after_exchange_parallel_getUserProfile');
-        if (!ex.ok) {
-          return { error: { message: ex.error } as AuthError };
+        if (!resolved.ok) {
+          return { error: { message: resolved.error } as AuthError };
         }
-        await applyMedvbaSession(ex.access_token, ex.profile_id, up?.email);
+        await applyMedvbaSession(resolved.access_token, resolved.profile_id, resolved.email);
         perf('after_applyMedvbaSession');
         const mountedRef = { current: true };
-        await fetchProfile(ex.profile_id, up?.email ?? undefined, mountedRef, 'hosted');
+        await fetchProfile(resolved.profile_id, resolved.email, mountedRef, 'hosted');
         perf('after_await_fetchProfile');
         return { error: null };
       } catch (error) {
@@ -686,7 +713,9 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   const isFacebookLoginEnabled = isFacebookLoginEnabledForBuild(extraConfig);
 
   const signInWithGoogle = useCallback(async () => {
-    const hint = googleConnectionId ? { connectionId: googleConnectionId } : undefined;
+    const hint: LoginMethodParams | undefined = googleConnectionId
+      ? { connectionId: googleConnectionId }
+      : undefined;
     return signInWithKindeHosted(hint);
   }, [googleConnectionId, signInWithKindeHosted]);
 
@@ -696,7 +725,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
         error: { message: 'Facebook sign-in is not enabled for this app.' } as AuthError,
       };
     }
-    const hint = facebookConnectionId
+    const hint: LoginMethodParams | undefined = facebookConnectionId
       ? { connectionId: facebookConnectionId }
       : undefined;
     return signInWithKindeHosted(hint);
@@ -886,6 +915,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     resetPassword,
     completeOnboarding,
     resetOnboarding,
+    refreshMedvbaSession: refreshMedvbaIfNeeded,
     refreshProfile,
     applyServerProfilePatch,
     signInWithGoogle,

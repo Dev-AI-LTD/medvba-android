@@ -1,4 +1,5 @@
 import type { Hono } from "hono";
+import bcrypt from "bcryptjs";
 import { mintSupabaseAccessJwt } from "./mint-supabase-jwt";
 import { fetchKindeUserProfile } from "./kinde-user-profile";
 import { getSupabaseAdmin, resolveOrCreateProfileId, type KindeUserProfile } from "./resolve-profile";
@@ -7,7 +8,9 @@ import { getSupabaseAdmin, resolveOrCreateProfileId, type KindeUserProfile } fro
  * Resource Owner Password Credentials (identity server) — server only (never expose client_secret to the app).
  * Enable password grant for the app client in the identity provider admin console.
  */
-async function kindePasswordToken(email: string, password: string): Promise<string | null> {
+type KindeTokenPair = { access_token: string; refresh_token?: string };
+
+async function kindePasswordToken(email: string, password: string): Promise<KindeTokenPair | null> {
   const issuer = (process.env.KINDE_ISSUER_URL || "").trim().replace(/\/+$/, "");
   const clientId = process.env.KINDE_CLIENT_ID?.trim();
   const clientSecret = process.env.KINDE_CLIENT_SECRET?.trim();
@@ -35,8 +38,53 @@ async function kindePasswordToken(email: string, password: string): Promise<stri
     console.warn("[auth] Password grant token failed:", res.status, t.slice(0, 200));
     return null;
   }
-  const json = (await res.json()) as { access_token?: string };
-  return json.access_token ?? null;
+  const json = (await res.json()) as { access_token?: string; refresh_token?: string };
+  const access_token = json.access_token;
+  if (!access_token) return null;
+  return {
+    access_token,
+    ...(typeof json.refresh_token === "string" && json.refresh_token.length > 0
+      ? { refresh_token: json.refresh_token }
+      : {}),
+  };
+}
+
+async function kindeRefreshAccessToken(refreshToken: string): Promise<KindeTokenPair | null> {
+  const issuer = (process.env.KINDE_ISSUER_URL || "").trim().replace(/\/+$/, "");
+  const clientId = process.env.KINDE_CLIENT_ID?.trim();
+  const clientSecret = process.env.KINDE_CLIENT_SECRET?.trim();
+  if (!issuer || !clientId || !clientSecret) return null;
+
+  const body = new URLSearchParams({
+    grant_type: "refresh_token",
+    refresh_token: refreshToken,
+    client_id: clientId,
+    client_secret: clientSecret,
+  });
+  const aud = process.env.KINDE_AUDIENCE?.trim();
+  if (aud) {
+    body.set("audience", aud);
+  }
+
+  const res = await fetch(`${issuer}/oauth2/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    console.warn("[auth] Refresh token grant failed:", res.status, t.slice(0, 200));
+    return null;
+  }
+  const json = (await res.json()) as { access_token?: string; refresh_token?: string };
+  const access_token = json.access_token;
+  if (!access_token) return null;
+  return {
+    access_token,
+    ...(typeof json.refresh_token === "string" && json.refresh_token.length > 0
+      ? { refresh_token: json.refresh_token }
+      : {}),
+  };
 }
 
 async function mintSessionBody(input: {
@@ -90,7 +138,271 @@ async function sessionFromKindeAccessToken(kindeAccessToken: string) {
   };
 }
 
+function getKindeIssuerBase(): string {
+  return (process.env.KINDE_ISSUER_URL || "").trim().replace(/\/+$/, "");
+}
+
+function getKindeManagementAudience(issuer: string): string {
+  const explicit =
+    (process.env.KINDE_MANAGEMENT_AUDIENCE || process.env.KINDE_AUDIENCE || "").trim() || "";
+  if (explicit) return explicit.replace(/\/+$/, "");
+  return `${issuer}/api`;
+}
+
+async function kindeManagementAccessToken(): Promise<string | null> {
+  const issuer = getKindeIssuerBase();
+  const m2mId = process.env.KINDE_M2M_CLIENT_ID?.trim();
+  const m2mSecret = process.env.KINDE_M2M_CLIENT_SECRET?.trim();
+  if (!issuer || !m2mId || !m2mSecret) return null;
+
+  const audience = getKindeManagementAudience(issuer);
+  const body = new URLSearchParams({
+    grant_type: "client_credentials",
+    client_id: m2mId,
+    client_secret: m2mSecret,
+    audience,
+  });
+
+  const res = await fetch(`${issuer}/oauth2/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    console.warn("[auth] Kinde M2M token failed:", res.status, t.slice(0, 200));
+    return null;
+  }
+  const json = (await res.json()) as { access_token?: string };
+  return json.access_token ?? null;
+}
+
+function splitDisplayName(name: string): { given_name: string; family_name: string } {
+  const t = name.trim();
+  if (!t) return { given_name: "Student", family_name: "" };
+  const sp = t.indexOf(" ");
+  if (sp === -1) return { given_name: t, family_name: "" };
+  return { given_name: t.slice(0, sp).trim(), family_name: t.slice(sp + 1).trim() };
+}
+
+async function kindeManagementCreateUser(
+  m2mToken: string,
+  email: string,
+  displayName: string,
+): Promise<{ ok: true; userId: string } | { ok: false; status: number; message: string; detail?: string }> {
+  const issuer = getKindeIssuerBase();
+  const orgCode = process.env.KINDE_REGISTER_ORG_CODE?.trim();
+  const { given_name, family_name } = splitDisplayName(displayName);
+
+  const payload: Record<string, unknown> = {
+    identities: [{ type: "email", details: { email: email.trim().toLowerCase() } }],
+    given_name,
+    family_name: family_name || undefined,
+  };
+  if (orgCode) {
+    payload.organization_code = orgCode;
+  }
+
+  const res = await fetch(`${issuer}/api/v1/user`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${m2mToken}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const raw = await res.text().catch(() => "");
+  if (!res.ok) {
+    return {
+      ok: false,
+      status: res.status >= 400 && res.status < 600 ? res.status : 502,
+      message: "Could not create account.",
+      detail: raw.slice(0, 400),
+    };
+  }
+
+  let json: unknown;
+  try {
+    json = raw.trim() ? JSON.parse(raw) : {};
+  } catch {
+    return { ok: false, status: 502, message: "Invalid response from identity server." };
+  }
+
+  const obj = json as Record<string, unknown>;
+  const userId =
+    (typeof obj.id === "string" && obj.id) ||
+    (typeof (obj.user as Record<string, unknown> | undefined)?.id === "string"
+      ? String((obj.user as Record<string, unknown>).id)
+      : "") ||
+    (Array.isArray(obj.users) && obj.users[0] && typeof (obj.users[0] as { id?: string }).id === "string"
+      ? String((obj.users[0] as { id: string }).id)
+      : "");
+
+  if (!userId) {
+    console.warn("[auth] Kinde create user: missing id in response:", raw.slice(0, 300));
+    return { ok: false, status: 502, message: "Account created but user id was not returned." };
+  }
+
+  return { ok: true, userId };
+}
+
+async function kindeManagementSetPassword(
+  m2mToken: string,
+  userId: string,
+  plainPassword: string,
+): Promise<{ ok: true } | { ok: false; status: number; message: string; detail?: string }> {
+  const issuer = getKindeIssuerBase();
+  const hashed_password = await bcrypt.hash(plainPassword, 12);
+  const res = await fetch(`${issuer}/api/v1/users/${encodeURIComponent(userId)}/password`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${m2mToken}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      hashed_password,
+      hashing_method: "bcrypt",
+      is_temporary_password: false,
+    }),
+  });
+  const raw = await res.text().catch(() => "");
+  if (!res.ok) {
+    return {
+      ok: false,
+      status: res.status >= 400 && res.status < 600 ? res.status : 502,
+      message: "Could not set account password.",
+      detail: raw.slice(0, 400),
+    };
+  }
+  return { ok: true };
+}
+
 export function registerAuthSessionRoutes(app: Hono) {
+  app.post("/api/auth/register", async (c) => {
+    try {
+      const body = (await c.req.json().catch(() => null)) as {
+        email?: string;
+        password?: string;
+        name?: string;
+      } | null;
+      const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+      const password = typeof body?.password === "string" ? body.password : "";
+      const name = typeof body?.name === "string" ? body.name.trim() : "";
+
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return c.json({ error: "A valid email is required." }, 400);
+      }
+      if (password.length < 8) {
+        return c.json({ error: "Password must be at least 8 characters." }, 400);
+      }
+      if (!name || name.length < 1) {
+        return c.json({ error: "Name is required." }, 400);
+      }
+
+      const m2m = await kindeManagementAccessToken();
+      if (!m2m) {
+        return c.json(
+          {
+            error:
+              "Registration is not configured. Set KINDE_M2M_CLIENT_ID, KINDE_M2M_CLIENT_SECRET, and authorize the M2M app for the Kinde Management API (see project docs).",
+          },
+          503,
+        );
+      }
+
+      const created = await kindeManagementCreateUser(m2m, email, name);
+      if (!created.ok) {
+        const dup =
+          created.status === 409 ||
+          (created.detail &&
+            /already exists|duplicate|unique|409|user.*exist/i.test(created.detail));
+        if (dup) {
+          return c.json({ error: "An account with this email already exists." }, 409);
+        }
+        console.warn("[auth] register create user:", created.status, created.detail);
+        return c.json(
+          { error: created.message, ...(created.detail ? { detail: created.detail } : {}) },
+          created.status >= 400 && created.status < 600 ? (created.status as 400) : 502,
+        );
+      }
+
+      const pwdSet = await kindeManagementSetPassword(m2m, created.userId, password);
+      if (!pwdSet.ok) {
+        console.error("[auth] register set password failed:", pwdSet.detail);
+        return c.json(
+          { error: pwdSet.message, ...(pwdSet.detail ? { detail: pwdSet.detail } : {}) },
+          pwdSet.status >= 400 && pwdSet.status < 600 ? (pwdSet.status as 400) : 502,
+        );
+      }
+
+      const kindeTokens = await kindePasswordToken(email, password);
+      if (!kindeTokens) {
+        return c.json(
+          {
+            error:
+              "Account was created but sign-in failed. If email verification is required in Kinde, disable it for password users or complete verification, then try logging in.",
+          },
+          401,
+        );
+      }
+
+      const out = await sessionFromKindeAccessToken(kindeTokens.access_token);
+      if (!out.ok) {
+        return c.json({ error: out.message, detail: out.detail }, out.status as 401);
+      }
+
+      return c.json({
+        ...out.body,
+        ...(typeof kindeTokens.refresh_token === "string" && kindeTokens.refresh_token.length > 0
+          ? { refresh_token: kindeTokens.refresh_token }
+          : {}),
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("[auth] /api/auth/register:", msg);
+      return c.json({ error: msg }, 500);
+    }
+  });
+
+  app.post("/api/auth/session/refresh", async (c) => {
+    try {
+      const body = (await c.req.json().catch(() => null)) as { refresh_token?: string } | null;
+      const refreshToken = typeof body?.refresh_token === "string" ? body.refresh_token.trim() : "";
+      if (!refreshToken) {
+        return c.json({ error: "refresh_token is required." }, 400);
+      }
+
+      const kindeAccess = await kindeRefreshAccessToken(refreshToken);
+      if (!kindeAccess) {
+        return c.json(
+          {
+            error:
+              "Token refresh failed. Check KINDE_ISSUER_URL, KINDE_CLIENT_ID, KINDE_CLIENT_SECRET, or sign in again.",
+          },
+          401,
+        );
+      }
+
+      const out = await sessionFromKindeAccessToken(kindeAccess.access_token);
+      if (!out.ok) {
+        return c.json({ error: out.message, detail: out.detail }, out.status as 401);
+      }
+
+      const nextRefresh = kindeAccess.refresh_token ?? refreshToken;
+      return c.json({
+        ...out.body,
+        refresh_token: nextRefresh,
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("[auth] /api/auth/session/refresh:", msg);
+      return c.json({ error: msg }, 500);
+    }
+  });
+
   app.post("/api/auth/session", async (c) => {
     try {
       const authHeader = c.req.header("authorization");
@@ -115,8 +427,8 @@ export function registerAuthSessionRoutes(app: Hono) {
           return c.json({ error: "email and password are required." }, 400);
         }
 
-        const kindeAccess = await kindePasswordToken(email, password);
-        if (!kindeAccess) {
+        const kindeTokens = await kindePasswordToken(email, password);
+        if (!kindeTokens) {
           return c.json(
             {
               error:
@@ -126,11 +438,16 @@ export function registerAuthSessionRoutes(app: Hono) {
           );
         }
 
-        const out = await sessionFromKindeAccessToken(kindeAccess);
+        const out = await sessionFromKindeAccessToken(kindeTokens.access_token);
         if (!out.ok) {
           return c.json({ error: out.message, detail: out.detail }, out.status as 401);
         }
-        return c.json(out.body);
+        return c.json({
+          ...out.body,
+          ...(typeof kindeTokens.refresh_token === "string" && kindeTokens.refresh_token.length > 0
+            ? { refresh_token: kindeTokens.refresh_token }
+            : {}),
+        });
       }
 
       return c.json(

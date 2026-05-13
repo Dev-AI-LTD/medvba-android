@@ -31,6 +31,7 @@
     "db:migrate:clear": "tsx scripts/migrate-questions-to-supabase.ts --clear",
     "apple:jwt-supabase": "node scripts/generate-apple-jwt-supabase.mjs",
     "release:decode-jwt": "node scripts/decode-jwt-payload.mjs",
+    "verify:auth-session": "node scripts/verify-auth-session.mjs",
     "doctor": "node scripts/postinstall-dedupe-kinde-expo.mjs && expo-doctor",
     "release:preflight": "bun install --frozen-lockfile && bun run doctor && bunx tsc --noEmit",
     "release:android": "npx eas-cli build --platform android --profile production --non-interactive --no-wait",
@@ -58,6 +59,7 @@
     "@types/jest": "29.5.14",
     "@types/pg": "^8.16.0",
     "@ungap/structured-clone": "^1.3.0",
+    "bcryptjs": "^3.0.3",
     "dotenv": "^16.6.1",
     "expo": "~54.0.34",
     "expo-auth-session": "~7.0.11",
@@ -112,6 +114,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@expo/ngrok": "^4.1.0",
+    "@types/bcryptjs": "^3.0.0",
     "@types/react": "~19.1.10",
     "detox": "^20.50.1",
     "eslint": "^9.31.0",

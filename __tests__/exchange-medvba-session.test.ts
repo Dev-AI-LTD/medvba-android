@@ -6,7 +6,11 @@ jest.mock("@/lib/api-base-url", () => ({
   getApiBaseUrl: () => "http://api.test",
 }));
 
-import { exchangeEmailPasswordSession, exchangeKindeAccessToken } from "@/lib/exchange-medvba-session";
+import {
+  exchangeEmailPasswordSession,
+  exchangeKindeAccessToken,
+  registerEmailPasswordSession,
+} from "@/lib/exchange-medvba-session";
 
 describe("exchange-medvba-session (identity token)", () => {
   const fetchMock = global.fetch as jest.Mock;
@@ -77,5 +81,33 @@ describe("exchange-medvba-session (identity token)", () => {
       "Content-Type": "application/json",
     });
     expect(init?.body).toBe(JSON.stringify({ email: "user@example.com", password: "secret" }));
+  });
+
+  it("email login HTTP 404 returns endpoint hint instead of invalid JSON", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      text: async () => "404 Not Found",
+    });
+
+    const r = await exchangeEmailPasswordSession("user@example.com", "secret");
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.error).toContain("HTTP 404");
+    expect(r.error).toContain("/api/auth/session");
+    expect(r.error).toContain("http://api.test");
+  });
+
+  it("email register HTTP 404 returns endpoint hint", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      text: async () => "404 Not Found",
+    });
+
+    const r = await registerEmailPasswordSession("user@example.com", "secret1234", "Name");
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.error).toContain("/api/auth/register");
   });
 });

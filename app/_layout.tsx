@@ -36,6 +36,12 @@ monitoring.init();
 const extraConfig = Constants.expoConfig?.extra ?? {};
 const kindeIssuerUrl = process.env.EXPO_PUBLIC_KINDE_ISSUER_URL || extraConfig.EXPO_PUBLIC_KINDE_ISSUER_URL || '';
 const kindeClientId = process.env.EXPO_PUBLIC_KINDE_CLIENT_ID || extraConfig.EXPO_PUBLIC_KINDE_CLIENT_ID || '';
+/** @kinde/expo default; override with EXPO_PUBLIC_KINDE_SCOPES if your Kinde app uses different API scopes. */
+const kindeScopes = String(
+  process.env.EXPO_PUBLIC_KINDE_SCOPES ||
+    (extraConfig as { EXPO_PUBLIC_KINDE_SCOPES?: string }).EXPO_PUBLIC_KINDE_SCOPES ||
+    'openid profile email offline',
+).trim();
 
 const isAbortSignalError = (args: unknown[]): boolean => {
   return args.some(arg => {
@@ -431,6 +437,14 @@ function ExternalAuthSdkBoundary({ children }: { children: React.ReactNode }) {
       config={{
         domain: (kindeIssuerUrl || 'https://__configure_kinde__.kinde.com').replace(/\/+$/, ''),
         clientId: kindeClientId || '__configure_kinde__',
+        scopes: kindeScopes,
+      }}
+      callbacks={{
+        onError: ({ error, errorDescription }) => {
+          if (__DEV__) {
+            log.warn('[Kinde]', error, errorDescription);
+          }
+        },
       }}
     >
       {children}

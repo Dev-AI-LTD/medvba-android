@@ -68,6 +68,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
   loadEnvFile(path.join(root, '.env'), envFromFile);
   loadEnvFile(path.join(root, '.env.local'), envFromFile, { override: true });
 
+  /** Trebuie să coincidă cu URL-ul backend-ului unde rulează Hono (login email → POST /api/auth/session). */
   const mergedPublicApiBase =
     [envFromFile.EXPO_PUBLIC_API_BASE_URL, envFromFile.EXPO_PUBLIC_RORK_API_BASE_URL]
       .map((s) => (s || '').trim())
@@ -135,12 +136,13 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     orientation: 'default',
     icon: './assets/images/icon.png',
     scheme: 'medvba',
-    userInterfaceStyle: 'automatic',
+    userInterfaceStyle: 'dark',
     newArchEnabled: true,
     splash: {
       image: './assets/images/splash-icon.png',
       resizeMode: 'contain',
-      backgroundColor: '#ffffff',
+      /** Same family as `constants/colors` dark `background` — continuous with welcome / login. */
+      backgroundColor: '#0A1628',
     },
     updates: {
       url: 'https://u.expo.dev/667a66db-a3be-4c1e-b7da-8ad212c92bb4',
@@ -228,6 +230,8 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       EXPO_PUBLIC_KINDE_FACEBOOK_CONNECTION_ID:
         envFromFile.EXPO_PUBLIC_KINDE_FACEBOOK_CONNECTION_ID ||
         process.env.EXPO_PUBLIC_KINDE_FACEBOOK_CONNECTION_ID,
+      EXPO_PUBLIC_KINDE_SCOPES:
+        envFromFile.EXPO_PUBLIC_KINDE_SCOPES || process.env.EXPO_PUBLIC_KINDE_SCOPES,
       EXPO_PUBLIC_SHOW_FACEBOOK_LOGIN:
         envFromFile.EXPO_PUBLIC_SHOW_FACEBOOK_LOGIN || process.env.EXPO_PUBLIC_SHOW_FACEBOOK_LOGIN,
       EXPO_PUBLIC_FACEBOOK_LOGIN_ENABLED:

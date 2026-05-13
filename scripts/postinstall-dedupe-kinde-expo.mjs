@@ -125,15 +125,22 @@ class __KindeNativeSecureStore {
 }
 async function __getKindeSecureStoreCtor() {
 \ttry {
-\t\tconst t = await e.default();
-\t\tif (t) return t;
-\t} catch (e) {
-\t\tconsole.warn("[Kinde] Falling back to native Expo SecureStore:", e);
+\t\tconst Ctor = await e.default();
+\t\tif (Ctor && typeof Ctor.prototype.removeItems === "function") return Ctor;
+\t} catch (err) {
+\t\tconsole.warn("[Kinde] Falling back to native Expo SecureStore:", err);
 \t}
 \treturn __KindeNativeSecureStore;
 }`;
   if (!source.includes("__KindeNativeSecureStore")) {
     source = source.replace(marker, fallback);
+  }
+  const ctorOldBody = `\t\tconst t = await e.default();
+\t\tif (t) return t;`;
+  const ctorNewBody = `\t\tconst Ctor = await e.default();
+\t\tif (Ctor && typeof Ctor.prototype.removeItems === "function") return Ctor;`;
+  if (source.includes(ctorOldBody)) {
+    source = source.replace(ctorOldBody, ctorNewBody);
   }
   source = source.replace("let t = new (await (e.default()))();", "let t = new (await __getKindeSecureStoreCtor())();");
   fs.writeFileSync(kindeExpoIndex, source);

@@ -81,10 +81,11 @@ optional.forEach((key) => {
 });
 
 if (!hasApiBaseUrl(env)) {
-  console.error('❌ Lipsește EXPO_PUBLIC_API_BASE_URL sau EXPO_PUBLIC_RORK_API_BASE_URL (obligatoriu la runtime pentru tRPC).');
+  console.error('❌ Lipsește EXPO_PUBLIC_API_BASE_URL sau EXPO_PUBLIC_RORK_API_BASE_URL (obligatoriu la runtime pentru tRPC și login email).');
   failed = true;
 } else {
   console.log('✅ EXPO_PUBLIC_API_BASE_URL sau EXPO_PUBLIC_RORK_API_BASE_URL');
+  console.log('   → trebuie să fie același host ca backend-ul Railway (Hono); verifică cu: bun run verify:auth-session');
 }
 
 if (failed) {

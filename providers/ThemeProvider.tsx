@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SystemUI from 'expo-system-ui';
 import { darkColors, lightColors } from '@/constants/colors';
 import { log } from '@/lib/log';
 
@@ -18,22 +19,27 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 const THEME_KEY = '@medvba_theme_preference';
 
+/** Default for new installs — matches onboarding / login (dark UI). */
+const DEFAULT_PREFERENCE: ThemePreference = 'dark';
+
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const systemScheme = useColorScheme();
-  const [preference, setPreferenceState] = useState<ThemePreference>('system');
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [preference, setPreferenceState] = useState<ThemePreference>(DEFAULT_PREFERENCE);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem(THEME_KEY).then(stored => {
-      log.debug('[ThemeProvider] Loaded preference from storage:', stored);
-      if (stored === 'light' || stored === 'dark' || stored === 'system') {
-        setPreferenceState(stored);
-      }
-      setIsLoaded(true);
-    }).catch(() => {
-      setIsLoaded(true);
-    });
+    AsyncStorage.getItem(THEME_KEY)
+      .then((stored) => {
+        log.debug('[ThemeProvider] Loaded preference from storage:', stored);
+        if (stored === 'light' || stored === 'dark' || stored === 'system') {
+          setPreferenceState(stored);
+        } else {
+          setPreferenceState(DEFAULT_PREFERENCE);
+        }
+      })
+      .catch(() => {
+        setPreferenceState(DEFAULT_PREFERENCE);
+      });
   }, []);
 
   const setPreference = (value: ThemePreference) => {
@@ -49,6 +55,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, 300);
   };
 
+  useEffect(() => {
+    if (preference === 'system') {
+      Appearance.setColorScheme(undefined);
+    } else {
+      Appearance.setColorScheme(preference);
+    }
+  }, [preference]);
+
   const colorScheme: 'light' | 'dark' = useMemo(() => {
     if (preference === 'system') {
       return systemScheme === 'dark' ? 'dark' : 'light';
@@ -61,6 +75,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [colorScheme]);
 
   useEffect(() => {
+    void SystemUI.setBackgroundColorAsync(colors.background);
+  }, [colors.background]);
+
+  useEffect(() => {
     log.debug('[ThemeProvider] State updated - preference:', preference, 'systemScheme:', systemScheme, 'computed colorScheme:', colorScheme);
   }, [preference, systemScheme, colorScheme]);
 
@@ -68,10 +86,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     () => ({ preference, setPreference, colorScheme, colors, isTransitioning }),
     [preference, colorScheme, colors, isTransitioning]
   );
-
-  if (!isLoaded) {
-    return null;
-  }
 
   return (
     <ThemeContext.Provider value={value}>
@@ -89,7 +103,7 @@ export const useTheme = () => {
 const FALLBACK_THEME: ThemeContextValue = {
   colors: darkColors,
   colorScheme: 'dark',
-  preference: 'system',
+  preference: DEFAULT_PREFERENCE,
   setPreference: () => {},
   isTransitioning: false,
 };

@@ -51,7 +51,7 @@ type DeletionStep = 'confirm' | 'deleting' | 'success';
 export default function DeleteAccountScreen() {
   const router = useRouter();
   const { t } = useLanguage();
-  const { user, signOut } = useAuth();
+  const { user, signOut, refreshMedvbaSession } = useAuth();
   const [confirmText, setConfirmText] = useState('');
   const [step, setStep] = useState<DeletionStep>('confirm');
   const deleteAccountMutation = trpc.account.deleteSelf.useMutation();
@@ -106,6 +106,8 @@ export default function DeleteAccountScreen() {
         console.log('[DeleteAccount] Calling deleteAccountMutation...');
       }
 
+      await refreshMedvbaSession();
+
       const result = await deleteAccountMutation.mutateAsync();
       if (__DEV__) {
         console.log('[DeleteAccount] Backend deletion result:', result);
@@ -158,7 +160,7 @@ export default function DeleteAccountScreen() {
       }
       Alert.alert(t('deleteAccount.alertDeletionFailed'), message, [{ text: t('common.ok') }]);
     }
-  }, [confirmText, user?.id, deleteAccountMutation, signOut, t]);
+  }, [confirmText, user?.id, deleteAccountMutation, signOut, refreshMedvbaSession, t]);
 
   const handleFinish = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
