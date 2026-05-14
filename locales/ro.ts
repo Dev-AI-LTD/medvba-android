@@ -18,6 +18,8 @@ export const ro: Record<string, string> = {
 
   // Auth Screens
   'auth.welcomeBack': 'Bine ai revenit',
+  'auth.welcomeUnifiedTitle': 'Bun venit',
+  'auth.welcomeUnifiedSubtitle': 'Autentifică-te pentru a începe călătoria de învățare',
   'auth.signInSubtitle': 'Autentifică-te pentru a continua călătoria de învățare',
   'auth.createAccount': 'Creează cont',
   'auth.joinStudents': 'Alătură-te miilor de studenți',
@@ -31,14 +33,22 @@ export const ro: Record<string, string> = {
   'auth.fullName': 'Nume complet',
   'auth.namePlaceholder': 'Introdu numele',
   'auth.forgotPassword': 'Ai uitat parola?',
-  'auth.forgotPasswordSubtitle': 'Introdu adresa de email și îți vom trimite instrucțiuni pentru resetarea parolei.',
+  'auth.forgotPasswordSubtitle':
+    'Introdu emailul. Dacă există un cont pentru acea adresă, îți trimitem instrucțiuni de resetare a parolei.',
   'auth.checkEmailTitle': 'Verifică emailul',
   'auth.checkEmailMessage': 'Am trimis instrucțiunile de resetare a parolei la',
   'auth.checkEmailHint': 'Dacă nu găsești emailul, verifică și dosarul Spam.',
+  'auth.passwordResetOpenedTitle': 'Verifică emailul',
+  'auth.passwordResetOpenedBody':
+    'Dacă există un cont pentru acea adresă, ți-am trimis instrucțiuni de resetare a parolei. Urmează linkul din mesajul Kinde.',
+  'auth.passwordResetOpenedHint':
+    'Nu ai primit nimic? Verifică spamul sau așteaptă un minut și încearcă din nou.',
   'auth.backToLogin': 'Înapoi la autentificare',
   'auth.sendResetLink': 'Trimite link resetare',
+  'auth.sendPasswordResetEmail': 'Trimite instrucțiuni de resetare',
+  'auth.continueToKindeForReset': 'Continuă la autentificarea securizată',
   'auth.rememberPassword': 'Îți amintești parola?',
-  'auth.resetFailed': 'Trimiterea emailului a eșuat. Încearcă din nou.',
+  'auth.resetFailed': 'Nu am putut trimite instrucțiunile. Încearcă din nou.',
   'auth.error': 'Eroare',
   'auth.signIn': 'Autentificare',
   'auth.loading': 'Se încarcă…',
@@ -47,6 +57,12 @@ export const ro: Record<string, string> = {
   'auth.signInWithFacebook': 'Autentificare cu Facebook',
   'auth.signInWithApple': 'Autentificare cu Apple',
   'auth.orContinueWithEmail': 'sau continuă cu email',
+  'auth.continueWithEmail': 'Continuă cu email',
+  'auth.continueWithEmailHint':
+    'Se deschide o pagină securizată în browser unde te poți autentifica cu emailul.',
+  'auth.createAccountWithEmail': 'Creează cont cu email',
+  'auth.createAccountWithEmailHint':
+    'Se deschide o pagină securizată în browser unde te poți înregistra sau autentifica cu emailul.',
   'auth.dontHaveAccount': 'Nu ai cont?',
   'auth.alreadyHaveAccount': 'Ai deja cont?',
   'auth.showPassword': 'Arată parola',
@@ -73,7 +89,7 @@ export const ro: Record<string, string> = {
   'auth.verifyEmailMessage':
     'Ți-am trimis un link de confirmare pe email. Deschide-l pentru a activa contul, apoi autentifică-te aici.',
   'auth.signUpKindeVerifyThenSignIn':
-    'Contul a fost creat. Verifică emailul, finalizează confirmarea, apoi autentifică-te cu emailul și parola.',
+    'Contul a fost creat. Verifică emailul, finalizează confirmarea, apoi autentifică-te cu „Creează cont cu email” sau o opțiune socială.',
   'auth.verifyEmail.title': 'Verifică emailul',
   'auth.verifyEmail.body':
     'Contul este pregătit. Deschide mesajul trimis de noi și folosește linkul de confirmare. Dacă mai trebuie să finalizezi autentificarea, folosește linkul de mai jos în browser; după aceea revii în aplicație.',

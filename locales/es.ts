@@ -18,6 +18,8 @@ export const es: Record<string, string> = {
 
   // Auth Screens
   'auth.welcomeBack': 'Bienvenido de nuevo',
+  'auth.welcomeUnifiedTitle': 'Bienvenido',
+  'auth.welcomeUnifiedSubtitle': 'Inicia sesión para empezar tu aprendizaje',
   'auth.signInSubtitle': 'Inicia sesión para continuar tu aprendizaje',
   'auth.createAccount': 'Crear cuenta',
   'auth.joinStudents': 'Únete a miles de estudiantes',
@@ -31,21 +33,36 @@ export const es: Record<string, string> = {
   'auth.fullName': 'Nombre completo',
   'auth.namePlaceholder': 'Ingresa tu nombre',
   'auth.forgotPassword': '¿Olvidaste tu contraseña?',
-  'auth.forgotPasswordSubtitle': 'Introduce tu correo y te enviaremos instrucciones para restablecer la contraseña.',
+  'auth.forgotPasswordSubtitle':
+    'Introduce tu correo. Si existe una cuenta con esa dirección, te enviaremos instrucciones para restablecer la contraseña.',
   'auth.checkEmailTitle': 'Revisa tu correo',
   'auth.checkEmailMessage': 'Hemos enviado instrucciones de restablecimiento a',
   'auth.checkEmailHint': 'Si no ves el correo, revisa la carpeta de spam.',
+  'auth.passwordResetOpenedTitle': 'Revisa tu correo',
+  'auth.passwordResetOpenedBody':
+    'Si existe una cuenta con esa dirección, enviamos instrucciones para restablecer la contraseña. Sigue el enlace del mensaje de Kinde.',
+  'auth.passwordResetOpenedHint':
+    '¿No recibiste nada? Revisa spam o espera un minuto e inténtalo de nuevo.',
   'auth.backToLogin': 'Volver al inicio de sesión',
   'auth.sendResetLink': 'Enviar enlace de restablecimiento',
+  'auth.sendPasswordResetEmail': 'Enviar instrucciones de restablecimiento',
+  'auth.continueToKindeForReset': 'Continuar al inicio de sesión seguro',
   'auth.rememberPassword': '¿Recuerdas tu contraseña?',
-  'auth.resetFailed': 'Error al enviar el correo. Inténtalo de nuevo.',
+  'auth.resetFailed': 'No se pudieron enviar las instrucciones. Inténtalo de nuevo.',
   'auth.error': 'Error',
   'auth.signIn': 'Iniciar sesión',
+  'auth.loading': 'Cargando…',
   'auth.signUp': 'Registrarse',
   'auth.signInWithGoogle': 'Iniciar sesión con Google',
   'auth.signInWithFacebook': 'Iniciar sesión con Facebook',
   'auth.signInWithApple': 'Iniciar sesión con Apple',
   'auth.orContinueWithEmail': 'o continúa con email',
+  'auth.continueWithEmail': 'Continuar con email',
+  'auth.continueWithEmailHint':
+    'Se abre una página segura en el navegador para iniciar sesión con tu email.',
+  'auth.createAccountWithEmail': 'Crear cuenta con email',
+  'auth.createAccountWithEmailHint':
+    'Se abre una página segura en el navegador para registrarte o iniciar sesión con tu email.',
   'auth.dontHaveAccount': '¿No tienes una cuenta?',
   'auth.alreadyHaveAccount': '¿Ya tienes una cuenta?',
   'auth.agreeToTerms': 'Al crear una cuenta, aceptas nuestros',
@@ -70,7 +87,7 @@ export const es: Record<string, string> = {
   'auth.verifyEmailMessage':
     'Te enviamos un enlace de confirmación. Ábrelo para activar tu cuenta y luego inicia sesión aquí.',
   'auth.signUpKindeVerifyThenSignIn':
-    'Tu cuenta fue creada. Revisa tu correo, completa la verificación y luego inicia sesión con tu email y contraseña.',
+    'Tu cuenta fue creada. Revisa tu correo, completa la verificación y luego inicia sesión con «Crear cuenta con email» o una opción social.',
   'auth.verifyEmail.title': 'Revisa tu correo',
   'auth.verifyEmail.body':
     'Tu cuenta está lista. Abre el mensaje que te enviamos y usa el enlace de confirmación. Si aún debes terminar de iniciar sesión, usa el enlace de abajo en el navegador; después volverás a la aplicación.',

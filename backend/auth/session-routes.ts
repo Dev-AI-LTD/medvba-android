@@ -388,6 +388,68 @@ async function kindeManagementSetPassword(
   return { ok: true };
 }
 
+async function kindeManagementFindUserIdByEmail(
+  m2mToken: string,
+  emailLower: string,
+): Promise<
+  { ok: true; userId: string } | { ok: false; notFound: true } | { ok: false; status: number; detail: string }
+> {
+  const issuer = getKindeIssuerBase();
+  const q = encodeURIComponent(emailLower.trim().toLowerCase());
+  const res = await fetch(`${issuer}/api/v1/search/users?query=${q}`, {
+    headers: {
+      Authorization: `Bearer ${m2mToken}`,
+      Accept: "application/json",
+    },
+  });
+  const raw = await res.text().catch(() => "");
+  if (!res.ok) {
+    return { ok: false, status: res.status, detail: raw.slice(0, 400) };
+  }
+  let parsed: unknown;
+  try {
+    parsed = raw.trim() ? JSON.parse(raw) : {};
+  } catch {
+    return { ok: false, status: 502, detail: "Invalid JSON from Kinde user search." };
+  }
+  const want = emailLower.trim().toLowerCase();
+  const obj = parsed as { results?: unknown };
+  const rows = Array.isArray(obj.results) ? obj.results : [];
+  for (const row of rows) {
+    const r = row as { id?: string; email?: string };
+    if (
+      typeof r.id === "string" &&
+      r.id.length > 0 &&
+      typeof r.email === "string" &&
+      r.email.trim().toLowerCase() === want
+    ) {
+      return { ok: true, userId: r.id };
+    }
+  }
+  return { ok: false, notFound: true };
+}
+
+async function kindeManagementRequestPasswordResetFlag(
+  m2mToken: string,
+  userId: string,
+): Promise<{ ok: true } | { ok: false; status: number; detail: string }> {
+  const issuer = getKindeIssuerBase();
+  const res = await fetch(`${issuer}/api/v1/users/${encodeURIComponent(userId)}`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${m2mToken}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ is_password_reset_requested: true }),
+  });
+  const raw = await res.text().catch(() => "");
+  if (res.ok) {
+    return { ok: true };
+  }
+  return { ok: false, status: res.status, detail: raw.slice(0, 500) };
+}
+
 async function kindeManagementDeleteUser(
   m2mToken: string,
   kindeUserId: string,
@@ -549,6 +611,54 @@ export function registerAuthSessionRoutes(app: Hono) {
       const msg = e instanceof Error ? e.message : String(e);
       console.error("[auth] /api/auth/register:", msg);
       return c.json({ error: msg }, 500);
+    }
+  });
+
+  /**
+   * Self-service password reset: asks Kinde to email reset instructions for the user (no in-browser password step).
+   * Requires the same M2M app as registration, with Management API permission to read + update users.
+   * Always returns 200 for a valid email shape to avoid account enumeration.
+   */
+  app.post("/api/auth/request-password-reset", async (c) => {
+    try {
+      const body = (await c.req.json().catch(() => null)) as { email?: string } | null;
+      const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return c.json({ error: "A valid email is required." }, 400);
+      }
+
+      const m2mRes = await kindeManagementAccessToken();
+      if (!m2mRes.ok) {
+        if (m2mRes.code === "missing_env") {
+          console.warn("[auth] request-password-reset: M2M not configured");
+        } else {
+          console.warn("[auth] request-password-reset: M2M token failed:", m2mRes.detail);
+        }
+        return c.json({ ok: true });
+      }
+
+      const found = await kindeManagementFindUserIdByEmail(m2mRes.token, email);
+      if (!found.ok) {
+        if ("notFound" in found && found.notFound) {
+          return c.json({ ok: true });
+        }
+        console.warn("[auth] request-password-reset: user search failed:", found.detail);
+        return c.json({ ok: true });
+      }
+
+      const flagged = await kindeManagementRequestPasswordResetFlag(m2mRes.token, found.userId);
+      if (!flagged.ok) {
+        console.warn(
+          "[auth] request-password-reset: PATCH user failed:",
+          flagged.status,
+          flagged.detail.slice(0, 400),
+        );
+      }
+      return c.json({ ok: true });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("[auth] /api/auth/request-password-reset:", msg);
+      return c.json({ ok: true });
     }
   });
 

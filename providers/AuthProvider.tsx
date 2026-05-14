@@ -5,8 +5,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import createContextHook from '@nkzw/create-context-hook';
 import { supabase } from '@/lib/supabase';
 import { useUserProfile } from '@/lib/supabase-hooks';
-import { AppState, Platform, Linking } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
+import { getApiBaseUrl } from '@/lib/api-base-url';
 import type { LoginMethodParams } from '@kinde/js-utils';
 import { useKindeAuth } from '@kinde/expo';
 import {
@@ -781,18 +782,35 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
 
   const resetPassword = useCallback(async (email: string) => {
     try {
-      const issuer = (
-        process.env.EXPO_PUBLIC_KINDE_ISSUER_URL ||
-        (extraConfig as { EXPO_PUBLIC_KINDE_ISSUER_URL?: string }).EXPO_PUBLIC_KINDE_ISSUER_URL ||
-        ''
-      )
-        .trim()
-        .replace(/\/+$/, '');
-      if (!issuer) {
-        return { error: { message: 'Password reset is not configured.' } as AuthError };
+      let base: string;
+      try {
+        base = getApiBaseUrl();
+      } catch {
+        return {
+          error: { message: 'Password reset is not available (API URL missing).' } as AuthError,
+        };
       }
-      const q = new URLSearchParams({ email: email.trim() }).toString();
-      await Linking.openURL(`${issuer}/password_reset#/?${q}`);
+      const res = await fetch(`${base}/api/auth/request-password-reset`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        let detail = text?.trim() || `HTTP ${res.status}`;
+        try {
+          const j = JSON.parse(text) as { error?: string };
+          if (typeof j.error === 'string' && j.error.length > 0) {
+            detail = j.error;
+          }
+        } catch {
+          /* plain text */
+        }
+        return { error: { message: detail } as AuthError };
+      }
       return { error: null };
     } catch (error) {
       return { error: error as AuthError };

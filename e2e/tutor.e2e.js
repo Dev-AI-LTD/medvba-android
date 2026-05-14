@@ -18,7 +18,7 @@ describe('Tutor Screen Tests', () => {
       // First, ensure we're logged in (use helper function or previous test state)
       let onLogin = false;
       try {
-        await waitFor(element(by.id('loginEmail')))
+        await waitFor(element(by.id('loginHostedEmail')))
           .toBeVisible()
           .withTimeout(5000);
         onLogin = true;
@@ -27,13 +27,9 @@ describe('Tutor Screen Tests', () => {
       }
 
       if (onLogin) {
-        const email = process.env.DETOX_TEST_EMAIL;
-        const password = process.env.DETOX_TEST_PASSWORD;
-        if (email && password) {
-          await element(by.id('loginEmail')).replaceText(email);
-          await element(by.id('loginPassword')).replaceText(password);
-          await element(by.id('loginSubmit')).tap();
-        }
+        throw new Error(
+          'Login screen is visible: sign in manually first, then re-run. Hosted email/social auth is not automated in this suite.',
+        );
       }
 
       // Wait for home screen

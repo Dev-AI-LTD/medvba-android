@@ -114,14 +114,16 @@ export default function ForgotPasswordScreen() {
             <Card style={[styles.successCard, { backgroundColor: theme.colors.primaryContainer }]}>
               <Card.Content style={styles.successCardContent}>
                 <Text variant="headlineMedium" style={[styles.successTitle, { color: theme.colors.onPrimaryContainer }]}>
-                  {t('auth.checkEmailTitle')}
+                  {t('auth.passwordResetOpenedTitle')}
                 </Text>
                 <Text variant="bodyLarge" style={[styles.successText, { color: theme.colors.onSurfaceVariant }]}>
-                  {t('auth.checkEmailMessage')}{'\n'}
-                  <Text style={{ color: theme.colors.primary, fontWeight: '600' }}>{email}</Text>
+                  {t('auth.passwordResetOpenedBody')}
+                </Text>
+                <Text variant="bodyMedium" style={[styles.successText, { color: theme.colors.onSurfaceVariant }]}>
+                  <Text style={{ fontWeight: '600' }}>{email}</Text>
                 </Text>
                 <Text variant="bodySmall" style={[styles.successHint, { color: theme.colors.outline }]}>
-                  {t('auth.checkEmailHint')}
+                  {t('auth.passwordResetOpenedHint')}
                 </Text>
                 <Button
                   mode="contained"
@@ -207,7 +209,7 @@ export default function ForgotPasswordScreen() {
                   disabled={isLoading || !isSupabaseConfigured}
                   style={{ marginTop: SPACING.x3 }}
                 >
-                  {t('auth.sendResetLink')}
+                  {t('auth.sendPasswordResetEmail')}
                 </Button>
               </Card.Content>
             </Card>

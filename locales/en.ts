@@ -18,6 +18,8 @@ export const en: Record<string, string> = {
 
   // Auth Screens
   'auth.welcomeBack': 'Welcome Back',
+  'auth.welcomeUnifiedTitle': 'Welcome',
+  'auth.welcomeUnifiedSubtitle': 'Sign in to start your learning journey',
   'auth.signInSubtitle': 'Sign in to continue your learning journey',
   'auth.createAccount': 'Create Account',
   'auth.joinStudents': 'Join thousands of students',
@@ -31,14 +33,22 @@ export const en: Record<string, string> = {
   'auth.fullName': 'Full Name',
   'auth.namePlaceholder': 'Enter your name',
   'auth.forgotPassword': 'Forgot Password?',
-  'auth.forgotPasswordSubtitle': 'Enter your email address and we will send you instructions to reset your password.',
+  'auth.forgotPasswordSubtitle':
+    'Enter your email. If an account exists, we will send password reset instructions to that address.',
   'auth.checkEmailTitle': 'Check Your Email',
   'auth.checkEmailMessage': 'We have sent password reset instructions to',
   'auth.checkEmailHint': 'If you do not see the email, check your spam folder.',
+  'auth.passwordResetOpenedTitle': 'Check your email',
+  'auth.passwordResetOpenedBody':
+    'If an account exists for that address, we sent instructions to reset your password. Follow the link in the message from Kinde.',
+  'auth.passwordResetOpenedHint':
+    'Did not receive anything? Check spam or wait a minute and try again.',
   'auth.backToLogin': 'Back to Login',
   'auth.sendResetLink': 'Send Reset Link',
+  'auth.sendPasswordResetEmail': 'Send reset instructions',
+  'auth.continueToKindeForReset': 'Continue to secure sign-in',
   'auth.rememberPassword': 'Remember your password?',
-  'auth.resetFailed': 'Failed to send reset email. Please try again.',
+  'auth.resetFailed': 'Could not send reset instructions. Please try again.',
   'auth.error': 'Error',
   'auth.signIn': 'Sign In',
   'auth.loading': 'Loading…',
@@ -47,6 +57,12 @@ export const en: Record<string, string> = {
   'auth.signInWithFacebook': 'Sign in with Facebook',
   'auth.signInWithApple': 'Sign in with Apple',
   'auth.orContinueWithEmail': 'or continue with email',
+  'auth.continueWithEmail': 'Continue with email',
+  'auth.continueWithEmailHint':
+    'Opens a secure browser page where you can sign in with your email.',
+  'auth.createAccountWithEmail': 'Create account with email',
+  'auth.createAccountWithEmailHint':
+    'Opens a secure browser page where you can register or sign in with your email.',
   'auth.dontHaveAccount': 'Don\'t have an account?',
   'auth.alreadyHaveAccount': 'Already have an account?',
   'auth.showPassword': 'Show password',
@@ -73,7 +89,7 @@ export const en: Record<string, string> = {
   'auth.verifyEmailMessage':
     'We sent a confirmation link to your email. Open it to activate your account, then sign in here.',
   'auth.signUpKindeVerifyThenSignIn':
-    'Your account was created. Check your email, complete verification, then sign in with your email and password.',
+    'Your account was created. Check your email, complete verification, then sign in using Create account with email or a social option.',
   'auth.verifyEmail.title': 'Check your email',
   'auth.verifyEmail.body':
     'Your account is ready. Open the message we sent and use the confirmation link. If you still need to finish signing in, use the link below to continue in the browser—you will return to the app afterward.',

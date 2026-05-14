@@ -124,7 +124,18 @@ console.log('HTTP', res.status);
 console.log('body (truncated):', snippet + (text.length > 400 ? '…' : ''));
 
 if (!res.ok) {
-  if (res.status === 401 && /password grant|Email\/password login failed/i.test(text)) {
+  const kindeToken5xx =
+    /\/oauth2\/token[^\n]*HTTP 5\d\d/i.test(text) ||
+    /HTTP 5\d\d[^\n]*kinde\.com\/oauth2\/token/i.test(text) ||
+    /502 Bad Gateway/i.test(text);
+  if (kindeToken5xx) {
+    console.error(
+      '\n→ Kinde a răspuns cu 5xx la /oauth2/token — backend-ul Railway a ajuns corect la Kinde; nu e „parolă greșită” sau grant neconfigurat.',
+    );
+    console.error(
+      '   Retry peste câteva minute, altă rețea (Wi‑Fi vs date mobile), https://status.kinde.com/ , apoi ticket la Kinde (tenant + oră + POST /oauth2/token, 502).\n',
+    );
+  } else if (res.status === 401 && /password grant|Email\/password login failed/i.test(text)) {
     console.error('\n→ Verifică în Kinde: Applications → aplicația cu acel client_id → Authentication:');
     console.error('   activează password / resource owner flow pentru acest client (vezi docs Kinde).');
     console.error('→ Pe Railway: KINDE_ISSUER_URL, KINDE_CLIENT_ID, KINDE_CLIENT_SECRET aliniate cu acel client.\n');

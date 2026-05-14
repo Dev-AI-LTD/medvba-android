@@ -13,13 +13,21 @@ if (!shouldKeepConsole) {
 }
 
 jest.mock('expo-router', () => {
+  const React = require('react');
   const router = {
     push: jest.fn(),
     replace: jest.fn(),
     back: jest.fn(),
   };
+  const Redirect = ({ href }) => {
+    React.useEffect(() => {
+      router.replace(href);
+    }, [href]);
+    return null;
+  };
   return {
     router,
+    Redirect,
     useRouter: () => router,
     useSegments: () => [],
     useLocalSearchParams: () => ({}),
@@ -264,6 +272,14 @@ global.fetch = jest.fn().mockImplementation((url) => {
       status: 200,
       text: async () => body,
       json: async () => JSON.parse(body),
+    });
+  }
+  if (u.includes('/api/auth/request-password-reset')) {
+    return Promise.resolve({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify({ ok: true }),
+      json: async () => ({ ok: true }),
     });
   }
   const empty = JSON.stringify({});
