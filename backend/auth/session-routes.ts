@@ -16,8 +16,8 @@ function trimEnvValue(s: string | undefined): string {
   return t;
 }
 
-const KINDE_OAUTH2_TOKEN_MAX_ATTEMPTS = 3;
-const TRANSIENT_KINDE_TOKEN_STATUSES = new Set([502, 503, 504]);
+const KINDE_OAUTH2_TOKEN_MAX_ATTEMPTS = 5;
+const TRANSIENT_KINDE_TOKEN_STATUSES = new Set([429, 502, 503, 504]);
 
 function sleepMs(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
@@ -34,7 +34,7 @@ async function fetchKindeOAuth2Token(url: string, init: RequestInit, logLabel: s
       TRANSIENT_KINDE_TOKEN_STATUSES.has(res.status) && attempt < KINDE_OAUTH2_TOKEN_MAX_ATTEMPTS;
     if (!canRetry) return res;
     await res.text().catch(() => {});
-    const delayMs = 300 * attempt;
+    const delayMs = Math.min(2500, 350 * attempt ** 2);
     console.warn(
       `[auth] ${logLabel}: HTTP ${res.status} from oauth2/token, retry ${attempt}/${KINDE_OAUTH2_TOKEN_MAX_ATTEMPTS} after ${delayMs}ms`,
     );
@@ -383,6 +383,61 @@ async function kindeManagementSetPassword(
       status: res.status >= 400 && res.status < 600 ? res.status : 502,
       message: "Could not set account password.",
       detail: raw.slice(0, 400),
+    };
+  }
+  return { ok: true };
+}
+
+async function kindeManagementDeleteUser(
+  m2mToken: string,
+  kindeUserId: string,
+): Promise<{ ok: true } | { ok: false; status: number; detail: string }> {
+  const issuer = getKindeIssuerBase();
+  const res = await fetch(`${issuer}/api/v1/users/${encodeURIComponent(kindeUserId)}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${m2mToken}`,
+      Accept: "application/json",
+    },
+  });
+  const raw = await res.text().catch(() => "");
+  if (res.ok || res.status === 204 || res.status === 404) {
+    return { ok: true };
+  }
+  return { ok: false, status: res.status, detail: raw.slice(0, 500) };
+}
+
+/**
+ * Removes the end-user from Kinde (frees email for re-registration). Requires the same M2M app as
+ * POST /api/auth/register, with Management API permission to delete users.
+ */
+export async function deleteMedvbaKindeIdentityUser(kindeUserId: string): Promise<
+  | { ok: true }
+  | { ok: false; code: "missing_m2m" | "m2m_token_error" | "kinde_delete_failed"; detail?: string }
+> {
+  const trimmed = kindeUserId.trim();
+  if (!trimmed) {
+    return { ok: false, code: "kinde_delete_failed", detail: "Missing Kinde user id." };
+  }
+
+  const m2mRes = await kindeManagementAccessToken();
+  if (!m2mRes.ok) {
+    if (m2mRes.code === "missing_env") {
+      return {
+        ok: false,
+        code: "missing_m2m",
+        detail: "KINDE_M2M_CLIENT_ID / KINDE_M2M_CLIENT_SECRET not set on the API server.",
+      };
+    }
+    return { ok: false, code: "m2m_token_error", detail: m2mRes.detail };
+  }
+
+  const del = await kindeManagementDeleteUser(m2mRes.token, trimmed);
+  if (!del.ok) {
+    return {
+      ok: false,
+      code: "kinde_delete_failed",
+      detail: `HTTP ${del.status} ${del.detail}`,
     };
   }
   return { ok: true };

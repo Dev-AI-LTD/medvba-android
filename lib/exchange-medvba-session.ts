@@ -25,6 +25,18 @@ function isAbortError(e: unknown): boolean {
   return false;
 }
 
+function sleepMs(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+/** Backend signals Kinde /oauth2/token gateway or 5xx after its own retries — safe to retry once or twice from the app. */
+function isTransientKindeLoginJson(json: SessionResponseJson): boolean {
+  const hint = typeof json.hint === "string" ? json.hint : "";
+  if (hint.includes("Kinde returned a server error")) return true;
+  const detail = typeof json.detail === "string" ? json.detail : "";
+  return /HTTP (502|503|504)\b.*oauth2\/token/i.test(detail);
+}
+
 async function fetchSession(
   url: string,
   init: Omit<RequestInit, "signal">,
@@ -208,54 +220,65 @@ export async function exchangeEmailPasswordSession(
   password: string,
 ): Promise<ExchangeSessionResult> {
   const base = getApiBaseUrl();
-  let res: Response;
-  try {
-    res = await fetchSession(`${base}/api/auth/session`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
-    });
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "Network error";
-    return { ok: false, error: msg };
-  }
-  if (res.status === 404) {
-    return { ok: false, error: authEndpointNotFoundMessage(base, "/api/auth/session"), status: 404 };
-  }
-  const parsed = await parseSessionJson(res);
-  if (__DEV__) {
+  const body = JSON.stringify({ email: email.trim().toLowerCase(), password });
+  const maxAttempts = 3;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    let res: Response;
     try {
-      const u = new URL(`${base}/api/auth/session`);
-      log.debug(
-        `[exchangeEmailPasswordSession] ${u.origin}/api/auth/session → HTTP ${res.status}`,
-      );
-    } catch {
-      log.debug(`[exchangeEmailPasswordSession] HTTP ${res.status}`);
+      res = await fetchSession(`${base}/api/auth/session`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body,
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Network error";
+      return { ok: false, error: msg };
     }
+    if (res.status === 404) {
+      return { ok: false, error: authEndpointNotFoundMessage(base, "/api/auth/session"), status: 404 };
+    }
+    const parsed = await parseSessionJson(res);
+    if (__DEV__) {
+      try {
+        const u = new URL(`${base}/api/auth/session`);
+        log.debug(
+          `[exchangeEmailPasswordSession] attempt ${attempt}/${maxAttempts} ${u.origin}/api/auth/session → HTTP ${res.status}`,
+        );
+      } catch {
+        log.debug(`[exchangeEmailPasswordSession] attempt ${attempt}/${maxAttempts} HTTP ${res.status}`);
+      }
+    }
+    if (!parsed.ok) {
+      return { ok: false, error: parsed.error, status: res.status };
+    }
+    const json = parsed.json;
+    if (!res.ok) {
+      if (isTransientKindeLoginJson(json) && attempt < maxAttempts) {
+        await sleepMs(700 * attempt);
+        continue;
+      }
+      return { ok: false, error: formatApiErrorMessage(json, res.statusText), status: res.status };
+    }
+    if (!json.access_token || !json.profile_id) {
+      return { ok: false, error: formatApiErrorMessage(json, "Login failed.") };
+    }
+    const refresh_token =
+      typeof json.refresh_token === "string" && json.refresh_token.length > 0
+        ? json.refresh_token
+        : undefined;
+    return {
+      ok: true,
+      access_token: json.access_token,
+      profile_id: json.profile_id,
+      ...(refresh_token ? { refresh_token } : {}),
+    };
   }
-  if (!parsed.ok) {
-    return { ok: false, error: parsed.error, status: res.status };
-  }
-  const json = parsed.json;
-  if (!res.ok) {
-    return { ok: false, error: formatApiErrorMessage(json, res.statusText), status: res.status };
-  }
-  if (!json.access_token || !json.profile_id) {
-    return { ok: false, error: formatApiErrorMessage(json, "Login failed.") };
-  }
-  const refresh_token =
-    typeof json.refresh_token === "string" && json.refresh_token.length > 0
-      ? json.refresh_token
-      : undefined;
-  return {
-    ok: true,
-    access_token: json.access_token,
-    profile_id: json.profile_id,
-    ...(refresh_token ? { refresh_token } : {}),
-  };
+
+  return { ok: false, error: "Login failed after retries." };
 }
 
 /**
