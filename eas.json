@@ -8,6 +8,9 @@
       "developmentClient": true,
       "distribution": "internal",
       "channel": "development",
+      "env": {
+        "EXPO_DOCTOR_ENABLE_DIRECTORY_CHECK": "0"
+      },
       "android": {
         "buildType": "apk"
       }
@@ -15,7 +18,7 @@
     "production": {
       "channel": "production",
       "env": {
-        "NODE_ENV": "production"
+        "EXPO_DOCTOR_ENABLE_DIRECTORY_CHECK": "0"
       },
       "android": {
         "buildType": "app-bundle",
@@ -28,7 +31,7 @@
     "internal": {
       "channel": "internal",
       "env": {
-        "NODE_ENV": "production"
+        "EXPO_DOCTOR_ENABLE_DIRECTORY_CHECK": "0"
       },
       "android": {
         "buildType": "app-bundle",

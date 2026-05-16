@@ -1,5 +1,5 @@
-# EAS picks Bun when bun.lock is present; exclude it so builds use npm + package-lock.json.
-bun.lock
+# Do NOT list bun.lock here — EAS must upload it so installs match `bun install --frozen-lockfile`
+# (same tree as local). Ignoring it leaves npm without package-lock.json → Doctor warning + flaky Gradle.
 
 # Use CNG/Prebuild on EAS even though android/ is versioned locally.
 /android

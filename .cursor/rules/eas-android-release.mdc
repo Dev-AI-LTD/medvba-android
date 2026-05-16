@@ -9,7 +9,8 @@ alwaysApply: true
 
 - Folosește **doar Bun** pentru dependențe: `bun install`. Comite **`bun.lock`**.
 - **Nu** comite `package-lock.json` (e în `.gitignore`). Două lockfile-uri fac **`bun run doctor`** / **`npx expo-doctor`** și uneori EAS să eșueze.
-- După ce modifici `package.json`: rulează `bun install`, apoi verifică `bun install --frozen-lockfile` (trebuie să treacă înainte de push/build). `postinstall` rescrie `node_modules/.bin/expo-doctor*` ca să ruleze dedupe + doctor pinuit — astfel și `npx -y expo-doctor` din rădăcina repo-ului trece aceleași verificări ca `bun run doctor`.
+- După ce modifici `package.json`: rulează `bun install`, apoi verifică `bun install --frozen-lockfile` (trebuie să treacă înainte de push/build). `postinstall` rescrie `node_modules/.bin/expo-doctor*` ca să ruleze dedupe + doctor pinuit — astfel și `npx -y expo-doctor` din rădăcina repo-ului trece aceleași verificări ca `bun run doctor`. `expo-doctor` este pinuit în **`dependencies`** (nu doar dev) ca să fie mereu instalat pe EAS dacă mediul omită devDependencies.
+- În **`eas.json`**, profilele de build au `EXPO_DOCTOR_ENABLE_DIRECTORY_CHECK=0` ca să nu pice pe EAS verificarea experimentală „React Native Directory” care uneori diferă de local.
 
 ## Înainte de fiecare release Android
 
@@ -18,6 +19,7 @@ alwaysApply: true
 3. **`eas.json`**: păstrează `buildType: app-bundle` și `buildArtifactPaths` cu `android/app/build/outputs/mapping/release/mapping.txt` pentru **mapping / deobfuscare R8**.
 4. **`app.config.ts`**: `expo-build-properties` → `enableMinifyInReleaseBuilds: true` (necesar pentru `mapping.txt`).
 5. Variabile **EAS** (environment **production**): `EXPO_PUBLIC_*` complete (Supabase, RevenueCat, Google/Facebook dacă le folosești).
+6. **Nu** seta `NODE_ENV=production` în `eas.json` pe profilul de **build**: face ca install-ul să sară peste `devDependencies` (`expo-doctor`, `@babel/core`, …) și pasul **expo doctor** / Gradle pot eșua pe EAS. Release-ul rămâne tot „production” prin profilul EAS și bundling-ul Expo.
 
 ## Comandă build
 
@@ -37,3 +39,4 @@ npx eas-cli build --platform android --profile production --non-interactive --no
 ## Dacă `expo-doctor` pică la „lock file”
 
 - Asigură-te că există un singur lockfile relevant: **`bun.lock`**, fără `package-lock.json` în repo.
+- **`.easignore`**: nu exclude **`bun.lock`** — altfel EAS instalează fără lock (ca în avertismentul Doctor) și pot apărea erori Gradle / diferențe față de local.

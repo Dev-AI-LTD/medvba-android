@@ -24,7 +24,16 @@ if (dedupeResult.status !== 0 && dedupeResult.status != null) {
 
 if (!fs.existsSync(doctor)) {
   console.error(
-    "[expo-doctor] Missing node_modules/expo-doctor. From repo root run: bun install",
+    [
+      "[expo-doctor] Missing node_modules/expo-doctor (devDependency).",
+      "  From repo root run:  bun install",
+      "  Then run:            bun run doctor",
+      "",
+      "If this failed in CI: do not install with --omit=dev / production-only installs before doctor;",
+      "expo-doctor must be present. Prefer: bun install && bun run doctor",
+      "",
+      "Avoid: npx -y expo-doctor outside this repo (pulls an unpinned package).",
+    ].join("\n"),
   );
   process.exit(1);
 }
