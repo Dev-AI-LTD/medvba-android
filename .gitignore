@@ -46,3 +46,6 @@ yarn-error.*
 .rork
 
 rork-eslint.config.js
+
+# Generated audit / batch reports (local only)
+scripts/*-report.txt

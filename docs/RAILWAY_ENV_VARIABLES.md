@@ -54,6 +54,29 @@ railway variables
 
 ---
 
+## Troubleshooting după redeploy
+
+### `NET::ERR_NAME_NOT_RESOLVED` la `…kinde.com/oauth2/auth`
+
+- URL-ul issuer trebuie să fie exact **`https://subdomeniu.kinde.com`** (două puncte **`:`**, apoi **`//`**).
+- **`https;//…`** este o greșeală uzuală din tastatură (**`;`** lângă **`:``**). În **EAS (production)** și **Railway**, verifică `EXPO_PUBLIC_KINDE_ISSUER_URL`, respectiv **`KINDE_ISSUER_URL`**, să nu conțină `;`.
+- Codul MEDVBA autocorectează `https;//` → `https://` la pornire (client + backend), dar **mai bine corectezi valorile salvate**.
+
+### Logs: `SCOPE_MISSING` / `"Scope is missing: read:users"`
+
+- Aplicația **Machine-to-machine** din Kinde trebuie autorizată pentru **Management API** cu permisiuni de tip **Users** (read / update / create / delete, după ce folosești).
+- Pe Railway poți seta explicit:
+  **`KINDE_M2M_TOKEN_SCOPE=read:users update:users create:users delete:users`**
+  (sau scopes exact cum le arată dashboard-ul pentru M2M).
+- În cod, dacă **`KINDE_M2M_TOKEN_SCOPE` lipsește**, backend-ul cere implicit scope-urile de mai sus la token M2M (evită eroarea pentru search / înregistrare).
+
+### Railway build: „SecretsUsedInArgOrEnv … Dockerfile” sau `NIXPACKS_PATH`
+
+- Avertizările **Docker BuildKit** despre `ARG`/`ENV` pentru secrete sunt frecvente cu **builder NIXPACKS**; **nu înseamnă neapărat** că serverul nu pornește (Railway injectează valorile și la rulare).
+- Dacă build-ul pică efectiv din cauza `UndefinedVar … NIXPACKS_PATH`: actualizează **Railway Nixpacks** / ghid oficial sau înlocuiește cu un **Dockerfile** propriu care nu referă `$NIXPACKS_PATH`.
+
+---
+
 ## Variabile pentru AI Tutor (exemplu Railway)
 
 **Exemplu în Railway Dashboard (Variables):**

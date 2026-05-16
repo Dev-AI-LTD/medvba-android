@@ -2,6 +2,7 @@ import { persistMedvbaKindeRefreshToken } from '@/lib/medvba-session-storage';
 import { log } from '@/lib/log';
 import type { useKindeAuth } from '@kinde/expo';
 import { getMergedExpoExtra } from '@/lib/expo-public-extra';
+import { fixHttpSchemeColonTypo } from '@/lib/fix-http-url-scheme-typo';
 
 /** Matches `useKindeAuth().refreshToken` (optional — absent on some builds). */
 export type KindeAuthWithRefresh = Partial<Pick<ReturnType<typeof useKindeAuth>, 'refreshToken'>>;
@@ -14,7 +15,7 @@ export async function persistKindeRefreshTokenFromSdk(kinde: KindeAuthWithRefres
     return;
   }
   const extra = getMergedExpoExtra();
-  const domain = String(extra.EXPO_PUBLIC_KINDE_ISSUER_URL ?? '')
+  const domain = fixHttpSchemeColonTypo(String(extra.EXPO_PUBLIC_KINDE_ISSUER_URL ?? ''))
     .trim()
     .replace(/\/$/, '');
   const clientId = String(extra.EXPO_PUBLIC_KINDE_CLIENT_ID ?? '').trim();

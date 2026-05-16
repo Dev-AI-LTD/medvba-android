@@ -27,6 +27,7 @@ import { isSupabaseConfigured } from "@/lib/supabase";
 import { isPublicUnauthenticatedRoute } from "@/lib/auth-public-routes";
 import { resolvePostAuthHref, saveAuthReturnTo } from "@/lib/auth-return-url";
 import { PUBLIC_APP_NAME } from "@/lib/public-brand";
+import { fixHttpSchemeColonTypo } from "@/lib/fix-http-url-scheme-typo";
 
 let splashScreenAvailable = true;
 try {
@@ -38,7 +39,8 @@ WebBrowser.maybeCompleteAuthSession();
 monitoring.init();
 
 const extraConfig = Constants.expoConfig?.extra ?? {};
-const kindeIssuerUrl = process.env.EXPO_PUBLIC_KINDE_ISSUER_URL || extraConfig.EXPO_PUBLIC_KINDE_ISSUER_URL || '';
+const kindeIssuerRaw = process.env.EXPO_PUBLIC_KINDE_ISSUER_URL || extraConfig.EXPO_PUBLIC_KINDE_ISSUER_URL || '';
+const kindeIssuerUrl = kindeIssuerRaw ? fixHttpSchemeColonTypo(String(kindeIssuerRaw)) : '';
 const kindeClientId = process.env.EXPO_PUBLIC_KINDE_CLIENT_ID || extraConfig.EXPO_PUBLIC_KINDE_CLIENT_ID || '';
 /** @kinde/expo default; override with EXPO_PUBLIC_KINDE_SCOPES if your Kinde app uses different API scopes. */
 const kindeScopes = String(

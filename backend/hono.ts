@@ -42,7 +42,8 @@ app.use(
       if (allowedOrigins.has(origin)) return origin;
       // Allow file:// origins (React Native)
       if (origin.startsWith("file://")) return origin;
-      // Reject unknown origins
+      // Expo web / dev UI may send *.expo.dev Origin
+      if (/^https:\/\/([a-z0-9-]+\.)*expo\.dev$/i.test(origin)) return origin;
       return "";
     },
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],

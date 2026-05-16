@@ -1,4 +1,5 @@
 import { getMergedExpoExtra } from "@/lib/expo-public-extra";
+import { fixHttpSchemeColonTypo } from "@/lib/fix-http-url-scheme-typo";
 
 function pickFirstNonEmpty(...candidates: unknown[]): string | undefined {
   for (const c of candidates) {
@@ -11,7 +12,7 @@ function pickFirstNonEmpty(...candidates: unknown[]): string | undefined {
 
 /** Fix common typo: `https:/host` → `https://host` (missing slash after scheme). */
 function normalizeApiBaseUrl(s: string): string {
-  let out = s
+  let out = fixHttpSchemeColonTypo(s)
     .trim()
     .replace(/^https:\/(?!\/)/, "https://")
     .replace(/^http:\/(?!\/)/, "http://")

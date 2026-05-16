@@ -245,10 +245,11 @@ async function kindeManagementAccessToken(): Promise<KindeM2mTokenResult> {
     client_secret: m2mSecret,
     audience,
   });
-  const scope = trimEnvValue(process.env.KINDE_M2M_TOKEN_SCOPE);
-  if (scope) {
-    body.set("scope", scope);
-  }
+  const scopeFromEnv = trimEnvValue(process.env.KINDE_M2M_TOKEN_SCOPE);
+  /** If unset, token often lacks Management API scopes → `SCOPE_MISSING: read:users`. Override via env if Kinde rejects a scope name. */
+  const scope =
+    scopeFromEnv || "read:users update:users create:users delete:users";
+  body.set("scope", scope);
 
   const res = await fetchKindeOAuth2Token(
     `${issuer}/oauth2/token`,
