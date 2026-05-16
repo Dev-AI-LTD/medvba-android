@@ -28,14 +28,18 @@ describe('AuthProvider (session)', () => {
 
   it('tracks onboarding completion', async () => {
     (AsyncStorage.getItem as jest.Mock).mockImplementation((key: string) => {
-      if (key === '@medvba_onboarding_complete') return Promise.resolve('true');
+      if (key === '@medvba_onboarding_map_v2') {
+        return Promise.resolve(JSON.stringify({ users: [], deviceCarouselDone: true }));
+      }
       return Promise.resolve(null);
     });
     const { result } = renderHook(() => useAuth(), { wrapper });
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
-    expect(result.current.hasCompletedOnboarding).toBe(true);
+    await waitFor(() => {
+      expect(result.current.hasCompletedOnboarding).toBe(true);
+    });
   });
 
   it('completeOnboarding persists flag', async () => {
@@ -47,7 +51,10 @@ describe('AuthProvider (session)', () => {
     await act(async () => {
       await result.current.completeOnboarding();
     });
-    expect(AsyncStorage.setItem).toHaveBeenCalledWith('@medvba_onboarding_complete', 'true');
+    expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+      '@medvba_onboarding_map_v2',
+      expect.stringContaining('"deviceCarouselDone":true'),
+    );
     expect(result.current.hasCompletedOnboarding).toBe(true);
   });
 });

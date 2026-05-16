@@ -34,10 +34,27 @@ import { withTimeout } from '@/lib/with-timeout';
 import { getMergedExpoExtra } from '@/lib/expo-public-extra';
 import { PUBLIC_APP_NAME } from '@/lib/public-brand';
 import { isFacebookLoginEnabledForBuild } from '@/lib/auth-facebook-visibility';
-
-const ONBOARDING_COMPLETE_KEY = '@medvba_onboarding_complete';
+import { buildKindeSocialSignInHint } from '@/lib/kinde-hosted-hints';
+import { shouldClearMedvbaSessionAfterSyncFailure } from '@/lib/auth-sync-failure';
+import { persistKindeRefreshTokenFromSdk } from '@/lib/kinde-refresh-persistence';
+import { clearAuthReturnDestination } from '@/lib/auth-return-url';
+import { shouldRefreshMedvbaAccessToken } from '@/lib/medvba-jwt-ttl';
+import { decodeProfileIdFromMedvbaJwt } from '@/lib/medvba-jwt-profile-id';
+import {
+  clearAllOnboardingProgress,
+  hasCompletedOnboardingStored,
+  markDeviceOnboardingCarouselComplete,
+  markUserOnboardingComplete,
+  promoteGuestOnboardingToUser,
+} from '@/lib/onboarding-storage';
 
 export const AUTH_SIGN_IN_CANCELLED = 'SIGN_IN_CANCELLED';
+
+type KindeHostedOAuthResult = {
+  success: boolean;
+  accessToken?: string;
+  errorMessage?: string;
+};
 
 const extraConfig = getMergedExpoExtra();
 
@@ -167,6 +184,7 @@ interface AuthActions {
   signInWithFacebook: () => Promise<{ error: AuthError | null }>;
   signInWithApple: () => Promise<{ error: AuthError | null }>;
   signInWithKindeHosted: (loginHint?: LoginMethodParams) => Promise<{ error: AuthError | null }>;
+  signUpWithKindeHosted: (registerHint?: LoginMethodParams) => Promise<{ error: AuthError | null }>;
 }
 
 type AuthContextValue = AuthState & AuthActions;
@@ -181,20 +199,6 @@ const RECENT_PROFILE_FETCH_SKIP_MS = 10_000;
 /** Minted MEDVBA JWT TTL is 15m (backend); refresh before expiry so Supabase queries do not hit PGRST303. */
 const MEDVBA_JWT_REFRESH_BUFFER_MS = 3 * 60 * 1000;
 const MEDVBA_SESSION_POLL_MS = 2 * 60 * 1000;
-
-/** True when missing, invalid, expired, or expiring within buffer (ms). */
-function shouldRefreshMedvbaAccessToken(bufferMs: number): boolean {
-  const t = getMedvbaAccessToken();
-  if (!t) return true;
-  try {
-    const c = decodeJwtClaims(t);
-    const exp = c.exp;
-    if (typeof exp !== 'number') return true;
-    return exp * 1000 <= Date.now() + bufferMs;
-  } catch {
-    return true;
-  }
-}
 
 export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() => {
   const queryClient = useQueryClient();
@@ -226,6 +230,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     async (accessToken: string, profileId: string, email?: string | null) => {
       setMedvbaAccessToken(accessToken);
       await persistMedvbaAccessToken(accessToken);
+      await promoteGuestOnboardingToUser(profileId);
       const syn = buildSyntheticSession(accessToken, profileId, email);
       setSession(syn);
       setUser(syn.user as User);
@@ -282,13 +287,15 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
 
       try {
         if (!mounted.current) return;
-        const [{ data: result, error: profileError }, { data: progressData }] = await Promise.all([
-          supabase.from('profiles').select('*').eq('id', userId).single(),
-          supabase.from('user_progress').select('*').eq('user_id', userId).single(),
-        ]);
+        const [{ data: result, error: profileError }, { data: progressData, error: progressError }] =
+          await Promise.all([
+            supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
+            supabase.from('user_progress').select('*').eq('user_id', userId).maybeSingle(),
+          ]);
 
         if (!mounted.current) return;
         if (profileError) throw profileError;
+        if (progressError && progressError.code !== 'PGRST116') throw progressError;
         perf('after_profiles_user_progress');
 
         if (result) {
@@ -321,7 +328,27 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
           };
           setProfile(userProfileRow);
           recentProfileFetchRef.current = { profileId: userId, at: Date.now() };
+        } else {
+          if (!mounted.current) return;
+          perf('profile_row_missing_fallback');
+          setProfile({
+            id: userId,
+            name: 'Student',
+            avatar: `https://api.dicebear.com/7.x/avataaars/png?seed=${userId}`,
+            rank: 0,
+            points: 0,
+            streak: 0,
+            questionsAnswered: 0,
+            accuracy: 0,
+            studyHours: 0,
+            badges: [],
+            joinedAt: new Date().toISOString(),
+            isPublic: true,
+            email: email ?? undefined,
+          });
+          recentProfileFetchRef.current = { profileId: userId, at: Date.now() };
         }
+        void queryClient.invalidateQueries({ queryKey: ['userProfile', userId] });
         perf('done');
       } catch (error) {
         if (isAbortError(error)) return;
@@ -343,9 +370,10 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
           email: email ?? undefined,
         });
         recentProfileFetchRef.current = { profileId: userId, at: Date.now() };
+        void queryClient.invalidateQueries({ queryKey: ['userProfile', userId] });
       }
     },
-    [ensureUserExists],
+    [ensureUserExists, queryClient],
   );
 
   const syncFromKinde = useCallback(async () => {
@@ -445,13 +473,32 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
 
   const checkOnboardingStatus = useCallback(async () => {
     try {
-      const completed = await AsyncStorage.getItem(ONBOARDING_COMPLETE_KEY);
-      setHasCompletedOnboarding(completed === 'true');
+      const storedToken = await loadMedvbaAccessToken();
+      const inMemory = getMedvbaAccessToken();
+      const rawToken = inMemory ?? storedToken;
+      const tokenLooksLikeJwt = typeof rawToken === 'string' && rawToken.split('.').length === 3;
+
+      if (!tokenLooksLikeJwt) {
+        const done = await hasCompletedOnboardingStored(false, null);
+        setHasCompletedOnboarding(done);
+        return;
+      }
+
+      const profileFromJwt = decodeProfileIdFromMedvbaJwt(rawToken);
+      const profileId =
+        profileFromJwt ?? (typeof user?.id === 'string' && user.id.length > 0 ? user.id : null);
+      const authenticated = Boolean(profileId && session?.access_token);
+      const done = await hasCompletedOnboardingStored(authenticated, profileId);
+      setHasCompletedOnboarding(done);
     } catch (error) {
       if (isAbortError(error)) return;
       log.error('[Auth] Error checking onboarding status:', error);
     }
-  }, []);
+  }, [user?.id, session?.access_token]);
+
+  useEffect(() => {
+    void checkOnboardingStatus();
+  }, [checkOnboardingStatus, session?.access_token]);
 
   useEffect(() => {
     const mountedRef = { current: true };
@@ -577,7 +624,9 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
                 }
               } catch (syncErr) {
                 log.warn('[Auth] session sync failed or timed out:', syncErr);
-                clearMedvbaSession();
+                if (shouldClearMedvbaSessionAfterSyncFailure()) {
+                  clearMedvbaSession();
+                }
               }
             } else if (!kinde.isLoading && !restoredMedvba && !getMedvbaAccessToken()) {
               // Do not clear an in-flight or just-applied MEDVBA session (e.g. email/password or
@@ -668,6 +717,39 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     [applyMedvbaSession, fetchProfile],
   );
 
+  const completeHostedKindeAuth = useCallback(
+    async (res: KindeHostedOAuthResult, flowLabel: string) => {
+      const perf = authPerfStep(flowLabel);
+      if (!res.success) {
+        if (/cancel|dismiss|closed/i.test(res.errorMessage || '')) {
+          return { error: { message: AUTH_SIGN_IN_CANCELLED } as AuthError };
+        }
+        return { error: { message: res.errorMessage || 'Authentication failed' } as AuthError };
+      }
+      if (!res.accessToken) {
+        return { error: { message: 'Authentication failed' } as AuthError };
+      }
+      const resolved = await resolveMedvbaSessionFromKindeAccessToken(res.accessToken, () =>
+        kinde.getUserProfile(),
+      );
+      perf('after_exchange_parallel_getUserProfile');
+      if (!resolved.ok) {
+        return { error: { message: resolved.error } as AuthError };
+      }
+      await applyMedvbaSession(resolved.access_token, resolved.profile_id, resolved.email);
+      if (resolved.refresh_token) {
+        await persistMedvbaKindeRefreshToken(resolved.refresh_token);
+      }
+      await persistKindeRefreshTokenFromSdk(kinde);
+      perf('after_applyMedvbaSession');
+      const mountedRef = { current: true };
+      await fetchProfile(resolved.profile_id, resolved.email, mountedRef, 'hosted');
+      perf('after_await_fetchProfile');
+      return { error: null };
+    },
+    [kinde, applyMedvbaSession, fetchProfile],
+  );
+
   const signInWithKindeHosted = useCallback(
     async (loginHint?: LoginMethodParams) => {
       const perf = authPerfStep('signInWithKindeHosted');
@@ -676,32 +758,32 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
         perf('before_kinde.login');
         const res = await kinde.login(loginHint);
         perf('after_kinde.login');
-        if (!res.success) {
-          if (/cancel|dismiss|closed/i.test(res.errorMessage || '')) {
-            return { error: { message: AUTH_SIGN_IN_CANCELLED } as AuthError };
-          }
-          return { error: { message: res.errorMessage || 'Login failed' } as AuthError };
-        }
-        const resolved = await resolveMedvbaSessionFromKindeAccessToken(res.accessToken, () =>
-          kinde.getUserProfile(),
-        );
-        perf('after_exchange_parallel_getUserProfile');
-        if (!resolved.ok) {
-          return { error: { message: resolved.error } as AuthError };
-        }
-        await applyMedvbaSession(resolved.access_token, resolved.profile_id, resolved.email);
-        perf('after_applyMedvbaSession');
-        const mountedRef = { current: true };
-        await fetchProfile(resolved.profile_id, resolved.email, mountedRef, 'hosted');
-        perf('after_await_fetchProfile');
-        return { error: null };
+        return await completeHostedKindeAuth(res, 'signInWithKindeHosted');
       } catch (error) {
         return { error: error as AuthError };
       } finally {
         setHostedOAuthInFlight(false);
       }
     },
-    [kinde, applyMedvbaSession, fetchProfile],
+    [kinde, completeHostedKindeAuth],
+  );
+
+  const signUpWithKindeHosted = useCallback(
+    async (registerHint?: LoginMethodParams) => {
+      const perf = authPerfStep('signUpWithKindeHosted');
+      setHostedOAuthInFlight(true);
+      try {
+        perf('before_kinde.register');
+        const res = await kinde.register(registerHint);
+        perf('after_kinde.register');
+        return await completeHostedKindeAuth(res, 'signUpWithKindeHosted');
+      } catch (error) {
+        return { error: error as AuthError };
+      } finally {
+        setHostedOAuthInFlight(false);
+      }
+    },
+    [kinde, completeHostedKindeAuth],
   );
 
   const facebookConnectionId = String(
@@ -714,11 +796,14 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
 
   const isFacebookLoginEnabled = isFacebookLoginEnabledForBuild(extraConfig);
 
+  const appleConnectionId = String(
+    (extraConfig as Record<string, unknown>).EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID ?? '',
+  ).trim();
+
   const signInWithGoogle = useCallback(async () => {
-    const hint: LoginMethodParams | undefined = googleConnectionId
-      ? { connectionId: googleConnectionId }
-      : undefined;
-    return signInWithKindeHosted(hint);
+    return signInWithKindeHosted(
+      buildKindeSocialSignInHint(googleConnectionId || undefined),
+    );
   }, [googleConnectionId, signInWithKindeHosted]);
 
   const signInWithFacebook = useCallback(async () => {
@@ -727,17 +812,24 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
         error: { message: 'Facebook sign-in is not enabled for this app.' } as AuthError,
       };
     }
-    const hint: LoginMethodParams | undefined = facebookConnectionId
-      ? { connectionId: facebookConnectionId }
-      : undefined;
-    return signInWithKindeHosted(hint);
+    if (!facebookConnectionId) {
+      log.warn(
+        '[Auth] EXPO_PUBLIC_KINDE_FACEBOOK_CONNECTION_ID is empty. Add the Connection ID from Kinde (Settings → Authentication → Facebook → Configure) and set Meta OAuth redirect URIs per Kinde docs.',
+      );
+    }
+    return signInWithKindeHosted(
+      buildKindeSocialSignInHint(facebookConnectionId || undefined),
+    );
   }, [facebookConnectionId, isFacebookLoginEnabled, signInWithKindeHosted]);
+
   const signInWithApple = useCallback(async () => {
     if (Platform.OS !== 'ios') {
       return { error: { message: 'Apple Sign-In is not available on this device' } as AuthError };
     }
-    return signInWithKindeHosted(undefined);
-  }, [signInWithKindeHosted]);
+    return signInWithKindeHosted(
+      buildKindeSocialSignInHint(appleConnectionId || undefined),
+    );
+  }, [appleConnectionId, signInWithKindeHosted]);
 
   const signInWithBiometric = useCallback(async () => {
     if (Platform.OS === 'web') {
@@ -775,6 +867,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     } catch (e) {
       log.warn('[Auth] Logout:', e);
     }
+    await clearAuthReturnDestination().catch(() => {});
     coldStartAuthBootstrapDoneRef.current = false;
     clearMedvbaSession();
     queryClient.clear();
@@ -819,16 +912,20 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
 
   const completeOnboarding = useCallback(async () => {
     try {
-      await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
+      if (user?.id) {
+        await markUserOnboardingComplete(user.id);
+      } else {
+        await markDeviceOnboardingCarouselComplete();
+      }
       setHasCompletedOnboarding(true);
     } catch (error) {
       log.error('[Auth] Error completing onboarding:', error);
     }
-  }, []);
+  }, [user?.id]);
 
   const resetOnboarding = useCallback(async () => {
     try {
-      await AsyncStorage.removeItem(ONBOARDING_COMPLETE_KEY);
+      await clearAllOnboardingProgress();
       setHasCompletedOnboarding(false);
     } catch (error) {
       log.error('[Auth] Error resetting onboarding:', error);
@@ -941,6 +1038,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     signInWithFacebook,
     signInWithApple,
     signInWithKindeHosted,
+    signUpWithKindeHosted,
   };
 });
 

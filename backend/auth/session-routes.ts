@@ -639,10 +639,9 @@ export function registerAuthSessionRoutes(app: Hono) {
 
       const found = await kindeManagementFindUserIdByEmail(m2mRes.token, email);
       if (!found.ok) {
-        if ("notFound" in found && found.notFound) {
-          return c.json({ ok: true });
+        if ("detail" in found) {
+          console.warn("[auth] request-password-reset: user search failed:", found.detail);
         }
-        console.warn("[auth] request-password-reset: user search failed:", found.detail);
         return c.json({ ok: true });
       }
 

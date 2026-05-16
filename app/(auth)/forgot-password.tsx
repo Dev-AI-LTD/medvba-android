@@ -21,7 +21,7 @@ import {
 import { useAuth } from '@/providers/AuthProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { SPACING } from '@/theme/paperTheme';
-import { isSupabaseConfigured } from '@/lib/supabase';
+import { isApiBaseUrlConfigured } from '@/lib/api-base-url';
 import { log } from '@/lib/log';
 
 export default function ForgotPasswordScreen() {
@@ -47,8 +47,8 @@ export default function ForgotPasswordScreen() {
   }, [email, t]);
 
   const handleResetPassword = useCallback(async () => {
-    if (!isSupabaseConfigured) {
-      Alert.alert(t('auth.error'), t('auth.supabaseNotConfigured'));
+    if (!isApiBaseUrlConfigured()) {
+      Alert.alert(t('auth.error'), t('auth.backendNotConfigured'));
       return;
     }
     if (!validateEmail()) {
@@ -206,7 +206,7 @@ export default function ForgotPasswordScreen() {
                   mode="contained"
                   onPress={handleResetPassword}
                   loading={isLoading}
-                  disabled={isLoading || !isSupabaseConfigured}
+                  disabled={isLoading || !isApiBaseUrlConfigured()}
                   style={{ marginTop: SPACING.x3 }}
                 >
                   {t('auth.sendPasswordResetEmail')}

@@ -8,24 +8,24 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import type { LoginMethodParams } from '@kinde/js-utils';
 import { router, useLocalSearchParams } from 'expo-router';
+import type { LoginMethodParams } from '@kinde/js-utils';
 import * as Haptics from 'expo-haptics';
 import { Appbar, Text, Card, useTheme } from 'react-native-paper';
 import { useAuth, AUTH_SIGN_IN_CANCELLED } from '@/providers/AuthProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { SPACING } from '@/theme/paperTheme';
 import { isSupabaseConfigured } from '@/lib/supabase';
+import { isApiBaseUrlConfigured } from '@/lib/api-base-url';
 import { log } from '@/lib/log';
-
-const ONBOARDING_COMPLETE_KEY = '@medvba_onboarding_complete';
+import { resolvePostAuthHref } from '@/lib/auth-return-url';
+import { resolvePostAuthOnboardingDone } from '@/lib/onboarding-storage';
 
 async function replaceWithPostAuthHome() {
-  const completed = await AsyncStorage.getItem(ONBOARDING_COMPLETE_KEY);
-  const isOnboardingCompleted = completed === 'true';
-  router.replace(isOnboardingCompleted ? '/(tabs)' : '/(auth)/onboarding');
+  const onboarded = await resolvePostAuthOnboardingDone();
+  const href = await resolvePostAuthHref(onboarded);
+  router.replace(href);
 }
 
 export default function VerifyEmailScreen() {
@@ -34,6 +34,7 @@ export default function VerifyEmailScreen() {
   const params = useLocalSearchParams<{ email?: string | string[] }>();
   const { signInWithKindeHosted } = useAuth();
   const [hostedLoading, setHostedLoading] = useState(false);
+  const hostedAuthConfigured = isSupabaseConfigured && isApiBaseUrlConfigured();
 
   const emailParam = useMemo(() => {
     const raw = params.email;
@@ -56,6 +57,10 @@ export default function VerifyEmailScreen() {
   }, []);
 
   const handleContinueInBrowser = useCallback(async () => {
+    if (!isApiBaseUrlConfigured()) {
+      Alert.alert(t('auth.signUpFailed'), t('auth.backendNotConfigured'));
+      return;
+    }
     if (!isSupabaseConfigured) {
       Alert.alert(t('auth.signUpFailed'), t('auth.supabaseNotConfigured'));
       return;
@@ -120,7 +125,7 @@ export default function VerifyEmailScreen() {
 
               <Pressable
                 accessibilityRole="link"
-                disabled={hostedLoading}
+                disabled={hostedLoading || !hostedAuthConfigured}
                 onPress={handleContinueInBrowser}
                 style={({ pressed }) => [
                   styles.linkRow,

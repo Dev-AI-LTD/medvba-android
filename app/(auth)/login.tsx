@@ -9,28 +9,33 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { resolvePostAuthHref } from '@/lib/auth-return-url';
+import { resolvePostAuthOnboardingDone } from '@/lib/onboarding-storage';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Appbar, Text, Card, useTheme } from 'react-native-paper';
-import type { LoginMethodParams } from '@kinde/js-utils';
 import { UIButton } from '@/ui';
+import { buildKindeRegisterHint, buildKindeSignInHint } from '@/lib/kinde-hosted-hints';
+import { getMergedExpoExtra } from '@/lib/expo-public-extra';
 import { useAuth, AUTH_SIGN_IN_CANCELLED } from '@/providers/AuthProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { SPACING } from '@/theme/paperTheme';
+import { SPACING, TOUCH_TARGET_MIN } from '@/theme/paperTheme';
 import { isSupabaseConfigured } from '@/lib/supabase';
+import { isApiBaseUrlConfigured } from '@/lib/api-base-url';
 import { log } from '@/lib/log';
 import { AuthError } from '@supabase/supabase-js';
-
-const ONBOARDING_COMPLETE_KEY = '@medvba_onboarding_complete';
 
 function LoginScreen() {
   const theme = useTheme();
   const params = useLocalSearchParams<{ email?: string | string[] }>();
   const [isLoading, setIsLoading] = useState(false);
+  const isWeb = Platform.OS === 'web';
+  const hostedAuthConfigured = isSupabaseConfigured && isApiBaseUrlConfigured();
+  const canUseHostedAuth = !isWeb && hostedAuthConfigured;
   const {
     signInWithKindeHosted,
+    signUpWithKindeHosted,
     signInWithGoogle,
     signInWithFacebook,
     signInWithApple,
@@ -45,46 +50,97 @@ function LoginScreen() {
     return fromParam.trim().toLowerCase();
   }, [params.email]);
 
-  const hostedCreateAccountHint = useMemo((): LoginMethodParams => {
-    if (emailParam.includes('@')) {
-      return { authUrlParams: { prompt: 'create', login_hint: emailParam } } as LoginMethodParams;
-    }
-    return { authUrlParams: { prompt: 'create' } } as LoginMethodParams;
-  }, [emailParam]);
-
-  const replaceAfterAuth = useCallback(async () => {
-    const completed = await AsyncStorage.getItem(ONBOARDING_COMPLETE_KEY);
-    const isOnboardingCompleted = completed === 'true';
-    router.replace(isOnboardingCompleted ? '/(tabs)' : '/(auth)/onboarding');
+  const emailConnectionId = useMemo(() => {
+    const extra = getMergedExpoExtra() as Record<string, unknown>;
+    return String(extra.EXPO_PUBLIC_KINDE_EMAIL_CONNECTION_ID ?? '').trim();
   }, []);
 
-  const handleCreateAccountWithEmail = useCallback(async () => {
-    if (!isSupabaseConfigured) {
-      Alert.alert(t('auth.loginFailed'), t('auth.supabaseNotConfigured'));
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const { error } = await signInWithKindeHosted(hostedCreateAccountHint);
-      if (error) {
-        if (error.message === AUTH_SIGN_IN_CANCELLED) return;
+  const hostedRegisterHint = useMemo(
+    () =>
+      buildKindeRegisterHint({
+        email: emailParam,
+        emailConnectionId: emailConnectionId || undefined,
+      }),
+    [emailParam, emailConnectionId],
+  );
+
+  const hostedSignInHint = useMemo(
+    () =>
+      buildKindeSignInHint({
+        email: emailParam,
+        emailConnectionId: emailConnectionId || undefined,
+      }),
+    [emailParam, emailConnectionId],
+  );
+
+  const replaceAfterAuth = useCallback(async () => {
+    const onboarded = await resolvePostAuthOnboardingDone();
+    const href = await resolvePostAuthHref(onboarded);
+    router.replace(href);
+  }, []);
+
+  const handleHostedAuthResult = useCallback(
+    async (result: { error: AuthError | null }) => {
+      if (isWeb) return;
+      if (result.error) {
+        if (result.error.message === AUTH_SIGN_IN_CANCELLED) return;
         if (Platform.OS !== 'web') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }
-        Alert.alert(t('auth.loginFailed'), error.message || t('auth.unexpectedError'));
+        Alert.alert(t('auth.loginFailed'), result.error.message || t('auth.unexpectedError'));
         return;
       }
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
       await replaceAfterAuth();
+    },
+    [replaceAfterAuth, t, isWeb],
+  );
+
+  const handleCreateAccountWithEmail = useCallback(async () => {
+    if (isWeb) return;
+    if (!isApiBaseUrlConfigured()) {
+      Alert.alert(t('auth.loginFailed'), t('auth.backendNotConfigured'));
+      return;
+    }
+    if (!isSupabaseConfigured) {
+      Alert.alert(t('auth.loginFailed'), t('auth.supabaseNotConfigured'));
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const result = await signUpWithKindeHosted(hostedRegisterHint);
+      await handleHostedAuthResult(result);
+    } catch (error) {
+      log.error('[Login] Hosted email sign-up:', error);
+      Alert.alert(t('common.error'), t('auth.unexpectedError'));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [handleHostedAuthResult, hostedRegisterHint, signUpWithKindeHosted, t, isWeb]);
+
+  const handleSignInWithEmail = useCallback(async () => {
+    if (isWeb) return;
+    if (!isApiBaseUrlConfigured()) {
+      Alert.alert(t('auth.loginFailed'), t('auth.backendNotConfigured'));
+      return;
+    }
+    if (!isSupabaseConfigured) {
+      Alert.alert(t('auth.loginFailed'), t('auth.supabaseNotConfigured'));
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const result = await signInWithKindeHosted(hostedSignInHint);
+      await handleHostedAuthResult(result);
     } catch (error) {
       log.error('[Login] Hosted email sign-in:', error);
       Alert.alert(t('common.error'), t('auth.unexpectedError'));
     } finally {
       setIsLoading(false);
     }
-  }, [hostedCreateAccountHint, replaceAfterAuth, signInWithKindeHosted, t]);
+  }, [handleHostedAuthResult, hostedSignInHint, signInWithKindeHosted, t, isWeb]);
 
   const handleForgotPassword = useCallback(() => {
     if (Platform.OS !== 'web') {
@@ -95,6 +151,11 @@ function LoginScreen() {
 
   const handleSocialLogin = useCallback(
     async (provider: 'google' | 'facebook' | 'apple') => {
+      if (isWeb) return;
+      if (!isApiBaseUrlConfigured()) {
+        Alert.alert(t('auth.loginFailed'), t('auth.backendNotConfigured'));
+        return;
+      }
       if (!isSupabaseConfigured) {
         Alert.alert(t('auth.loginFailed'), t('auth.supabaseNotConfigured'));
         return;
@@ -137,7 +198,7 @@ function LoginScreen() {
         setIsLoading(false);
       }
     },
-    [replaceAfterAuth, signInWithGoogle, signInWithFacebook, signInWithApple, t],
+    [replaceAfterAuth, signInWithGoogle, signInWithFacebook, signInWithApple, t, isWeb],
   );
 
   return (
@@ -177,6 +238,15 @@ function LoginScreen() {
               <Text variant="bodyLarge" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
                 {t('auth.welcomeUnifiedSubtitle')}
               </Text>
+              {isWeb ? (
+                <Text
+                  variant="bodyMedium"
+                  style={[styles.webNativeHint, { color: theme.colors.tertiary, marginTop: SPACING.x2 }]}
+                  accessibilityRole="text"
+                >
+                  {t('auth.webProductionNativeHint')}
+                </Text>
+              ) : null}
             </View>
 
             <Card style={[styles.card, { backgroundColor: theme.colors.surface }]} mode="elevated">
@@ -185,9 +255,10 @@ function LoginScreen() {
                   <>
                     <View style={styles.socialButtonsRow}>
                       <TouchableOpacity
+                        testID="loginGoogleButton"
                         style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
                         onPress={() => handleSocialLogin('google')}
-                        disabled={isLoading}
+                        disabled={isLoading || !canUseHostedAuth}
                         accessibilityRole="button"
                         accessibilityLabel={t('auth.signInWithGoogle')}
                       >
@@ -198,7 +269,7 @@ function LoginScreen() {
                           testID="loginFacebookButton"
                           style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
                           onPress={() => handleSocialLogin('facebook')}
-                          disabled={isLoading}
+                          disabled={isLoading || !canUseHostedAuth}
                           accessibilityRole="button"
                           accessibilityLabel={t('auth.signInWithFacebook')}
                         >
@@ -209,7 +280,7 @@ function LoginScreen() {
                         <TouchableOpacity
                           style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
                           onPress={() => handleSocialLogin('apple')}
-                          disabled={isLoading}
+                          disabled={isLoading || !canUseHostedAuth}
                           accessibilityRole="button"
                           accessibilityLabel={t('auth.signInWithApple')}
                         >
@@ -220,16 +291,18 @@ function LoginScreen() {
                   </>
                 ) : null}
 
-                {!isSupabaseConfigured && (
+                {!isWeb && !hostedAuthConfigured && (
                   <Text variant="bodySmall" style={[styles.notConfiguredText, { color: theme.colors.error }]}>
-                    {t('auth.supabaseNotConfigured')}
+                    {!isApiBaseUrlConfigured()
+                      ? t('auth.backendNotConfigured')
+                      : t('auth.supabaseNotConfigured')}
                   </Text>
                 )}
                 <View style={[styles.primaryButton, { marginTop: SPACING.x1 }]}>
                   <UIButton
                     variant="borderedProminent"
                     onPress={handleCreateAccountWithEmail}
-                    disabled={isLoading || !isSupabaseConfigured}
+                    disabled={isLoading || !canUseHostedAuth}
                     color={theme.colors.primary}
                     testID="loginHostedEmail"
                   >
@@ -237,8 +310,25 @@ function LoginScreen() {
                   </UIButton>
                 </View>
 
+                <View style={[styles.secondaryButton, { marginTop: SPACING.x2 }]}>
+                  <UIButton
+                    variant="bordered"
+                    onPress={handleSignInWithEmail}
+                    disabled={isLoading || !canUseHostedAuth}
+                    testID="loginHostedEmailSignIn"
+                  >
+                    {isLoading ? t('auth.loading') : t('auth.signInWithEmail')}
+                  </UIButton>
+                  <Text
+                    variant="bodySmall"
+                    style={[styles.emailHint, { color: theme.colors.onSurfaceVariant }]}
+                  >
+                    {t('auth.continueWithEmailHint')}
+                  </Text>
+                </View>
+
                 <View style={{ alignSelf: 'center', marginTop: SPACING.x2 }}>
-                  <UIButton variant="borderless" onPress={handleForgotPassword} disabled={isLoading}>
+                  <UIButton variant="borderless" onPress={handleForgotPassword} disabled={isLoading || !isApiBaseUrlConfigured()}>
                     {t('auth.forgotPassword')}
                   </UIButton>
                 </View>
@@ -296,6 +386,13 @@ const styles = StyleSheet.create({
   title: {
     marginBottom: SPACING.x1,
   },
+  webNativeHint: {
+    textAlign: 'center',
+    lineHeight: 22,
+    maxWidth: 360,
+    alignSelf: 'center',
+    paddingHorizontal: SPACING.x2,
+  },
   card: {
     borderRadius: 16,
     marginBottom: SPACING.x4,
@@ -312,9 +409,9 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.x3,
   },
   socialButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -324,6 +421,14 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     marginBottom: SPACING.x1,
+  },
+  secondaryButton: {
+    marginBottom: SPACING.x1,
+  },
+  emailHint: {
+    marginTop: SPACING.x2,
+    textAlign: 'center',
+    lineHeight: 18,
   },
   notConfiguredText: {
     marginTop: SPACING.x2,

@@ -10,7 +10,7 @@ export async function resolveMedvbaSessionFromKindeAccessToken(
   kindeAccessToken: string,
   getUserProfile: () => Promise<KindeUserProfileLite>,
 ): Promise<
-  | { ok: true; access_token: string; profile_id: string; email?: string }
+  | { ok: true; access_token: string; profile_id: string; email?: string; refresh_token?: string }
   | { ok: false; error: string }
 > {
   const [ex, up] = await Promise.all([
@@ -26,5 +26,6 @@ export async function resolveMedvbaSessionFromKindeAccessToken(
     access_token: ex.access_token,
     profile_id: ex.profile_id,
     ...(email ? { email } : {}),
+    ...(ex.refresh_token ? { refresh_token: ex.refresh_token } : {}),
   };
 }
