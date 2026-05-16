@@ -78,6 +78,20 @@ jest.mock('expo-web-browser', () => ({
   maybeCompleteAuthSession: jest.fn(),
 }));
 
+jest.mock('@react-native-community/netinfo', () => {
+  const defaultState = { type: 'wifi', isConnected: true, isInternetReachable: true };
+  return {
+    __esModule: true,
+    default: {
+      fetch: jest.fn(() => Promise.resolve({ ...defaultState })),
+      addEventListener: jest.fn((listener) => {
+        listener({ ...defaultState });
+        return jest.fn();
+      }),
+    },
+  };
+});
+
 jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn().mockResolvedValue(null),
   setItemAsync: jest.fn().mockResolvedValue(undefined),

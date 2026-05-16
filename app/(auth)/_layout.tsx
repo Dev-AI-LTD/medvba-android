@@ -1,21 +1,26 @@
 import { Stack } from 'expo-router';
+import { View } from 'react-native';
 import { useTheme } from 'react-native-paper';
+import { AuthOfflineBanner } from '@/components/AuthOfflineBanner';
 
 export default function AuthLayout() {
   const { colors } = useTheme();
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: colors.background },
-        animation: 'slide_from_right',
-      }}
-    >
-      <Stack.Screen name="onboarding" />
-      <Stack.Screen name="login" />
-      <Stack.Screen name="signup" />
-      <Stack.Screen name="forgot-password" />
-      <Stack.Screen name="verify-email" />
-    </Stack>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <AuthOfflineBanner />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: colors.background },
+          animation: 'slide_from_right',
+        }}
+      >
+        <Stack.Screen name="onboarding" />
+        <Stack.Screen name="login" />
+        <Stack.Screen name="signup" />
+        <Stack.Screen name="forgot-password" />
+        <Stack.Screen name="verify-email" />
+      </Stack>
+    </View>
   );
 }

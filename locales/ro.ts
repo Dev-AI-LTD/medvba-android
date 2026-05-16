@@ -98,6 +98,9 @@ export const ro: Record<string, string> = {
   'auth.goToSignIn': 'Merg la autentificare',
   'auth.ok': 'OK',
   'auth.unexpectedError': 'A apărut o eroare neașteptată. Te rog încearcă din nou.',
+  'offline.needsInternetTitle': 'Fără internet',
+  'offline.needsInternetMessage':
+    'Ai nevoie de internet pentru autentificare și pentru transfer/sincronizare date cu MEDVBA (serverele aplicației). Folosește Wi‑Fi sau date mobile, apoi încearcă din nou.',
   'auth.supabaseNotConfigured': 'Autentificarea nu este disponibilă: Supabase nu este configurat. Setează EXPO_PUBLIC_SUPABASE_URL și EXPO_PUBLIC_SUPABASE_ANON_KEY în .env',
   'auth.backendNotConfigured': 'Această acțiune necesită API-ul MEDVBA. Setează EXPO_PUBLIC_API_BASE_URL (sau EXPO_PUBLIC_RORK_API_BASE_URL) în .env.',
   'auth.welcome.title': 'Bine ai revenit',

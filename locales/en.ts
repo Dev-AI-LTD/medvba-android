@@ -98,6 +98,9 @@ export const en: Record<string, string> = {
   'auth.goToSignIn': 'Go to sign in',
   'auth.ok': 'OK',
   'auth.unexpectedError': 'An unexpected error occurred. Please try again.',
+  'offline.needsInternetTitle': 'No internet connection',
+  'offline.needsInternetMessage':
+    'You need internet to sign in and to sync your data with MEDVBA. Connect to Wi‑Fi or mobile data and try again.',
   'auth.supabaseNotConfigured': 'Login is not available: Supabase is not configured. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in .env',
   'auth.backendNotConfigured': 'This action needs the MEDVBA API. Set EXPO_PUBLIC_API_BASE_URL (or EXPO_PUBLIC_RORK_API_BASE_URL) in .env.',
   'auth.welcome.title': 'Welcome back',

@@ -21,6 +21,8 @@ import { isApiBaseUrlConfigured } from '@/lib/api-base-url';
 import { log } from '@/lib/log';
 import { resolvePostAuthHref } from '@/lib/auth-return-url';
 import { resolvePostAuthOnboardingDone } from '@/lib/onboarding-storage';
+import { isLikelyAuthConnectivityFailure } from '@/lib/auth-connectivity-errors';
+import { useBlockingAuthOffline } from '@/lib/use-network-auth-offline';
 
 async function replaceWithPostAuthHome() {
   const onboarded = await resolvePostAuthOnboardingDone();
@@ -35,6 +37,7 @@ export default function VerifyEmailScreen() {
   const { signInWithKindeHosted } = useAuth();
   const [hostedLoading, setHostedLoading] = useState(false);
   const hostedAuthConfigured = isSupabaseConfigured && isApiBaseUrlConfigured();
+  const blockingOffline = useBlockingAuthOffline();
 
   const emailParam = useMemo(() => {
     const raw = params.email;
@@ -57,6 +60,10 @@ export default function VerifyEmailScreen() {
   }, []);
 
   const handleContinueInBrowser = useCallback(async () => {
+    if (blockingOffline) {
+      Alert.alert(t('offline.needsInternetTitle'), t('offline.needsInternetMessage'));
+      return;
+    }
     if (!isApiBaseUrlConfigured()) {
       Alert.alert(t('auth.signUpFailed'), t('auth.backendNotConfigured'));
       return;
@@ -73,7 +80,12 @@ export default function VerifyEmailScreen() {
         if (Platform.OS !== 'web') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }
-        Alert.alert(t('auth.loginFailed'), error.message || t('auth.unexpectedError'));
+        const detail = error.message?.trim() ?? '';
+        const connectivity = isLikelyAuthConnectivityFailure(detail);
+        Alert.alert(
+          connectivity ? t('offline.needsInternetTitle') : t('auth.loginFailed'),
+          connectivity ? t('offline.needsInternetMessage') : detail || t('auth.unexpectedError'),
+        );
         return;
       }
       if (Platform.OS !== 'web') {
@@ -82,11 +94,15 @@ export default function VerifyEmailScreen() {
       await replaceWithPostAuthHome();
     } catch (e) {
       log.error('[VerifyEmail] hosted auth:', e);
-      Alert.alert(t('common.error'), t('auth.unexpectedError'));
+      const connectivity = isLikelyAuthConnectivityFailure(e);
+      Alert.alert(
+        connectivity ? t('offline.needsInternetTitle') : t('common.error'),
+        connectivity ? t('offline.needsInternetMessage') : t('auth.unexpectedError'),
+      );
     } finally {
       setHostedLoading(false);
     }
-  }, [hostedLoginHint, signInWithKindeHosted, t]);
+  }, [blockingOffline, hostedLoginHint, signInWithKindeHosted, t]);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -125,7 +141,7 @@ export default function VerifyEmailScreen() {
 
               <Pressable
                 accessibilityRole="link"
-                disabled={hostedLoading || !hostedAuthConfigured}
+                disabled={hostedLoading || !hostedAuthConfigured || blockingOffline}
                 onPress={handleContinueInBrowser}
                 style={({ pressed }) => [
                   styles.linkRow,

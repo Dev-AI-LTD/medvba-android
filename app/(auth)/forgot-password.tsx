@@ -23,6 +23,8 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { SPACING } from '@/theme/paperTheme';
 import { isApiBaseUrlConfigured } from '@/lib/api-base-url';
 import { log } from '@/lib/log';
+import { isLikelyAuthConnectivityFailure } from '@/lib/auth-connectivity-errors';
+import { useBlockingAuthOffline } from '@/lib/use-network-auth-offline';
 
 export default function ForgotPasswordScreen() {
   const theme = useTheme();
@@ -32,6 +34,7 @@ export default function ForgotPasswordScreen() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const { resetPassword } = useAuth();
+  const blockingOffline = useBlockingAuthOffline();
 
   const validateEmail = useCallback(() => {
     if (!email.trim()) {
@@ -47,6 +50,10 @@ export default function ForgotPasswordScreen() {
   }, [email, t]);
 
   const handleResetPassword = useCallback(async () => {
+    if (blockingOffline) {
+      Alert.alert(t('offline.needsInternetTitle'), t('offline.needsInternetMessage'));
+      return;
+    }
     if (!isApiBaseUrlConfigured()) {
       Alert.alert(t('auth.error'), t('auth.backendNotConfigured'));
       return;
@@ -67,10 +74,15 @@ export default function ForgotPasswordScreen() {
         if (Platform.OS !== 'web') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }
-        const detail = resetError.message?.trim();
+        const detail = resetError.message?.trim() ?? '';
+        const connectivity = isLikelyAuthConnectivityFailure(detail);
         Alert.alert(
-          t('auth.error'),
-          detail ? `${t('auth.resetFailed')}\n\n${detail}` : t('auth.resetFailed')
+          connectivity ? t('offline.needsInternetTitle') : t('auth.error'),
+          connectivity
+            ? t('offline.needsInternetMessage')
+            : detail
+              ? `${t('auth.resetFailed')}\n\n${detail}`
+              : t('auth.resetFailed'),
         );
       } else {
         if (Platform.OS !== 'web') {
@@ -80,11 +92,15 @@ export default function ForgotPasswordScreen() {
       }
     } catch (err) {
       log.error('[ForgotPassword] Unexpected error:', err);
-      Alert.alert(t('auth.error'), t('auth.unexpectedError'));
+      const connectivity = isLikelyAuthConnectivityFailure(err);
+      Alert.alert(
+        connectivity ? t('offline.needsInternetTitle') : t('auth.error'),
+        connectivity ? t('offline.needsInternetMessage') : t('auth.unexpectedError'),
+      );
     } finally {
       setIsLoading(false);
     }
-  }, [email, resetPassword, validateEmail, t]);
+  }, [blockingOffline, email, resetPassword, validateEmail, t]);
 
   const handleBack = useCallback(() => {
     if (Platform.OS !== 'web') {
@@ -206,7 +222,7 @@ export default function ForgotPasswordScreen() {
                   mode="contained"
                   onPress={handleResetPassword}
                   loading={isLoading}
-                  disabled={isLoading || !isApiBaseUrlConfigured()}
+                  disabled={isLoading || !isApiBaseUrlConfigured() || blockingOffline}
                   style={{ marginTop: SPACING.x3 }}
                 >
                   {t('auth.sendPasswordResetEmail')}

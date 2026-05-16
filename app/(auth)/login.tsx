@@ -24,6 +24,8 @@ import { SPACING, TOUCH_TARGET_MIN } from '@/theme/paperTheme';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { isApiBaseUrlConfigured } from '@/lib/api-base-url';
 import { log } from '@/lib/log';
+import { isLikelyAuthConnectivityFailure } from '@/lib/auth-connectivity-errors';
+import { useBlockingAuthOffline } from '@/lib/use-network-auth-offline';
 import { AuthError } from '@supabase/supabase-js';
 
 function LoginScreen() {
@@ -33,6 +35,7 @@ function LoginScreen() {
   const isWeb = Platform.OS === 'web';
   const hostedAuthConfigured = isSupabaseConfigured && isApiBaseUrlConfigured();
   const canUseHostedAuth = !isWeb && hostedAuthConfigured;
+  const blockingOffline = useBlockingAuthOffline();
   const {
     signInWithKindeHosted,
     signUpWithKindeHosted,
@@ -87,7 +90,12 @@ function LoginScreen() {
         if (Platform.OS !== 'web') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }
-        Alert.alert(t('auth.loginFailed'), result.error.message || t('auth.unexpectedError'));
+        const detail = result.error.message?.trim() ?? '';
+        const connectivity = isLikelyAuthConnectivityFailure(detail);
+        Alert.alert(
+          connectivity ? t('offline.needsInternetTitle') : t('auth.loginFailed'),
+          connectivity ? t('offline.needsInternetMessage') : detail || t('auth.unexpectedError'),
+        );
         return;
       }
       if (Platform.OS !== 'web') {
@@ -114,7 +122,11 @@ function LoginScreen() {
       await handleHostedAuthResult(result);
     } catch (error) {
       log.error('[Login] Hosted email sign-up:', error);
-      Alert.alert(t('common.error'), t('auth.unexpectedError'));
+      const connectivity = isLikelyAuthConnectivityFailure(error);
+      Alert.alert(
+        connectivity ? t('offline.needsInternetTitle') : t('common.error'),
+        connectivity ? t('offline.needsInternetMessage') : t('auth.unexpectedError'),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -136,7 +148,11 @@ function LoginScreen() {
       await handleHostedAuthResult(result);
     } catch (error) {
       log.error('[Login] Hosted email sign-in:', error);
-      Alert.alert(t('common.error'), t('auth.unexpectedError'));
+      const connectivity = isLikelyAuthConnectivityFailure(error);
+      Alert.alert(
+        connectivity ? t('offline.needsInternetTitle') : t('common.error'),
+        connectivity ? t('offline.needsInternetMessage') : t('auth.unexpectedError'),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -184,7 +200,12 @@ function LoginScreen() {
           if (Platform.OS !== 'web') {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
           }
-          Alert.alert(t('auth.loginFailed'), result.error.message);
+          const detail = result.error.message?.trim() ?? '';
+          const connectivity = isLikelyAuthConnectivityFailure(detail);
+          Alert.alert(
+            connectivity ? t('offline.needsInternetTitle') : t('auth.loginFailed'),
+            connectivity ? t('offline.needsInternetMessage') : detail || t('auth.unexpectedError'),
+          );
         } else {
           if (Platform.OS !== 'web') {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -193,7 +214,11 @@ function LoginScreen() {
         }
       } catch (error) {
         log.error('[Login] Social login error:', error);
-        Alert.alert(t('common.error'), t('auth.unexpectedError'));
+        const connectivity = isLikelyAuthConnectivityFailure(error);
+        Alert.alert(
+          connectivity ? t('offline.needsInternetTitle') : t('common.error'),
+          connectivity ? t('offline.needsInternetMessage') : t('auth.unexpectedError'),
+        );
       } finally {
         setIsLoading(false);
       }
@@ -258,7 +283,7 @@ function LoginScreen() {
                         testID="loginGoogleButton"
                         style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
                         onPress={() => handleSocialLogin('google')}
-                        disabled={isLoading || !canUseHostedAuth}
+                        disabled={isLoading || !canUseHostedAuth || blockingOffline}
                         accessibilityRole="button"
                         accessibilityLabel={t('auth.signInWithGoogle')}
                       >
@@ -269,7 +294,7 @@ function LoginScreen() {
                           testID="loginFacebookButton"
                           style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
                           onPress={() => handleSocialLogin('facebook')}
-                          disabled={isLoading || !canUseHostedAuth}
+                          disabled={isLoading || !canUseHostedAuth || blockingOffline}
                           accessibilityRole="button"
                           accessibilityLabel={t('auth.signInWithFacebook')}
                         >
@@ -280,7 +305,7 @@ function LoginScreen() {
                         <TouchableOpacity
                           style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
                           onPress={() => handleSocialLogin('apple')}
-                          disabled={isLoading || !canUseHostedAuth}
+                          disabled={isLoading || !canUseHostedAuth || blockingOffline}
                           accessibilityRole="button"
                           accessibilityLabel={t('auth.signInWithApple')}
                         >
@@ -302,7 +327,7 @@ function LoginScreen() {
                   <UIButton
                     variant="borderedProminent"
                     onPress={handleCreateAccountWithEmail}
-                    disabled={isLoading || !canUseHostedAuth}
+                    disabled={isLoading || !canUseHostedAuth || blockingOffline}
                     color={theme.colors.primary}
                     testID="loginHostedEmail"
                   >
@@ -314,7 +339,7 @@ function LoginScreen() {
                   <UIButton
                     variant="bordered"
                     onPress={handleSignInWithEmail}
-                    disabled={isLoading || !canUseHostedAuth}
+                    disabled={isLoading || !canUseHostedAuth || blockingOffline}
                     testID="loginHostedEmailSignIn"
                   >
                     {isLoading ? t('auth.loading') : t('auth.signInWithEmail')}
@@ -328,7 +353,11 @@ function LoginScreen() {
                 </View>
 
                 <View style={{ alignSelf: 'center', marginTop: SPACING.x2 }}>
-                  <UIButton variant="borderless" onPress={handleForgotPassword} disabled={isLoading || !isApiBaseUrlConfigured()}>
+                  <UIButton
+                    variant="borderless"
+                    onPress={handleForgotPassword}
+                    disabled={isLoading || !isApiBaseUrlConfigured() || blockingOffline}
+                  >
                     {t('auth.forgotPassword')}
                   </UIButton>
                 </View>
