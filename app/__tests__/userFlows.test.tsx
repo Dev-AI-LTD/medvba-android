@@ -8,6 +8,7 @@ import {
   APP_LANGUAGE_STORAGE_KEY,
   LEGACY_APP_LANGUAGE_STORAGE_KEY,
 } from '@/providers/LanguageProvider';
+import { AUTH_RETURN_TO_KEY } from '@/lib/auth-return-url';
 import { AppTestProviders } from './testProviders';
 import LoginScreen from '@/app/(auth)/login';
 import SignUpScreen from '@/app/(auth)/signup';
@@ -29,11 +30,33 @@ const renderWithApp = (ui: React.ReactElement) =>
 const findText = (text: string | RegExp) =>
   screen.findByText(text, {}, { timeout: 15000 });
 
+type KindeAuthMocks = { login: jest.Mock; register: jest.Mock };
+
+function getKindeAuthMocks(): KindeAuthMocks {
+  const mocks = (globalThis as { __kindeAuthMocks?: KindeAuthMocks }).__kindeAuthMocks;
+  if (!mocks) {
+    throw new Error('Kinde auth mocks not initialized (jest.setup.js)');
+  }
+  return mocks;
+}
+
 describe('User flows (integration-style)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    getKindeAuthMocks().login.mockResolvedValue({
+      success: true,
+      accessToken: 'mock-kinde-access',
+      idToken: 'mock-kinde-id',
+    });
+    getKindeAuthMocks().register.mockResolvedValue({
+      success: true,
+      accessToken: 'mock-kinde-access',
+      idToken: 'mock-kinde-id',
+    });
     (AsyncStorage.getItem as jest.Mock).mockImplementation((key: string) => {
-      if (key === '@medvba_onboarding_complete') return Promise.resolve('true');
+      if (key === '@medvba_onboarding_map_v2') {
+        return Promise.resolve(JSON.stringify({ users: [], deviceCarouselDone: true }));
+      }
       if (key === APP_LANGUAGE_STORAGE_KEY || key === LEGACY_APP_LANGUAGE_STORAGE_KEY) {
         return Promise.resolve(null);
       }
@@ -49,9 +72,11 @@ describe('User flows (integration-style)', () => {
       expect(await findText(enCopy('auth.welcomeUnifiedTitle'))).toBeTruthy();
       expect(screen.getByTestId('loginHostedEmail')).toBeTruthy();
       expect(screen.getByText(enCopy('auth.createAccountWithEmail'))).toBeTruthy();
+      expect(screen.getByTestId('loginHostedEmailSignIn')).toBeTruthy();
+      expect(screen.getByText(enCopy('auth.signInWithEmail'))).toBeTruthy();
     });
 
-    it('navigates to tabs after successful hosted email sign-in when onboarding is complete', async () => {
+    it('navigates to tabs after successful hosted email sign-up when onboarding is complete', async () => {
       renderWithApp(<LoginScreen />);
 
       expect(await findText(enCopy('auth.welcomeUnifiedTitle'))).toBeTruthy();
@@ -63,7 +88,24 @@ describe('User flows (integration-style)', () => {
       await waitFor(() => {
         expect(router.replace).toHaveBeenCalledWith('/(tabs)');
       });
+      expect(getKindeAuthMocks().register).toHaveBeenCalled();
+      expect(getKindeAuthMocks().login).not.toHaveBeenCalled();
       expect(global.fetch).toHaveBeenCalled();
+    });
+
+    it('calls kinde.login when signing in with email', async () => {
+      renderWithApp(<LoginScreen />);
+
+      expect(await findText(enCopy('auth.welcomeUnifiedTitle'))).toBeTruthy();
+
+      await act(async () => {
+        fireEvent.press(screen.getByTestId('loginHostedEmailSignIn'));
+      });
+
+      await waitFor(() => {
+        expect(getKindeAuthMocks().login).toHaveBeenCalled();
+      });
+      expect(getKindeAuthMocks().register).not.toHaveBeenCalled();
     });
 
     it('navigates to forgot password', async () => {
@@ -76,6 +118,43 @@ describe('User flows (integration-style)', () => {
       });
 
       expect(router.push).toHaveBeenCalledWith('/(auth)/forgot-password');
+    });
+
+    it('returns to saved path after login when auth_return_to is set', async () => {
+      (AsyncStorage.getItem as jest.Mock).mockImplementation((key: string) => {
+        if (key === '@medvba_onboarding_map_v2') {
+          return Promise.resolve(JSON.stringify({ users: [], deviceCarouselDone: true }));
+        }
+        if (key === AUTH_RETURN_TO_KEY) return Promise.resolve('quiz-chapters');
+        return Promise.resolve(null);
+      });
+
+      renderWithApp(<LoginScreen />);
+      expect(await findText(enCopy('auth.welcomeUnifiedTitle'))).toBeTruthy();
+
+      await act(async () => {
+        fireEvent.press(screen.getByTestId('loginHostedEmailSignIn'));
+      });
+
+      await waitFor(() => {
+        expect(router.replace).toHaveBeenCalledWith('/quiz-chapters');
+      });
+      expect(AsyncStorage.removeItem).toHaveBeenCalledWith(AUTH_RETURN_TO_KEY);
+    });
+
+    it('uses kinde.login (not register) for Google sign-in', async () => {
+      renderWithApp(<LoginScreen />);
+
+      expect(await findText(enCopy('auth.welcomeUnifiedTitle'))).toBeTruthy();
+
+      await act(async () => {
+        fireEvent.press(screen.getByTestId('loginGoogleButton'));
+      });
+
+      await waitFor(() => {
+        expect(getKindeAuthMocks().login).toHaveBeenCalled();
+      });
+      expect(getKindeAuthMocks().register).not.toHaveBeenCalled();
     });
   });
 

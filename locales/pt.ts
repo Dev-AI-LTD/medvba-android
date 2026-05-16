@@ -19,7 +19,9 @@ export const pt: Record<string, string> = {
   // Auth Screens
   'auth.welcomeBack': 'Bem-vindo de volta',
   'auth.welcomeUnifiedTitle': 'Bem-vindo',
-  'auth.welcomeUnifiedSubtitle': 'Inicie sessão para começar a sua aprendizagem',
+  'auth.welcomeUnifiedSubtitle': 'Crie uma conta ou inicie sessão para continuar a sua aprendizagem',
+  'auth.webProductionNativeHint':
+    'O início de sessão completo está na app nativa. Em produção usa o MEDVBA em Android ou iOS — a pré-visualização web não suporta conta aqui.',
   'auth.signInSubtitle': 'Faça login para continuar a sua aprendizagem',
   'auth.createAccount': 'Criar conta',
   'auth.joinStudents': 'Junte-se a milhares de estudantes',
@@ -61,8 +63,7 @@ export const pt: Record<string, string> = {
   'auth.continueWithEmailHint':
     'Abre uma página segura no navegador para iniciares sessão com o teu email.',
   'auth.createAccountWithEmail': 'Criar conta com email',
-  'auth.createAccountWithEmailHint':
-    'Abre uma página segura no navegador para te registares ou iniciares sessão com o teu email.',
+  'auth.signInWithEmail': 'Iniciar sessão com email',
   'auth.dontHaveAccount': 'Não tem uma conta?',
   'auth.alreadyHaveAccount': 'Já tem uma conta?',
   'auth.agreeToTerms': 'Ao criar uma conta, concorda com os nossos',
@@ -565,6 +566,10 @@ export const pt: Record<string, string> = {
   'support.contactSupport': 'Contactar suporte',
   'support.contactSupportSubtitle': 'Ainda precisa de ajuda? Estamos aqui para si.',
   'support.contactSupportButton': 'Contactar suporte',
+  'support.emailFromHelpButton': 'Escrever email',
+  'support.emailFromHelpSubtitle': 'Abre a sua app de email com o nosso endereço. O formulário abaixo é para mais detalhe.',
+  'support.helpQuickEmailSubject': '[MEDVBA] Centro de ajuda',
+  'support.helpQuickEmailBody': 'Olá equipa MEDVBA,\n\n',
   'support.faqTitle': 'Perguntas frequentes',
   'support.faq1Question': 'Como redefinir a minha palavra-passe?',
   'support.faq1Answer': 'Use a opção de redefinição de palavra-passe na tela de login.',
@@ -592,6 +597,11 @@ export const pt: Record<string, string> = {
   'support.messageRequired': 'A mensagem é obrigatória.',
   'support.sentTitle': 'Email pronto',
   'support.sentMessage': 'O seu cliente de email está pronto para enviar a mensagem.',
+  'support.savedTitle': 'Rascunho guardado',
+  'support.savedMessage': 'A sua mensagem foi guardada como rascunho no Mail.',
+  'support.mailtoOpenedTitle': 'App de email',
+  'support.mailtoOpenedMessage':
+    'Complete a mensagem na app de email. Se nada abriu, use “Contactar suporte” para copiar o texto.',
   'support.fallbackTitle': 'Email indisponível',
   'support.fallbackMessage': 'Contacte-nos no email abaixo e cole a sua mensagem.',
   'support.copyMessage': 'Copiar mensagem',
@@ -679,6 +689,16 @@ export const pt: Record<string, string> = {
   'notifications.soundEnabledDesc': 'Ativar ou desativar os sons de notificação.',
   'notifications.doNotDisturb': 'Não incomodar',
   'notifications.doNotDisturbDesc': 'Não enviar notificações entre os horários selecionados.',
+  'notifications.dndStart': 'Início do modo silencioso',
+  'notifications.dndEnd': 'Fim do modo silencioso',
+  'notifications.studyReminderLocalTitle': 'Lembrete de estudo',
+  'notifications.studyReminderLocalBody': 'Hora de uma sessão de estudo no MEDVBA.',
+  'notifications.studyTimeBlockedByDnd':
+    'O seu horário de estudo está dentro do modo silencioso. Altere um dos horários para podermos agendar lembretes.',
+  'notifications.permissionDeniedTitle': 'Notificações desativadas',
+  'notifications.permissionDeniedMessage':
+    'Ative as notificações do MEDVBA nas definições do sistema para receber lembretes de estudo.',
+  'notifications.openSettings': 'Abrir definições',
 
   // Appearance Settings
   'appearance.title': 'Aparência',

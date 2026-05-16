@@ -17,7 +17,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { 
   Users, 
   Radio, 
@@ -41,6 +41,7 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/providers/ThemeProvider';
+import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
 import GlassCard from '@/components/GlassCard';
 import RoomChat from '@/components/RoomChat';
 import OnlineIndicator from '@/components/OnlineIndicator';
@@ -61,16 +62,14 @@ import {
 import { useAuth } from '@/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { useLanguage } from '@/providers/LanguageProvider';
+import {
+  loadBlockedUsersFromStorage,
+  addBlockedUserEntry,
+  type BlockedUser,
+} from '@/lib/blocked-users-storage';
+import { safeAvatarUri } from '@/lib/safe-image-uri';
 
-const BLOCKED_USERS_KEY = '@medvba_blocked_users';
 const USER_REPORTS_KEY = '@medvba_user_reports';
-
-interface BlockedUser {
-  id: string;
-  name: string;
-  avatar: string;
-  blockedAt: string;
-}
 
 interface UserReport {
   id: string;
@@ -178,34 +177,29 @@ export default function SocialScreen() {
   const [showChatModal, setShowChatModal] = useState(false);
   const [selectedChatRoom, setSelectedChatRoom] = useState<StudyRoom | null>(null);
 
+  const loadBlockedUsers = useCallback(async () => {
+    try {
+      const list = await loadBlockedUsersFromStorage();
+      setBlockedUsers(list);
+    } catch (error) {
+      console.error('Failed to load blocked users:', error);
+    }
+  }, []);
+
   useEffect(() => {
-    const interval = setInterval(() => forceUpdate(n => n + 1), 30000);
+    const interval = setInterval(() => forceUpdate((n) => n + 1), 30000);
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    loadBlockedUsers();
-  }, []);
+    void loadBlockedUsers();
+  }, [loadBlockedUsers]);
 
-  const loadBlockedUsers = async () => {
-    try {
-      const stored = await AsyncStorage.getItem(BLOCKED_USERS_KEY);
-      if (stored) {
-        setBlockedUsers(JSON.parse(stored));
-      }
-    } catch (error) {
-      console.error('Failed to load blocked users:', error);
-    }
-  };
-
-  const saveBlockedUsers = async (users: BlockedUser[]) => {
-    try {
-      await AsyncStorage.setItem(BLOCKED_USERS_KEY, JSON.stringify(users));
-      setBlockedUsers(users);
-    } catch (error) {
-      console.error('Failed to save blocked users:', error);
-    }
-  };
+  useFocusEffect(
+    useCallback(() => {
+      void loadBlockedUsers();
+    }, [loadBlockedUsers])
+  );
 
   const handleBlockUser = (user: { id: string; name: string; avatar: string }) => {
     Alert.alert(
@@ -218,13 +212,16 @@ export default function SocialScreen() {
           style: 'destructive',
           onPress: async () => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            const newBlockedUser: BlockedUser = {
-              id: user.id,
-              name: user.name,
-              avatar: user.avatar,
-              blockedAt: new Date().toISOString(),
-            };
-            await saveBlockedUsers([...blockedUsers, newBlockedUser]);
+            try {
+              const next = await addBlockedUserEntry({
+                id: user.id,
+                name: user.name,
+                avatar: user.avatar,
+              });
+              setBlockedUsers(next);
+            } catch (e) {
+              console.error('Failed to block user:', e);
+            }
             setShowUserActionsModal(false);
             setSelectedUser(null);
           },
@@ -297,6 +294,14 @@ export default function SocialScreen() {
   };
 
   const isUserBlocked = (userId: string) => blockedUsers.some(u => u.id === userId);
+
+  useEffect(() => {
+    if (!selectedChatRoom) return;
+    if (blockedUsers.some((u) => u.id === selectedChatRoom.hostId)) {
+      setShowChatModal(false);
+      setSelectedChatRoom(null);
+    }
+  }, [blockedUsers, selectedChatRoom]);
 
   const isProfilePublic = profile?.isPublic !== false;
 
@@ -398,8 +403,9 @@ export default function SocialScreen() {
       onlineFriendsQuery.refetch(),
       friendActivityQuery.refetch(),
       activityFeedQuery.refetch(),
+      loadBlockedUsers(),
     ]).finally(() => setRefreshing(false));
-  }, [studyRoomsQuery, upcomingSessionsQuery, recentAchievementsQuery, onlineFriendsQuery, friendActivityQuery, activityFeedQuery]);
+  }, [studyRoomsQuery, upcomingSessionsQuery, recentAchievementsQuery, onlineFriendsQuery, friendActivityQuery, activityFeedQuery, loadBlockedUsers]);
 
   const handleReaction = (activityId: string, emoji: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -524,6 +530,9 @@ export default function SocialScreen() {
   const filteredStudyRooms = studyRooms.filter(room => !isUserBlocked(room.hostId));
   const filteredUpcomingSessions = upcomingSessions.filter(session => !isUserBlocked(session.hostId));
   const filteredAchievements = recentAchievements.filter(achievement => !isUserBlocked(achievement.userId));
+  const filteredOnlineFriends = onlineFriends.filter((f) => !isUserBlocked(f.id));
+  const filteredFriendActivity = friendActivity.filter((a) => !isUserBlocked(a.userId));
+  const filteredActivityFeed = activityFeed.filter((a) => !isUserBlocked(a.actorId));
 
   return (
     <View style={styles.container}>
@@ -604,7 +613,10 @@ export default function SocialScreen() {
                   >
                     <GlassCard style={styles.roomCard} variant="light">
                       <View style={styles.roomAvatarContainer}>
-                        <Image source={{ uri: room.hostAvatar }} style={styles.roomHostAvatar} />
+                        <Image
+                          source={{ uri: safeAvatarUri(room.hostAvatar, room.hostId) }}
+                          style={styles.roomHostAvatar}
+                        />
                         <OnlineIndicator 
                           isOnline={onlineFriends.some(f => f.id === room.hostId)} 
                           size={14}
@@ -681,7 +693,10 @@ export default function SocialScreen() {
                 return (
                   <GlassCard key={session.id} style={styles.sessionCard}>
                     <View style={styles.sessionHeader}>
-                      <Image source={{ uri: session.hostAvatar }} style={styles.sessionAvatar} />
+                      <Image
+                        source={{ uri: safeAvatarUri(session.hostAvatar, session.hostId) }}
+                        style={styles.sessionAvatar}
+                      />
                       <View style={styles.sessionInfo}>
                         <Text style={styles.sessionTitle} numberOfLines={1}>{session.title}</Text>
                         <Text style={styles.sessionHost}>
@@ -752,7 +767,7 @@ export default function SocialScreen() {
             </GlassCard>
           )}
 
-          {isProfilePublic && onlineFriends.length > 0 && (
+          {isProfilePublic && filteredOnlineFriends.length > 0 && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Users color={colors.success} size={18} />
@@ -763,10 +778,13 @@ export default function SocialScreen() {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.onlineFriendsScroll}
               >
-                {onlineFriends.map((friend) => (
+                {filteredOnlineFriends.map((friend) => (
                   <TouchableOpacity key={friend.id} style={styles.onlineFriendCard}>
                     <View style={styles.onlineFriendAvatarContainer}>
-                      <Image source={{ uri: friend.avatar }} style={styles.onlineFriendAvatar} />
+                      <Image
+                        source={{ uri: safeAvatarUri(friend.avatar, friend.id) }}
+                        style={styles.onlineFriendAvatar}
+                      />
                       <OnlineIndicator 
                         isOnline={true} 
                         size={14}
@@ -780,19 +798,22 @@ export default function SocialScreen() {
             </View>
           )}
 
-          {isProfilePublic && friendActivity.length > 0 && (
+          {isProfilePublic && filteredFriendActivity.length > 0 && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Clock color={colors.secondary} size={18} />
                 <Text style={styles.sectionTitle}>{t('social.recentActivity')}</Text>
               </View>
-              {friendActivity.map((activity) => (
+              {filteredFriendActivity.map((activity) => (
                 <GlassCard key={activity.id} style={styles.activityCard}>
                   <View style={styles.activityHeader}>
                     <View style={styles.friendActivityAvatarContainer}>
-                      <Image source={{ uri: activity.userAvatar }} style={styles.activityAvatar} />
+                      <Image
+                        source={{ uri: safeAvatarUri(activity.userAvatar, activity.userId) }}
+                        style={styles.activityAvatar}
+                      />
                       <OnlineIndicator 
-                        isOnline={onlineFriends.some(f => f.id === activity.userId)} 
+                        isOnline={filteredOnlineFriends.some(f => f.id === activity.userId)} 
                         size={12}
                         style={styles.activityOnlineIndicator}
                       />
@@ -822,7 +843,10 @@ export default function SocialScreen() {
             {filteredAchievements.map((achievement) => (
               <GlassCard key={achievement.id} style={styles.activityCard}>
                 <View style={styles.activityHeader}>
-                  <Image source={{ uri: achievement.userAvatar }} style={styles.activityAvatar} />
+                  <Image
+                    source={{ uri: safeAvatarUri(achievement.userAvatar, achievement.userId) }}
+                    style={styles.activityAvatar}
+                  />
                   <View style={styles.activityUserInfo}>
                     <Text style={styles.activityUserName}>{achievement.userName}</Text>
                     <Text style={styles.activityTime}>
@@ -846,7 +870,7 @@ export default function SocialScreen() {
               </GlassCard>
             ))}
             
-            {activityFeed.map((activity) => {
+            {filteredActivityFeed.map((activity) => {
               const IconComponent = activityIcons[activity.type] || Star;
               const userReaction = reactedActivities[activity.id];
 
@@ -885,7 +909,10 @@ export default function SocialScreen() {
               return (
                 <GlassCard key={activity.id} style={styles.activityCard}>
                   <View style={styles.activityHeader}>
-                    <Image source={{ uri: activity.actorAvatar }} style={styles.activityAvatar} />
+                    <Image
+                      source={{ uri: safeAvatarUri(activity.actorAvatar, activity.actorId) }}
+                      style={styles.activityAvatar}
+                    />
                     <View style={styles.activityUserInfo}>
                       <Text style={styles.activityUserName}>{activity.actorName}</Text>
                       <Text style={styles.activityTime}>{formatTimeAgo(new Date(activity.createdAt))}</Text>
@@ -1216,7 +1243,10 @@ export default function SocialScreen() {
             {selectedUser && (
               <>
                 <View style={styles.userActionsHeader}>
-                  <Image source={{ uri: selectedUser.avatar }} style={styles.userActionsAvatar} />
+                  <Image
+                    source={{ uri: safeAvatarUri(selectedUser.avatar, selectedUser.id) }}
+                    style={styles.userActionsAvatar}
+                  />
                   <Text style={styles.userActionsName}>{selectedUser.name}</Text>
                 </View>
                 
@@ -1305,7 +1335,10 @@ export default function SocialScreen() {
                 <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
                   {selectedUser && (
                     <View style={styles.reportUserBadge}>
-                      <Image source={{ uri: selectedUser.avatar }} style={styles.reportUserAvatar} />
+                      <Image
+                        source={{ uri: safeAvatarUri(selectedUser.avatar, selectedUser.id) }}
+                        style={styles.reportUserAvatar}
+                      />
                       <Text style={styles.reportUserName}>{t('social.reportingUser').replace('{name}', selectedUser.name)}</Text>
                     </View>
                   )}
@@ -2079,9 +2112,9 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     alignItems: 'center',
   },
   sessionUserActionsButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
     backgroundColor: colors.cardBgLight,
     justifyContent: 'center',
     alignItems: 'center',

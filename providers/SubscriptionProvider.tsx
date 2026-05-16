@@ -107,6 +107,8 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
 
   const currentOfferingRef = useRef<any>(null);
   const didLogRevenueCatConfigErrorRef = useRef(false);
+  /** Profile id last passed to RevenueCat logIn (skip logOut when already anonymous). */
+  const lastRevenueCatUserIdRef = useRef<string | null>(null);
   /** Tracks last premium state synced to Supabase (subscriptions row) for this session. */
   const lastSupabasePremiumSyncRef = useRef<boolean | null>(null);
 
@@ -335,17 +337,19 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     const initRevenueCat = async () => {
       try {
         Purchases.configure({ apiKey: REVENUECAT_API_KEY });
-        if (!user?.id) {
-          try {
-            await Purchases.logOut();
-          } catch {
-            /* already anonymous or SDK not ready */
-          }
-        } else {
+        if (user?.id) {
           const { customerInfo } = await Purchases.logIn(user.id);
+          lastRevenueCatUserIdRef.current = user.id;
           const premium = isPremiumFromCustomerInfo(customerInfo);
           setState((prev) => ({ ...prev, isPremium: premium }));
           applyRevenueCatPremiumToSupabase(customerInfo, true);
+        } else if (lastRevenueCatUserIdRef.current) {
+          try {
+            await Purchases.logOut();
+          } catch {
+            /* already anonymous */
+          }
+          lastRevenueCatUserIdRef.current = null;
         }
 
         const offerings = await Purchases.getOfferings();

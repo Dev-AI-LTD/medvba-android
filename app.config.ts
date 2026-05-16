@@ -5,7 +5,7 @@ import path from 'path';
 type EnvMap = Record<string, string>;
 
 /** Keep in sync with store releases; bare workflow requires a string runtimeVersion (no policy). */
-const APP_VERSION = '1.0.23';
+const APP_VERSION = '1.0.27';
 
 const readEnvText = (filePath: string): string => {
   const buf = fs.readFileSync(filePath);
@@ -102,6 +102,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     ],
     // react-native-edge-to-edge: prevents react-native-screens from using deprecated setStatusBarColor/setNavigationBarColor APIs
     'react-native-edge-to-edge',
+    'expo-notifications',
     [
       'expo-build-properties',
       {
@@ -152,7 +153,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       supportsTablet: false,
       bundleIdentifier: 'com.devaieood.medvba',
       icon: './assets/images/icon.png',
-      buildNumber: '42',
+      buildNumber: '46',
       // Required for @invertase/react-native-apple-authentication (EAS / prebuild).
       entitlements: {
         'com.apple.developer.applesignin': ['Default'],
@@ -168,7 +169,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         foregroundImage: './assets/images/adaptive-icon.png',
         backgroundColor: '#000000',
       },
-      versionCode: 32,
+      versionCode: 36,
       package: 'com.devaieood.medvba',
       // Play: upload mapping.txt per release (Deobfuscation). Native: native-debug-symbols.zip (Symbols); both are buildArtifactPaths in eas.json.
       blockedPermissions: [
@@ -180,6 +181,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       ],
       permissions: [
         'android.permission.VIBRATE',
+        'android.permission.POST_NOTIFICATIONS',
       ],
       // Android 15+ edge-to-edge; use system bars (status/nav) via insets instead of deprecated color APIs
       edgeToEdgeEnabled: true,
@@ -230,6 +232,12 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       EXPO_PUBLIC_KINDE_FACEBOOK_CONNECTION_ID:
         envFromFile.EXPO_PUBLIC_KINDE_FACEBOOK_CONNECTION_ID ||
         process.env.EXPO_PUBLIC_KINDE_FACEBOOK_CONNECTION_ID,
+      EXPO_PUBLIC_KINDE_EMAIL_CONNECTION_ID:
+        envFromFile.EXPO_PUBLIC_KINDE_EMAIL_CONNECTION_ID ||
+        process.env.EXPO_PUBLIC_KINDE_EMAIL_CONNECTION_ID,
+      EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID:
+        envFromFile.EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID ||
+        process.env.EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID,
       EXPO_PUBLIC_KINDE_SCOPES:
         envFromFile.EXPO_PUBLIC_KINDE_SCOPES || process.env.EXPO_PUBLIC_KINDE_SCOPES,
       EXPO_PUBLIC_SHOW_FACEBOOK_LOGIN:
@@ -240,6 +248,8 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         envFromFile.EXPO_PUBLIC_FETCH_ZOOM_REQUESTS ??
         process.env.EXPO_PUBLIC_FETCH_ZOOM_REQUESTS ??
         'false',
+      EXPO_PUBLIC_SUPPORT_EMAIL:
+        envFromFile.EXPO_PUBLIC_SUPPORT_EMAIL || process.env.EXPO_PUBLIC_SUPPORT_EMAIL,
     },
     owner: 'devaieood79',
   };

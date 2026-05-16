@@ -108,8 +108,10 @@ App scheme (Expo): **`medvba`** — see `scheme` in `app.config.ts`.
 - [ ] **Callback URLs** in Kinde include at least: `medvba://*` (or the exact redirect URIs `@kinde/expo` uses for your SDK version — often `medvba://<kinde-default-path>`). Add any **web** callback URL if you use web sign-in.
 - [ ] **Allowed logout redirect URLs** include the post-logout destination you use (e.g. `medvba://` or your hosted URL).
 - [ ] **Google / Facebook / Apple** enabled in Kinde with valid client IDs/secrets; Apple Sign In matches iOS bundle if used.
-- [ ] Email/password: Kinde **password grant** enabled for the app client; Railway has `KINDE_CLIENT_SECRET` (and optional `KINDE_AUDIENCE`); app uses `POST /api/auth/session` JSON `{ email, password }` (no hosted Kinde for sign-in form).
-- [ ] Hosted Kinde still used where needed (e.g. `kinde.register` / social `kinde.login`); backend accepts `Authorization: Bearer <kinde_access_token>` on `/api/auth/session`.
+- [ ] Email sign-up/sign-in: **hosted Kinde** in app — **Create account with email** → `kinde.register()`; **Sign in with email** → `kinde.login()`; social → `kinde.login` with connection ID. Enable **email registration** under Authentication → Sign-up and sign-in.
+- [ ] **Email UX (Kinde):** If the hosted page asks for a **password**, that is the user's **Kinde / MEDVBA account** password (created in that flow), **not** their Gmail password unless they use Google sign-in. For **email code (OTP)** instead, enable the **Email + code** (passwordless) authentication method in Kinde and set `EXPO_PUBLIC_KINDE_EMAIL_CONNECTION_ID` to **that** connection’s ID (see [Kinde passwordless](https://docs.kinde.com/authenticate/authentication-methods/passwordless-authentication/)).
+- [ ] Password grant on server (optional): only for forgot-password API / legacy; Railway `KINDE_CLIENT_SECRET` if you keep `POST /api/auth/session` JSON `{ email, password }`.
+- [ ] Backend accepts `Authorization: Bearer <kinde_access_token>` on `POST /api/auth/session` after hosted OAuth.
 
 ## 3.5 Post-deploy smoke (see `docs/ANDROID_RELEASE_SMOKE_TEST.md`)
 

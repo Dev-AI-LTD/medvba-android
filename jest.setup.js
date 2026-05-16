@@ -226,6 +226,18 @@ jest.mock('@/lib/monitoring', () => ({
   },
 }));
 
+const kindeHostedAuthSuccess = {
+  success: true,
+  accessToken: 'mock-kinde-access',
+  idToken: 'mock-kinde-id',
+};
+
+/** @type {{ login: jest.Mock; register: jest.Mock }} */
+global.__kindeAuthMocks = {
+  login: jest.fn().mockResolvedValue(kindeHostedAuthSuccess),
+  register: jest.fn().mockResolvedValue(kindeHostedAuthSuccess),
+};
+
 jest.mock('@kinde/expo', () => {
   const React = require('react');
   return {
@@ -233,21 +245,16 @@ jest.mock('@kinde/expo', () => {
     useKindeAuth: () => ({
       isAuthenticated: false,
       isLoading: false,
-      login: jest.fn().mockResolvedValue({
-        success: true,
-        accessToken: 'mock-kinde-access',
-        idToken: 'mock-kinde-id',
-      }),
-      register: jest.fn().mockResolvedValue({
-        success: true,
-        accessToken: 'mock-kinde-access',
-        idToken: 'mock-kinde-id',
-      }),
+      login: global.__kindeAuthMocks.login,
+      register: global.__kindeAuthMocks.register,
       logout: jest.fn().mockResolvedValue({ success: true }),
       getAccessToken: jest.fn().mockResolvedValue(null),
       getIdToken: jest.fn().mockResolvedValue(null),
       getUserProfile: jest.fn().mockResolvedValue({ email: 'user@example.com' }),
-      refreshToken: jest.fn(),
+      refreshToken: jest.fn().mockResolvedValue({
+        success: true,
+        refreshToken: 'mock-kinde-refresh',
+      }),
     }),
   };
 });
@@ -260,11 +267,22 @@ global.requestAnimationFrame = (callback) => {
 };
 global.cancelAnimationFrame = jest.fn();
 
+function buildMedvbaTestAccessJwt(): string {
+  const payload = Buffer.from(
+    JSON.stringify({
+      profile_id: '11111111-1111-1111-1111-111111111111',
+      exp: Math.floor(Date.now() / 1000) + 86_400,
+    }),
+  ).toString('base64url');
+  const header = Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url');
+  return `${header}.${payload}.x`;
+}
+
 global.fetch = jest.fn().mockImplementation((url) => {
   const u = String(url);
   if (u.includes('/api/auth/session') || u.includes('/api/auth/register')) {
     const body = JSON.stringify({
-      access_token: 'test-jwt',
+      access_token: buildMedvbaTestAccessJwt(),
       profile_id: '11111111-1111-1111-1111-111111111111',
     });
     return Promise.resolve({

@@ -71,7 +71,7 @@ bunx tsc --noEmit
 
 ## Android production builds (MEDVBA)
 
-Internal checklist for Play / EAS lives in [`.cursor/rules/eas-android-release.mdc`](./.cursor/rules/eas-android-release.mdc) (Bun-only lockfile, `bun run doctor`, versionCode, `mapping.txt`, etc.).
+Internal checklist for Play / EAS lives in [`.cursor/rules/eas-android-release.mdc`](./.cursor/rules/eas-android-release.mdc) (Bun-only lockfile, `bun run doctor`, versionCode, `mapping.txt`, etc.). **EAS must receive `bun.lock`** (do not list it in `.easignore`); otherwise cloud installs have no lockfile and can diverge from local / break Gradle.
 
 ---
 
@@ -105,7 +105,7 @@ Internal checklist for Play / EAS lives in [`.cursor/rules/eas-android-release.m
 
 ## Batch translation (OpenAI, no Rork SDK)
 
-Structured question translation uses **`lib/llm-generate-object-json.ts`**: OpenAI Chat Completions with `response_format: json_object` and Zod validation. It is used from **`lib/batch-translate.ts`** (in-app **`app/batch-translate.tsx`**) and **`scripts/translate-questions.ts`** (CLI).
+Structured question translation uses **`lib/llm-generate-object-json.ts`**: OpenAI Chat Completions with `response_format: json_object` and Zod validation. It is used from **`lib/batch-translate.ts`** (in-app **`app/batch-translate.tsx`**) and **`scripts/translate-questions.ts`** (legacy ES/PT CLI). For **Romanian** on the **full quiz-session pool** (deduped `allQuestions` from `lib/quizSessionQuestionPool.ts`), use **`bun run translate:quiz-ro`** (`scripts/batch-translate-quiz-ro.ts`) with optional `--skip`, `--max`, `--delta-out`. It writes **`scripts/ro-delta-last-run.json`** (only `ro` for ids in that run). Apply into the repo with **`bun run merge:ro-delta`** (`scripts/merge-ro-delta-apply.ts`). Optional **`--out`** on translate still writes the full merged `.ts` if you want it.
 
 **Keys (see also `lib/llm-generate-object-json.ts`):**
 

@@ -1,14 +1,16 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { HelpCircle, Mail } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 
 import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import GlassCard from '@/components/GlassCard';
 import Button from '@/components/Button';
+import { openSupportMail } from '@/lib/support-mail';
 
 type FaqItem = {
   question: string;
@@ -20,6 +22,7 @@ export default function HelpCenterScreen() {
   const { colors } = useTheme();
   const { t } = useLanguage();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const [openingMail, setOpeningMail] = useState(false);
 
   const faqs: FaqItem[] = [
     {
@@ -39,6 +42,30 @@ export default function HelpCenterScreen() {
       answer: t('support.faq4Answer'),
     },
   ];
+
+  const handleOpenSupportMail = async () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setOpeningMail(true);
+    try {
+      const result = await openSupportMail({
+        subject: t('support.helpQuickEmailSubject'),
+        body: t('support.helpQuickEmailBody'),
+      });
+      if (result === 'sent' || result === 'saved') {
+        Alert.alert(t('support.sentTitle'), t('support.sentMessage'));
+      } else if (result === 'opened_mailto') {
+        Alert.alert(t('support.mailtoOpenedTitle'), t('support.mailtoOpenedMessage'));
+      } else if (result === 'unavailable') {
+        Alert.alert(t('support.fallbackTitle'), t('support.fallbackMessage'));
+      }
+    } catch {
+      Alert.alert(t('support.fallbackTitle'), t('support.fallbackMessage'));
+    } finally {
+      setOpeningMail(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -74,9 +101,18 @@ export default function HelpCenterScreen() {
             </View>
             <Text style={styles.contactSubtitle}>{t('support.contactSupportSubtitle')}</Text>
             <Button
+              title={openingMail ? t('support.sending') : t('support.emailFromHelpButton')}
+              onPress={() => void handleOpenSupportMail()}
+              icon={<Mail color="#FFFFFF" size={18} />}
+              fullWidth
+              loading={openingMail}
+              disabled={openingMail}
+            />
+            <Text style={styles.secondaryHint}>{t('support.emailFromHelpSubtitle')}</Text>
+            <Button
               title={t('support.contactSupportButton')}
               onPress={() => router.push('/support/contact-support')}
-              icon={<Mail color="#FFFFFF" size={18} />}
+              variant="secondary"
               fullWidth
             />
           </GlassCard>
@@ -158,5 +194,11 @@ const createStyles = (colors: any) =>
       fontSize: 13,
       color: colors.textSecondary,
       lineHeight: 18,
+    },
+    secondaryHint: {
+      fontSize: 12,
+      color: colors.textMuted,
+      lineHeight: 16,
+      marginTop: -4,
     },
   });

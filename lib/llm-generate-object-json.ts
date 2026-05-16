@@ -26,9 +26,12 @@ export function resolveOpenAIApiKeyForBatchTools(): string {
  * Structured JSON via OpenAI `response_format: json_object` + Zod validation.
  * Same transport style as {@link ./ai-provider.ts} `callOpenAI`.
  */
+export type CoerceParsedJson = (parsed: unknown) => unknown;
+
 export async function llmGenerateObjectJson<T extends z.ZodTypeAny>(
   prompt: string,
   schema: T,
+  options?: { coerceParsedJson?: CoerceParsedJson },
 ): Promise<z.infer<T>> {
   const apiKey = resolveOpenAIApiKeyForBatchTools();
   const baseUrl = (process.env.AI_BASE_URL?.trim() || 'https://api.openai.com/v1').replace(/\/$/, '');
@@ -68,14 +71,21 @@ export async function llmGenerateObjectJson<T extends z.ZodTypeAny>(
 
   let parsedJson: unknown;
   try {
-    parsedJson = JSON.parse(content);
+    const trimmed = content.trim();
+    const unfenced = trimmed.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+    parsedJson = JSON.parse(unfenced);
   } catch {
     throw new Error('OpenAI returned non-JSON message content');
   }
 
-  const parsed = schema.safeParse(parsedJson);
+  const coerced = options?.coerceParsedJson ? options.coerceParsedJson(parsedJson) : parsedJson;
+  const parsed = schema.safeParse(coerced);
   if (!parsed.success) {
-    throw new Error(`OpenAI JSON failed schema validation: ${parsed.error.message}`);
+    const hint =
+      coerced && typeof coerced === 'object' && !Array.isArray(coerced)
+        ? ` Top-level keys received: ${Object.keys(coerced as Record<string, unknown>).join(', ') || '(none)'}.`
+        : '';
+    throw new Error(`OpenAI JSON failed schema validation: ${parsed.error.message}.${hint}`);
   }
 
   return parsed.data;

@@ -14,13 +14,14 @@ import { Stack, router } from 'expo-router';
 import { ChevronLeft, Download, AlertCircle, CheckCircle } from 'lucide-react-native';
 import {
   batchTranslateQuestions,
+  dedupeQuizPoolQuestions,
   generateTranslationFile,
+  questionNeedsTargetLanguage,
   translateSpecificCategory,
   TranslationProgress,
   TranslationResult,
 } from '@/lib/batch-translate';
-import { sampleQuestions } from '@/mocks/questions';
-import { questionTranslations } from '@/locales/questionTranslations';
+import { allQuestions } from '@/lib/quizSessionQuestionPool';
 
 export default function BatchTranslateScreen() {
   const [isTranslating, setIsTranslating] = useState(false);
@@ -28,24 +29,24 @@ export default function BatchTranslateScreen() {
   const [result, setResult] = useState<TranslationResult | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const categories = Array.from(new Set(sampleQuestions.map((q) => q.category)));
-  
-  const untranslatedCountES = sampleQuestions.filter(
-    (q) => !questionTranslations[q.id]?.es
-  ).length;
-  
-  const untranslatedCountPT = sampleQuestions.filter(
-    (q) => !questionTranslations[q.id]?.pt
-  ).length;
+  const pool = dedupeQuizPoolQuestions(allQuestions);
+  const categories = Array.from(new Set(pool.map((q) => q.category)));
+
+  const untranslatedCountES = pool.filter((q) => questionNeedsTargetLanguage(q, 'es')).length;
+  const untranslatedCountPT = pool.filter((q) => questionNeedsTargetLanguage(q, 'pt')).length;
+  const untranslatedCountRO = pool.filter((q) => questionNeedsTargetLanguage(q, 'ro')).length;
 
   const categoryStats = categories.map((cat) => ({
     name: cat,
-    total: sampleQuestions.filter((q) => q.category === cat).length,
-    untranslatedES: sampleQuestions.filter(
-      (q) => q.category === cat && !questionTranslations[q.id]?.es
+    total: pool.filter((q) => q.category === cat).length,
+    untranslatedES: pool.filter(
+      (q) => q.category === cat && questionNeedsTargetLanguage(q, 'es'),
     ).length,
-    untranslatedPT: sampleQuestions.filter(
-      (q) => q.category === cat && !questionTranslations[q.id]?.pt
+    untranslatedPT: pool.filter(
+      (q) => q.category === cat && questionNeedsTargetLanguage(q, 'pt'),
+    ).length,
+    untranslatedRO: pool.filter(
+      (q) => q.category === cat && questionNeedsTargetLanguage(q, 'ro'),
     ).length,
   }));
 
@@ -64,16 +65,39 @@ export default function BatchTranslateScreen() {
     }
   };
 
+  const handleTranslateAllRo = async () => {
+    setIsTranslating(true);
+    setProgress(null);
+    setResult(null);
+
+    try {
+      const translations = await batchTranslateQuestions(['ro'], (p) => setProgress(p));
+      setResult(translations);
+    } catch (error) {
+      console.error('Translation failed:', error);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   const handleTranslateCategory = async (category: string) => {
     setIsTranslating(true);
     setProgress(null);
     setResult(null);
     setSelectedCategory(category);
 
+    const stats = categoryStats.find((c) => c.name === category);
+    const langs: ('ro' | 'es' | 'pt')[] = [];
+    if (stats && (stats.untranslatedES > 0 || stats.untranslatedPT > 0)) {
+      langs.push('es', 'pt');
+    }
+    if (stats && stats.untranslatedRO > 0) {
+      langs.push('ro');
+    }
+
     try {
-      const translations = await translateSpecificCategory(category, ['es', 'pt'], (p) =>
-        setProgress(p)
-      );
+      if (langs.length === 0) return;
+      const translations = await translateSpecificCategory(category, langs, (p) => setProgress(p));
       setResult(translations);
     } catch (error) {
       console.error('Translation failed:', error);
@@ -127,17 +151,21 @@ export default function BatchTranslateScreen() {
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         <View style={styles.statsCard}>
-          <Text style={styles.statsTitle}>Translation Status (ES/PT)</Text>
+          <Text style={styles.statsTitle}>Translation status (quiz pool)</Text>
           <View style={styles.statsRow}>
-            <Text style={styles.statsLabel}>Total Questions:</Text>
-            <Text style={styles.statsValue}>{sampleQuestions.length}</Text>
+            <Text style={styles.statsLabel}>Total questions (deduped):</Text>
+            <Text style={styles.statsValue}>{pool.length}</Text>
           </View>
           <View style={styles.statsRow}>
-            <Text style={styles.statsLabel}>Spanish Untranslated:</Text>
+            <Text style={styles.statsLabel}>Romanian incomplete:</Text>
+            <Text style={styles.statsValueWarning}>{untranslatedCountRO}</Text>
+          </View>
+          <View style={styles.statsRow}>
+            <Text style={styles.statsLabel}>Spanish missing:</Text>
             <Text style={styles.statsValueWarning}>{untranslatedCountES}</Text>
           </View>
           <View style={styles.statsRow}>
-            <Text style={styles.statsLabel}>Portuguese Untranslated:</Text>
+            <Text style={styles.statsLabel}>Portuguese missing:</Text>
             <Text style={styles.statsValueWarning}>{untranslatedCountPT}</Text>
           </View>
         </View>
@@ -145,21 +173,35 @@ export default function BatchTranslateScreen() {
         <TouchableOpacity
           style={[
             styles.primaryButton,
-            (isTranslating || (untranslatedCountES === 0 && untranslatedCountPT === 0)) && styles.buttonDisabled,
+            (isTranslating || (untranslatedCountRO === 0)) && styles.buttonDisabled,
           ]}
-          onPress={handleTranslateAll}
-          disabled={isTranslating || (untranslatedCountES === 0 && untranslatedCountPT === 0)}
+          onPress={handleTranslateAllRo}
+          disabled={isTranslating || untranslatedCountRO === 0}
         >
           {isTranslating && !selectedCategory ? (
             <ActivityIndicator color="#fff" />
           ) : (
             <>
               <Download size={20} color="#fff" />
-              <Text style={styles.primaryButtonText}>
-                Translate All ES/PT
-              </Text>
+              <Text style={styles.primaryButtonText}>Translate all missing RO</Text>
             </>
           )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.primaryButton,
+            (isTranslating || (untranslatedCountES === 0 && untranslatedCountPT === 0)) &&
+              styles.buttonDisabled,
+            { marginTop: 10, backgroundColor: '#5a6570' },
+          ]}
+          onPress={handleTranslateAll}
+          disabled={isTranslating || (untranslatedCountES === 0 && untranslatedCountPT === 0)}
+        >
+          <>
+            <Download size={20} color="#fff" />
+            <Text style={styles.primaryButtonText}>Translate all ES / PT</Text>
+          </>
         </TouchableOpacity>
 
         <Text style={styles.sectionTitle}>Translate by Category</Text>
@@ -169,24 +211,32 @@ export default function BatchTranslateScreen() {
             key={cat.name}
             style={[
               styles.categoryCard,
-              (cat.untranslatedES === 0 && cat.untranslatedPT === 0) && styles.categoryCardComplete,
+              cat.untranslatedES === 0 &&
+                cat.untranslatedPT === 0 &&
+                cat.untranslatedRO === 0 &&
+                styles.categoryCardComplete,
               isTranslating && styles.buttonDisabled,
             ]}
             onPress={() => handleTranslateCategory(cat.name)}
-            disabled={isTranslating || (cat.untranslatedES === 0 && cat.untranslatedPT === 0)}
+            disabled={
+              isTranslating ||
+              (cat.untranslatedES === 0 &&
+                cat.untranslatedPT === 0 &&
+                cat.untranslatedRO === 0)
+            }
           >
             <View style={styles.categoryHeader}>
               <Text style={styles.categoryName}>{cat.name}</Text>
-              {(cat.untranslatedES === 0 && cat.untranslatedPT === 0) && (
+              {cat.untranslatedES === 0 &&
+                cat.untranslatedPT === 0 &&
+                cat.untranslatedRO === 0 && (
                 <CheckCircle size={20} color="#4CAF50" />
               )}
             </View>
             <View style={styles.categoryStats}>
+              <Text style={styles.categoryStatsText}>Total: {cat.total}</Text>
               <Text style={styles.categoryStatsText}>
-                Total: {cat.total}
-              </Text>
-              <Text style={styles.categoryStatsText}>
-                ES: {cat.untranslatedES} | PT: {cat.untranslatedPT}
+                RO: {cat.untranslatedRO} | ES: {cat.untranslatedES} | PT: {cat.untranslatedPT}
               </Text>
             </View>
             {isTranslating && selectedCategory === cat.name && (

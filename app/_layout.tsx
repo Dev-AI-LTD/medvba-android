@@ -19,9 +19,13 @@ import { getPaperTheme } from "@/theme/paperTheme";
 import { monitoring } from "@/lib/monitoring";
 import { log } from "@/lib/log";
 import { trpc, createMedvbaTrpcClient } from "@/lib/trpc";
+import { loadNotificationPreferences } from "@/lib/notification-preferences";
+import { en } from "@/locales/en";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { BootstrapLoadingOverlay } from "@/components/BootstrapLoadingOverlay";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import { isPublicUnauthenticatedRoute } from "@/lib/auth-public-routes";
+import { resolvePostAuthHref, saveAuthReturnTo } from "@/lib/auth-return-url";
 import { PUBLIC_APP_NAME } from "@/lib/public-brand";
 
 let splashScreenAvailable = true;
@@ -55,6 +59,21 @@ const isAbortSignalError = (args: unknown[]): boolean => {
   });
 };
 
+const isRevenueCatAnonymousLogOutNoise = (args: unknown[]): boolean => {
+  return args.some((arg) => {
+    const text =
+      typeof arg === 'string'
+        ? arg
+        : arg instanceof Error
+          ? arg.message
+          : '';
+    return (
+      text.includes('Called logOut but the current user is anonymous') ||
+      text.includes('logOut but the current user is anonymous')
+    );
+  });
+};
+
 const sanitizeValue = (value: unknown): unknown => {
   if (typeof value === "string") {
     return value
@@ -85,6 +104,7 @@ const originalConsoleDebug = console.debug;
 
 console.error = (...args: unknown[]) => {
   if (isAbortSignalError(args)) return;
+  if (isRevenueCatAnonymousLogOutNoise(args)) return;
   if (__DEV__) {
     originalConsoleError(...args);
   } else {
@@ -179,10 +199,21 @@ function useProtectedRoute(splashAvailable: boolean, languageBootstrap: boolean)
       return;
     }
 
-    if (!isAuthenticated && !inAuthGroup) {
+    const allowWithoutAuth = inAuthGroup || isPublicUnauthenticatedRoute(segs);
+
+    if (!isAuthenticated && !allowWithoutAuth) {
       log.info('[Auth] Redirecting to login');
+      void saveAuthReturnTo(segs);
       router.replace('/(auth)/login');
     } else if (isAuthenticated && inAuthGroup) {
+      const authScreen = segs[1];
+      if (authScreen === 'login' || authScreen === 'signup' || authScreen === 'verify-email') {
+        void (async () => {
+          const href = await resolvePostAuthHref(hasCompletedOnboarding);
+          router.replace(href);
+        })();
+        return;
+      }
       log.info('[Auth] Redirecting to tabs');
       router.replace('/(tabs)');
     }
@@ -208,6 +239,27 @@ function RootLayoutNav({ splashAvailable }: { splashAvailable: boolean }) {
   const segments = useSegments();
   const { colors, colorScheme } = useTheme();
   const inAuthGroup = segments[0] === "(auth)";
+
+  React.useEffect(() => {
+    if (Platform.OS === "web") return;
+    void (async () => {
+      try {
+        const { initNotificationPresentationOnce, ensureAndroidStudyNotificationChannels } = await import(
+          "@/lib/local-notifications-init"
+        );
+        const { syncStudyReminderNotification } = await import("@/lib/study-reminder-schedule");
+        await initNotificationPresentationOnce();
+        const prefs = await loadNotificationPreferences();
+        await ensureAndroidStudyNotificationChannels();
+        await syncStudyReminderNotification(prefs, {
+          title: en["notifications.studyReminderLocalTitle"] ?? "Study reminder",
+          body: en["notifications.studyReminderLocalBody"] ?? "Time for a MEDVBA study session.",
+        });
+      } catch (e) {
+        log.warn("[notifications] Startup scheduling skipped:", e);
+      }
+    })();
+  }, []);
 
   const envSource = Constants.executionEnvironment ? ` (${Constants.executionEnvironment})` : "";
   const showEnvBanner = !isSupabaseConfigured && __DEV__ && !inAuthGroup;

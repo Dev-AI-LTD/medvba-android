@@ -16,6 +16,7 @@ import { getChaptersForModule } from '@/mocks/chapters';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useSubscription } from '@/providers/SubscriptionProvider';
+import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
 
 export default function QuizChaptersScreen() {
   const router = useRouter();
@@ -60,7 +61,6 @@ export default function QuizChaptersScreen() {
           <TouchableOpacity
             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }}
             style={styles.backButton}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
             <ChevronRight size={24} color={colors.text} style={{ transform: [{ rotate: '180deg' }] }} />
           </TouchableOpacity>
@@ -120,7 +120,11 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   backButton: {
-    padding: 8,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
@@ -129,7 +133,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   headerRight: {
-    width: 40,
+    width: TOUCH_TARGET_MIN,
   },
   subtitle: {
     fontSize: 14,

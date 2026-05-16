@@ -16,6 +16,8 @@ import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { useRoomMessages, useSendMessage, RoomMessage } from '@/lib/supabase-hooks';
 import { useAuth } from '@/providers/AuthProvider';
+import { safeAvatarUri } from '@/lib/safe-image-uri';
+import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
 
 interface RoomChatProps {
   roomId: string;
@@ -84,7 +86,10 @@ export default function RoomChat({ roomId, roomName }: RoomChatProps) {
         ]}
       >
         {!isOwnMessage && showAvatar ? (
-          <Image source={{ uri: item.userAvatar }} style={styles.messageAvatar} />
+          <Image
+            source={{ uri: safeAvatarUri(item.userAvatar, item.userId) }}
+            style={styles.messageAvatar}
+          />
         ) : (
           !isOwnMessage && <View style={styles.messageAvatarPlaceholder} />
         )}
@@ -314,9 +319,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
     backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',

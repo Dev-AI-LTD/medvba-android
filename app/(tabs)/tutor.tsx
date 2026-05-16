@@ -28,10 +28,12 @@ import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/providers/ThemeProvider';
 import GlassCard from '@/components/GlassCard';
 import { log } from '@/lib/log';
+import { saveAuthReturnToPath } from '@/lib/auth-return-url';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { TRPCClientError } from '@trpc/client';
 import { trpc } from '@/lib/trpc';
+import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
 
 function getMutationErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof TRPCClientError) {
@@ -202,7 +204,8 @@ export default function TutorScreen() {
         errStr.toLowerCase().includes('authentication required') ||
         errStr.toLowerCase().includes('not authenticated')
       ) {
-        router.push('/(auth)/login');
+        void saveAuthReturnToPath('(tabs)/tutor');
+        router.replace('/(auth)/login');
         return;
       }
 
@@ -511,9 +514,9 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     borderBottomColor: colors.glassBorder,
   },
   headerIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
     backgroundColor: colors.cardBgLight,
     justifyContent: 'center',
     alignItems: 'center',
@@ -640,7 +643,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginLeft: 46,
+    marginLeft: TOUCH_TARGET_MIN + 4,
     marginTop: 4,
     marginBottom: 4,
     alignSelf: 'flex-start',
@@ -705,9 +708,9 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     flex: 1,
   },
   sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',

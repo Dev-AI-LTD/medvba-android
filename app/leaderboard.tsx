@@ -21,6 +21,8 @@ import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useLeaderboard } from '@/lib/supabase-hooks';
 import { useAuth } from '@/providers/AuthProvider';
+import { safeAvatarUri } from '@/lib/safe-image-uri';
+import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
 
 type LeaderboardPeriod = 'daily' | 'weekly' | 'monthly' | 'allTime';
 
@@ -152,7 +154,10 @@ export default function LeaderboardScreen() {
                 <View style={styles.rankChange}>
                   {getRankChangeIcon(index + 3)}
                 </View>
-                <Image source={{ uri: user.avatar }} style={styles.leaderboardAvatar} />
+                <Image
+                  source={{ uri: safeAvatarUri(user.avatar, user.id) }}
+                  style={styles.leaderboardAvatar}
+                />
                 <View style={styles.leaderboardInfo}>
                   <Text style={styles.leaderboardName}>{user.name}</Text>
                   <View style={styles.leaderboardStats}>
@@ -188,9 +193,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -199,7 +204,7 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
   },
   placeholder: {
-    width: 40,
+    width: TOUCH_TARGET_MIN,
   },
   periodSelector: {
     flexDirection: 'row',
@@ -308,9 +313,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   leaderboardAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
     marginLeft: 4,
   },
   leaderboardInfo: {

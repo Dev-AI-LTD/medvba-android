@@ -18,6 +18,7 @@ import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { ArrowLeft, Camera, Save, User, MapPin, School, BookOpen, Eye, EyeOff, X } from 'lucide-react-native';
 import { useTheme } from '@/providers/ThemeProvider';
+import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
 import { useAuth } from '@/providers/AuthProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import GlassCard from '@/components/GlassCard';
@@ -469,9 +470,9 @@ const createStyles = (colors: any) =>
       color: colors.text,
     },
     backButton: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      width: TOUCH_TARGET_MIN,
+      height: TOUCH_TARGET_MIN,
+      borderRadius: TOUCH_TARGET_MIN / 2,
       backgroundColor: colors.cardBg,
       justifyContent: 'center',
       alignItems: 'center',
@@ -479,9 +480,9 @@ const createStyles = (colors: any) =>
       borderColor: colors.glassBorder,
     },
     saveButton: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      width: TOUCH_TARGET_MIN,
+      height: TOUCH_TARGET_MIN,
+      borderRadius: TOUCH_TARGET_MIN / 2,
       backgroundColor: colors.cardBg,
       justifyContent: 'center',
       alignItems: 'center',

@@ -252,6 +252,1043 @@ export const questionTranslations: Record<string, Record<string, QuestionTransla
       explanation: 'O tubérculo maior do úmero está posicionado lateralmente na extremidade proximal do úmero e serve como ponto de inserção para os músculos rotadores.'
     }
   },
+  'cl2': {
+    ro: {
+      question: 'Două treimi mediale ale tijei claviculare sunt de obicei:',
+      options: [
+        'Concave anterior și aplatizate',
+        'Convex anterior și mai robuste',
+        'Convex posterior și subțiri',
+        'Complet drepte, fără curbură',
+        'Concave superior doar'
+      ],
+      explanation:
+        'Privită de deasupra, treimea medială a claviculei este convexă anterior, iar treimea laterală este concavă anterior, conferind osului forma caracteristică în S.[web:405][web:408][web:411]'
+    }
+  },
+  'cl3': {
+    ro: {
+      question:
+        'Care suprafață și margine ale claviculei laterale dau inserție mușchilor deltoid și, respectiv, trapez?',
+      options: [
+        'Deltoid la marginea posterioară; trapez la marginea anterioară',
+        'Deltoid la suprafața superioară; trapez la suprafața inferioară',
+        'Deltoid la marginea anterioară; trapez la marginea posterioară',
+        'Deltoid la suprafața inferioară; trapez doar la suprafața superioară',
+        'Ambii mușchi se atașează doar la extremitatea sternală'
+      ],
+      explanation:
+        'Pe treimea laterală a claviculei, marginea anterioară dă originea mușchiului deltoid, iar marginea posterioară servește ca punct de inserție pentru mușchiul trapez.[web:404][web:406][web:416]'
+    }
+  },
+  'cl4': {
+    ro: {
+      question:
+        'Care formațiuni proeminente de pe fața inferioară a claviculei sunt importante pentru atașamentele ligamentare către prima coastă și scapulă?',
+      options: [
+        'Spina și fosa glenoidă',
+        'Tuberculul conoid și linia trapezoidală, și tuberozitatea costală',
+        'Procesul coracoid și acromionul',
+        'Tuberozitatea deltoidiană și șanțul radial',
+        'Linea aspera și fosa intercondiliană'
+      ],
+      explanation:
+        'Fața inferioară prezintă tuberozitatea costală pentru ligamentul costoclavicular medial și tuberculul conoid cu linia trapezoidală lateral pentru ligamentele coracoclaviculare (conoid și trapezoid).[web:404][web:406][web:408]'
+    }
+  },
+  'cl5': {
+    ro: {
+      question: 'În care articulații participă direct clavicula?',
+      options: [
+        'Articulația glenohumerală și scapulotoracică',
+        'Articulația sternoclaviculară și acromioclaviculară',
+        'Articulațiile costovertebrale și manubriosternală',
+        'Doar articulația acromioclaviculară',
+        'Doar articulația sternocostală'
+      ],
+      explanation:
+        'Clavicula articulează medial cu manubriul sternului la articulația sternoclaviculară și lateral cu acromionul scapulei la articulația acromioclaviculară.[web:405][web:409][web:418]'
+    }
+  },
+  'cl6': {
+    ro: {
+      question: 'Care grup enumeră principalii mușchi atașați la treimea medială a claviculei?',
+      options: [
+        'Deltoid și trapez',
+        'Pectoral mic, rotund mare și latissimus dorsi',
+        'Sternocleidomastoidian, pectoral mare și sternohioid/subclavian',
+        'Supra și infraspinos',
+        'Biceps brahial și coracobrahial'
+      ],
+      explanation:
+        'Porțiunea medială a claviculei oferă inserții pentru sternocleidomastoidian (superior/posterior), pectoral mare (anterior) și sternohioid și subclavian inferior.[web:406][web:407][web:413]'
+    }
+  },
+  'cl7': {
+    ro: {
+      question: 'Care afirmație rezumă cel mai bine tiparul de osificare al claviculei?',
+      options: [
+        'Este ultimul os care începe osificarea și primul care o finalizează',
+        'Osifică integral prin osificare endocondrală de la un singur centru',
+        'Este primul os care începe osificarea in utero, cu componente intramembranoase și endocondrale, și printre ultimele care finalizează fuziunea epifizară',
+        'Nu dezvoltă niciodată centru secundar de osificare',
+        'Osifică doar după naștere'
+      ],
+      explanation:
+        'Clavicula începe devreme osificarea prin două centre primare intramembranoase în tijă și dezvoltă ulterior un centru endocondral la extremitatea sternală, fuziunea finalizându-se la începutul adultului tânăr.[web:408][web:411][web:414]'
+    }
+  },
+  'hu2': {
+    ro: {
+      question:
+        'Care structură a humerusului proximal articulează cu fosa glenoidă a scapulei?',
+      options: [
+        'Tubercul mare',
+        'Tubercul mic',
+        'Capul humerusului',
+        'Gâtul anatomic',
+        'Gâtul chirurgical'
+      ],
+      explanation:
+        'Capul hemisferic neted al humerusului articulează cu fosa glenoidă a scapulei, formând articulația glenohumerală.[web:434][web:436][web:443]'
+    }
+  },
+  'hu3': {
+    ro: {
+      question:
+        'Care afirmație deosebește cel mai bine gâtul anatomic de gâtul chirurgical al humerusului?',
+      options: [
+        'Gâtul anatomic se află între cap și tuberculi; gâtul chirurgical este distal de tuberculi și este loc frecvent de fractură',
+        'Gâtul anatomic este distal de tuberozitatea deltoidiană; gâtul chirurgical este proximal de cap',
+        'Ambii termeni desemnează aceeași regiune îngustată',
+        'Gâtul chirurgical face parte doar din humerusul distal',
+        'Gâtul anatomic este prezent doar la copii'
+      ],
+      explanation:
+        'Gâtul anatomic înconjoară capul, separându-l de tuberculi, în timp ce gâtul chirurgical este îngustarea mai distală sub tuberculi, frecvent fracturată.[web:435][web:438][web:443]'
+    }
+  },
+  'hu4': {
+    ro: {
+      question:
+        'Care element de pe fața laterală a tijei humerale servește ca punct de inserție pentru mușchiul deltoid?',
+      options: [
+        'Tubercul mare',
+        'Tubercul mic',
+        'Tuberozitatea deltoidiană',
+        'Șanțul radial',
+        'Creta supracondiliană medială'
+      ],
+      explanation:
+        'Tuberozitatea deltoidiană este o proeminență triunghiulară rugoasă pe aspectul lateral al tijei humerale unde se inserează deltoidul.[web:435][web:436][web:441]'
+    }
+  },
+  'hu5': {
+    ro: {
+      question:
+        'Șanțul radial (spiral) de pe humerusul posterior este clinic important deoarece transmite care structuri neurovasculare?',
+      options: [
+        'Nervul axilar și artera humerală circumflexă posterioară',
+        'Nervul radial și artera brahială profundă (profunda brachii)',
+        'Nervul median și artera brahială',
+        'Nervul ulnar și artera colaterală ulnară superioară',
+        'Nervul musculocutanat și artera radială'
+      ],
+      explanation:
+        'Șanțul radial de pe tijă găzduiește nervul radial și artera brahială profundă, vulnerabile la fracturile de mijloc de tijă.[web:435][web:436][web:441]'
+    }
+  },
+  'hu6': {
+    ro: {
+      question: 'Care nerv este cel mai expus riscului la o fractură a gâtului chirurgical al humerusului?',
+      options: [
+        'Nervul radial',
+        'Nervul median',
+        'Nervul ulnar',
+        'Nervul axilar',
+        'Nervul musculocutanat'
+      ],
+      explanation:
+        'Nervul axilar și artera humerală circumflexă posterioară ocolesc gâtul chirurgical al humerusului și sunt puse în pericol la fracturi în acest nivel.[web:435][web:441][web:446]'
+    }
+  },
+  'hu7': {
+    ro: {
+      question:
+        'Care nerv este cel mai frecvent lezat în asociere cu o fractură diafizară (de mijloc de tijă) a humerusului care implică șanțul radial?',
+      options: [
+        'Nervul axilar',
+        'Nervul radial',
+        'Nervul median',
+        'Nervul ulnar',
+        'Nervul toracic lung'
+      ],
+      explanation:
+        'Fracturile diafizare ale humerusului pot leza nervul radial în timp ce acesta parcurge șanțul radial, ducând la „căderea” pumnului și deficit senzorial pe dosul mâinii.[web:435][web:442][web:445]'
+    }
+  },
+  'ru1': {
+    ro: {
+      question:
+        'Care afirmație descrie cel mai bine poziția relativă a radiusului și ulnei în poziția anatomică?',
+      options: [
+        'Radiusul este medial, iar ulna lateral în antebraț',
+        'Radiusul este lateral, iar ulna medial în antebraț',
+        'Ambele oase sunt direct unul în fața celuilalt',
+        'Ambele oase sunt direct unul în spatele celuilalt',
+        'Radiusul se află în întregime proximal față de ulna'
+      ],
+      explanation:
+        'În poziția anatomică, radiusul este pe partea laterală (degetul mare) a antebrațului, iar ulna medial.[web:448][web:449][web:451]'
+    }
+  },
+  'ru2': {
+    ro: {
+      question:
+        'Care descriere contrastează corect extremitățile proximală și distală ale radiusului și ulnei?',
+      options: [
+        'Radiusul are extremitatea proximală mare și pe cea distală mică; ulna are extremitatea proximală mică și pe cea distală largă',
+        'Radiusul are extremitatea proximală mică și pe cea distală largă; ulna are extremitatea proximală mare și pe cea distală mică',
+        'Ambele oase au dimensiuni identice proximal și distal',
+        'Ambele au extremități proximale late și distale înguste',
+        'Ambele au extremități proximale înguste și distale late'
+      ],
+      explanation:
+        'Radiusul este mai mic proximal (cap, gât) și lat distal la încheietură, pe când ulna este mare proximal (olecran, incizură trohleară) și se subțiază distal.[web:448][web:452][web:456]'
+    }
+  },
+  'ru3': {
+    ro: {
+      question: 'Care repere se găsesc la extremitatea proximală a radiusului?',
+      options: [
+        'Olecranul, procesul coroid și incizura trohleară',
+        'Capul, gâtul și tuberozitatea radială',
+        'Procesul stiloid și tuberculul lui Lister',
+        'Incizura ulnară și procesul stiloid radial',
+        'Capitulumul și trohleea'
+      ],
+      explanation:
+        'Radiusul proximal cuprinde capul în formă de disc, un gât îngust și tuberozitatea radială, punct de inserție pentru tendonul bicepsului brahial.[web:449][web:455][web:458]'
+    }
+  },
+  'ru4': {
+    ro: {
+      question:
+        'Care structură pe radiusul distal articulează cu oasele carpiene, formând o parte a articulației încheieturii?',
+      options: [
+        'Tuberozitatea radială',
+        'Capul radial',
+        'Suprafața articulară distală pentru scafoid și semilunar',
+        'Incizura ulnară',
+        'Procesul coroid'
+      ],
+      explanation:
+        'Suprafața articulară distală a radiusului articulează lateral cu scafoidul și medial cu semilunarul, formând articulația radiocarpiană.[web:451][web:452][web:461]'
+    }
+  },
+  'ru5': {
+    ro: {
+      question: 'Care repere caracterizează ulna proximală la articulația cotului?',
+      options: [
+        'Capul ulnei și procesul stiloid',
+        'Capul radial și incizura radială',
+        'Olecranul, procesul coroid și incizura trohleară',
+        'Incizura ulnară și tuberculul dorsal',
+        'Capitulumul și trohleea'
+      ],
+      explanation:
+        'Ulna proximală prezintă olecranul și procesul coroid, care împreună formează incizura trohleară ce articulează cu trohleea humerusului la cot.[web:448][web:453][web:456]'
+    }
+  },
+  'ru6': {
+    ro: {
+      question:
+        'Care tipare eponimice de fractură implică leziune combinată a radiusului/ulnei și luxație la o articulație radioulnară?',
+      options: [
+        'Fracturile Colles și Smith',
+        'Fractura Monteggia (fractură de ulna proximală cu luxația capului radial) și fractura Galeazzi (fractură de radius distal cu luxația articulației radioulnare distale)',
+        'Fracturile Pott și Jones',
+        'Fracturile în verde și în torus',
+        'Fracturile supracondiliene și intercondiliene'
+      ],
+      explanation:
+        'Fractura Monteggia constă din fractură de ulna proximală cu luxația capului radial, iar fractura Galeazzi implică fractură de tijă radială distală cu luxația articulației radioulnare distale.[web:448][web:454][web:457]'
+    }
+  },
+  'ru7': {
+    ro: {
+      question: 'Care este semnificația funcțională a membranei interosoase între radius și ulna?',
+      options: [
+        'Împiedică pronosupinația antebrațului',
+        'Transmite forțe de la ulna la radius și oferă suprafață suplimentară pentru inserții musculare, stabilizând cele două oase',
+        'Formează suprafața articulară pentru humerus',
+        'Adăpostește nervul radial în interiorul ei',
+        'Separă complet mușchii flexori de cei extensori'
+      ],
+      explanation:
+        'Membrana interosoasă leagă radiusul de ulna, distribuie sarcinile (în special de la mână spre ulna prin radius) și dă inserție mușchilor profunzi ai antebrațului.[web:448][web:454][web:458]'
+    }
+  },
+  'carp1': {
+    ro: {
+      question: 'Câte oase carpiene sunt într-o încheietură și cum sunt aranjate?',
+      options: [
+        'Șase oase carpiene într-un singur rând',
+        'Șapte oase carpiene într-o singură arcadă',
+        'Opt oase carpiene în două rânduri a câte patru',
+        'Nouă oase carpiene în trei rânduri a câte trei',
+        'Zece oase carpiene aranjate aleator'
+      ],
+      explanation:
+        'Fiecare încheietură conține opt oase carpiene organizate într-un rând proximal și unul distal, fiecare cu patru oase.[web:463][web:465][web:467]'
+    }
+  },
+  'carp2': {
+    ro: {
+      question:
+        'Care enumerare denumește corect oasele carpiene ale rândului proximal de la lateral (radial) la medial (ulnar)?',
+      options: [
+        'Trapez, trapezoid, capitat, hamat',
+        'Scafoid, semilunar, triquetrum, pisiform',
+        'Scafoid, semilunar, capitat, hamat',
+        'Pisiform, triquetrum, semilunar, scafoid',
+        'Hamat, capitat, trapezoid, trapez'
+      ],
+      explanation:
+        'Rândul proximal carpian de la radial spre ulnar este: scafoid, semilunar, triquetrum și pisiform.[web:463][web:464][web:470]'
+    }
+  },
+  'carp3': {
+    ro: {
+      question:
+        'Care os carpian este cel mai frecvent fracturat și se află în podeaua „snuffbox”-ului anatomic?',
+      options: ['Semilunarul', 'Pisiformul', 'Scafoidul', 'Hamatul', 'Capitatul'],
+      explanation:
+        'Scafoidul este cel mai frecvent fracturat os carpian și participă la formarea podelei „snuffbox”-ului anatomic.[web:463][web:469][web:472]'
+    }
+  },
+  'carp4': {
+    ro: {
+      question:
+        'Care oase carpiene articulează direct cu radiusul distal la articulația radiocarpiană (încheietura mâinii)?',
+      options: [
+        'Scafoidul și semilunarul',
+        'Doar semilunarul și triquetrumul',
+        'Toate cele patru oase ale rândului proximal',
+        'Trapezul și trapezoidul',
+        'Capitatul și hamatul'
+      ],
+      explanation:
+        'Articulația radiocarpiană se formează în principal între radiusul distal și scafoid și semilunar; triquetrumul poate articula printr-un disc articular pe partea ulnară.[web:465][web:467][web:470]'
+    }
+  },
+  'carp5': {
+    ro: {
+      question:
+        'Care os carpian are un cârlig proeminent (hamulus) pe fața palmară și contribuie la marginea ulnară a tunelului carpian?',
+      options: ['Trapezul', 'Capitatul', 'Hamatul', 'Pisiformul', 'Scafoidul'],
+      explanation:
+        'Hamatul prezintă o proiecție palmară numită cârligul hamatului, care contribuie la limita medială a tunelului carpian și la canalul lui Guyon.[web:463][web:468][web:470]'
+    }
+  },
+  'carp6': {
+    ro: {
+      question:
+        'Care os carpian este sesamoid în tendonul flexorului carpian ulnar și articulează în principal cu triquetrumul?',
+      options: ['Pisiformul', 'Semilunarul', 'Capitatul', 'Trapezoidul', 'Scafoidul'],
+      explanation:
+        'Pisiformul este un os sesamoid în formă de mazăre, inclus în tendonul flexorului carpian ulnar, și articulează cu fața palmară a triquetrumului.[web:463][web:467][web:468]'
+    }
+  },
+  'carp7': {
+    ro: {
+      question:
+        'Care os carpian articulează cu primul metacarpian, formând articulația de tip șa responsabilă de opusul policelui?',
+      options: ['Trapezoidul', 'Trapezul', 'Capitatul', 'Hamatul', 'Scafoidul'],
+      explanation:
+        'Trapezul articulează cu baza primului metacarpian, formând o articulație carpometacarpiană de tip șa, esențială pentru opusul policelui.[web:463][web:465][web:470]'
+    }
+  },
+  'hip1': {
+    ro: {
+      question: 'Care oase fuzionează pentru a forma un singur os coxal (os coxae) la adult?',
+      options: [
+        'Ilionul, sacrul și coccisul',
+        'Ilionul, ischionul și pubisul',
+        'Sacrul, coccisul și pubisul',
+        'Femurul, ilionul și ischionul',
+        'Ischionul, pubisul și sacrul'
+      ],
+      explanation:
+        'Fiecare os coxal se dezvoltă din trei părți — ilion, ischion și pubis — inițial separate prin cartilaj triradiat, care fuzionează ulterior în osul coxal.[web:478][web:479][web:496]'
+    }
+  },
+  'hip2': {
+    ro: {
+      question:
+        'Care reper de pe fața laterală a osului coxal articulează cu capul femural?',
+      options: [
+        'Foramenul obturator',
+        'Fosa ilionului',
+        'Acetabulul',
+        'Incizura sciatică mare',
+        'Fața auriculară'
+      ],
+      explanation:
+        'Acetabulul este o cavitate adâncă, în formă de cupă, pe osul coxal lateral, care primește capul femurului și formează articulația șoldului.[web:479][web:493][web:496]'
+    }
+  },
+  'hip3': {
+    ro: {
+      question:
+        'Care componentă a osului coxal formează partea cea mai superioară și contribuie la creasta ilionului și fosa ilionului?',
+      options: ['Ilionul', 'Ischionul', 'Pubisul', 'Sacrul', 'Coccisul'],
+      explanation:
+        'Ilionul este partea largă, superioară a osului coxal; formează creasta ilionului și găzduiește fosa ilionului pe fața sa medială.[web:479][web:491][web:500]'
+    }
+  },
+  'hip4': {
+    ro: {
+      question:
+        'Care set împerechează corect spinele iliace proeminente cu reperele de suprafață uzuale?',
+      options: [
+        'IASP și IPSP se află ambele pe fața medială a ilionului',
+        'IASP este o proiecție anterioară palpabilă la capătul crestei iliace; IPSP se află posterior și corespunde unor adâncituri cutanate deasupra regiunii sacroiliace',
+        'IPSP se află anterior lângă creasta pubiană, iar IASP posterior lângă sacru',
+        'AIIS și PIIS formează creasta ilionului',
+        'Doar IPSP face parte din creasta ilionului'
+      ],
+      explanation:
+        'Spina iliacă antero-superioară (IASP) marchează capătul anterior al crestei iliace și este ușor palpabilă; spina iliacă postero-superioară (IPSP) marchează capătul posterior și dă adânciturile caracteristice deasupra zonei sacroiliace.[web:493][web:497][web:500]'
+    }
+  },
+  'hip5': {
+    ro: {
+      question: 'Care descriere caracterizează cel mai bine foramenul obturator al osului coxal?',
+      options: [
+        'O deschidere între ilion și sacru, prin care trece nervul femural',
+        'O deschidere mare anteroinferioară, mărginită de ischion și pubis, în mare parte acoperită de o membrană',
+        'O incizură pe ilionul posterior pentru trecerea nervului sciatic',
+        'Un canal în sinfiza pubiană',
+        'Un foramen între ilion și femur'
+      ],
+      explanation:
+        'Foramenul obturator este o deschidere mare anteroinferioară față de acetabul, mărginită de ischion și pubis și acoperită în cea mai mare parte de membrana obturatorie, lăsând un canal îngust pentru vasele și nervul obturator.[web:479][web:493][web:496]'
+    }
+  },
+  'hip6': {
+    ro: {
+      question: 'Care contribuții osoase la acetabul sunt cele mai exacte?',
+      options: [
+        'Ilionul formează întreg acetabulul',
+        'Ischionul formează întreg acetabulul',
+        'Pubisul formează întreg acetabulul',
+        'Ilionul partea superioară, ischionul partea postero-inferioară și pubisul partea antero-inferioară a acetabulului',
+        'Sacrul și coccisul formează jumătatea posterioară a acetabulului'
+      ],
+      explanation:
+        'Acetabulul este format din toate cele trei componente ale osului coxal: ilion superior, ischion postero-inferior și pubis antero-inferior.[web:493][web:500][web:501]'
+    }
+  },
+  'hip7': {
+    ro: {
+      question:
+        'Care repere sunt împerecheate corect cu partea osului coxal pe care se află?',
+      options: [
+        'Spina și tuberozitatea ischială – ilionul',
+        'Creasta și tuberculul pubian – pubisul',
+        'Fața auriculară pentru sacru – pubisul',
+        'Incizura sciatică mare – doar pubisul',
+        'Fosa ilionului – ischionul'
+      ],
+      explanation:
+        'Pubisul poartă corpul, creasta pubiană, tuberculul pubian și ramurile superioară și inferioară; ischionul poartă spina și tuberozitatea ischială, iar ilionul creasta ilionului, fosa ilionului și fața auriculară.[web:478][web:491][web:502]'
+    }
+  },
+  'fe1': {
+    ro: {
+      question: 'Care afirmație descrie cel mai bine femurul?',
+      options: [
+        'Un os scurt care face parte din pelvis',
+        'Un os plat care formează peretele posterior al abdomenului',
+        'Singurul os al coapsei și cel mai lung și rezistent os al corpului',
+        'Unul din două oase paralele ale gambei sub genunchi',
+        'Un os sesamoid inclus în tendonul cvadricepsului'
+      ],
+      explanation:
+        'Femurul este singurul os al coapsei și cel mai lung și mai rezistent os al scheletului uman.[web:492][web:508][web:511]'
+    }
+  },
+  'fe2': {
+    ro: {
+      question: 'Care structuri se găsesc la extremitatea proximală a femurului?',
+      options: [
+        'Condilii medial și lateral, fosa intercondiliană și fața rotulară',
+        'Capul, gâtul, trohanterul mare și trohanterul mic',
+        'Platforma tibială și eminența intercondiliană',
+        'Maleolele medială și laterală',
+        'Capul fibulei și procesul stiloid'
+      ],
+      explanation:
+        'Femurul proximal cuprinde capul, gâtul și trohanterii mare și mic, repere importante de inserție musculară.[web:483][web:486][web:505]'
+    }
+  },
+  'fe3': {
+    ro: {
+      question:
+        'Care afirmație descrie corect gâtul femural și relația lui cu diafiza?',
+      options: [
+        'Gâtul este aliniat în prelungirea diafizei la 180°',
+        'Gâtul este înclinat superolateral față de diafiză la aproximativ 90°',
+        'Gâtul este înclinat superomedial față de diafiză, formând un unghi de aproximativ 120–135° la adult',
+        'Gâtul este perfect orizontal, fără unghi față de diafiză',
+        'Gâtul există doar la copii și fuzionează la adult'
+      ],
+      explanation:
+        'Gâtul femural se proiectează superomedial față de diafiză, creând un unghi de înclinație de aproximativ 120–135° la adult, optimizând transmiterea sarcinilor.[web:483][web:492][web:505]'
+    }
+  },
+  'fe4': {
+    ro: {
+      question:
+        'Care element de pe fața posterioară a diafizei femurale servește drept creastă majoră pentru inserții musculare?',
+      options: [
+        'Linia intertrohanteriană',
+        'Fosa trohanteriană',
+        'Linea aspera',
+        'Fața rotulară',
+        'Fosa intercondiliană'
+      ],
+      explanation:
+        'Linea aspera este o creastă longitudinală proeminentă pe fața posterioară a diafizei femurale, care dă inserție mai multor mușchi ai coapsei.[web:483][web:506][web:512]'
+    }
+  },
+  'fe5': {
+    ro: {
+      question:
+        'Care structuri formează extremitatea articulară distală a femurului la articulația genunchiului?',
+      options: [
+        'Maleolele medială și laterală și platoul tibial',
+        'Condilii medial și lateral, fosa intercondiliană și fața rotulară',
+        'Capul, gâtul și trohanterii',
+        'Acetabulul și fovea capitis',
+        'Tuberozitatea tibială și eminența intercondiliană'
+      ],
+      explanation:
+        'Femurul distal prezintă condilii medial și lateral separați posterior de fosa intercondiliană și anterior de fața rotulară, articulând cu tibia și rotula.[web:483][web:492][web:505]'
+    }
+  },
+  'fe6': {
+    ro: {
+      question:
+        'Care regiune a femurului prezintă cel mai mare risc de necroză avasculară după fractură și de ce?',
+      options: [
+        'Mijlocul tijei, din cauza acoperirii musculare slabe',
+        'Condilii distali, din lipsă de vascularizație colaterală',
+        'Zona intertrohanteriană, din absența ramurilor arteriale',
+        'Gâtul femural, deoarece fractura poate întrerupe vasele retiniculare de la artera femurală circumflexă medială care vascularizează capul',
+        'Linea aspera, deoarece nu există artere nutriționale la nivelul tijei'
+      ],
+      explanation:
+        'Fracturile intracapsulare ale gâtului femural pot întrerupe ramurile retiniculare ale arterei femurale circumflexe mediale, punând în pericol vascularizația capului femural și predispunând la necroză avasculară.[web:486][web:505][web:514]'
+    }
+  },
+  'fe7': {
+    ro: {
+      question:
+        'Care combinație împerechează corect reperele trohanterice majore cu pozițiile lor relative?',
+      options: [
+        'Trohanterul mare este postero-medial; trohanterul mic este antero-lateral',
+        'Trohanterul mare este mare și lateral; trohanterul mic este mai mic și postero-medial',
+        'Ambii trohanteri se află pe partea medială a femurului',
+        'Trohanterul mare este distal de condili; trohanterul mic este la diafiza femurală distală',
+        'Ambii trohanteri se află pe fața anterioară a femurului'
+      ],
+      explanation:
+        'Trohanterul mare este o proiecție largă, laterală, iar trohanterul mic este o proeminență mai mică, postero-medială la jonctiunea gât–diafiză.[web:483][web:509][web:515]'
+    }
+  },
+  'pa1': {
+    ro: {
+      question: 'Rotula este cel mai corect clasificată ca tip de os:',
+      options: [
+        'Os lung',
+        'Os scurt',
+        'Os plat',
+        'Os sesamoid',
+        'Os neregulat'
+      ],
+      explanation:
+        'Rotula este cel mai mare os sesamoid, inclus în tendonul mușchiului cvadriceps femural.'
+    }
+  },
+  'pa2': {
+    ro: {
+      question:
+        'Care față a rotulei este articulară și participă la articulația genunchiului?',
+      options: [
+        'Fața anterioară',
+        'Fața posterioară',
+        'Marginea superioară',
+        'Marginea inferioară (vârful)',
+        'Marginea medială'
+      ],
+      explanation:
+        'Fața posterioară a rotulei este acoperită cu cartilaj articular și articulează cu suprafața trohleară femurală.'
+    }
+  },
+  'pa3': {
+    ro: {
+      question: 'Vârful rotulei este orientat:',
+      options: [
+        'Superior și lateral',
+        'Superior și medial',
+        'Inferior',
+        'Posterior',
+        'Strict anterior'
+      ],
+      explanation:
+        'Vârful ascuțit al rotulei este orientat inferior și dă inserție ligamentului rotular.'
+    }
+  },
+  'pa4': {
+    ro: {
+      question:
+        'Ligamentul rotular leagă vârful rotulei de care structură?',
+      options: [
+        'Tuberozitatea tibială',
+        'Epicondilul medial al femurului',
+        'Capul fibulei',
+        'Spina iliacă antero-superioară',
+        'Eminența intercondiliană'
+      ],
+      explanation:
+        'Ligamentul rotular se extinde de la vârful rotulei până la tuberozitatea tibială, transmițând forța cvadricepsului către tibie.'
+    }
+  },
+  'pa5': {
+    ro: {
+      question:
+        'Principala funcție a rotulei în mecanismul extensor este de a:',
+      options: [
+        'Micșora brațul de forță al mușchiului cvadriceps',
+        'Mări avantajul mecanic al tendonului cvadricepsului',
+        'Împiedica flexia genunchiului',
+        'Acționa doar ca amortizor',
+        'Limita rotația tibiei'
+      ],
+      explanation:
+        'Prin creșterea unghiului de acțiune al tendonului cvadricepsului, rotula îmbunătățește levierul și eficiența extensiei genunchiului.'
+    }
+  },
+  'ti1': {
+    ro: {
+      question: 'Tibia se află pe care parte a gambei în poziția anatomică?',
+      options: [
+        'Lateral, în linie cu degetul mic',
+        'Medial, în linie cu degetul mare',
+        'Doar posterior',
+        'Doar anterior',
+        'Central între femur și fibulă'
+      ],
+      explanation: 'Tibia formează partea medială a gambei și este aliniată cu degetul mare.'
+    }
+  },
+  'ti2': {
+    ro: {
+      question: 'Care afirmație descrie cel mai bine rolul tibiei?',
+      options: [
+        'Os fără sarcină, doar pentru inserții musculare',
+        'Principalul os care suportă greutatea între femur și talus',
+        'Os care formează doar maleola laterală',
+        'Os sesamoid mic la genunchi',
+        'Os care articulează doar cu fibula și rotula'
+      ],
+      explanation:
+        'Tibia este principalul os al gambei care suportă greutatea, transmițând forțele de la femur la talus.'
+    }
+  },
+  'ti3': {
+    ro: {
+      question: 'Care structuri se găsesc la extremitatea proximală a tibiei?',
+      options: [
+        'Maleolele medială și laterală',
+        'Condilii medial și lateral',
+        'Trohanterii mare și mic',
+        'Capul și gâtul',
+        'Fațetele pentru navicular și cuboid'
+      ],
+      explanation:
+        'Tibia proximală are condili medial și lateral care articulează cu condilii femurali la articulația genunchiului.'
+    }
+  },
+  'fi1': {
+    ro: {
+      question: 'Fibula se află pe care parte a gambei în poziția anatomică?',
+      options: [
+        'Medial, în linie cu degetul mare',
+        'Lateral, în linie cu degetul mic',
+        'Anterior pe linia mediană',
+        'Posterior pe linia mediană',
+        'Central între tibie și talus'
+      ],
+      explanation: 'Fibula se află lateral în gambă, pe partea degetului mic.'
+    }
+  },
+  'fi2': {
+    ro: {
+      question: 'Care descrie cel mai bine rolul funcțional principal al fibulei?',
+      options: [
+        'Principalul os al gambei care suportă greutatea',
+        'Osul principal care articulează cu femurul',
+        'Oferă inserții musculare și formează maleola laterală',
+        'Poartă greutatea corporală de la tibie la talus',
+        'Formează suprafața articulară pentru rotulă'
+      ],
+      explanation:
+        'Fibula nu este os primar de susținere a greutății; oferă inserții musculare și formează maleola laterală la gleznă.'
+    }
+  },
+  'tf1': {
+    ro: {
+      question:
+        'Care afirmație descrie cel mai bine pozițiile relative și rolurile tibiei și fibulei în gambă?',
+      options: [
+        'Tibia este laterală și în principal pentru inserții musculare; fibula este medială și suportă greutatea',
+        'Tibia este medială și principalul os portant; fibula este laterală, mai subțire, în principal pentru inserții musculare și stabilitate laterală la gleznă',
+        'Ambele oase suportă egal greutatea și nu au diferențe funcționale',
+        'Fibula este medială și formează genunchiul; tibia este laterală și formează doar glezna',
+        'Tibia și fibula fuzionează distal într-un singur os'
+      ],
+      explanation:
+        'Tibia este osul medial, mai mare, principal portant al gambei, iar fibula este laterală, zveltă și oferă în principal inserții musculare și stabilitate laterală la gleznă.[web:516][web:517][web:524]'
+    }
+  },
+  'tf2': {
+    ro: {
+      question:
+        'Care structuri formează suprafața articulară proximală a tibiei la articulația genunchiului?',
+      options: [
+        'Maleolele medială și laterală',
+        'Tuberozitatea tibială și eminența intercondiliană',
+        'Condilii medial și lateral care formează platoul tibial',
+        'Capul fibulei și plafonul tibial',
+        'Condilul medial și maleola medială'
+      ],
+      explanation:
+        'Tibia proximală are condili medial și lateral care formează platoul tibial, articulând cu condilii femurali la genunchi.[web:516][web:518][web:520]'
+    }
+  },
+  'tf3': {
+    ro: {
+      question:
+        'Care reper de pe tibia proximală anterioară servește ca inserție pentru ligamentul rotular?',
+      options: [
+        'Eminența intercondiliană',
+        'Tuberozitatea tibială',
+        'Maleola medială',
+        'Incizura fibulară',
+        'Tuberculul lui Gerdy'
+      ],
+      explanation:
+        'Tuberozitatea tibială este o proiecție osoasă anterioară proeminentă imediat distal de condili, unde se inserează ligamentul rotular.[web:516][web:519][web:523]'
+    }
+  },
+  'tf4': {
+    ro: {
+      question:
+        'Care trăsaturi caracterizează tibia distală la articulația gleznică (talocrurală)?',
+      options: [
+        'Capul tibiei și maleola laterală',
+        'Suprafața articulară distală (plafonul tibial) și maleola medială, cu incizura fibulară pe fața laterală',
+        'Suprafața articulară distală și maleola laterală',
+        'Doar maleola medială, fără suprafață articulară',
+        'Eminența intercondiliană și tuberozitatea tibială'
+      ],
+      explanation:
+        'Tibia distală formează plafonul tibial (suprafața articulară pentru talus), poartă maleola medială și prezintă lateral incizura fibulară pentru articulația tibio-fibulară distală.[web:517][web:520][web:523]'
+    }
+  },
+  'tf5': {
+    ro: {
+      question: 'Care repere se găsesc la extremitatea proximală a fibulei?',
+      options: [
+        'Maleola laterală și incizura fibulară',
+        'Capul fibulei și gâtul fibulei',
+        'Maleola medială și tuberozitatea tibială',
+        'Eminența intercondiliană și platoul tibial',
+        'Baza și capul fibulei formând suprafața articulară a genunchiului'
+      ],
+      explanation:
+        'Fibula proximală cuprinde capul și un gât îngust; capul articulează cu condilul lateral al tibiei la articulația tibio-fibulară superioară.[web:524][web:529][web:530]'
+    }
+  },
+  'tf6': {
+    ro: {
+      question: 'Care afirmație descrie cel mai bine maleola laterală a fibulei?',
+      options: [
+        'Este principala suprafață portantă a articulației gleznei',
+        'Se află medial de tibie și articulează doar cu calcaneul',
+        'Formează proeminența osoasă laterală a gleznei, articulează cu talusul și contribuie la stabilitatea laterală a gleznei',
+        'Este doar punct de inserție musculară, fără suprafețe articulare',
+        'Face parte din articulația genunchiului și nu are legătură cu glezna'
+      ],
+      explanation:
+        'Fibula distală formează maleola laterală, care articulează cu talusul și stabilizează lateral articulația gleznică.[web:521][web:524][web:530]'
+    }
+  },
+  'tf7': {
+    ro: {
+      question:
+        'Care este semnificația funcțională a membranei interosoase între tibie și fibulă?',
+      options: [
+        'Separă gamba doar în compartimente anterioar și posterior',
+        'Permite rotația liberă între tibie și fibulă în repaus',
+        'Leagă tibia de fibulă, oferă suprafață suplimentară pentru inserții musculare și ajută la transmiterea forțelor între oase',
+        'Formează suprafața articulară pentru femur',
+        'Adăpostește nervul tibial în interiorul ei'
+      ],
+      explanation:
+        'Membrana interosoasă stabilizează raportul tibie–fibulă, dă inserție mușchilor profunzi ai gambei și ajută la distribuirea sarcinilor mecanice între oase.[web:520][web:524][web:529]'
+    }
+  },
+  'ta1': {
+    ro: {
+      question:
+        'Talusul este în principal responsabil de articulațiile dintre care regiuni?',
+      options: [
+        'Femur și tibie',
+        'Gambă și picior la gleznă și articulația subtalară',
+        'Doar tibie și fibulă',
+        'Metatarsiene și falange',
+        'Doar calcaneu și navicular'
+      ],
+      explanation:
+        'Talusul leagă gambă de picior, participând la articulația talocrurală (glezna), subtalară și la articulațiile tarsiene transverse.'
+    }
+  },
+  'ta2': {
+    ro: {
+      question:
+        'Care parte a talusului articulează cu tibia la articulația gleznică (talocrurală)?',
+      options: [
+        'Capul talusului',
+        'Gâtul talusului',
+        'Corpul talusului cu suprafața sa trohleară',
+        'Fața inferioară cu fațetele calcaneene',
+        'Procesul posterior'
+      ],
+      explanation:
+        'Suprafața trohleară superioară a corpului talusului articulează cu tibia distală (și fibula), formând articulația gleznică.'
+    }
+  },
+  'caL1': {
+    ro: {
+      question: 'Calcaneul este cel mai bine descris ca:',
+      options: [
+        'Cel mai superior os tarsian',
+        'Cel mai mare os tarsian care formează călcâiul',
+        'Os sesamoid în tendonul Ahile',
+        'Un os mic doar în arcul median al piciorului',
+        'Osul principal al antepiciorului'
+      ],
+      explanation:
+        'Calcaneul este cel mai mare os tarsian și formează proeminența călcâiului, transmițând greutatea de la talus la sol.'
+    }
+  },
+  'caL2': {
+    ro: {
+      question:
+        'Fața posterioară a calcaneului primește inserția cărui tendon?',
+      options: [
+        'Tendonul tibialului anterior',
+        'Ligamentul rotular',
+        'Tendonul Ahile (calcanean)',
+        'Tendonul peronierului lung',
+        'Tendonul flexorului lung al halucelui'
+      ],
+      explanation:
+        'Tendonul calcanean (Ahile) se inserează pe tuberozitatea posterioară a calcaneului.'
+    }
+  },
+  'tb1': {
+    ro: {
+      question: 'Câte oase tarsiene sunt într-un picior și care sunt acestea?',
+      options: [
+        'Șase: talus, calcaneu, navicular, cuboid, două cuneiforme',
+        'Șapte: talus, calcaneu, navicular, cuboid și trei cuneiforme',
+        'Opt: talus, calcaneu, navicular, cuboid și patru cuneiforme',
+        'Cinci: talus, calcaneu, navicular, cuboid și un cuneiform',
+        'Patru: doar talus, calcaneu, navicular și cuboid'
+      ],
+      explanation:
+        'Fiecare picior are șapte oase tarsiene: talus, calcaneu, navicular, cuboid și trei cuneiforme (medial, intermediar și lateral).[web:525][web:531][web:532]'
+    }
+  },
+  'tb2': {
+    ro: {
+      question: 'Care descriere caracterizează cel mai bine talusul?',
+      options: [
+        'Cel mai mare os tarsian care formează călcâiul',
+        'Al doilea ca mărime os tarsian care transmite greutatea de la tibie la picior și articulează cu tibia, fibula, calcaneul și navicularul',
+        'Os în formă de barcă pe mijlocul medial al piciorului',
+        'Os cubiform pe mijlocul lateral al piciorului',
+        'Os în formă de pană care articulează doar cu metatarsienele'
+      ],
+      explanation:
+        'Talusul este al doilea os tarsian ca mărime; formează glezna cu tibia și fibula și articulează cu calcaneul și navicularul, transmițând greutatea corporală către picior.[web:525][web:528][web:541]'
+    }
+  },
+  'tb3': {
+    ro: {
+      question: 'Care os tarsian formează călcâiul și este cel mai mare os tarsian?',
+      options: ['Talusul', 'Navicularul', 'Cuboidul', 'Calcaneul', 'Cuneiformul medial'],
+      explanation:
+        'Calcaneul este cel mai mare os tarsian și formează călcâiul, articulând cu talusul și cuboidul și contribuind la arcurile longitudinale.[web:525][web:533][web:538]'
+    }
+  },
+  'tb4': {
+    ro: {
+      question:
+        'Care descriere potrivește corect navicularul și cuboidul cu pozițiile lor?',
+      options: [
+        'Navicularul lateral și cuboidul medial în mijlocul piciorului',
+        'Navicularul proximal față de talus și medial; cuboidul lateral, distal față de calcaneu',
+        'Navicularul distal față de metatarsiene; cuboidul proximal față de tibie',
+        'Atât navicularul cât și cuboidul se află doar în retropicior',
+        'Navicularul și cuboidul sunt ambele oase sesamoide'
+      ],
+      explanation:
+        'Navicularul se află medial între talus și cuneiforme, iar cuboidul este osul lateral al rândului tarsian distal, distal de calcaneu și proximal de metatarsienele IV–V.[web:525][web:532][web:536]'
+    }
+  },
+  'tb5': {
+    ro: {
+      question: 'Care afirmație despre oasele cuneiforme este cea mai exactă?',
+      options: [
+        'Există două oase cuneiforme care articulează doar cu talusul',
+        'Există trei oase cuneiforme (medial, intermediar, lateral) între navicular și bazele primelor trei metatarsiene',
+        'Oasele cuneiforme se află între calcaneu și cuboid',
+        'Toate cuneiformele formează exclusiv arcul longitudinal lateral',
+        'Oasele cuneiforme articulează doar între ele'
+      ],
+      explanation:
+        'Trei oase cuneiforme în formă de pană (medial, intermediar, lateral) se află posterior de navicular și anterior de bazele metatarsienelor I, II și III, contribuind la arcurile medială și transversală.[web:525][web:539][web:542]'
+    }
+  },
+  'tb6': {
+    ro: {
+      question:
+        'Care articulații definesc articulația subtalară (talocalcaneană) și care este funcția ei principală?',
+      options: [
+        'Între talus și tibie; permite dorsiflexia și flexia plantară',
+        'Între calcaneu și cuboid; permite flexia degetelor',
+        'Între talus și calcaneu la mai multe fațete; permite inversia și everția retropiciorului',
+        'Între navicular și cuneiforme; permite abducția degetelor',
+        'Între talus și metatarsiene; transmite direct greutatea către degete'
+      ],
+      explanation:
+        'Articulația subtalară este formată de contactul dintre talus și calcaneu la fațetele anterioară, mijlocie și posterioară și permite în principal inversia și everția retropiciorului.[web:525][web:535][web:540]'
+    }
+  },
+  'tb7': {
+    ro: {
+      question:
+        'Funcțional, cum diferă navicularul și cuboidul la distribuirea forțelor prin picior?',
+      options: [
+        'Navicularul transmite forțe către metatarsienele laterale; cuboidul către cele mediale',
+        'Navicularul transmite în principal forțele de la talus către primele trei metatarsiene prin cuneiforme; cuboidul transmite forțele de la calcaneu către metatarsienele IV și V',
+        'Ambele oase transmit forțe doar către talus',
+        'Ambele oase susțin doar arcul transversal',
+        'Navicularul și cuboidul nu au rol în transmiterea forțelor'
+      ],
+      explanation:
+        'Navicularul preia sarcina de la talus spre cuneiforme și apoi spre primele trei metatarsiene, iar cuboidul o preia de la calcaneu spre metatarsienele IV și V.[web:525][web:532][web:534]'
+    }
+  },
+  'ull-001': {
+    ro: {
+      question: 'Care os este cel mai lung os al corpului uman?',
+      options: ['Humerusul', 'Tibia', 'Femurul', 'Fibula'],
+      explanation:
+        'Femurul este cel mai lung și cel mai rezistent os al corpului uman, întinzându-se de la șold la genunchi.'
+    }
+  },
+  'ull-002': {
+    ro: {
+      question: 'Câte falange sunt într-o mână?',
+      options: ['10', '12', '14', '16'],
+      explanation:
+        'Fiecare mână are 14 falange: 2 la degetul mare (proximală și distală) și câte 3 la fiecare dintre celelalte patru degete (proximală, mijlocie și distală).'
+    }
+  },
+  'ull-003': {
+    ro: {
+      question: 'Care os formează călcâiul piciorului?',
+      options: ['Talusul', 'Calcaneul', 'Cuboidul', 'Navicularul'],
+      explanation:
+        'Calcaneul este cel mai mare os tarsian și formează călcâiul; articulează superior cu talusul și anterior cu cuboidul.'
+    }
+  },
+  'ull-004': {
+    ro: {
+      question: 'Rotula este frecvent numită:',
+      options: ['Osul cotului', 'Capacul genunchiului', 'Osul gleznei', 'Osul încheieturii'],
+      explanation:
+        'Rotula (capacul genunchiului) este un os sesamoid în tendonul cvadricepsului; protejează genunchiul și îmbunătățește avantajul mecanic al cvadricepsului.'
+    }
+  },
+  'ull-005': {
+    ro: {
+      question:
+        'Extremitatea laterală a claviculei articulează cu ce structură la articulația acromioclaviculară?',
+      options: [
+        'Manubriul sternului',
+        'Acromionul scapulei',
+        'Procesul coroid al scapulei',
+        'Tubercul mare al humerusului'
+      ],
+      explanation:
+        'Articulația acromioclaviculară se formează între extremitatea laterală a claviculei și acromionul scapulei, legând centura scapulară de trunchi.'
+    }
+  },
+  'ull-006': {
+    ro: {
+      question: 'Radiusul se află pe care parte a antebrațului?',
+      options: [
+        'Partea medială (ulnară)',
+        'Partea laterală (de polică)',
+        'Partea posterioară',
+        'Partea anterioară'
+      ],
+      explanation:
+        'Radiusul se află pe partea laterală (de polică) a antebrațului; este mai scurt decât ulna proximal, dar mai lat distal, unde articulează cu oasele carpiene.'
+    }
+  },
+  'ull-007': {
+    ro: {
+      question: 'Câte oase carpiene sunt în fiecare încheietură?',
+      options: ['6', '7', '8', '9'],
+      explanation:
+        'Fiecare încheietură conține 8 oase carpiene în două rânduri: proximal (scafoid, semilunar, triquetrum, pisiform) și distal (trapez, trapezoid, capitat, hamat).'
+    }
+  },
+  'ull-008': {
+    ro: {
+      question: 'Câte oase metacarpiene se află de obicei într-o mână?',
+      options: ['4', '5', '6', '8'],
+      explanation:
+        'Mâna are cinci metacarpiene, numerotate 1–5 de la polică spre degetul mic; fiecare articulează proximal cu carpul și distal cu falangele aceleiași raze.'
+    }
+  },
+  'ull-010': {
+    ro: {
+      question: 'Care os articulează cu acetabulul și formează articulația șoldului?',
+      options: ['Tibia', 'Fibula', 'Femurul', 'Rotula'],
+      explanation:
+        'Capul femurului articulează cu acetabulul bazinului, formând articulația șoldului — o articulație sinovială tip „bilă și cavitate”.'
+    }
+  },
   'io-001': {
     ro: {
       question: 'Care organ este responsabil pentru producerea de insulină?',
@@ -921,6 +1958,94 @@ export const questionTranslations: Record<string, Record<string, QuestionTransla
         'Exclusiv în ganglionii bazali profunzi'
       ],
       explanation: 'Infarctele de zonă limitrofă apar la joncțiunile dintre teritoriile arteriale majore (ex. ACA-ACM, ACM-ACP sau perforante profunde-teritorii superficiale), care sunt deosebit de vulnerabile la hipoperfuzie.'
+    }
+  },
+  'pw5': {
+    ro: {
+      question:
+        'Care situație clinică sau hemodinamică este CEA MAI STRÂNS asociată cu dezvoltarea infarctelor corticale de zonă limitrofă (watershed)?',
+      options: [
+        'Hipotensiune sistemică severă, adesea combinată cu stenoză carotidiană sau a altor artere mari semnificativă',
+        'Tromboză izolată a sinusului venos cu flux arterial normal',
+        'Anemie ușoară fără hipotensiune',
+        'Leziunea nervilor cranieni în sinusul cavernos',
+        'Doar leziuni de masă în fosa posterioară'
+      ],
+      explanation:
+        'Infarctele corticale de zonă limitrofă apar frecvent când hipotensiunea sistemică coexistează cu stenoză sau ocluzie severă a arterelor de alimentare majore (ex. carotida internă), compromițând perfuzia distală în zonele limitrofe.[web:192][web:195][web:200]'
+    }
+  },
+  'pw6': {
+    ro: {
+      question:
+        'Infarctele de zonă limitrofă internă (profunde) implică cel mai frecvent ce regiune și mecanism?',
+      options: [
+        'Cortex cerebelos, prin ocluzia AICP',
+        'Corona radiata și centrum semiovale, prin insuficiență hemodinamică între sistemele perforante profunde și cele superficiale',
+        'Opercul frontal, prin ocluzie embolică a unei ramuri ACM',
+        'Bulb, prin disecția vertebrală',
+        'Pol occipital, prin emboli pe ramuri ACP'
+      ],
+      explanation:
+        'Infarctele de watershed intern apar caracteristic în corona radiata și centrum semiovale, unde se suprapun teritoriile arterelor perforante profunde și ramurilor corticale superficiale, fiind vulnerabile la hipoperfuzie.[web:192][web:195][web:198]'
+    }
+  },
+  'pw7': {
+    ro: {
+      question: 'Care artere perforante provin din artera cerebrală posterioară și vascularizează talamusul?',
+      options: [
+        'Arterele lenticulostriate',
+        'Arterele talamoperforante (talamice posterioare)',
+        'Artera recurentă a lui Heubner',
+        'Ramurile arterei coroide anterioare',
+        'Perforantele pontine'
+      ],
+      explanation:
+        'Arterele talamoperforante (perforatoare talamice posterioare) provin din segmentul P1 al arterei cerebrale posterioare și vascularizează talamusul medial și posterior.'
+    }
+  },
+  'pw8': {
+    ro: {
+      question: 'Artera recurentă a lui Heubner este o ramură perforantă a cărei artere?',
+      options: [
+        'Artera cerebrală medie (segment M1)',
+        'Artera cerebrală anterioară (segment A1 sau A2)',
+        'Artera cerebrală posterioară (segment P1)',
+        'Artera bazilară',
+        'Artera coroidă anterioară'
+      ],
+      explanation:
+        'Artera recurentă a lui Heubner (artera striată medială) provine de obicei din segmentul A1 sau A2 proximal al arterei cerebrale anterioare și vascularizează capul nucleului caudat și brațul anterior al capsulei interne.'
+    }
+  },
+  'pw9': {
+    ro: {
+      question:
+        'Care prezentare clinică este clasic asociată cu infarctele lacunare care afectează brațul posterior al capsulei interne?',
+      options: [
+        'Hemianopsie homonimă',
+        'Hemipareză motorie pură',
+        'Afasie globală',
+        'Orbire corticală',
+        'Ataxie cerebeloasă'
+      ],
+      explanation:
+        'Infarctele lacunare în brațul posterior al capsulei interne cauzează clasic hemipareză motorie pură, deoarece fibrele tractului cortico-spinal sunt dens grupate în această regiune.'
+    }
+  },
+  'pw10': {
+    ro: {
+      question:
+        'Infarctele de zonă limitrofă corticale (externe) între teritoriile ACA și ACM se manifestă de obicei prin ce tipar de pareză?',
+      options: [
+        'Slăbiciune la nivelul feței și mâinii, cu crutarea gambei (tipar ACM)',
+        'Slăbiciune proximală la braț și umăr („omul în butoi” / man-in-a-barrel)',
+        'Slăbiciune izolată a gambei (tipar ACA)',
+        'Hemiplegie completă cu pierdere senzorială',
+        'Slăbiciune facială bilaterală'
+      ],
+      explanation:
+        'Infarctele bilaterale de watershed între ACA și ACM pot determina sindromul „omul în butoi”, cu slăbiciune proximală la membrul superior și centura scapulară, crutând adesea fața și membrele inferioare aflate în teritoriile centrale.'
     }
   },
   'her1': {

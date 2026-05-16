@@ -31,6 +31,8 @@ import { useAuth } from '@/providers/AuthProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import GlassCard from '@/components/GlassCard';
 import { useUserProfile, useGetOrCreateDirectChat, useUserProgress } from '@/lib/supabase-hooks';
+import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
+import { safeAvatarUri } from '@/lib/safe-image-uri';
 
 export default function ProfileDetailScreen() {
   const router = useRouter();
@@ -158,7 +160,15 @@ export default function ProfileDetailScreen() {
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           <GlassCard style={styles.profileCard}>
             <View style={styles.profileHeader}>
-              <Image source={{ uri: profile.avatar }} style={styles.avatar} />
+              <Image
+                source={{
+                  uri: safeAvatarUri(
+                    profile.profile_photo_url ?? profile.avatar,
+                    profile.id,
+                  ),
+                }}
+                style={styles.avatar}
+              />
               <Text style={styles.name}>{profile.name}</Text>
 
               {profile.city && (
@@ -292,9 +302,9 @@ const createStyles = (colors: any) =>
       color: colors.text,
     },
     backButton: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      width: TOUCH_TARGET_MIN,
+      height: TOUCH_TARGET_MIN,
+      borderRadius: TOUCH_TARGET_MIN / 2,
       backgroundColor: colors.cardBg,
       justifyContent: 'center',
       alignItems: 'center',
@@ -432,9 +442,9 @@ const createStyles = (colors: any) =>
       borderColor: colors.glassBorder,
     },
     statIcon: {
-      width: 44,
-      height: 44,
-      borderRadius: 12,
+      width: TOUCH_TARGET_MIN,
+      height: TOUCH_TARGET_MIN,
+      borderRadius: 14,
       justifyContent: 'center',
       alignItems: 'center',
       marginBottom: 12,

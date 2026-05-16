@@ -1183,6 +1183,22 @@ export const upperLimbBonesQuestions: Question[] = [
     explanation: 'The patella, or kneecap, is a sesamoid bone embedded in the quadriceps tendon. It protects the knee joint and improves the mechanical advantage of the quadriceps muscle.',
   },
   {
+    id: 'ull-005',
+    category: 'upper-lower-limbs',
+    difficulty: 'easy',
+    question:
+      'The lateral end of the clavicle articulates with which structure at the acromioclavicular joint?',
+    options: [
+      'Manubrium of the sternum',
+      'Acromion of the scapula',
+      'Coracoid process of the scapula',
+      'Greater tubercle of the humerus',
+    ],
+    correctAnswer: 1,
+    explanation:
+      'The acromioclavicular joint is formed between the lateral end of the clavicle and the acromion process of the scapula, linking the shoulder girdle to the trunk.',
+  },
+  {
     id: 'ull-006',
     category: 'upper-lower-limbs',
     difficulty: 'easy',
@@ -1199,6 +1215,16 @@ export const upperLimbBonesQuestions: Question[] = [
     options: ['6', '7', '8', '9'],
     correctAnswer: 2,
     explanation: 'Each wrist contains 8 carpal bones arranged in two rows: proximal row (scaphoid, lunate, triquetrum, pisiform) and distal row (trapezium, trapezoid, capitate, hamate).',
+  },
+  {
+    id: 'ull-008',
+    category: 'upper-lower-limbs',
+    difficulty: 'easy',
+    question: 'How many metacarpal bones are typically found in one hand?',
+    options: ['4', '5', '6', '8'],
+    correctAnswer: 1,
+    explanation:
+      'The hand has five metacarpals, numbered 1–5 from the thumb side to the little-finger side; each articulates proximally with the carpus and distally with the phalanges of the same ray.',
   },
   {
     id: 'ull-010',

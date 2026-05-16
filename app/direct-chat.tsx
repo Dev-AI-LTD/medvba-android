@@ -19,6 +19,7 @@ import AvatarImage from '@/components/AvatarImage';
 import { useDirectChatMessages, useSendDirectMessage, DirectChatMessage } from '@/lib/supabase-hooks';
 import { useAuth } from '@/providers/AuthProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
 
 const formatTime = (dateString: string): string => {
   const date = new Date(dateString);
@@ -331,9 +332,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -13,6 +13,11 @@ import {
 } from 'react-native';
 import { Appbar, Button } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  loadBlockedUsersFromStorage,
+  removeBlockedUserById,
+  type BlockedUser,
+} from '@/lib/blocked-users-storage';
 import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -45,12 +50,14 @@ import {
   BookOpen,
 } from 'lucide-react-native';
 import { useAuth } from '@/providers/AuthProvider';
+import { safeAvatarUri } from '@/lib/safe-image-uri';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage, Language } from '@/providers/LanguageProvider';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import { presentCustomerCenter } from '@/lib/revenuecat';
-import { SPACING } from '@/theme/paperTheme';
+import { SPACING, TOUCH_TARGET_MIN } from '@/theme/paperTheme';
 import { useUserProfile, useUpdateUserProfile, uploadProfilePhoto } from '@/lib/supabase-hooks';
+import { APP_LAUNCH_ENGLISH_UI_ONLY } from '@/lib/app-ui-languages';
 import PhotoPicker from '@/components/PhotoPicker';
 
 interface SettingsItemProps {
@@ -79,15 +86,6 @@ function SettingsItem({ icon, title, subtitle, onPress, showBorder = true, showC
       {showChevron && <ChevronRight color={colors.textMuted} size={20} />}
     </TouchableOpacity>
   );
-}
-
-const BLOCKED_USERS_KEY = '@medvba_blocked_users';
-
-interface BlockedUser {
-  id: string;
-  name: string;
-  avatar: string;
-  blockedAt: string;
 }
 
 const languages: { code: Language; label: string; flag: string }[] = [
@@ -144,10 +142,7 @@ export default function SettingsScreen() {
 
   const loadBlockedUsers = async () => {
     try {
-      const stored = await AsyncStorage.getItem(BLOCKED_USERS_KEY);
-      if (stored) {
-        setBlockedUsers(JSON.parse(stored));
-      }
+      setBlockedUsers(await loadBlockedUsersFromStorage());
     } catch (error) {
       console.error('Failed to load blocked users:', error);
     }
@@ -232,9 +227,12 @@ export default function SettingsScreen() {
           text: t('settings.unblockButton'),
           onPress: async () => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            const updated = blockedUsers.filter(u => u.id !== user.id);
-            setBlockedUsers(updated);
-            await AsyncStorage.setItem(BLOCKED_USERS_KEY, JSON.stringify(updated));
+            try {
+              const updated = await removeBlockedUserById(user.id);
+              setBlockedUsers(updated);
+            } catch (e) {
+              console.error('Failed to unblock user:', e);
+            }
           },
         },
       ]
@@ -409,6 +407,7 @@ export default function SettingsScreen() {
                 colors={['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.04)']}
                 style={StyleSheet.absoluteFill}
               />
+              {!APP_LAUNCH_ENGLISH_UI_ONLY && (
               <View style={[styles.languageSection, { borderBottomColor: colors.glassBorder }]}>
                 <View style={styles.languageSectionHeader}>
                   <View style={styles.settingsItemIcon}>
@@ -457,6 +456,7 @@ export default function SettingsScreen() {
                   })}
                 </View>
               </View>
+              )}
               <SettingsItem
                 icon={<Bell color={colors.primary} size={22} />}
                 title={t('settings.notifications')}
@@ -512,7 +512,10 @@ export default function SettingsScreen() {
                         index < blockedUsers.length - 1 && styles.blockedUserItemBorder
                       ]}
                     >
-                      <Image source={{ uri: user.avatar }} style={styles.blockedUserAvatar} />
+                      <Image
+                        source={{ uri: safeAvatarUri(user.avatar, user.id) }}
+                        style={styles.blockedUserAvatar}
+                      />
                       <View style={styles.blockedUserInfo}>
                         <Text style={styles.blockedUserName}>{user.name}</Text>
                         <Text style={styles.blockedUserDate}>
@@ -740,9 +743,9 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
   },
   closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
@@ -776,8 +779,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   settingsItemIcon: {
-    width: 40,
-    height: 40,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
     borderRadius: 12,
     backgroundColor: 'rgba(255,255,255,0.06)',
     justifyContent: 'center',
@@ -815,8 +818,8 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   blockedUsersIcon: {
-    width: 40,
-    height: 40,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
     borderRadius: 12,
     backgroundColor: 'rgba(255, 71, 87, 0.15)',
     justifyContent: 'center',
@@ -839,9 +842,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   blockedUserAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
   },
   blockedUserInfo: {
     flex: 1,
@@ -874,8 +877,8 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   deleteAccountIcon: {
-    width: 40,
-    height: 40,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
     borderRadius: 12,
     backgroundColor: 'rgba(255, 71, 87, 0.15)',
     justifyContent: 'center',
@@ -895,8 +898,8 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   signOutIcon: {
-    width: 40,
-    height: 40,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
     borderRadius: 12,
     backgroundColor: 'rgba(255, 184, 0, 0.15)',
     justifyContent: 'center',
@@ -1019,9 +1022,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   yearButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
@@ -1041,8 +1044,8 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   privacyIcon: {
-    width: 40,
-    height: 40,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
     borderRadius: 12,
     backgroundColor: 'rgba(255,255,255,0.06)',
     justifyContent: 'center',

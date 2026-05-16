@@ -13,7 +13,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack } from 'expo-router';
-import * as MailComposer from 'expo-mail-composer';
 import * as Clipboard from 'expo-clipboard';
 import Constants from 'expo-constants';
 
@@ -22,10 +21,9 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { useAuth } from '@/providers/AuthProvider';
 import GlassCard from '@/components/GlassCard';
 import Button from '@/components/Button';
+import { getSupportEmail, openSupportMail } from '@/lib/support-mail';
 
 type CategoryOption = 'bug' | 'billing' | 'account' | 'other';
-
-const SUPPORT_EMAIL = 'contact@devaieood.com';
 
 export default function ContactSupportScreen() {
   const { colors } = useTheme();
@@ -51,7 +49,7 @@ export default function ContactSupportScreen() {
 
   const version =
     Constants.expoConfig?.version ||
-    (Constants as any)?.manifest?.version ||
+    (Constants as { manifest?: { version?: string } }).manifest?.version ||
     'unknown';
 
   const technicalInfo = [
@@ -62,7 +60,7 @@ export default function ContactSupportScreen() {
   ].join('\n');
 
   const composeBody = () => {
-    const categoryLabel = categories.find(item => item.value === category)?.label || '';
+    const categoryLabel = categories.find((item) => item.value === category)?.label || '';
     const base = `${t('support.categoryLabel')}: ${categoryLabel}\n\n${message.trim()}`;
     if (!includeTechInfo) {
       return base;
@@ -101,20 +99,21 @@ export default function ContactSupportScreen() {
     const body = composeBody();
 
     try {
-      const available = await MailComposer.isAvailableAsync();
-      if (!available) {
-        setShowFallback(true);
-        return;
-      }
-
-      const result = await MailComposer.composeAsync({
-        recipients: [SUPPORT_EMAIL],
+      const result = await openSupportMail({
         subject: emailSubject,
         body,
       });
 
-      if (result.status === MailComposer.MailComposerStatus.SENT) {
+      if (result === 'sent') {
         Alert.alert(t('support.sentTitle'), t('support.sentMessage'));
+      } else if (result === 'saved') {
+        Alert.alert(t('support.savedTitle'), t('support.savedMessage'));
+      } else if (result === 'opened_mailto') {
+        Alert.alert(t('support.mailtoOpenedTitle'), t('support.mailtoOpenedMessage'));
+      } else if (result === 'cancelled') {
+        /* user dismissed composer */
+      } else {
+        setShowFallback(true);
       }
     } catch {
       setShowFallback(true);
@@ -145,7 +144,7 @@ export default function ContactSupportScreen() {
 
             <Text style={styles.label}>{t('support.categoryLabel')}</Text>
             <View style={styles.categoryRow}>
-              {categories.map(option => (
+              {categories.map((option) => (
                 <TouchableOpacity
                   key={option.value}
                   style={[
@@ -196,7 +195,7 @@ export default function ContactSupportScreen() {
 
             <Button
               title={isSending ? t('support.sending') : t('support.send')}
-              onPress={handleSend}
+              onPress={() => void handleSend()}
               loading={isSending}
               disabled={isSending}
               fullWidth
@@ -207,10 +206,10 @@ export default function ContactSupportScreen() {
             <GlassCard style={styles.fallbackCard}>
               <Text style={styles.fallbackTitle}>{t('support.fallbackTitle')}</Text>
               <Text style={styles.fallbackText}>{t('support.fallbackMessage')}</Text>
-              <Text style={styles.emailText}>{SUPPORT_EMAIL}</Text>
+              <Text style={styles.emailText}>{getSupportEmail()}</Text>
               <Button
                 title={t('support.copyMessage')}
-                onPress={handleCopy}
+                onPress={() => void handleCopy()}
                 variant="secondary"
                 fullWidth
               />
@@ -218,12 +217,8 @@ export default function ContactSupportScreen() {
           )}
 
           <View style={styles.noteContainer}>
-            <Text style={styles.noteText}>
-              {t('support.footerLine')}
-            </Text>
-            <Text style={styles.noteWarning}>
-              {t('support.sensitiveWarning')}
-            </Text>
+            <Text style={styles.noteText}>{t('support.footerLine')}</Text>
+            <Text style={styles.noteWarning}>{t('support.sensitiveWarning')}</Text>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -231,7 +226,19 @@ export default function ContactSupportScreen() {
   );
 }
 
-const createStyles = (colors: any) =>
+const createStyles = (colors: {
+  background: string;
+  backgroundLight: string;
+  text: string;
+  textMuted: string;
+  textSecondary: string;
+  glassBorder: string;
+  cardBg: string;
+  cardBgLight: string;
+  primary: string;
+  error: string;
+  warning: string;
+}) =>
   StyleSheet.create({
     container: {
       flex: 1,

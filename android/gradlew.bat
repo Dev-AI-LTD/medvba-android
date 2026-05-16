@@ -35,6 +35,16 @@ set APP_HOME=%DIRNAME%
 @rem Resolve any "." and ".." in APP_HOME to make it shorter.
 for %%i in ("%APP_HOME%") do set APP_HOME=%%~fi
 
+@rem MEDVBA: Windows MAX_PATH - Cursor sandbox TEMP/GRADLE_USER_HOME breaks CMake/Ninja (paths over 260 chars).
+if "%OS%"=="Windows_NT" (
+  set "MEDVBA_GRADLE_HOME=C:\.gradle"
+  if not exist "%MEDVBA_GRADLE_HOME%" mkdir "%MEDVBA_GRADLE_HOME%" 2>nul
+  if not exist "%MEDVBA_GRADLE_HOME%\tmp" mkdir "%MEDVBA_GRADLE_HOME%\tmp" 2>nul
+  set "GRADLE_USER_HOME=%MEDVBA_GRADLE_HOME%"
+  set "TEMP=%MEDVBA_GRADLE_HOME%\tmp"
+  set "TMP=%MEDVBA_GRADLE_HOME%\tmp"
+)
+
 @rem Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
 set DEFAULT_JVM_OPTS="-Xmx64m" "-Xms64m"
 

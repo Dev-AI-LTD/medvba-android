@@ -33,6 +33,8 @@ import {
   APP_LANGUAGE_STORAGE_KEY,
   LEGACY_APP_LANGUAGE_STORAGE_KEY,
 } from '@/providers/LanguageProvider';
+import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
+import { BLOCKED_USERS_STORAGE_KEY } from '@/lib/blocked-users-storage';
 
 const STORAGE_KEYS_TO_CLEAR = [
   'quiz_daily_progress',
@@ -40,7 +42,7 @@ const STORAGE_KEYS_TO_CLEAR = [
   'quiz_all_time_stats',
   'quiz_streak_data',
   'quiz_weekly_history',
-  '@medvba_blocked_users',
+  BLOCKED_USERS_STORAGE_KEY,
   '@medvba_user_reports',
   APP_LANGUAGE_STORAGE_KEY,
   LEGACY_APP_LANGUAGE_STORAGE_KEY,
@@ -331,9 +333,9 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.glassBorder,
   },
   closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
     backgroundColor: Colors.cardBg,
     justifyContent: 'center',
     alignItems: 'center',
@@ -346,7 +348,7 @@ const styles = StyleSheet.create({
     color: Colors.text,
   },
   headerSpacer: {
-    width: 40,
+    width: TOUCH_TARGET_MIN,
   },
   scrollContent: {
     padding: 20,

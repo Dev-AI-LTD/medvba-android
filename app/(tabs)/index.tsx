@@ -23,7 +23,7 @@ import PremiumBadge from '@/components/PremiumBadge';
 import { categories } from '@/mocks/questions';
 import { useQuizProgress } from '@/providers/QuizProgressProvider';
 import { FREE_QUIZ_ANSWER_LIMIT } from '@/constants/subscription';
-import { SPACING } from '@/theme/paperTheme';
+import { SPACING, TOUCH_TARGET_MIN } from '@/theme/paperTheme';
 import { log } from '@/lib/log';
 
 export default function HomeScreen() {
@@ -452,9 +452,9 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   appIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
   },
   headerRight: {
     flexDirection: 'row',
@@ -462,9 +462,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
   },
   upgradeBanner: {
     marginBottom: SPACING.x3,
@@ -478,9 +478,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   upgradeBannerIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
     backgroundColor: 'rgba(255,255,255,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -649,9 +649,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.x2,
   },
   categoryIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },

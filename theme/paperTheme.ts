@@ -20,6 +20,12 @@ export const SPACING = {
   x8: 64,
 } as const;
 
+/**
+ * Minimum interactive size (pt on iOS, dp on Android). Single value for both platforms:
+ * aligns with Material guidance (~48) and is comfortable on iOS (HIG often cites ~44).
+ */
+export const TOUCH_TARGET_MIN = 48;
+
 type AppColors = {
   primary: string;
   primaryDark: string;

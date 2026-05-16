@@ -2,6 +2,7 @@ import "dotenv/config";
 import { z } from "zod";
 import { sampleQuestions, Question } from "@/mocks/questions";
 import { llmGenerateObjectJson } from "@/lib/llm-generate-object-json";
+import { coerceTranslationBatchRoot } from "@/lib/batch-translate";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -96,7 +97,9 @@ ${JSON.stringify(questionsForTranslation, null, 2)}
 
 Return the translations in the same JSON structure with all fields translated.`;
 
-  const translation = await llmGenerateObjectJson(prompt, translationSchema);
+  const translation = await llmGenerateObjectJson(prompt, translationSchema, {
+    coerceParsedJson: coerceTranslationBatchRoot,
+  });
 
   return translation.translations;
 }

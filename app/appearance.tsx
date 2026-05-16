@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { ChevronLeft, Sun, Moon, Smartphone } from 'lucide-react-native';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useTheme } from '@/providers/ThemeProvider';
+import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
 
 type ThemeMode = 'auto' | 'light' | 'dark';
 
@@ -215,9 +216,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
@@ -227,7 +228,7 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
   },
   placeholder: {
-    width: 40,
+    width: TOUCH_TARGET_MIN,
   },
   scrollContent: {
     padding: 20,

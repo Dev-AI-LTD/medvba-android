@@ -1,3 +1,5 @@
+import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
+
 export const spacing = {
   xs: 4,
   sm: 8,
@@ -139,9 +141,11 @@ export const animation = {
   },
 } as const;
 
+/** Prefer `TOUCH_TARGET_MIN`-sized layouts; use only when the visible control must stay small. */
 export const hitSlop = {
   default: { top: 8, right: 8, bottom: 8, left: 8 },
   large: { top: 12, right: 12, bottom: 12, left: 12 },
 } as const;
 
-export const minTapTarget = 44;
+/** Alias for `Button` min heights; same as `TOUCH_TARGET_MIN` from `@/theme/paperTheme`. */
+export const minTapTarget = TOUCH_TARGET_MIN;

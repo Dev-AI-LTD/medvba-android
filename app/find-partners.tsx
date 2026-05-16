@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { X, Search, MapPin, School, Users, Filter, MessageCircle } from 'lucide-react-native';
 import { useTheme } from '@/providers/ThemeProvider';
@@ -22,6 +22,8 @@ import AvatarImage from '@/components/AvatarImage';
 import { useStudyPartners, useGetOrCreateDirectChat } from '@/lib/supabase-hooks';
 import type { UserAccount } from '@/types/user';
 import { useAuth } from '@/providers/AuthProvider';
+import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
+import { loadBlockedUsersFromStorage } from '@/lib/blocked-users-storage';
 
 export default function FindPartnersScreen() {
   const router = useRouter();
@@ -32,12 +34,29 @@ export default function FindPartnersScreen() {
   const [selectedCity, setSelectedCity] = useState<string | undefined>();
   const [selectedUniversity, setSelectedUniversity] = useState<string | undefined>();
   const [showFilters, setShowFilters] = useState(false);
+  const [blockedIds, setBlockedIds] = useState<Set<string>>(() => new Set());
+
+  const reloadBlockedIds = useCallback(async () => {
+    const list = await loadBlockedUsersFromStorage();
+    setBlockedIds(new Set(list.map((u) => u.id)));
+  }, []);
+
+  useEffect(() => {
+    void reloadBlockedIds();
+  }, [reloadBlockedIds]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void reloadBlockedIds();
+    }, [reloadBlockedIds])
+  );
 
   const { data: allPartners = [], isLoading, refetch, isRefetching } = useStudyPartners();
   const createOrGetChatMutation = useGetOrCreateDirectChat();
 
   const filteredPartners = useMemo(() => {
     let filtered = allPartners.filter((partner) => partner.id !== user?.id);
+    filtered = filtered.filter((partner) => !blockedIds.has(partner.id));
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -59,7 +78,7 @@ export default function FindPartnersScreen() {
     }
 
     return filtered;
-  }, [allPartners, searchQuery, selectedCity, selectedUniversity, user?.id]);
+  }, [allPartners, searchQuery, selectedCity, selectedUniversity, user?.id, blockedIds]);
 
   const availableCities = useMemo(() => {
     const cities = new Set<string>();
@@ -352,9 +371,9 @@ const createStyles = (colors: any) => StyleSheet.create({
     color: colors.text,
   },
   closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
     backgroundColor: colors.cardBg,
     justifyContent: 'center',
     alignItems: 'center',
@@ -362,9 +381,9 @@ const createStyles = (colors: any) => StyleSheet.create({
     borderColor: colors.glassBorder,
   },
   filterButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
     backgroundColor: colors.cardBg,
     justifyContent: 'center',
     alignItems: 'center',

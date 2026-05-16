@@ -42,3 +42,17 @@ export function getApiBaseUrl(): string {
 
   return normalizeApiBaseUrl(String(raw));
 }
+
+/** True when `EXPO_PUBLIC_API_BASE_URL` (or fallback env keys from {@link getApiBaseUrl}) is set. */
+export function isApiBaseUrlConfigured(): boolean {
+  const extraConfig = getMergedExpoExtra();
+  return Boolean(
+    pickFirstNonEmpty(
+      extraConfig.EXPO_PUBLIC_API_BASE_URL,
+      extraConfig.EXPO_PUBLIC_RORK_API_BASE_URL,
+      extraConfig.apiBaseUrl,
+      process.env.EXPO_PUBLIC_API_BASE_URL,
+      process.env.EXPO_PUBLIC_RORK_API_BASE_URL,
+    ),
+  );
+}

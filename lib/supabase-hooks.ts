@@ -637,11 +637,16 @@ export function useUserProfile(userId: string | undefined) {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('[Supabase] Error fetching user profile:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
         throw error;
+      }
+
+      if (!data) {
+        console.log('[Supabase] No profile row yet for user (will retry when created):', userId);
+        return null;
       }
 
       return {
@@ -1873,15 +1878,35 @@ export function useUpdateSubscription() {
         .single();
 
       if (error) {
-        console.error('[Supabase] Error updating subscription:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        const payload = { message: error.message, code: error.code, details: error.details };
+        /** RLS (migration 009): client may only write free tier rows; premium + some inserts are webhook/service-role only */
+        const isRlsViolation =
+          error.code === '42501' || /row-level security policy/i.test(String(error.message));
+        if (isRlsViolation) {
+          console.warn(
+            '[Supabase] Subscription sync skipped by RLS (expected for writes when policies or JWT claims disallow):',
+            JSON.stringify(payload),
+          );
+          return null;
+        }
+        if (error.code === '23503') {
+          console.warn(
+            '[Supabase] Subscription sync skipped (profile not linked in DB yet — run migration 014/037):',
+            JSON.stringify(payload),
+          );
+        } else {
+          console.error('[Supabase] Error updating subscription:', JSON.stringify(payload));
+        }
         throw error;
       }
 
       console.log('[Supabase] Subscription updated successfully');
       return data;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['subscription', variables.userId] });
+    onSuccess: (data, variables) => {
+      if (data) {
+        queryClient.invalidateQueries({ queryKey: ['subscription', variables.userId] });
+      }
     },
   });
 }

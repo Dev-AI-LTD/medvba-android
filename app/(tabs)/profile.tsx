@@ -40,8 +40,10 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import ProgressRing from '@/components/ProgressRing';
 import { useQuizProgress } from '@/providers/QuizProgressProvider';
 import { useAuth } from '@/providers/AuthProvider';
+import { safeAvatarUri } from '@/lib/safe-image-uri';
 import { useLeaderboard, useZoomRequests } from '@/lib/supabase-hooks';
 import { useSubscription } from '@/providers/SubscriptionProvider';
+import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -620,7 +622,10 @@ export default function ProfileScreen() {
                   <View style={styles.rankChange}>
                     {getRankChangeIcon(index + 3)}
                   </View>
-                  <Image source={{ uri: user.avatar }} style={styles.leaderboardAvatar} />
+                  <Image
+                    source={{ uri: safeAvatarUri(user.avatar, user.id) }}
+                    style={styles.leaderboardAvatar}
+                  />
                   <View style={styles.leaderboardInfo}>
                     <Text style={styles.leaderboardName}>{user.name}</Text>
                     <View style={styles.leaderboardStats}>
@@ -814,9 +819,9 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     color: colors.text,
   },
   settingsButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
@@ -1017,9 +1022,9 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     overflow: 'hidden',
   },
   statIconContainer: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
@@ -1252,9 +1257,9 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     alignItems: 'center',
   },
   leaderboardAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
     marginLeft: 4,
   },
   leaderboardInfo: {

@@ -23,116 +23,22 @@ import GlassCard from '@/components/GlassCard';
 import type { Question } from '@/mocks/questions';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { getAllQuestionsWithChapters } from '@/mocks/chapters';
-import { translateAndShuffleQuestions } from '@/lib/translateQuestion';
+import {
+  translateAndShuffleQuestions,
+  type QuestionTranslateLanguage,
+} from '@/lib/translateQuestion';
 import { log } from '@/lib/log';
+import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
 
 import {
-  generalVertebraeQuestions,
-  regionalVertebraeQuestions,
-  thoracicVertebraeQuestions,
-  lumbarVertebraeQuestions,
-  sacrumQuestions,
-  atlasAxisVertebraeQuestions,
-  ribsGeneralQuestions,
-  sternumQuestions
-} from '@/mocks/questions_bones_axial';
-
-import {
-  clavicleQuestions,
-  humerusQuestions,
-  radiusAndUlnaQuestions,
-  carpalBonesQuestions,
-  hipBoneQuestions,
-  femurQuestions,
-  patellaQuestions,
-  tibiaQuestions,
-  fibulaQuestions,
-  tibiaFibulaQuestions,
-  talusQuestions,
-  calcaneusQuestions,
-  tarsalBonesQuestions,
-  upperLimbBonesQuestions
-} from '@/mocks/questions_bones_appendicular';
-
-import {
-  shoulderMusclesQuestions,
-  armMusclesQuestions,
-  forearmMusclesQuestions,
-  anteriorThighMusclesQuestions,
-  hamstringMusclesQuestions,
-  medialThighMusclesQuestions,
-  legMusclesQuestions,
-  halluxMusclesQuestions,
-  midplantarMusclesQuestions
-} from '@/mocks/questions_muscles';
-
-import {
-  brachialArteryQuestions
-} from '@/mocks/questions_vessels';
-
-import {
-  medianNerveQuestions,
-  musculocutaneousNerveQuestions,
-  radialNerveQuestions
-} from '@/mocks/questions_nerves';
-
-import {
-  brachialPlexusQuestions,
-  lumbarPlexusQuestions,
-  sacralPlexusQuestions,
-  sensoryInnervationQuestions
-} from '@/mocks/questions_plexuses';
-
-import {
-  shoulderJointQuestions,
-  elbowJointQuestions,
-  wristJointQuestions,
-  hipJointQuestions,
-  kneeJointQuestions,
-  ankleJointQuestions
-} from '@/mocks/questions_joints';
-
-import {
-  internalOrgansQuestions,
-  headNeckQuestions,
-  neuroanatomyQuestions,
-  pulmonaryAndBronchialCirculationQuestions,
-  systemicAndPortalCirculationQuestions,
-  fetalCirculationQuestions,
-  microcirculationAndCapillaryExchangeQuestions,
-  hemodynamicsAndFlowQuestions,
-  baroreflexChemoreflexAutoregulationQuestions,
-  coronaryCirculationQuestions,
-  cerebralAutoregulationAndBBBQuestions,
-  lymphaticSystemOverviewQuestions
-} from '@/mocks/questions_internal_organs';
-
-import {
-  perforatingAndWatershedQuestions
-} from '@/mocks/questions_neuro';
-
-import {
-  cardioAdmissionSet1,
-  bloodAdmissionSet1,
-  respiratoryAdmissionSet1,
-  metabolismNutritionAdmissionSet1,
-  digestiveAdmissionSet1,
-  nervousAdmissionSet1,
-  introAnatPhysAdmissionSet1,
-  chemBasicsAdmissionSet1,
-  cellBiologyAdmissionSet1,
-  tissuesAdmissionSet1,
-  integumentaryAdmissionSet1,
-  skeletalAdmissionSet1,
-  muscularAdmissionSet1,
-  sensesAdmissionSet1,
-  endocrineAdmissionSet1,
-  lymphaticAdmissionSet1,
-  urinaryAdmissionSet1,
-  reproMaleAdmissionSet1,
-  reproFemaleAdmissionSet1,
-  embryologyAdmissionSet1,
-} from '@/mocks/questions_med_admission';
+  allQuestions,
+  allUpperLowerLimbsQuestions,
+  headNeckAllQuestions,
+  internalOrgansAllQuestions,
+  medAdmissionAllQuestions,
+  neuroanatomyAllQuestions,
+  upperLowerLimbsSubcategories,
+} from '@/lib/quizSessionQuestionPool';
 
 const QUESTION_COUNTS = {
   quick: 10,
@@ -147,139 +53,25 @@ interface QuestionWithChapter {
   chapterName: string;
 }
 
-const bonesQuestions: Question[] = [
-  ...generalVertebraeQuestions,
-  ...regionalVertebraeQuestions,
-  ...thoracicVertebraeQuestions,
-  ...lumbarVertebraeQuestions,
-  ...sacrumQuestions,
-  ...atlasAxisVertebraeQuestions,
-  ...ribsGeneralQuestions,
-  ...sternumQuestions,
-  ...clavicleQuestions,
-  ...humerusQuestions,
-  ...radiusAndUlnaQuestions,
-  ...carpalBonesQuestions,
-  ...hipBoneQuestions,
-  ...femurQuestions,
-  ...patellaQuestions,
-  ...tibiaQuestions,
-  ...fibulaQuestions,
-  ...tibiaFibulaQuestions,
-  ...talusQuestions,
-  ...calcaneusQuestions,
-  ...tarsalBonesQuestions,
-  ...upperLimbBonesQuestions,
-];
+let canonicalQuestionById: Map<string, Question> | null = null;
 
-const musclesQuestions: Question[] = [
-  ...shoulderMusclesQuestions,
-  ...armMusclesQuestions,
-  ...forearmMusclesQuestions,
-  ...anteriorThighMusclesQuestions,
-  ...hamstringMusclesQuestions,
-  ...medialThighMusclesQuestions,
-  ...legMusclesQuestions,
-  ...halluxMusclesQuestions,
-  ...midplantarMusclesQuestions,
-];
+function ensureCanonicalQuestionById(): Map<string, Question> {
+  if (!canonicalQuestionById) {
+    canonicalQuestionById = new Map();
+    for (const q of allQuestions) {
+      if (!canonicalQuestionById.has(q.id)) {
+        canonicalQuestionById.set(q.id, q);
+      }
+    }
+  }
+  return canonicalQuestionById;
+}
 
-const vesselsQuestions: Question[] = [
-  ...brachialArteryQuestions,
-];
-
-const nervesQuestions: Question[] = [
-  ...medianNerveQuestions,
-  ...musculocutaneousNerveQuestions,
-  ...radialNerveQuestions,
-];
-
-const plexusesQuestions: Question[] = [
-  ...brachialPlexusQuestions,
-  ...lumbarPlexusQuestions,
-  ...sacralPlexusQuestions,
-  ...sensoryInnervationQuestions,
-];
-
-const jointsQuestions: Question[] = [
-  ...shoulderJointQuestions,
-  ...elbowJointQuestions,
-  ...wristJointQuestions,
-  ...hipJointQuestions,
-  ...kneeJointQuestions,
-  ...ankleJointQuestions,
-];
-
-const internalOrgansAllQuestions: Question[] = [
-  ...internalOrgansQuestions,
-  ...pulmonaryAndBronchialCirculationQuestions,
-  ...systemicAndPortalCirculationQuestions,
-  ...fetalCirculationQuestions,
-  ...microcirculationAndCapillaryExchangeQuestions,
-  ...hemodynamicsAndFlowQuestions,
-  ...baroreflexChemoreflexAutoregulationQuestions,
-  ...coronaryCirculationQuestions,
-  ...cerebralAutoregulationAndBBBQuestions,
-  ...lymphaticSystemOverviewQuestions,
-];
-
-const headNeckAllQuestions: Question[] = [
-  ...headNeckQuestions,
-];
-
-const neuroanatomyAllQuestions: Question[] = [
-  ...neuroanatomyQuestions,
-  ...perforatingAndWatershedQuestions,
-];
-
-const medAdmissionAllQuestions: Question[] = [
-  ...introAnatPhysAdmissionSet1,
-  ...chemBasicsAdmissionSet1,
-  ...cellBiologyAdmissionSet1,
-  ...tissuesAdmissionSet1,
-  ...integumentaryAdmissionSet1,
-  ...skeletalAdmissionSet1,
-  ...muscularAdmissionSet1,
-  ...nervousAdmissionSet1,
-  ...sensesAdmissionSet1,
-  ...endocrineAdmissionSet1,
-  ...bloodAdmissionSet1,
-  ...cardioAdmissionSet1,
-  ...lymphaticAdmissionSet1,
-  ...respiratoryAdmissionSet1,
-  ...digestiveAdmissionSet1,
-  ...metabolismNutritionAdmissionSet1,
-  ...urinaryAdmissionSet1,
-  ...reproMaleAdmissionSet1,
-  ...reproFemaleAdmissionSet1,
-  ...embryologyAdmissionSet1,
-];
-
-const upperLowerLimbsSubcategories = {
-  bones: bonesQuestions,
-  muscles: musclesQuestions,
-  vessels: vesselsQuestions,
-  nerves: nervesQuestions,
-  plexuses: plexusesQuestions,
-  joints: jointsQuestions,
-};
-
-const allUpperLowerLimbsQuestions: Question[] = [
-  ...bonesQuestions,
-  ...musclesQuestions,
-  ...vesselsQuestions,
-  ...nervesQuestions,
-  ...plexusesQuestions,
-  ...jointsQuestions,
-];
-
-const allQuestions: Question[] = [
-  ...allUpperLowerLimbsQuestions,
-  ...internalOrgansAllQuestions,
-  ...headNeckAllQuestions,
-  ...neuroanatomyAllQuestions,
-  ...medAdmissionAllQuestions,
-];
+/** Rebuild English-canonical questions in the same order as the current session (for re-translation after UI language change). */
+function questionsToCanonicalInSessionOrder(ordered: Question[]): Question[] {
+  const map = ensureCanonicalQuestionById();
+  return ordered.map((q) => map.get(q.id) ?? q);
+}
 
 function fisherYatesShuffle<T>(array: T[]): T[] {
   const shuffled = [...array];
@@ -427,7 +219,7 @@ async function selectQuestionsForQuiz(
 
 export default function QuizSessionScreen() {
   const router = useRouter();
-  const { t, getChapterTitle, currentLanguage } = useLanguage();
+  const { t, getChapterTitle, currentLanguage, isLoading: isLanguageHydrating } = useLanguage();
   const { colors } = useTheme();
   const { category, mode, resume, chapterId } = useLocalSearchParams<{
     category: string;
@@ -447,14 +239,18 @@ export default function QuizSessionScreen() {
     saveSessionState,
     clearSessionState,
     sessionState: savedSession,
-    addStudyTime
+    addStudyTime,
+    isLoading: isProgressHydrating,
   } = useQuizProgress();
   const { incrementQuestionAnsweredCount, FREE_QUIZ_LIMIT } = useSubscription();
   const [limitReached, setLimitReached] = useState(false);
   
   const sessionStartTimeRef = useRef<number>(Date.now());
   const sessionLanguageRef = useRef<'en' | 'ro' | undefined>(undefined);
-  
+  /** English-source questions in session order; used to re-translate when UI language changes. */
+  const sessionCanonicalQuestionsRef = useRef<Question[]>([]);
+  const lastSyncedQuizUiLanguageRef = useRef<'en' | 'ro' | null>(null);
+
   const [questions, setQuestions] = useState<Question[]>([]);
   const [questionsWithChapters, setQuestionsWithChapters] = useState<QuestionWithChapter[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -511,6 +307,15 @@ export default function QuizSessionScreen() {
       );
 
       try {
+        /** Avoid translating with default `en` before AsyncStorage resolves the user's real UI language.
+         *  Also wait for quiz progress restore so `resume=true` sees `savedSession` instead of starting a new quiz. */
+        if (isLanguageHydrating || isProgressHydrating) {
+          log.info(
+            '[QuizSession] Waiting for providers',
+            { language: isLanguageHydrating, progress: isProgressHydrating },
+          );
+          return;
+        }
         if (resume === 'true' && savedSession) {
           log.info(
             '[QuizSession] Resuming from saved session at index:',
@@ -531,20 +336,33 @@ export default function QuizSessionScreen() {
               return;
             }
 
-            setQuestions(savedSession.questions);
+            const canonicalOrdered = questionsToCanonicalInSessionOrder(
+              savedSession.questions,
+            );
+            sessionCanonicalQuestionsRef.current = canonicalOrdered;
+            lastSyncedQuizUiLanguageRef.current = null;
+
+            /** Always map from English canonical + current UI language — saved blobs may be EN from an older session or before `sessionLanguage` was stored. */
+            const resumedQuestions = translateAndShuffleQuestions(
+              canonicalOrdered,
+              currentLanguage as QuestionTranslateLanguage,
+            );
+
+            setQuestions(resumedQuestions);
             setCurrentIndex(savedSession.currentIndex);
             setScore(savedSession.score);
             setAnsweredInSession(savedSession.answeredInSession);
             setSessionStartedAt(savedSession.startedAt);
             sessionStartTimeRef.current = Date.now();
-            sessionLanguageRef.current =
-              savedSession.sessionLanguage ?? currentLanguage;
+            sessionLanguageRef.current = currentLanguage;
             setIsLoading(false);
           }
           return;
         }
 
         sessionLanguageRef.current = currentLanguage;
+        /** UI language for this load; mid-session changes are applied via `sessionCanonicalQuestionsRef` + effect. */
+        const quizTranslateLanguage = currentLanguage;
         const startedAt = new Date().toISOString();
         if (isMounted) setSessionStartedAt(startedAt);
 
@@ -573,9 +391,11 @@ export default function QuizSessionScreen() {
           );
 
           if (isMounted) {
+            sessionCanonicalQuestionsRef.current = baseQuestions.slice();
+            lastSyncedQuizUiLanguageRef.current = null;
             const translatedQuestions = translateAndShuffleQuestions(
               baseQuestions,
-              currentLanguage
+              quizTranslateLanguage
             );
             setQuestionsWithChapters(orderedWithChapters);
             setQuestions(translatedQuestions);
@@ -620,9 +440,11 @@ export default function QuizSessionScreen() {
               return;
             }
 
+            sessionCanonicalQuestionsRef.current = selectedQuestions.slice();
+            lastSyncedQuizUiLanguageRef.current = null;
             const translatedQuestions = translateAndShuffleQuestions(
               selectedQuestions,
-              currentLanguage
+              quizTranslateLanguage
             );
             if (!translatedQuestions || translatedQuestions.length === 0) {
               log.error('[QuizSession] Translation failed');
@@ -646,7 +468,7 @@ export default function QuizSessionScreen() {
               score: 0,
               answeredInSession: [],
               startedAt,
-              sessionLanguage: currentLanguage,
+              sessionLanguage: quizTranslateLanguage,
             };
             await saveSessionState(initialSessionState);
           }
@@ -666,10 +488,47 @@ export default function QuizSessionScreen() {
   return () => {
     isMounted = false;
   };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, mode, resume, chapterId, currentLanguage]);
+  }, [category, mode, resume, chapterId, isLanguageHydrating, isProgressHydrating]);
 
+  useEffect(() => {
+    if (isLanguageHydrating || isProgressHydrating) return;
+    if (isLoading) return;
+    const canonical = sessionCanonicalQuestionsRef.current;
+    if (canonical.length === 0) return;
 
+    if (lastSyncedQuizUiLanguageRef.current === null) {
+      lastSyncedQuizUiLanguageRef.current = currentLanguage;
+      return;
+    }
+    if (lastSyncedQuizUiLanguageRef.current === currentLanguage) return;
+    lastSyncedQuizUiLanguageRef.current = currentLanguage;
+
+    const lang: QuestionTranslateLanguage = currentLanguage;
+    const reTranslated = translateAndShuffleQuestions(canonical, lang);
+    sessionLanguageRef.current = currentLanguage;
+    setQuestions(reTranslated);
+    setSelectedAnswer(null);
+    setShowResult(false);
+
+    if (modeRef.current !== 'sequential') {
+      void saveSessionState({
+        category: categoryRef.current || 'mixed',
+        mode: modeRef.current || 'quick',
+        questions: reTranslated,
+        currentIndex: currentIndexRef.current,
+        score: scoreRef.current,
+        answeredInSession: answeredInSessionRef.current,
+        startedAt: sessionStartedAtRef.current,
+        sessionLanguage: currentLanguage,
+      });
+    }
+  }, [
+    currentLanguage,
+    isLanguageHydrating,
+    isProgressHydrating,
+    isLoading,
+    saveSessionState,
+  ]);
 
   const currentQuestion = questions[currentIndex] || null;
 
@@ -737,12 +596,12 @@ export default function QuizSessionScreen() {
         score: isCorrect ? scoreRef.current + 1 : scoreRef.current,
         answeredInSession: newAnsweredInSession,
         startedAt: sessionStartedAtRef.current,
-        sessionLanguage: sessionLanguageRef.current ?? currentLanguage,
+        sessionLanguage: sessionLanguageRef.current ?? 'en',
       };
       await saveSessionState(updatedSessionState);
       log.info('[QuizSession] Saved progress after question', currentIdx + 1);
     }
-  }, [showResult, updateDailyProgress, saveSessionState, incrementQuestionAnsweredCount, currentLanguage]);
+  }, [showResult, updateDailyProgress, saveSessionState, incrementQuestionAnsweredCount]);
 
   const handleNext = useCallback(async () => {
     if (!questionsRef.current || questionsRef.current.length === 0) {
@@ -1132,9 +991,9 @@ const createStyles = (colors: any) => StyleSheet.create({
     gap: 12,
   },
   closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
     backgroundColor: colors.cardBg,
     justifyContent: 'center',
     alignItems: 'center',

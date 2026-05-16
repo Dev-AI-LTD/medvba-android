@@ -4,6 +4,7 @@ import createContextHook from '@nkzw/create-context-hook';
 import { en } from '@/locales/en';
 import { ro } from '@/locales/ro';
 import { chapterTranslations } from '@/locales/chapterTranslations';
+import { APP_LAUNCH_ENGLISH_UI_ONLY } from '@/lib/app-ui-languages';
 import { log } from '@/lib/log';
 
 export type Language = 'en' | 'ro';
@@ -22,30 +23,39 @@ const translations: Record<Language, Record<string, string>> = {
   ro,
 };
 
-function isSupportedLanguage(value: string | null): value is Language {
-  return value === 'en' || value === 'ro';
+function normalizeLanguageCode(value: string | null): Language | null {
+  if (value == null) return null;
+  const v = value.trim().toLowerCase();
+  if (v === 'en' || v === 'ro') return v;
+  return null;
 }
 
 export const [LanguageProvider, useLanguage] = createContextHook(() => {
-  const [currentLanguage, setCurrentLanguage] = useState<Language>(DEFAULT_APP_LANGUAGE);
+  /** Persisted choice (ro/en); UI may still show English only while {@link APP_LAUNCH_ENGLISH_UI_ONLY} is true. */
+  const [storedLanguage, setStoredLanguage] = useState<Language>(DEFAULT_APP_LANGUAGE);
   const [isLoading, setIsLoading] = useState(true);
+
+  const currentLanguage: Language = APP_LAUNCH_ENGLISH_UI_ONLY ? 'en' : storedLanguage;
 
   useEffect(() => {
     const loadLanguage = async () => {
       try {
         let stored = await AsyncStorage.getItem(APP_LANGUAGE_STORAGE_KEY);
-        if (!isSupportedLanguage(stored)) {
+        let normalized = normalizeLanguageCode(stored);
+        if (!normalized) {
           const legacy = await AsyncStorage.getItem(LEGACY_APP_LANGUAGE_STORAGE_KEY);
-          if (isSupportedLanguage(legacy)) {
-            stored = legacy;
-            await AsyncStorage.setItem(APP_LANGUAGE_STORAGE_KEY, legacy);
+          const legacyNorm = normalizeLanguageCode(legacy);
+          if (legacyNorm) {
+            stored = legacyNorm;
+            await AsyncStorage.setItem(APP_LANGUAGE_STORAGE_KEY, legacyNorm);
             await AsyncStorage.removeItem(LEGACY_APP_LANGUAGE_STORAGE_KEY);
-            log.debug('Migrated UI language from legacy storage key:', legacy);
+            log.debug('Migrated UI language from legacy storage key:', legacyNorm);
+            normalized = legacyNorm;
           }
         }
-        if (isSupportedLanguage(stored)) {
-          setCurrentLanguage(stored);
-          log.debug('Loaded language from storage:', stored);
+        if (normalized) {
+          setStoredLanguage(normalized);
+          log.debug('Loaded language from storage:', normalized);
         }
       } catch (error) {
         log.error('Error loading language:', error);
@@ -60,7 +70,7 @@ export const [LanguageProvider, useLanguage] = createContextHook(() => {
     try {
       await AsyncStorage.setItem(APP_LANGUAGE_STORAGE_KEY, lang);
       await AsyncStorage.removeItem(LEGACY_APP_LANGUAGE_STORAGE_KEY);
-      setCurrentLanguage(lang);
+      setStoredLanguage(lang);
       log.debug('Language changed and saved:', lang);
     } catch (error) {
       log.error('Error saving language:', error);

@@ -19,7 +19,9 @@ export const en: Record<string, string> = {
   // Auth Screens
   'auth.welcomeBack': 'Welcome Back',
   'auth.welcomeUnifiedTitle': 'Welcome',
-  'auth.welcomeUnifiedSubtitle': 'Sign in to start your learning journey',
+  'auth.welcomeUnifiedSubtitle': 'Create an account or sign in to continue your learning journey',
+  'auth.webProductionNativeHint':
+    'Full sign-in runs in the native app. In production, use MEDVBA on Android or iOS—web preview does not support account login here.',
   'auth.signInSubtitle': 'Sign in to continue your learning journey',
   'auth.createAccount': 'Create Account',
   'auth.joinStudents': 'Join thousands of students',
@@ -61,8 +63,7 @@ export const en: Record<string, string> = {
   'auth.continueWithEmailHint':
     'Opens a secure browser page where you can sign in with your email.',
   'auth.createAccountWithEmail': 'Create account with email',
-  'auth.createAccountWithEmailHint':
-    'Opens a secure browser page where you can register or sign in with your email.',
+  'auth.signInWithEmail': 'Sign in with email',
   'auth.dontHaveAccount': 'Don\'t have an account?',
   'auth.alreadyHaveAccount': 'Already have an account?',
   'auth.showPassword': 'Show password',
@@ -98,6 +99,7 @@ export const en: Record<string, string> = {
   'auth.ok': 'OK',
   'auth.unexpectedError': 'An unexpected error occurred. Please try again.',
   'auth.supabaseNotConfigured': 'Login is not available: Supabase is not configured. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in .env',
+  'auth.backendNotConfigured': 'This action needs the MEDVBA API. Set EXPO_PUBLIC_API_BASE_URL (or EXPO_PUBLIC_RORK_API_BASE_URL) in .env.',
   'auth.welcome.title': 'Welcome back',
   'auth.welcome.subtitle': 'Log in to continue your anatomy practice.',
   'auth.login.email': 'Email',
@@ -601,6 +603,10 @@ export const en: Record<string, string> = {
   'support.contactSupport': 'Contact Support',
   'support.contactSupportSubtitle': 'Still need help? We are here for you.',
   'support.contactSupportButton': 'Contact Support',
+  'support.emailFromHelpButton': 'Compose email',
+  'support.emailFromHelpSubtitle': 'Opens your mail app with our address. Use the form below for more detail.',
+  'support.helpQuickEmailSubject': '[MEDVBA] Help Center',
+  'support.helpQuickEmailBody': 'Hello MEDVBA support,\n\n',
   'support.faqTitle': 'FAQs',
   'support.faq1Question': 'How do I reset my password?',
   'support.faq1Answer': 'Use the reset password option on the login screen and follow the instructions sent to your email.',
@@ -628,6 +634,11 @@ export const en: Record<string, string> = {
   'support.messageRequired': 'Message is required.',
   'support.sentTitle': 'Email ready',
   'support.sentMessage': 'Your email client is ready to send the message.',
+  'support.savedTitle': 'Draft saved',
+  'support.savedMessage': 'Your message was saved as a draft in Mail.',
+  'support.mailtoOpenedTitle': 'Mail app opened',
+  'support.mailtoOpenedMessage':
+    'Complete the message in your email app. If nothing opened, use Contact Support to copy your text.',
   'support.fallbackTitle': 'Email not available',
   'support.fallbackMessage': 'Please contact us at the email below and paste your message.',
   'support.copyMessage': 'Copy message',
@@ -707,6 +718,16 @@ export const en: Record<string, string> = {
   'notifications.soundEnabledDesc': 'Turn notification sounds on or off.',
   'notifications.doNotDisturb': 'Do not disturb',
   'notifications.doNotDisturbDesc': 'Do not send notifications between the selected hours.',
+  'notifications.dndStart': 'Quiet hours start',
+  'notifications.dndEnd': 'Quiet hours end',
+  'notifications.studyReminderLocalTitle': 'Study reminder',
+  'notifications.studyReminderLocalBody': 'Time for a MEDVBA study session.',
+  'notifications.studyTimeBlockedByDnd':
+    'Your study time falls inside quiet hours. Change one of the times so reminders can be scheduled.',
+  'notifications.permissionDeniedTitle': 'Notifications disabled',
+  'notifications.permissionDeniedMessage':
+    'Turn on notifications for MEDVBA in system settings to receive study reminders.',
+  'notifications.openSettings': 'Open settings',
 
   // Appearance Settings
   'appearance.title': 'Appearance',

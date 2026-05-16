@@ -5,6 +5,7 @@ import { X } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
 
 export default function ModalScreen() {
   const router = useRouter();
@@ -40,9 +41,9 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: TOUCH_TARGET_MIN,
+    height: TOUCH_TARGET_MIN,
+    borderRadius: TOUCH_TARGET_MIN / 2,
     backgroundColor: Colors.cardBg,
     justifyContent: 'center',
     alignItems: 'center',

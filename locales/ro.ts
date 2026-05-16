@@ -19,7 +19,9 @@ export const ro: Record<string, string> = {
   // Auth Screens
   'auth.welcomeBack': 'Bine ai revenit',
   'auth.welcomeUnifiedTitle': 'Bun venit',
-  'auth.welcomeUnifiedSubtitle': 'Autentifică-te pentru a începe călătoria de învățare',
+  'auth.welcomeUnifiedSubtitle': 'Creează un cont sau autentifică-te pentru a continua călătoria de învățare',
+  'auth.webProductionNativeHint':
+    'Autentificarea completă este în aplicația nativă. În producție folosește MEDVBA pe Android sau iOS — browserul web de aici nu oferă cont.',
   'auth.signInSubtitle': 'Autentifică-te pentru a continua călătoria de învățare',
   'auth.createAccount': 'Creează cont',
   'auth.joinStudents': 'Alătură-te miilor de studenți',
@@ -61,8 +63,7 @@ export const ro: Record<string, string> = {
   'auth.continueWithEmailHint':
     'Se deschide o pagină securizată în browser unde te poți autentifica cu emailul.',
   'auth.createAccountWithEmail': 'Creează cont cu email',
-  'auth.createAccountWithEmailHint':
-    'Se deschide o pagină securizată în browser unde te poți înregistra sau autentifica cu emailul.',
+  'auth.signInWithEmail': 'Autentificare cu email',
   'auth.dontHaveAccount': 'Nu ai cont?',
   'auth.alreadyHaveAccount': 'Ai deja cont?',
   'auth.showPassword': 'Arată parola',
@@ -98,6 +99,7 @@ export const ro: Record<string, string> = {
   'auth.ok': 'OK',
   'auth.unexpectedError': 'A apărut o eroare neașteptată. Te rog încearcă din nou.',
   'auth.supabaseNotConfigured': 'Autentificarea nu este disponibilă: Supabase nu este configurat. Setează EXPO_PUBLIC_SUPABASE_URL și EXPO_PUBLIC_SUPABASE_ANON_KEY în .env',
+  'auth.backendNotConfigured': 'Această acțiune necesită API-ul MEDVBA. Setează EXPO_PUBLIC_API_BASE_URL (sau EXPO_PUBLIC_RORK_API_BASE_URL) în .env.',
   'auth.welcome.title': 'Bine ai revenit',
   'auth.welcome.subtitle': 'Autentifică-te pentru a continua pregătirea la anatomie.',
   'auth.login.email': 'Email',
@@ -601,6 +603,10 @@ export const ro: Record<string, string> = {
   'support.contactSupport': 'Contactează suportul',
   'support.contactSupportSubtitle': 'Ai nevoie de ajutor? Suntem aici pentru tine.',
   'support.contactSupportButton': 'Contactează suportul',
+  'support.emailFromHelpButton': 'Deschide email',
+  'support.emailFromHelpSubtitle': 'Deschide aplicația de mail cu adresa noastră. Formularul de mai jos e pentru detalii.',
+  'support.helpQuickEmailSubject': '[MEDVBA] Centru de ajutor',
+  'support.helpQuickEmailBody': 'Bună echipă MEDVBA,\n\n',
   'support.faqTitle': 'Întrebări frecvente',
   'support.faq1Question': 'Cum îmi resetez parola?',
   'support.faq1Answer': 'Folosește opțiunea de resetare a parolei din ecranul de autentificare.',
@@ -628,6 +634,11 @@ export const ro: Record<string, string> = {
   'support.messageRequired': 'Mesajul este obligatoriu.',
   'support.sentTitle': 'Email pregătit',
   'support.sentMessage': 'Clientul tău de email este gata să trimită mesajul.',
+  'support.savedTitle': 'Ciornă salvată',
+  'support.savedMessage': 'Mesajul a fost salvat ca ciornă în Mail.',
+  'support.mailtoOpenedTitle': 'Aplicația de mail',
+  'support.mailtoOpenedMessage':
+    'Finalizează mesajul în aplicația de email. Dacă nu s-a deschis nimic, folosește „Contactează suportul” ca să copiezi textul.',
   'support.fallbackTitle': 'Email indisponibil',
   'support.fallbackMessage': 'Contactează-ne la adresa de mai jos și lipește mesajul.',
   'support.copyMessage': 'Copiază mesajul',
@@ -707,6 +718,16 @@ export const ro: Record<string, string> = {
   'notifications.soundEnabledDesc': 'Pornește sau oprește sunetul pentru notificări.',
   'notifications.doNotDisturb': 'Nu deranja',
   'notifications.doNotDisturbDesc': 'Nu trimite notificări între orele selectate.',
+  'notifications.dndStart': 'Început interval liniște',
+  'notifications.dndEnd': 'Sfârșit interval liniște',
+  'notifications.studyReminderLocalTitle': 'Reminder studiu',
+  'notifications.studyReminderLocalBody': 'E timpul pentru o sesiune de studiu MEDVBA.',
+  'notifications.studyTimeBlockedByDnd':
+    'Ora de studiu intră în intervalul „nu deranja”. Schimbă una dintre ore ca să putem programa reminderele.',
+  'notifications.permissionDeniedTitle': 'Notificări dezactivate',
+  'notifications.permissionDeniedMessage':
+    'Activează notificările pentru MEDVBA din setările sistemului ca să primești remindere de studiu.',
+  'notifications.openSettings': 'Deschide setările',
 
   // Appearance Settings
   'appearance.title': 'Aspect',
