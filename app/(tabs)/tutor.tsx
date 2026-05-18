@@ -34,6 +34,7 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { TRPCClientError } from '@trpc/client';
 import { trpc } from '@/lib/trpc';
 import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
+import { OfflineFeatureNotice } from '@/components/OfflineFeatureNotice';
 
 function getMutationErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof TRPCClientError) {
@@ -315,6 +316,7 @@ export default function TutorScreen() {
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
           enabled={Platform.OS !== 'web'}
         >
+          <OfflineFeatureNotice />
           <View style={styles.header}>
             <View style={styles.headerIcon}>
               <Bot color={colors.primary} size={24} />

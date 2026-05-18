@@ -11,11 +11,17 @@ function isDefinitelyDisconnected(state: {
   return false;
 }
 
-/**
- * Device has no usable internet for signing in / talking to MEDVBA backends.
- * On native, excludes unknown `isInternetReachable` while connected to avoid flashing the banner during checks.
- */
+/** Device has no usable internet (auth gates, offline sync, banners). */
+export function useIsOffline(): boolean {
+  return useBlockingAuthOfflineInternal();
+}
+
+/** @deprecated Prefer {@link useIsOffline} */
 export function useBlockingAuthOffline(): boolean {
+  return useBlockingAuthOfflineInternal();
+}
+
+function useBlockingAuthOfflineInternal(): boolean {
   const [offline, setOffline] = useState(false);
 
   useEffect(() => {

@@ -42,6 +42,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/providers/ThemeProvider';
 import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
+import { OfflineFeatureNotice } from '@/components/OfflineFeatureNotice';
 import GlassCard from '@/components/GlassCard';
 import RoomChat from '@/components/RoomChat';
 import OnlineIndicator from '@/components/OnlineIndicator';
@@ -552,6 +553,7 @@ export default function SocialScreen() {
             />
           }
         >
+          <OfflineFeatureNotice />
           <View style={styles.header}>
             <View style={styles.headerTop}>
               <View style={styles.headerTextContainer}>

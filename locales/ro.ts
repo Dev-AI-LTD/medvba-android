@@ -101,6 +101,11 @@ export const ro: Record<string, string> = {
   'offline.needsInternetTitle': 'Fără internet',
   'offline.needsInternetMessage':
     'Ai nevoie de internet pentru autentificare și pentru transfer/sincronizare date cu MEDVBA (serverele aplicației). Folosește Wi‑Fi sau date mobile, apoi încearcă din nou.',
+  'offline.workingOfflineTitle': 'Ești offline',
+  'offline.workingOfflineMessage':
+    'Poți continua cu conținutul salvat. Progresul se sincronizează când revine internetul.',
+  'offline.featureRequiresInternet':
+    'Această secțiune are nevoie de internet. Conectează Wi‑Fi sau date mobile pentru conținut nou.',
   'auth.supabaseNotConfigured': 'Autentificarea nu este disponibilă: Supabase nu este configurat. Setează EXPO_PUBLIC_SUPABASE_URL și EXPO_PUBLIC_SUPABASE_ANON_KEY în .env',
   'auth.backendNotConfigured': 'Această acțiune necesită API-ul MEDVBA. Setează EXPO_PUBLIC_API_BASE_URL (sau EXPO_PUBLIC_RORK_API_BASE_URL) în .env.',
   'auth.welcome.title': 'Bine ai revenit',

@@ -101,6 +101,11 @@ export const en: Record<string, string> = {
   'offline.needsInternetTitle': 'No internet connection',
   'offline.needsInternetMessage':
     'You need internet to sign in and to sync your data with MEDVBA. Connect to Wi‑Fi or mobile data and try again.',
+  'offline.workingOfflineTitle': 'You are offline',
+  'offline.workingOfflineMessage':
+    'You can keep studying with saved content. Progress will sync when you are back online.',
+  'offline.featureRequiresInternet':
+    'This section needs internet. Connect to Wi‑Fi or mobile data to load new content.',
   'auth.supabaseNotConfigured': 'Login is not available: Supabase is not configured. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in .env',
   'auth.backendNotConfigured': 'This action needs the MEDVBA API. Set EXPO_PUBLIC_API_BASE_URL (or EXPO_PUBLIC_RORK_API_BASE_URL) in .env.',
   'auth.welcome.title': 'Welcome back',

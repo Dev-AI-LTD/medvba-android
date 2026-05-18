@@ -1,9 +1,11 @@
 import { Tabs } from "expo-router";
 import { Home, BookOpen, Users, MessageCircle, User } from "lucide-react-native";
 import React from "react";
+import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useLanguage } from "@/providers/LanguageProvider";
+import { AppOfflineBanner } from "@/components/AppOfflineBanner";
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
@@ -11,6 +13,8 @@ export default function TabLayout() {
   const { t, currentLanguage } = useLanguage();
 
   return (
+    <View style={{ flex: 1 }}>
+      <AppOfflineBanner />
     <Tabs
       key={`${colorScheme}-${currentLanguage}`}
       screenOptions={{
@@ -89,5 +93,6 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    </View>
   );
 }
