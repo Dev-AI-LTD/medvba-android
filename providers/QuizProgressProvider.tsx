@@ -13,6 +13,14 @@ import {
   useGrantAchievement
 } from '@/lib/supabase-hooks';
 import { log } from '@/lib/log';
+import { useIsOffline } from '@/lib/use-network-auth-offline';
+import {
+  enqueueOfflineProgress,
+  flushOfflineProgressQueue,
+  type OfflineDailyProgressPayload,
+  type OfflineUserProgressPayload,
+} from '@/lib/offline-progress-queue';
+import { useOfflineReconnectEffect } from '@/lib/use-offline-reconnect';
 
 const DAILY_PROGRESS_KEY = 'quiz_daily_progress';
 const SESSION_STATE_KEY = 'quiz_session_state';
@@ -160,6 +168,52 @@ export const [QuizProgressProvider, useQuizProgress] = createContextHook<QuizPro
 
   const upsertUserProgressAsync = upsertUserProgressMutation.mutateAsync;
   const upsertDailyProgressAsync = upsertDailyProgressMutation.mutateAsync;
+  const isOffline = useIsOffline();
+
+  const flushOfflineQueue = useCallback(async () => {
+    if (!userId) return;
+    await flushOfflineProgressQueue({
+      upsertUserProgress: (payload) => upsertUserProgressAsync(payload),
+      upsertDailyProgress: (payload) => upsertDailyProgressAsync(payload),
+    });
+  }, [userId, upsertUserProgressAsync, upsertDailyProgressAsync]);
+
+  useOfflineReconnectEffect(() => {
+    void flushOfflineQueue();
+  });
+
+  useEffect(() => {
+    if (!isOffline && userId) {
+      void flushOfflineQueue();
+    }
+  }, [isOffline, userId, flushOfflineQueue]);
+
+  const syncUserAndDailyToCloud = useCallback(
+    async (
+      syncPayload: OfflineUserProgressPayload,
+      dailyPayload: OfflineDailyProgressPayload,
+      onSuccess?: () => void,
+    ) => {
+      if (isOffline) {
+        await enqueueOfflineProgress({ type: 'userProgress', payload: syncPayload });
+        await enqueueOfflineProgress({ type: 'dailyProgress', payload: dailyPayload });
+        return;
+      }
+      try {
+        await Promise.all([
+          upsertUserProgressAsync(syncPayload),
+          upsertDailyProgressAsync(dailyPayload),
+        ]);
+        log.info('[QuizProgress] Synced to Supabase successfully');
+        onSuccess?.();
+      } catch (error) {
+        log.error('[QuizProgress] Error syncing to Supabase:', error);
+        await enqueueOfflineProgress({ type: 'userProgress', payload: syncPayload });
+        await enqueueOfflineProgress({ type: 'dailyProgress', payload: dailyPayload });
+      }
+    },
+    [isOffline, upsertUserProgressAsync, upsertDailyProgressAsync],
+  );
 
   const accuracy = useMemo(() => {
     if (allTimeStats.totalQuestionsAnswered === 0) return 0;
@@ -503,22 +557,14 @@ export const [QuizProgressProvider, useQuizProgress] = createContextHook<QuizPro
           ? { userId, date: today, questionsAnswered: newWeeklyEntry.questionsAnswered, correctAnswers: newWeeklyEntry.correctAnswers, studyTimeSeconds: newWeeklyEntry.studyTimeSeconds }
           : { userId, date: today, questionsAnswered: 1, correctAnswers: correct ? 1 : 0, studyTimeSeconds: 0 };
 
-        Promise.all([
-          upsertUserProgressAsync(syncPayload),
-          upsertDailyProgressAsync(dailyPayload),
-        ])
-          .then(() => {
-            log.info('[QuizProgress] Synced to Supabase successfully');
-            checkAndGrantAchievements();
-          })
-          .catch(error => {
-            log.error('[QuizProgress] Error syncing to Supabase:', error);
-          });
+        void syncUserAndDailyToCloud(syncPayload, dailyPayload, () => {
+          checkAndGrantAchievements();
+        });
       }
     } catch (error) {
       log.error('[QuizProgress] Error updating daily progress:', error);
     }
-  }, [updateStreak, updateWeeklyHistory, userId, streakData, weeklyHistory, upsertUserProgressAsync, upsertDailyProgressAsync, checkAndGrantAchievements]);
+  }, [updateStreak, updateWeeklyHistory, userId, streakData, weeklyHistory, syncUserAndDailyToCloud, checkAndGrantAchievements]);
 
   const saveLastSessionInfo = useCallback(async (category: string, mode: string) => {
     try {
@@ -614,42 +660,56 @@ export const [QuizProgressProvider, useQuizProgress] = createContextHook<QuizPro
         const currentStreak = streakData;
         const today = getTodayDateString();
         const todayEntry = weeklyHistory.find(e => e.date === today);
-        
-        const promises = [
-          upsertUserProgressAsync({
-            userId,
-            totalQuestionsAnswered: currentAllTime.totalQuestionsAnswered,
-            correctAnswers: currentAllTime.totalCorrectAnswers,
-            studyTimeSeconds: currentAllTime.totalStudyTimeSeconds + seconds,
-            currentStreak: currentStreak.currentStreak,
-            longestStreak: currentStreak.longestStreak,
-            lastActivityDate: currentStreak.lastActiveDate || null,
-          })
-        ];
+
+        const userPayload: OfflineUserProgressPayload = {
+          userId,
+          totalQuestionsAnswered: currentAllTime.totalQuestionsAnswered,
+          correctAnswers: currentAllTime.totalCorrectAnswers,
+          studyTimeSeconds: currentAllTime.totalStudyTimeSeconds + seconds,
+          currentStreak: currentStreak.currentStreak,
+          longestStreak: currentStreak.longestStreak,
+          lastActivityDate: currentStreak.lastActiveDate || null,
+        };
 
         if (todayEntry) {
-          promises.push(
-            upsertDailyProgressAsync({
-              userId,
-              date: today,
-              questionsAnswered: todayEntry.questionsAnswered,
-              correctAnswers: todayEntry.correctAnswers,
-              studyTimeSeconds: todayEntry.studyTimeSeconds + seconds,
+          const dailyPayload: OfflineDailyProgressPayload = {
+            userId,
+            date: today,
+            questionsAnswered: todayEntry.questionsAnswered,
+            correctAnswers: todayEntry.correctAnswers,
+            studyTimeSeconds: todayEntry.studyTimeSeconds + seconds,
+          };
+          void syncUserAndDailyToCloud(userPayload, dailyPayload, () => {
+            checkAndGrantAchievements();
+          });
+        } else if (isOffline) {
+          await enqueueOfflineProgress({ type: 'userProgress', payload: userPayload });
+        } else {
+          upsertUserProgressAsync(userPayload)
+            .then(() => {
+              log.info('[QuizProgress] Study time synced to Supabase');
+              checkAndGrantAchievements();
             })
-          );
+            .catch(async (error) => {
+              log.error('[QuizProgress] Error syncing study time to Supabase:', error);
+              await enqueueOfflineProgress({ type: 'userProgress', payload: userPayload });
+            });
         }
-
-        Promise.all(promises).then(() => {
-          log.info('[QuizProgress] Study time synced to Supabase');
-          checkAndGrantAchievements();
-        }).catch(error => {
-          log.error('[QuizProgress] Error syncing study time to Supabase:', error);
-        });
       }
     } catch (error) {
       log.error('[QuizProgress] Error adding study time:', error);
     }
-  }, [updateWeeklyHistory, userId, allTimeStats, streakData, weeklyHistory, upsertUserProgressAsync, upsertDailyProgressAsync, checkAndGrantAchievements]);
+  }, [
+    updateWeeklyHistory,
+    userId,
+    allTimeStats,
+    streakData,
+    weeklyHistory,
+    syncUserAndDailyToCloud,
+    isOffline,
+    upsertUserProgressAsync,
+    checkAndGrantAchievements,
+  ]);
 
   const formattedQuestionsCount = useMemo(() => {
     const count = allTimeStats.totalQuestionsAnswered;

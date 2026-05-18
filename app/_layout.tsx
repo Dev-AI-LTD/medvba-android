@@ -1,4 +1,6 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { persistOptions, queryClient } from "@/lib/query-client";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import * as SplashScreen from "expo-splash-screen";
@@ -148,22 +150,6 @@ function NativeSplashFailsafe() {
   }, []);
   return null;
 }
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60000,
-      gcTime: 300000,
-      retry: 1,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-      refetchOnReconnect: false,
-    },
-    mutations: {
-      retry: 1,
-    },
-  },
-});
 
 function useProtectedRoute(splashAvailable: boolean, languageBootstrap: boolean) {
   const { isAuthenticated, isLoading, isAuthBusy, hasCompletedOnboarding } = useAuth();
@@ -421,7 +407,7 @@ function AppProvidersTree() {
   return (
     <ErrorBoundary>
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
           <ThemeProvider>
             <PaperProviderWrapper>
               <AuthProvider>
@@ -437,7 +423,7 @@ function AppProvidersTree() {
               </AuthProvider>
             </PaperProviderWrapper>
           </ThemeProvider>
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
       </trpc.Provider>
     </ErrorBoundary>
   );
