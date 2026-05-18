@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Screen, ScreenHeader } from '@/components/layout';
 import { 
   Bone, 
   Heart, 
@@ -31,6 +31,14 @@ import { useTheme } from '@/providers/ThemeProvider';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import { useQuizProgress } from '@/providers/QuizProgressProvider';
 import { log } from '@/lib/log';
+import {
+  iconSm,
+  iconXl,
+  screenPaddingX,
+  sectionGap,
+  space,
+  typeScale,
+} from '@/theme/iosDesign';
 
 const categoryIcons: Record<string, React.ComponentType<{ color: string; size: number }>> = {
   'upper-lower-limbs': Bone,
@@ -111,21 +119,19 @@ export default function QuizScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <LinearGradient
-        colors={[colors.background, colors.backgroundLight]}
-        style={StyleSheet.absoluteFill}
-      />
-      
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <ScrollView 
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
-          <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.text }]}>{t('quiz.title')}</Text>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('quiz.subtitle')}</Text>
-          </View>
+    <Screen withGradient edges={['top']} padded>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <ScreenHeader
+          layout="tab"
+          large
+          inset={false}
+          title={t('quiz.title')}
+          subtitle={t('quiz.subtitle')}
+          style={styles.screenHeader}
+        />
 
           {isPaywallEnabled && !isPremium && (
             <GlassCard style={styles.freeLimitBanner}>
@@ -142,7 +148,7 @@ export default function QuizScreen() {
                     accessibilityRole="button"
                     accessibilityLabel={t('tutor.upgrade')}
                   >
-                    <Crown color={colors.warning} size={14} />
+                    <Crown color={colors.warning} size={iconSm} />
                     <Text style={[styles.upgradeMiniText, { color: colors.warning }]}>{t('tutor.upgrade')}</Text>
                   </TouchableOpacity>
                 )}
@@ -166,7 +172,7 @@ export default function QuizScreen() {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
-                  <Zap color={colors.text} size={28} />
+                  <Zap color={colors.text} size={iconXl} />
                   <Text style={[styles.modeTitle, { color: colors.text }]}>{t('quiz.quickQuiz')}</Text>
                   <Text style={styles.modeSubtitle}>{t('quiz.quickQuizCount')}</Text>
                 </LinearGradient>
@@ -185,12 +191,12 @@ export default function QuizScreen() {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
-                  <Clock color={colors.text} size={28} />
+                  <Clock color={colors.text} size={iconXl} />
                   <Text style={[styles.modeTitle, { color: colors.text }]}>{t('quiz.practice')}</Text>
                   <Text style={styles.modeSubtitle}>{t('quiz.practiceCount')}</Text>
                   {isPaywallEnabled && !isPremium && (
                     <View style={styles.premiumBadge}>
-                      <Lock color={colors.warning} size={12} />
+                      <Lock color={colors.warning} size={iconSm} />
                     </View>
                   )}
                 </LinearGradient>
@@ -209,17 +215,17 @@ export default function QuizScreen() {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
-                  <Trophy color={colors.warning} size={32} />
+                  <Trophy color={colors.warning} size={iconXl} />
                   <View style={styles.examContent}>
                     <Text style={[styles.modeTitle, { color: colors.text }]}>{t('quiz.examSimulation')}</Text>
                     <Text style={styles.modeSubtitle}>{t('quiz.examDetails')}</Text>
                   </View>
                   {isPaywallEnabled && !isPremium ? (
                     <View style={styles.premiumBadge}>
-                      <Lock color={colors.warning} size={12} />
+                      <Lock color={colors.warning} size={iconSm} />
                     </View>
                   ) : (
-                    <ChevronRight color={colors.text} size={24} />
+                    <ChevronRight color={colors.text} size={iconXl} />
                   )}
                 </LinearGradient>
               </TouchableOpacity>
@@ -255,7 +261,7 @@ export default function QuizScreen() {
                       variant={isSelected ? 'light' : 'default'}
                     >
                       <View style={[styles.categoryIconContainer, { backgroundColor: category.color + '25' }]}>
-                        <IconComponent color={category.color} size={28} />
+                        <IconComponent color={category.color} size={iconXl} />
                       </View>
                       <Text style={[styles.categoryName, { color: colors.text }]}>{getModuleName(category.id)}</Text>
                       <Text style={[styles.categoryCount, { color: colors.textSecondary }]}>
@@ -299,40 +305,23 @@ export default function QuizScreen() {
               </View>
             </View>
           </GlassCard>
-        </ScrollView>
-      </SafeAreaView>
-    </View>
+      </ScrollView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: screenPaddingX,
   },
-  header: {
-    marginBottom: 32,
-    marginTop: 8,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700' as const,
-  },
-  subtitle: {
-    fontSize: 15,
-    marginTop: 4,
+  screenHeader: {
+    marginBottom: sectionGap,
   },
   modesSection: {
-    marginBottom: 32,
+    marginBottom: sectionGap,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: sectionGap,
   },
   sectionTitle: {
     fontSize: 18,
@@ -354,8 +343,8 @@ const styles = StyleSheet.create({
   modeGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
-    gap: 12,
+    padding: screenPaddingX,
+    gap: space.space3,
   },
   modeTitle: {
     fontSize: 18,
@@ -398,7 +387,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   categoryName: {
-    fontSize: 15,
+    ...typeScale.subheadMedium,
     fontWeight: '600' as const,
     marginBottom: 4,
   },
@@ -421,7 +410,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   statsCard: {
-    marginBottom: 20,
+    marginBottom: screenPaddingX,
   },
   statsHeader: {
     alignItems: 'center',
@@ -474,7 +463,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 184, 0, 0.2)',
-    paddingHorizontal: 12,
+    paddingHorizontal: space.space3,
     paddingVertical: 6,
     borderRadius: 12,
     gap: 4,

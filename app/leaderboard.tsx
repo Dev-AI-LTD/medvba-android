@@ -7,11 +7,10 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { Screen, ScreenHeader } from '@/components/layout';
 import {
-  ChevronLeft,
   ChevronUp,
   ChevronDown,
   Minus,
@@ -22,7 +21,15 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { useLeaderboard } from '@/lib/supabase-hooks';
 import { useAuth } from '@/providers/AuthProvider';
 import { safeAvatarUri } from '@/lib/safe-image-uri';
-import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
+import {
+  radiusLg,
+  radiusMd,
+  screenPaddingX,
+  sectionGap,
+  space,
+  touchTargetMin,
+  typeScale,
+} from '@/theme/iosDesign';
 
 type LeaderboardPeriod = 'daily' | 'weekly' | 'monthly' | 'allTime';
 
@@ -51,23 +58,12 @@ export default function LeaderboardScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <LinearGradient
-        colors={[colors.background, colors.backgroundLight]}
-        style={StyleSheet.absoluteFill}
+    <Screen withGradient edges={['top', 'bottom']} padded={false}>
+      <ScreenHeader
+        layout="stack-centered"
+        onBack={() => router.back()}
+        title={t('profile.leaderboard')}
       />
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => router.back()}
-            activeOpacity={0.7}
-          >
-            <ChevronLeft color={colors.text} size={24} />
-          </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text }]}>{t('profile.leaderboard')}</Text>
-          <View style={styles.placeholder} />
-        </View>
 
         <View style={styles.periodSelector}>
           {periods.map((period) => (
@@ -173,45 +169,17 @@ export default function LeaderboardScreen() {
             ))}
           </View>
         </ScrollView>
-      </SafeAreaView>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  backButton: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: TOUCH_TARGET_MIN / 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '700' as const,
-  },
-  placeholder: {
-    width: TOUCH_TARGET_MIN,
-  },
   periodSelector: {
     flexDirection: 'row',
-    marginHorizontal: 16,
-    marginBottom: 16,
+    marginHorizontal: screenPaddingX,
+    marginBottom: screenPaddingX,
     backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 12,
+    borderRadius: radiusMd,
     padding: 4,
   },
   periodButton: {
@@ -227,14 +195,14 @@ const styles = StyleSheet.create({
   },
   periodButtonTextActive: {},
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 20,
+    paddingHorizontal: screenPaddingX,
+    paddingBottom: space.space5,
   },
   podium: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'flex-end',
-    marginBottom: 24,
+    marginBottom: sectionGap,
     paddingTop: 10,
   },
   podiumItem: {
@@ -290,15 +258,15 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 8,
   },
   leaderboardList: {
-    borderRadius: 16,
+    borderRadius: radiusLg,
     borderWidth: 1,
     overflow: 'hidden',
   },
   leaderboardItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    paddingVertical: space.space3,
+    paddingHorizontal: screenPaddingX,
   },
   leaderboardItemHighlight: {
     backgroundColor: 'rgba(0, 180, 216, 0.15)',
@@ -313,9 +281,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   leaderboardAvatar: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: TOUCH_TARGET_MIN / 2,
+    width: touchTargetMin,
+    height: touchTargetMin,
+    borderRadius: touchTargetMin / 2,
     marginLeft: 4,
   },
   leaderboardInfo: {
@@ -323,7 +291,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   leaderboardName: {
-    fontSize: 16,
+    ...typeScale.body,
     fontWeight: '600' as const,
   },
   leaderboardStats: {

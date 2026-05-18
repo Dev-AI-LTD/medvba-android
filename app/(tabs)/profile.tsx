@@ -10,10 +10,9 @@ import {
   Animated,
   Dimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Screen, ProfileTabHeader } from '@/components/layout';
 import {
-  Settings,
   Crown,
   Award,
   Target,
@@ -33,7 +32,6 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  EyeOff,
 } from 'lucide-react-native';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -43,7 +41,17 @@ import { useAuth } from '@/providers/AuthProvider';
 import { safeAvatarUri } from '@/lib/safe-image-uri';
 import { useLeaderboard, useZoomRequests } from '@/lib/supabase-hooks';
 import { useSubscription } from '@/providers/SubscriptionProvider';
-import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
+import {
+  iconLg,
+  iconMd,
+  iconSm,
+  iconXl,
+  screenPaddingX,
+  sectionGap,
+  space,
+  touchTargetMin,
+  typeScale,
+} from '@/theme/iosDesign';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -252,53 +260,18 @@ export default function ProfileScreen() {
   const getRankChangeIcon = useCallback((index: number) => {
     const changes = [0, 1, -1, 2, 0, -2, 1];
     const change = changes[index] || 0;
-    if (change > 0) return <ChevronUp color={colors.success} size={14} />;
-    if (change < 0) return <ChevronDown color={colors.error} size={14} />;
-    return <Minus color={colors.textMuted} size={14} />;
+    if (change > 0) return <ChevronUp color={colors.success} size={iconSm} />;
+    if (change < 0) return <ChevronDown color={colors.error} size={iconSm} />;
+    return <Minus color={colors.textMuted} size={iconSm} />;
   }, [colors]);
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={[colors.background, colors.backgroundLight, colors.background]}
-        style={StyleSheet.absoluteFill}
-        locations={[0, 0.5, 1]}
-      />
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
-          <View style={styles.header}>
-            <TouchableOpacity 
-              style={styles.titleRow}
-              onPress={() => router.push('/settings')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.title}>{t('profile')}</Text>
-              {profile?.isPublic === false && (
-                <View style={[styles.privacyBadge, { backgroundColor: colors.textMuted + '20' }]}>
-                  <EyeOff size={12} color={colors.textMuted} />
-                  <Text style={[styles.privacyBadgeText, { color: colors.textMuted }]}>Private</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.settingsButton}
-              activeOpacity={0.7}
-              onPress={() => router.push('/settings')}
-              testID="profileOpenSettings"
-              accessibilityLabel="Open settings"
-            >
-              <LinearGradient
-                colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
-                style={StyleSheet.absoluteFill}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              />
-              <Settings color={colors.textSecondary} size={22} />
-            </TouchableOpacity>
-          </View>
+    <Screen withGradient edges={['top']} padded={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <ProfileTabHeader />
 
           <View style={styles.profileCard}>
             <LinearGradient
@@ -338,11 +311,11 @@ export default function ProfileScreen() {
                 <Text style={styles.profileName}>{profile?.name || t('common.student')}</Text>
                 <View style={styles.profileStats}>
                   <View style={styles.streakBadgeSmall}>
-                    <Flame color={colors.streakOrange} size={14} fill={colors.streakOrange} />
+                    <Flame color={colors.streakOrange} size={iconSm} fill={colors.streakOrange} />
                     <Text style={styles.streakTextSmall}>{streakData.currentStreak}</Text>
                   </View>
                   <View style={styles.pointsBadge}>
-                    <Star color={colors.warning} size={14} fill={colors.warning} />
+                    <Star color={colors.warning} size={iconSm} fill={colors.warning} />
                     <Text style={styles.pointsText}>{(profile?.points || 0).toLocaleString()}</Text>
                   </View>
                 </View>
@@ -356,7 +329,7 @@ export default function ProfileScreen() {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 />
-                <Crown color={colors.warning} size={18} fill={colors.warning} />
+                <Crown color={colors.warning} size={iconSm} fill={colors.warning} />
                 <Text style={styles.premiumBadgeText}>{t('profile.premiumMember')}</Text>
               </View>
             ) : null}
@@ -372,7 +345,7 @@ export default function ProfileScreen() {
               />
               <View style={styles.glassOverlay} />
               <View style={[styles.statIconContainer, { backgroundColor: 'rgba(0, 180, 216, 0.2)' }]}>
-                <Target color={colors.primary} size={22} />
+                <Target color={colors.primary} size={iconLg} />
               </View>
               <Text style={styles.statValue}>{formattedQuestionsCount}</Text>
               <Text style={styles.statLabel}>{t('profile.questions')}</Text>
@@ -384,7 +357,7 @@ export default function ProfileScreen() {
               />
               <View style={styles.glassOverlay} />
               <View style={[styles.statIconContainer, { backgroundColor: 'rgba(0, 196, 140, 0.2)' }]}>
-                <TrendingUp color={colors.success} size={22} />
+                <TrendingUp color={colors.success} size={iconLg} />
               </View>
               <Text style={styles.statValue}>{accuracy.toFixed(1)}%</Text>
               <Text style={styles.statLabel}>{t('profile.accuracy')}</Text>
@@ -396,7 +369,7 @@ export default function ProfileScreen() {
               />
               <View style={styles.glassOverlay} />
               <View style={[styles.statIconContainer, { backgroundColor: 'rgba(255, 107, 157, 0.2)' }]}>
-                <Clock color={colors.accentPink} size={22} />
+                <Clock color={colors.accentPink} size={iconLg} />
               </View>
               <Text style={styles.statValue}>{formattedStudyTime}</Text>
               <Text style={styles.statLabel}>{t('profile.studyTime')}</Text>
@@ -408,7 +381,7 @@ export default function ProfileScreen() {
               />
               <View style={styles.glassOverlay} />
               <View style={[styles.statIconContainer, { backgroundColor: 'rgba(255, 149, 0, 0.2)' }]}>
-                <Flame color={colors.streakOrange} size={22} />
+                <Flame color={colors.streakOrange} size={iconLg} />
               </View>
               <Text style={styles.statValue}>{streakData.currentStreak}</Text>
               <Text style={styles.statLabel}>{t('profile.dayStreak')}</Text>
@@ -429,7 +402,7 @@ export default function ProfileScreen() {
               >
                 <View style={styles.upgradeBannerLeft}>
                   <View style={styles.upgradeBannerIconWrap}>
-                    <Crown color="#FFF" size={24} strokeWidth={2.5} />
+                    <Crown color="#FFF" size={iconXl} strokeWidth={2.5} />
                   </View>
                   <View style={styles.upgradeBannerTextWrap}>
                     <Text style={styles.upgradeBannerTitle}>{t('profile.upgradeBannerTitle')}</Text>
@@ -445,7 +418,7 @@ export default function ProfileScreen() {
 
            <View style={styles.section}>
              <View style={styles.sectionHeader}>
-               <Award color={colors.primary} size={22} />
+               <Award color={colors.primary} size={iconLg} />
                <Text style={styles.sectionTitleInline}>{t('profile.achievements')}</Text>
               <View style={styles.achievementCounter}>
                 <Text style={styles.achievementCounterText}>{unlockedCount}/{achievements.length}</Text>
@@ -482,13 +455,13 @@ export default function ProfileScreen() {
                       <View style={styles.glassOverlay} />
                       {!isUnlocked && (
                         <View style={styles.lockedOverlay}>
-                          <Lock color={colors.textMuted} size={16} />
+                          <Lock color={colors.textMuted} size={iconMd} />
                         </View>
                       )}
                       <View style={[styles.achievementIconContainer, { backgroundColor: isUnlocked ? `${achievement.iconColor}30` : 'rgba(255,255,255,0.08)' }]}>
                         <AchievementIcon
                           color={isUnlocked ? achievement.iconColor : colors.textMuted}
-                          size={28}
+                          size={iconXl}
                           fill={isUnlocked && achievement.id.includes('streak') ? achievement.iconColor : undefined}
                         />
                       </View>
@@ -517,7 +490,7 @@ export default function ProfileScreen() {
 
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Trophy color={colors.warning} size={22} />
+              <Trophy color={colors.warning} size={iconLg} />
               <Text style={styles.sectionTitleInline}>{t('profile.leaderboard')}</Text>
               <TouchableOpacity 
                 style={styles.seeAllButton} 
@@ -525,7 +498,7 @@ export default function ProfileScreen() {
                 activeOpacity={0.7}
               >
                 <Text style={styles.seeAllText}>{t('profile.seeAll')}</Text>
-                <ChevronRight color={colors.primary} size={16} />
+                <ChevronRight color={colors.primary} size={iconMd} />
               </TouchableOpacity>
             </View>
 
@@ -629,7 +602,7 @@ export default function ProfileScreen() {
                   <View style={styles.leaderboardInfo}>
                     <Text style={styles.leaderboardName}>{user.name}</Text>
                     <View style={styles.leaderboardStats}>
-                      <Zap color={colors.warning} size={12} />
+                      <Zap color={colors.warning} size={iconSm} />
                       <Text style={styles.leaderboardPoints}>{user.points.toLocaleString()} {t('profile.pts')}</Text>
                     </View>
                   </View>
@@ -645,7 +618,7 @@ export default function ProfileScreen() {
           {zoomRequests.length > 0 && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Video color={colors.accent} size={22} />
+                <Video color={colors.accent} size={iconLg} />
                 <Text style={styles.sectionTitleInline}>Zoom Session Requests</Text>
               </View>
               <View style={styles.zoomRequestsContainer}>
@@ -668,7 +641,7 @@ export default function ProfileScreen() {
                       <View style={styles.zoomRequestHeader}>
                         <Text style={styles.zoomRequestTopic} numberOfLines={1}>{request.studyTopic}</Text>
                         <View style={[styles.zoomRequestStatus, { backgroundColor: statusConfig.bg }]}>
-                          <StatusIcon color={statusConfig.color} size={14} />
+                          <StatusIcon color={statusConfig.color} size={iconSm} />
                           <Text style={[styles.zoomRequestStatusText, { color: statusConfig.color }]}>
                             {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                           </Text>
@@ -676,7 +649,7 @@ export default function ProfileScreen() {
                       </View>
                       <View style={styles.zoomRequestDetails}>
                         <View style={styles.zoomRequestDetail}>
-                          <Calendar color={colors.textSecondary} size={14} />
+                          <Calendar color={colors.textSecondary} size={iconSm} />
                           <Text style={styles.zoomRequestDetailText}>
                             {new Date(request.preferredDate).toLocaleDateString('en-US', {
                               month: 'short',
@@ -686,7 +659,7 @@ export default function ProfileScreen() {
                           </Text>
                         </View>
                         <View style={styles.zoomRequestDetail}>
-                          <Clock color={colors.textSecondary} size={14} />
+                          <Clock color={colors.textSecondary} size={iconSm} />
                           <Text style={styles.zoomRequestDetailText}>
                             {new Date(request.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                           </Text>
@@ -701,7 +674,7 @@ export default function ProfileScreen() {
 
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Calendar color={colors.accent} size={22} />
+              <Calendar color={colors.accent} size={iconLg} />
               <Text style={styles.sectionTitleInline}>{t('profile.weeklyProgress')}</Text>
             </View>
             <View style={styles.weeklyCard}>
@@ -769,68 +742,18 @@ export default function ProfileScreen() {
           </View>
 
           <View style={{ height: 40 }} />
-        </ScrollView>
-      </SafeAreaView>
-    </View>
+      </ScrollView>
+    </Screen>
   );
 }
 
 const createStyles = (colors: typeof import('@/constants/colors').darkColors) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  safeArea: {
-    flex: 1,
-  },
   scrollContent: {
-    paddingBottom: 20,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 20,
-    marginTop: 8,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    flex: 1,
-  },
-  privacyBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  privacyBadgeText: {
-    fontSize: 11,
-    fontWeight: '600' as const,
-  },
-
-  title: {
-    fontSize: 28,
-    fontWeight: '700' as const,
-    color: colors.text,
-  },
-  settingsButton: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: TOUCH_TARGET_MIN / 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
-    overflow: 'hidden',
+    paddingBottom: screenPaddingX,
   },
   profileCard: {
-    marginHorizontal: 20,
-    marginBottom: 20,
+    marginHorizontal: screenPaddingX,
+    marginBottom: screenPaddingX,
     borderRadius: 24,
     borderWidth: 1,
     borderColor: colors.glassBorder,
@@ -934,7 +857,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     gap: 8,
   },
   premiumButtonText: {
-    fontSize: 16,
+    ...typeScale.body,
     fontWeight: '700' as const,
     color: colors.background,
   },
@@ -950,20 +873,20 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     overflow: 'hidden',
   },
   premiumBadgeText: {
-    fontSize: 16,
+    ...typeScale.body,
     fontWeight: '700' as const,
     color: colors.warning,
   },
 
   upgradeBannerSection: {
-    marginHorizontal: 20,
-    marginBottom: 24,
+    marginHorizontal: screenPaddingX,
+    marginBottom: sectionGap,
     borderRadius: 20,
     overflow: 'hidden',
   },
   upgradeBannerGradient: {
     paddingVertical: 18,
-    paddingHorizontal: 20,
+    paddingHorizontal: screenPaddingX,
   },
   upgradeBannerLeft: {
     flexDirection: 'row',
@@ -971,9 +894,9 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     marginBottom: 14,
   },
   upgradeBannerIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: touchTargetMin,
+    height: touchTargetMin,
+    borderRadius: touchTargetMin / 2,
     backgroundColor: 'rgba(255,255,255,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -999,16 +922,16 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     alignItems: 'center',
   },
   upgradeBannerCtaText: {
-    fontSize: 16,
+    ...typeScale.body,
     fontWeight: '700' as const,
     color: '#FFF',
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 20,
-    gap: 12,
-    marginBottom: 24,
+    paddingHorizontal: screenPaddingX,
+    gap: space.space3,
+    marginBottom: sectionGap,
   },
   statCard: {
     width: (SCREEN_WIDTH - 52) / 2,
@@ -1022,9 +945,9 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     overflow: 'hidden',
   },
   statIconContainer: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: TOUCH_TARGET_MIN / 2,
+    width: touchTargetMin,
+    height: touchTargetMin,
+    borderRadius: touchTargetMin / 2,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
@@ -1040,14 +963,14 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     marginTop: 4,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: sectionGap,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     marginBottom: 14,
-    paddingHorizontal: 20,
+    paddingHorizontal: screenPaddingX,
   },
   sectionTitleInline: {
     fontSize: 18,
@@ -1057,7 +980,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
   },
   achievementCounter: {
     backgroundColor: 'rgba(0, 180, 216, 0.2)',
-    paddingHorizontal: 12,
+    paddingHorizontal: space.space3,
     paddingVertical: 6,
     borderRadius: 12,
   },
@@ -1076,8 +999,8 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     fontWeight: '600' as const,
   },
   achievementsScroll: {
-    paddingHorizontal: 20,
-    gap: 12,
+    paddingHorizontal: screenPaddingX,
+    gap: space.space3,
   },
   achievementCard: {
     width: 140,
@@ -1085,7 +1008,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 18,
-    paddingHorizontal: 12,
+    paddingHorizontal: space.space3,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.glassBorder,
@@ -1135,7 +1058,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
   },
   periodSelector: {
     flexDirection: 'row',
-    marginHorizontal: 20,
+    marginHorizontal: screenPaddingX,
     marginBottom: 14,
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: 12,
@@ -1161,7 +1084,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     fontWeight: '700' as const,
   },
   leaderboardCard: {
-    marginHorizontal: 20,
+    marginHorizontal: screenPaddingX,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.glassBorder,
@@ -1257,9 +1180,9 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     alignItems: 'center',
   },
   leaderboardAvatar: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: TOUCH_TARGET_MIN / 2,
+    width: touchTargetMin,
+    height: touchTargetMin,
+    borderRadius: touchTargetMin / 2,
     marginLeft: 4,
   },
   leaderboardInfo: {
@@ -1295,7 +1218,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     fontSize: 14,
   },
   weeklyCard: {
-    marginHorizontal: 20,
+    marginHorizontal: screenPaddingX,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.glassBorder,
@@ -1312,7 +1235,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     marginLeft: 20,
   },
   weeklyTitle: {
-    fontSize: 16,
+    ...typeScale.body,
     fontWeight: '700' as const,
     color: colors.text,
     marginBottom: 4,
@@ -1385,8 +1308,8 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     marginTop: 2,
   },
   zoomRequestsContainer: {
-    paddingHorizontal: 20,
-    gap: 12,
+    paddingHorizontal: screenPaddingX,
+    gap: space.space3,
   },
   zoomRequestCard: {
     borderRadius: 16,
@@ -1402,7 +1325,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     marginBottom: 12,
   },
   zoomRequestTopic: {
-    fontSize: 16,
+    ...typeScale.body,
     fontWeight: '600' as const,
     color: colors.text,
     flex: 1,

@@ -8,6 +8,13 @@ import { useSubscription } from '@/providers/SubscriptionProvider';
 import { presentPaywall, PAYWALL_RESULT } from '@/lib/revenuecat';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { FREE_FEATURE_KEYS, getFreeFeatureLines } from '@/constants/subscription';
+import {
+  buttonHeight,
+  radiusMd,
+  sectionGap,
+  space,
+  typeScale,
+} from '@/theme/iosDesign';
 
 const IS_NATIVE = Platform.OS === 'ios' || Platform.OS === 'android';
 // Expo Go = storeClient; real builds = standalone
@@ -156,7 +163,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: sectionGap,
   },
   loadingText: {
     marginTop: 16,
@@ -182,9 +189,9 @@ const styles = StyleSheet.create({
   freeTierHeading: {
     alignSelf: 'stretch',
     maxWidth: 420,
-    marginTop: 24,
-    paddingHorizontal: 8,
-    fontSize: 16,
+    marginTop: sectionGap,
+    paddingHorizontal: space.space2,
+    ...typeScale.body,
     fontWeight: '600' as const,
     textAlign: 'left',
   },
@@ -196,12 +203,13 @@ const styles = StyleSheet.create({
   },
   goBackButton: {
     marginTop: 28,
-    paddingHorizontal: 32,
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingHorizontal: space.space7,
+    minHeight: buttonHeight,
+    paddingVertical: space.space3,
+    borderRadius: radiusMd,
   },
   goBackButtonText: {
-    fontSize: 16,
+    ...typeScale.body,
     fontWeight: '600' as const,
   },
 });

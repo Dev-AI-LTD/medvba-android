@@ -1,30 +1,33 @@
-import { MD3LightTheme, MD3DarkTheme, type MD3Theme } from 'react-native-paper';
+import { MD3LightTheme, MD3DarkTheme, configureFonts, type MD3Theme } from 'react-native-paper';
+import {
+  SPACING,
+  TOUCH_TARGET_MIN,
+  fontFamily,
+  radiusMd,
+  typeScale,
+} from '@/theme/iosDesign';
 
-/** Material Design 3 spacing: use multiples of 8dp */
-export const SPACING = {
-  /** 8dp */
-  x1: 8,
-  /** 16dp */
-  x2: 16,
-  /** 24dp */
-  x3: 24,
-  /** 32dp */
-  x4: 32,
-  /** 40dp */
-  x5: 40,
-  /** 48dp */
-  x6: 48,
-  /** 56dp */
-  x7: 56,
-  /** 64dp */
-  x8: 64,
-} as const;
+export { SPACING, TOUCH_TARGET_MIN };
 
-/**
- * Minimum interactive size (pt on iOS, dp on Android). Single value for both platforms:
- * aligns with Material guidance (~48) and is comfortable on iOS (HIG often cites ~44).
- */
-export const TOUCH_TARGET_MIN = 48;
+const iosFonts = configureFonts({
+  config: {
+    displayLarge: { ...typeScale.largeTitle, fontFamily },
+    displayMedium: { ...typeScale.title, fontFamily },
+    displaySmall: { ...typeScale.title2, fontFamily },
+    headlineLarge: { ...typeScale.title2, fontFamily },
+    headlineMedium: { ...typeScale.headline, fontFamily },
+    headlineSmall: { ...typeScale.headline, fontFamily },
+    titleLarge: { ...typeScale.title2, fontFamily },
+    titleMedium: { ...typeScale.headline, fontFamily },
+    titleSmall: { ...typeScale.subheadMedium, fontFamily },
+    bodyLarge: { ...typeScale.body, fontFamily },
+    bodyMedium: { ...typeScale.subhead, fontFamily },
+    bodySmall: { ...typeScale.caption, fontFamily },
+    labelLarge: { ...typeScale.headline, fontFamily },
+    labelMedium: { ...typeScale.subheadMedium, fontFamily },
+    labelSmall: { ...typeScale.caption, fontFamily },
+  },
+});
 
 type AppColors = {
   primary: string;
@@ -46,7 +49,8 @@ export function getPaperTheme(colors: AppColors, dark: boolean): MD3Theme {
   return {
     ...base,
     dark,
-    roundness: 12,
+    roundness: radiusMd,
+    fonts: iosFonts,
     colors: {
       ...base.colors,
       primary: colors.primary,

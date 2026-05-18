@@ -20,7 +20,12 @@ import { buildKindeRegisterHint, buildKindeSignInHint } from '@/lib/kinde-hosted
 import { getMergedExpoExtra } from '@/lib/expo-public-extra';
 import { useAuth, AUTH_SIGN_IN_CANCELLED } from '@/providers/AuthProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { SPACING, TOUCH_TARGET_MIN } from '@/theme/paperTheme';
+import {
+  SPACING,
+  radiusLg,
+  sectionGap,
+  touchTargetMin,
+} from '@/theme/iosDesign';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { isApiBaseUrlConfigured } from '@/lib/api-base-url';
 import { log } from '@/lib/log';
@@ -243,7 +248,7 @@ function LoginScreen() {
           <ScrollView
             contentContainerStyle={[
               styles.scrollContent,
-              { paddingHorizontal: SPACING.x3, paddingTop: SPACING.x3, paddingBottom: SPACING.x3 },
+              { paddingHorizontal: sectionGap, paddingTop: sectionGap, paddingBottom: sectionGap },
             ]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
@@ -423,7 +428,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.x2,
   },
   card: {
-    borderRadius: 16,
+    borderRadius: radiusLg,
     marginBottom: SPACING.x4,
   },
   cardContent: {
@@ -438,9 +443,9 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.x3,
   },
   socialButton: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: TOUCH_TARGET_MIN / 2,
+    width: touchTargetMin,
+    height: touchTargetMin,
+    borderRadius: touchTargetMin / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },

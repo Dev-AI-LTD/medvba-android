@@ -1,7 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { HelpCircle, Mail } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -10,7 +8,9 @@ import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import GlassCard from '@/components/GlassCard';
 import Button from '@/components/Button';
+import { Screen, ScreenHeader } from '@/components/layout';
 import { openSupportMail } from '@/lib/support-mail';
+import { iconMd, iconSm, screenPaddingX, space, typeScale } from '@/theme/iosDesign';
 
 type FaqItem = {
   question: string;
@@ -68,17 +68,18 @@ export default function HelpCenterScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Stack.Screen options={{ title: t('support.helpCenterTitle') }} />
-      <LinearGradient
-        colors={[colors.background, colors.backgroundLight]}
-        style={StyleSheet.absoluteFill}
-      />
-      <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <Screen withGradient edges={['top', 'bottom']} padded={false}>
+        <ScreenHeader
+          layout="stack-centered"
+          onBack={() => router.back()}
+          title={t('support.helpCenterTitle')}
+        />
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <GlassCard style={styles.headerCard}>
             <View style={styles.headerRow}>
-              <HelpCircle color={colors.primary} size={22} />
+              <HelpCircle color={colors.primary} size={iconMd} />
               <Text style={styles.headerTitle}>{t('support.helpCenterTitle')}</Text>
             </View>
             <Text style={styles.headerSubtitle}>{t('support.helpCenterSubtitle')}</Text>
@@ -96,14 +97,14 @@ export default function HelpCenterScreen() {
 
           <GlassCard style={styles.contactCard}>
             <View style={styles.contactRow}>
-              <Mail color={colors.accentPink} size={20} />
+              <Mail color={colors.accentPink} size={iconMd} />
               <Text style={styles.contactTitle}>{t('support.contactSupport')}</Text>
             </View>
             <Text style={styles.contactSubtitle}>{t('support.contactSupportSubtitle')}</Text>
             <Button
               title={openingMail ? t('support.sending') : t('support.emailFromHelpButton')}
               onPress={() => void handleOpenSupportMail()}
-              icon={<Mail color="#FFFFFF" size={18} />}
+              icon={<Mail color="#FFFFFF" size={iconSm} />}
               fullWidth
               loading={openingMail}
               disabled={openingMail}
@@ -117,88 +118,79 @@ export default function HelpCenterScreen() {
             />
           </GlassCard>
         </ScrollView>
-      </SafeAreaView>
-    </View>
+      </Screen>
+    </>
   );
 }
 
-const createStyles = (colors: any) =>
+const createStyles = (colors: {
+  text: string;
+  textSecondary: string;
+  textMuted: string;
+}) =>
   StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-    safeArea: {
-      flex: 1,
-    },
     content: {
-      padding: 20,
-      gap: 16,
+      padding: screenPaddingX,
+      gap: space.space4,
     },
     headerCard: {
-      padding: 16,
+      padding: screenPaddingX,
     },
     headerRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 8,
-      marginBottom: 8,
+      gap: space.space2,
+      marginBottom: space.space2,
     },
     headerTitle: {
-      fontSize: 18,
+      ...typeScale.headline,
       fontWeight: '700' as const,
       color: colors.text,
     },
     headerSubtitle: {
-      fontSize: 14,
+      ...typeScale.subhead,
       color: colors.textSecondary,
-      lineHeight: 20,
     },
     section: {
-      gap: 12,
+      gap: space.space3,
     },
     sectionTitle: {
-      fontSize: 16,
-      fontWeight: '700' as const,
+      ...typeScale.headline,
       color: colors.text,
     },
     faqCard: {
-      padding: 16,
+      padding: screenPaddingX,
     },
     faqQuestion: {
-      fontSize: 14,
+      ...typeScale.subheadMedium,
       fontWeight: '700' as const,
       color: colors.text,
-      marginBottom: 6,
+      marginBottom: space.space2,
     },
     faqAnswer: {
-      fontSize: 13,
+      ...typeScale.caption,
       color: colors.textSecondary,
-      lineHeight: 18,
     },
     contactCard: {
-      padding: 16,
-      gap: 10,
+      padding: screenPaddingX,
+      gap: space.space3,
     },
     contactRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 8,
+      gap: space.space2,
     },
     contactTitle: {
-      fontSize: 16,
-      fontWeight: '700' as const,
+      ...typeScale.headline,
       color: colors.text,
     },
     contactSubtitle: {
-      fontSize: 13,
+      ...typeScale.caption,
       color: colors.textSecondary,
-      lineHeight: 18,
     },
     secondaryHint: {
-      fontSize: 12,
+      ...typeScale.footnote,
       color: colors.textMuted,
-      lineHeight: 16,
-      marginTop: -4,
+      marginTop: -space.space1,
     },
   });

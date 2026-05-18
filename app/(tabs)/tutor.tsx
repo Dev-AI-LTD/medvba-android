@@ -9,17 +9,16 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useKeyboardHeight } from '@/lib/use-keyboard-height';
+import { Screen, TutorTabHeader } from '@/components/layout';
 import {
   Send,
   Bot,
   User,
-  Sparkles,
   BookOpen,
   Lightbulb,
   HelpCircle,
-  Crown,
   Lock,
   RotateCcw,
 } from 'lucide-react-native';
@@ -33,7 +32,15 @@ import { useSubscription } from '@/providers/SubscriptionProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { TRPCClientError } from '@trpc/client';
 import { trpc } from '@/lib/trpc';
-import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
+import {
+  iconMd,
+  iconSm,
+  inputMinHeight,
+  screenPaddingX,
+  space,
+  touchTargetMin,
+  typeScale,
+} from '@/theme/iosDesign';
 import { OfflineFeatureNotice } from '@/components/OfflineFeatureNotice';
 
 function getMutationErrorMessage(error: unknown, fallback: string): string {
@@ -101,6 +108,9 @@ export default function TutorScreen() {
 
   const remainingAiQuestions = getRemainingAiQuestions();
   const { t, currentLanguage } = useLanguage();
+  const tabBarHeight = useBottomTabBarHeight();
+  const keyboardHeight = useKeyboardHeight();
+  const keyboardVerticalOffset = tabBarHeight;
 
   const tutorLocale = currentLanguage === 'ro' ? 'ro' : 'en';
 
@@ -302,52 +312,41 @@ export default function TutorScreen() {
     setInputText(text);
   };
 
+  const scrollToEnd = useCallback(() => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 80);
+  }, []);
+
+  useEffect(() => {
+    if (keyboardHeight > 0) {
+      scrollToEnd();
+    }
+  }, [keyboardHeight, scrollToEnd]);
+
+  const messagesContentStyle = useMemo(
+    () => [
+      styles.messagesContent,
+      { paddingBottom: keyboardHeight > 0 ? 12 : 10 },
+    ],
+    [keyboardHeight],
+  );
+
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={[colors.background, colors.backgroundLight]}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-      />
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.keyboardView}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-          enabled={Platform.OS !== 'web'}
-        >
-          <OfflineFeatureNotice />
-          <View style={styles.header}>
-            <View style={styles.headerIcon}>
-              <Bot color={colors.primary} size={24} />
-            </View>
-            <View>
-              <Text style={styles.title}>{t('tutor.title')}</Text>
-              <View style={styles.statusRow}>
-                <View style={styles.onlineDot} />
-                <Text style={styles.status}>{t('tutor.alwaysAvailable')}</Text>
-              </View>
-            </View>
-            {isPaywallEnabled && isPremium ? (
-              <View style={styles.premiumBadge}>
-                <Sparkles color={colors.warning} size={14} />
-                <Text style={styles.premiumText}>{t('tutor.premium')}</Text>
-              </View>
-            ) : isPaywallEnabled ? (
-              <TouchableOpacity 
-                style={styles.upgradeButton}
-                onPress={() => router.push('/paywall')}
-              >
-                <Crown color={colors.warning} size={14} />
-                <Text style={styles.upgradeButtonText}>{t('tutor.upgrade')}</Text>
-              </TouchableOpacity>
-            ) : null}
-          </View>
+    <Screen withGradient edges={['top']} padded={false} contentStyle={styles.screenContent}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'web' ? undefined : 'padding'}
+        style={styles.keyboardView}
+        keyboardVerticalOffset={keyboardVerticalOffset}
+        enabled={Platform.OS !== 'web'}
+      >
+        <OfflineFeatureNotice />
+        <TutorTabHeader />
 
           <ScrollView
             ref={scrollViewRef}
             style={styles.messagesContainer}
-            contentContainerStyle={styles.messagesContent}
+            contentContainerStyle={messagesContentStyle}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
@@ -361,7 +360,7 @@ export default function TutorScreen() {
                       : t('tutor.dailyLimitReached')}
                   </Text>
                   {remainingAiQuestions === 0 && (
-                    <Lock color={colors.error} size={16} />
+                    <Lock color={colors.error} size={iconMd} />
                   )}
                 </View>
               </View>
@@ -376,7 +375,7 @@ export default function TutorScreen() {
                     onPress={() => handleSuggestion(suggestion.text)}
                   >
                     <GlassCard style={styles.suggestionCard}>
-                      <suggestion.icon color={colors.primary} size={20} />
+                      <suggestion.icon color={colors.primary} size={iconMd} />
                       <View style={styles.suggestionContent}>
                         <Text style={styles.suggestionText}>{suggestion.text}</Text>
                         <Text style={styles.suggestionCategory}>{suggestion.category}</Text>
@@ -397,7 +396,7 @@ export default function TutorScreen() {
                 >
                   {message.role === 'assistant' && (
                     <View style={styles.avatarContainer}>
-                      <Bot color={message.isError ? colors.error : colors.primary} size={18} />
+                      <Bot color={message.isError ? colors.error : colors.primary} size={iconSm} />
                     </View>
                   )}
                   <View
@@ -416,7 +415,7 @@ export default function TutorScreen() {
                   </View>
                   {message.role === 'user' && (
                     <View style={[styles.avatarContainer, styles.userAvatar]}>
-                      <User color={colors.text} size={18} />
+                      <User color={colors.text} size={iconSm} />
                     </View>
                   )}
                 </View>
@@ -426,7 +425,7 @@ export default function TutorScreen() {
                     onPress={handleRetry}
                     disabled={isTyping}
                   >
-                    <RotateCcw color={colors.primary} size={14} />
+                    <RotateCcw color={colors.primary} size={iconSm} />
                     <Text style={[styles.retryButtonText, { color: colors.primary }]}>
                       {t('tutor.retry')}
                     </Text>
@@ -438,7 +437,7 @@ export default function TutorScreen() {
             {isTyping && (
               <View style={styles.messageRow}>
                 <View style={styles.avatarContainer}>
-                  <Bot color={colors.primary} size={18} />
+                  <Bot color={colors.primary} size={iconSm} />
                 </View>
                 <View style={[styles.messageBubble, styles.assistantBubble, styles.typingBubble]}>
                   <View style={styles.typingIndicator}>
@@ -475,6 +474,7 @@ export default function TutorScreen() {
                 autoCapitalize="sentences"
                 returnKeyType="default"
                 blurOnSubmit={false}
+                onFocus={scrollToEnd}
               />
               <View style={styles.inputFooter}>
                 <Text style={[styles.charCount, inputText.length > 450 && { color: colors.error }]}>
@@ -485,86 +485,28 @@ export default function TutorScreen() {
                   onPress={handleSend}
                   disabled={!inputText.trim() || isTyping}
                 >
-                  <Send color={inputText.trim() && !isTyping ? colors.text : colors.textMuted} size={20} />
+                  <Send color={inputText.trim() && !isTyping ? colors.text : colors.textMuted} size={iconMd} />
                 </TouchableOpacity>
               </View>
             </View>
           </View>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </View>
+      </KeyboardAvoidingView>
+    </Screen>
   );
 }
 
 const createStyles = (colors: typeof import('@/constants/colors').darkColors) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  safeArea: {
+  screenContent: {
     flex: 1,
   },
   keyboardView: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.glassBorder,
-  },
-  headerIcon: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: TOUCH_TARGET_MIN / 2,
-    backgroundColor: colors.cardBgLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700' as const,
-    color: colors.text,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 2,
-  },
-  onlineDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.success,
-  },
-  status: {
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
-  premiumBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 184, 0, 0.15)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-    marginLeft: 'auto',
-    gap: 4,
-  },
-  premiumText: {
-    fontSize: 12,
-    fontWeight: '600' as const,
-    color: colors.warning,
-  },
   messagesContainer: {
     flex: 1,
   },
   messagesContent: {
-    padding: 20,
+    padding: screenPaddingX,
     paddingBottom: 10,
   },
   suggestions: {
@@ -645,7 +587,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginLeft: TOUCH_TARGET_MIN + 4,
+    marginLeft: touchTargetMin + 4,
     marginTop: 4,
     marginBottom: 4,
     alignSelf: 'flex-start',
@@ -656,7 +598,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
   },
   typingBubble: {
     paddingVertical: 16,
-    paddingHorizontal: 20,
+    paddingHorizontal: screenPaddingX,
   },
   typingIndicator: {
     flexDirection: 'row',
@@ -678,21 +620,21 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     opacity: 0.8,
   },
   inputContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: Platform.OS === 'ios' ? 20 : 10,
+    paddingHorizontal: screenPaddingX,
+    paddingBottom: Platform.OS === 'ios' ? 8 : 6,
     paddingTop: 10,
   },
   inputWrapper: {
     flexDirection: 'column',
     paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: space.space3,
     borderRadius: 24,
     borderWidth: 1,
   },
   input: {
     width: '100%',
-    minHeight: 44,
-    fontSize: 16,
+    minHeight: inputMinHeight,
+    ...typeScale.body,
     color: colors.text,
     maxHeight: 120,
     paddingVertical: 8,
@@ -710,30 +652,15 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     flex: 1,
   },
   sendButton: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: TOUCH_TARGET_MIN / 2,
+    width: touchTargetMin,
+    height: touchTargetMin,
+    borderRadius: touchTargetMin / 2,
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   sendButtonDisabled: {
     backgroundColor: colors.cardBgLight,
-  },
-  upgradeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 184, 0, 0.15)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-    marginLeft: 'auto',
-    gap: 4,
-  },
-  upgradeButtonText: {
-    fontSize: 12,
-    fontWeight: '600' as const,
-    color: colors.warning,
   },
   freeLimitBanner: {
     backgroundColor: 'rgba(255, 184, 0, 0.1)',

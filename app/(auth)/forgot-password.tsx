@@ -20,7 +20,7 @@ import {
 } from 'react-native-paper';
 import { useAuth } from '@/providers/AuthProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { SPACING } from '@/theme/paperTheme';
+import { SPACING, radiusLg, screenPaddingX, sectionGap } from '@/theme/iosDesign';
 import { isApiBaseUrlConfigured } from '@/lib/api-base-url';
 import { log } from '@/lib/log';
 import { isLikelyAuthConnectivityFailure } from '@/lib/auth-connectivity-errors';
@@ -175,7 +175,7 @@ export default function ForgotPasswordScreen() {
             contentContainerStyle={[
               styles.scrollContent,
               {
-                paddingHorizontal: SPACING.x3,
+                paddingHorizontal: screenPaddingX,
                 paddingTop: SPACING.x2,
                 paddingBottom: SPACING.x4,
               },
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.x2,
   },
   card: {
-    borderRadius: 16,
+    borderRadius: radiusLg,
     marginBottom: SPACING.x4,
   },
   cardContent: {
@@ -298,10 +298,10 @@ const styles = StyleSheet.create({
   successContainer: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: SPACING.x3,
+    paddingHorizontal: screenPaddingX,
   },
   successCard: {
-    borderRadius: 16,
+    borderRadius: radiusLg,
   },
   successCardContent: {
     padding: SPACING.x4,

@@ -28,7 +28,18 @@ import {
   type QuestionTranslateLanguage,
 } from '@/lib/translateQuestion';
 import { log } from '@/lib/log';
-import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
+import {
+  buttonHeight,
+  iconMd,
+  iconSm,
+  iconXl,
+  radiusLg,
+  radiusMd,
+  screenPaddingX,
+  space,
+  touchTargetMin,
+  typeScale,
+} from '@/theme/iosDesign';
 
 import {
   allQuestions,
@@ -802,7 +813,7 @@ export default function QuizSessionScreen() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Crown color="#FFF" size={20} strokeWidth={2.5} />
+                <Crown color="#FFF" size={iconMd} strokeWidth={2.5} />
                 <Text style={styles.limitReachedUpgradeText}>{t('session.upgradePremium')}</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -828,7 +839,7 @@ export default function QuizSessionScreen() {
       <View style={[styles.safeArea, { paddingTop: topPadding }]}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-            <X color={colors.text} size={24} />
+            <X color={colors.text} size={iconXl} />
           </TouchableOpacity>
           
           <View style={styles.progressContainer}>
@@ -905,8 +916,8 @@ export default function QuizSessionScreen() {
                         </Text>
                       </View>
                       <Text style={styles.optionText}>{option}</Text>
-                      {showCorrect && <CheckCircle color={colors.success} size={20} />}
-                      {showWrong && <XCircle color={colors.error} size={20} />}
+                      {showCorrect && <CheckCircle color={colors.success} size={iconMd} />}
+                      {showWrong && <XCircle color={colors.error} size={iconMd} />}
                     </GlassCard>
                   </TouchableOpacity>
                 );
@@ -921,7 +932,7 @@ export default function QuizSessionScreen() {
                     style={styles.copyButton} 
                     onPress={handleCopyExplanation}
                   >
-                    <Copy color={colors.primary} size={18} />
+                    <Copy color={colors.primary} size={iconSm} />
                     <Text style={styles.copyButtonText}>{t('session.copy')}</Text>
                   </TouchableOpacity>
                 </View>
@@ -943,7 +954,7 @@ export default function QuizSessionScreen() {
                 <Text style={styles.nextButtonText}>
                   {currentIndex < questions.length - 1 ? t('session.nextQuestion') : t('session.seeResults')}
                 </Text>
-                <ChevronRight color={colors.text} size={20} />
+                <ChevronRight color={colors.text} size={iconMd} />
               </LinearGradient>
             </TouchableOpacity>
           </View>
@@ -979,21 +990,21 @@ const createStyles = (colors: any) => StyleSheet.create({
     borderRadius: 12,
   },
   backButtonText: {
-    fontSize: 16,
+    ...typeScale.body,
     fontWeight: '600' as const,
     color: colors.text,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    gap: 12,
+    paddingHorizontal: screenPaddingX,
+    paddingVertical: space.space3,
+    gap: space.space3,
   },
   closeButton: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: TOUCH_TARGET_MIN / 2,
+    width: touchTargetMin,
+    height: touchTargetMin,
+    borderRadius: touchTargetMin / 2,
     backgroundColor: colors.cardBg,
     justifyContent: 'center',
     alignItems: 'center',
@@ -1025,8 +1036,8 @@ const createStyles = (colors: any) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 184, 0, 0.15)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: space.space3,
+    paddingVertical: space.space2,
     borderRadius: 20,
     gap: 6,
   },
@@ -1043,7 +1054,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: screenPaddingX,
   },
   questionContainer: {
     marginBottom: 24,
@@ -1051,9 +1062,9 @@ const createStyles = (colors: any) => StyleSheet.create({
   chapterBadge: {
     alignSelf: 'flex-start',
     backgroundColor: colors.primary + '25',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
+    paddingHorizontal: screenPaddingX,
+    paddingVertical: space.space2,
+    borderRadius: radiusMd,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: colors.primary + '40',
@@ -1066,9 +1077,9 @@ const createStyles = (colors: any) => StyleSheet.create({
   difficultyBadge: {
     alignSelf: 'flex-start',
     backgroundColor: colors.cardBgLight,
-    paddingHorizontal: 12,
+    paddingHorizontal: space.space3,
     paddingVertical: 6,
-    borderRadius: 12,
+    borderRadius: radiusMd,
     marginBottom: 16,
   },
   difficultyText: {
@@ -1151,9 +1162,9 @@ const createStyles = (colors: any) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 12,
+    paddingHorizontal: space.space3,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: radiusMd,
     backgroundColor: colors.primary + '20',
   },
   copyButtonText: {
@@ -1167,29 +1178,30 @@ const createStyles = (colors: any) => StyleSheet.create({
     lineHeight: 20,
   },
   footer: {
-    paddingHorizontal: 20,
-    paddingBottom: 12,
+    paddingHorizontal: screenPaddingX,
+    paddingBottom: space.space3,
   },
   nextButton: {
-    borderRadius: 16,
+    borderRadius: radiusLg,
     overflow: 'hidden',
   },
   nextButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    gap: 8,
+    minHeight: buttonHeight,
+    paddingVertical: space.space4,
+    gap: space.space2,
   },
   nextButtonText: {
-    fontSize: 16,
+    ...typeScale.body,
     fontWeight: '700' as const,
     color: colors.text,
   },
   resultContainer: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: screenPaddingX,
   },
   resultCard: {
     alignItems: 'center',
@@ -1211,7 +1223,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     marginBottom: 4,
   },
   resultPercentage: {
-    fontSize: 16,
+    ...typeScale.body,
     color: colors.textSecondary,
     marginBottom: 24,
   },
@@ -1241,16 +1253,17 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   finishButton: {
     width: '100%',
-    borderRadius: 16,
+    borderRadius: radiusLg,
     overflow: 'hidden',
   },
   finishButtonGradient: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
+    minHeight: buttonHeight,
+    paddingVertical: space.space4,
   },
   finishButtonText: {
-    fontSize: 16,
+    ...typeScale.body,
     fontWeight: '700' as const,
     color: colors.text,
   },
@@ -1277,10 +1290,9 @@ const createStyles = (colors: any) => StyleSheet.create({
     textAlign: 'center',
   },
   limitReachedSubtitle: {
-    fontSize: 16,
+    ...typeScale.body,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 22,
     marginBottom: 16,
   },
   limitReachedScore: {
@@ -1290,7 +1302,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     marginBottom: 32,
   },
   limitReachedUpgradeButton: {
-    borderRadius: 16,
+    borderRadius: radiusLg,
     overflow: 'hidden',
     width: '100%',
     marginBottom: 16,
@@ -1299,7 +1311,8 @@ const createStyles = (colors: any) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 18,
+    minHeight: buttonHeight,
+    paddingVertical: space.space4,
     gap: 10,
   },
   limitReachedUpgradeText: {

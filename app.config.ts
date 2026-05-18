@@ -5,7 +5,7 @@ import path from 'path';
 type EnvMap = Record<string, string>;
 
 /** Keep in sync with store releases; bare workflow requires a string runtimeVersion (no policy). */
-const APP_VERSION = '1.0.27';
+const APP_VERSION = '1.0.28';
 
 const readEnvText = (filePath: string): string => {
   const buf = fs.readFileSync(filePath);
@@ -153,7 +153,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       supportsTablet: false,
       bundleIdentifier: 'com.devaieood.medvba',
       icon: './assets/images/icon.png',
-      buildNumber: '46',
+      buildNumber: '47',
       // Required for @invertase/react-native-apple-authentication (EAS / prebuild).
       entitlements: {
         'com.apple.developer.applesignin': ['Default'],
@@ -169,7 +169,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         foregroundImage: './assets/images/adaptive-icon.png',
         backgroundColor: '#000000',
       },
-      versionCode: 36,
+      versionCode: 37,
       package: 'com.devaieood.medvba',
       // Play: upload mapping.txt per release (Deobfuscation). Native: native-debug-symbols.zip (Symbols); both are buildArtifactPaths in eas.json.
       blockedPermissions: [
@@ -185,6 +185,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       ],
       // Android 15+ edge-to-edge; use system bars (status/nav) via insets instead of deprecated color APIs
       edgeToEdgeEnabled: true,
+      softwareKeyboardLayoutMode: 'resize',
     },
     web: {
       favicon: './assets/images/favicon.png',

@@ -3,7 +3,7 @@ import { Text, useTheme } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useBlockingAuthOffline } from '@/lib/use-network-auth-offline';
-import { SPACING } from '@/theme/paperTheme';
+import { radiusMd, screenPaddingX, space } from '@/theme/iosDesign';
 
 export function AuthOfflineBanner() {
   const theme = useTheme();
@@ -13,7 +13,7 @@ export function AuthOfflineBanner() {
 
   if (!offline) return null;
 
-  const top = Platform.OS === 'web' ? 12 : insets.top + 8;
+  const top = Platform.OS === 'web' ? space.space3 : insets.top + space.space2;
 
   return (
     <View style={[styles.wrap, { top }]} pointerEvents="box-none" accessibilityRole="alert">
@@ -46,12 +46,12 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 40,
     elevation: 6,
-    paddingHorizontal: SPACING.x3,
+    paddingHorizontal: screenPaddingX,
   },
   banner: {
-    borderRadius: 12,
+    borderRadius: radiusMd,
     borderWidth: StyleSheet.hairlineWidth,
-    padding: SPACING.x2,
+    padding: space.space4,
   },
   textCol: {
     flex: 1,

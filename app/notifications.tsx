@@ -10,15 +10,24 @@ import {
   Alert,
   Linking,
 } from 'react-native';
-import * as Haptics from 'expo-haptics';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, Clock } from 'lucide-react-native';
+import { Clock } from 'lucide-react-native';
+import { Screen, ScreenHeader } from '@/components/layout';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
+import {
+  iconMd,
+  radiusLg,
+  radiusMd,
+  screenPaddingX,
+  sectionGap,
+  space,
+  touchTargetMin,
+  typeScale,
+} from '@/theme/iosDesign';
 import {
   loadNotificationPreferences,
   saveNotificationPreferences,
@@ -147,33 +156,21 @@ export default function NotificationsScreen() {
 
   if (!settings) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <LinearGradient
-          colors={[colors.background, colors.backgroundLight]}
-          style={StyleSheet.absoluteFill}
-        />
-      </View>
+      <Screen withGradient edges={['top', 'bottom']}>
+        <View />
+      </Screen>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={[colors.background, colors.backgroundLight]}
-        style={StyleSheet.absoluteFill}
+    <Screen withGradient edges={['top', 'bottom']} padded={false}>
+      <ScreenHeader
+        layout="stack-centered"
+        onBack={() => router.back()}
+        title={t('notifications.title')}
+        backVariant="pill"
+        bordered
       />
-      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-            activeOpacity={0.7}
-          >
-            <ChevronLeft color={colors.text} size={24} />
-          </TouchableOpacity>
-          <Text style={styles.title}>{t('notifications.title')}</Text>
-          <View style={styles.placeholder} />
-        </View>
 
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -214,7 +211,7 @@ export default function NotificationsScreen() {
                   activeOpacity={0.7}
                 >
                   <View style={styles.timePickerIcon}>
-                    <Clock color={colors.primary} size={20} />
+                    <Clock color={colors.primary} size={iconMd} />
                   </View>
                   <View style={styles.timePickerInfo}>
                     <Text style={styles.timePickerLabel}>
@@ -326,7 +323,7 @@ export default function NotificationsScreen() {
                     activeOpacity={0.7}
                   >
                     <View style={styles.timePickerIcon}>
-                      <Clock color={colors.primary} size={20} />
+                      <Clock color={colors.primary} size={iconMd} />
                     </View>
                     <View style={styles.timePickerInfo}>
                       <Text style={styles.timePickerLabel}>{t('notifications.dndStart')}</Text>
@@ -343,7 +340,7 @@ export default function NotificationsScreen() {
                     activeOpacity={0.7}
                   >
                     <View style={styles.timePickerIcon}>
-                      <Clock color={colors.primary} size={20} />
+                      <Clock color={colors.primary} size={iconMd} />
                     </View>
                     <View style={styles.timePickerInfo}>
                       <Text style={styles.timePickerLabel}>{t('notifications.dndEnd')}</Text>
@@ -384,8 +381,7 @@ export default function NotificationsScreen() {
             </View>
           </View>
         </ScrollView>
-      </SafeAreaView>
-    </View>
+    </Screen>
   );
 }
 
@@ -400,49 +396,16 @@ const createStyles = (colors: {
   primary: string;
 }) =>
   StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-    safeArea: {
-      flex: 1,
-    },
-    header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: 20,
-      paddingVertical: 16,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.glassBorder,
-    },
-    backButton: {
-      width: TOUCH_TARGET_MIN,
-      height: TOUCH_TARGET_MIN,
-      borderRadius: TOUCH_TARGET_MIN / 2,
-      backgroundColor: colors.cardBg,
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: colors.glassBorder,
-    },
-    title: {
-      fontSize: 20,
-      fontWeight: '700' as const,
-      color: colors.text,
-    },
-    placeholder: {
-      width: TOUCH_TARGET_MIN,
-    },
     scrollContent: {
-      padding: 20,
-      paddingBottom: 40,
+      paddingHorizontal: screenPaddingX,
+      paddingTop: screenPaddingX,
+      paddingBottom: space.space8,
     },
     section: {
-      marginBottom: 24,
+      marginBottom: sectionGap,
     },
     sectionCard: {
-      borderRadius: 16,
+      borderRadius: radiusLg,
       borderWidth: 1,
       borderColor: colors.glassBorder,
       overflow: 'hidden',
@@ -450,8 +413,8 @@ const createStyles = (colors: {
     settingItem: {
       flexDirection: 'row',
       alignItems: 'center',
-      padding: 16,
-      gap: 12,
+      padding: screenPaddingX,
+      gap: space.space3,
     },
     settingItemBorder: {
       borderTopWidth: 1,
@@ -461,7 +424,7 @@ const createStyles = (colors: {
       flex: 1,
     },
     settingTitle: {
-      fontSize: 16,
+      ...typeScale.body,
       fontWeight: '600' as const,
       color: colors.text,
       marginBottom: 4,
@@ -474,15 +437,14 @@ const createStyles = (colors: {
     timePickerContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      padding: 16,
+      padding: screenPaddingX,
       paddingTop: 0,
-      paddingLeft: 16,
-      gap: 12,
+      gap: space.space3,
     },
     timePickerIcon: {
-      width: TOUCH_TARGET_MIN,
-      height: TOUCH_TARGET_MIN,
-      borderRadius: 12,
+      width: touchTargetMin,
+      height: touchTargetMin,
+      borderRadius: radiusMd,
       backgroundColor: 'rgba(255,255,255,0.06)',
       justifyContent: 'center',
       alignItems: 'center',
@@ -502,8 +464,8 @@ const createStyles = (colors: {
       color: colors.primary,
     },
     warningBanner: {
-      paddingHorizontal: 16,
-      paddingBottom: 12,
+      paddingHorizontal: screenPaddingX,
+      paddingBottom: space.space3,
     },
     warningText: {
       fontSize: 13,

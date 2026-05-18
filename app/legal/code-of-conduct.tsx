@@ -11,6 +11,7 @@ import { Heart, Users, AlertOctagon, Flag, ShieldCheck, MessageCircle } from 'lu
 import { Stack } from 'expo-router';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { screenPaddingX, sectionGap, space, typeScale } from '@/theme/iosDesign';
 
 const LAST_UPDATED = 'January 12, 2026';
 const CONTACT_EMAIL = 'contact@devaieood.com';
@@ -261,7 +262,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
+    padding: screenPaddingX,
     paddingBottom: 40,
   },
   header: {
@@ -290,7 +291,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   highlightBox: {
     borderRadius: 16,
-    padding: 20,
+    padding: screenPaddingX,
     marginBottom: 24,
     alignItems: 'center',
     borderWidth: 1,
@@ -298,8 +299,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     overflow: 'hidden',
   },
   highlightTitle: {
-    fontSize: 16,
-    fontWeight: '700' as const,
+    ...typeScale.headline,
     color: colors.text,
     marginBottom: 8,
   },
@@ -327,8 +327,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.03)',
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600' as const,
+    ...typeScale.headline,
     color: colors.text,
   },
   sectionContent: {
@@ -383,7 +382,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     gap: 12,
   },
   consequenceBadge: {
-    paddingHorizontal: 10,
+    paddingHorizontal: space.space3,
     paddingVertical: 6,
     borderRadius: 8,
   },
@@ -440,15 +439,14 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   commitmentBox: {
     borderRadius: 16,
-    padding: 20,
+    padding: screenPaddingX,
     marginBottom: 24,
     borderWidth: 1,
     borderColor: colors.glassBorder,
     overflow: 'hidden',
   },
   commitmentTitle: {
-    fontSize: 16,
-    fontWeight: '700' as const,
+    ...typeScale.headline,
     color: colors.text,
     marginBottom: 12,
     textAlign: 'center',

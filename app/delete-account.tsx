@@ -33,7 +33,7 @@ import {
   APP_LANGUAGE_STORAGE_KEY,
   LEGACY_APP_LANGUAGE_STORAGE_KEY,
 } from '@/providers/LanguageProvider';
-import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
+import { screenPaddingX, touchTargetMin } from '@/theme/iosDesign';
 import { BLOCKED_USERS_STORAGE_KEY } from '@/lib/blocked-users-storage';
 
 const STORAGE_KEYS_TO_CLEAR = [
@@ -327,15 +327,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: screenPaddingX,
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: Colors.glassBorder,
   },
   closeButton: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: TOUCH_TARGET_MIN / 2,
+    width: touchTargetMin,
+    height: touchTargetMin,
+    borderRadius: touchTargetMin / 2,
     backgroundColor: Colors.cardBg,
     justifyContent: 'center',
     alignItems: 'center',
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
     color: Colors.text,
   },
   headerSpacer: {
-    width: TOUCH_TARGET_MIN,
+    width: touchTargetMin,
   },
   scrollContent: {
     padding: 20,

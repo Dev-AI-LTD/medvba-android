@@ -11,6 +11,7 @@ import { FileText, UserCheck, AlertTriangle, Scale, ShieldX, Ban } from 'lucide-
 import { Stack } from 'expo-router';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { screenPaddingX, sectionGap, space, typeScale } from '@/theme/iosDesign';
 
 const LAST_UPDATED_EN = 'January 12, 2026';
 const LAST_UPDATED_RO = '12 ianuarie 2026';
@@ -243,12 +244,12 @@ const createStyles = (colors: any) => StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
+    padding: screenPaddingX,
+    paddingBottom: space.space8,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: sectionGap,
   },
   iconContainer: {
     width: 64,
@@ -260,18 +261,17 @@ const createStyles = (colors: any) => StyleSheet.create({
     marginBottom: 12,
   },
   lastUpdated: {
-    fontSize: 13,
+    ...typeScale.caption,
     color: colors.textSecondary,
   },
   intro: {
-    fontSize: 15,
+    ...typeScale.subhead,
     color: colors.textSecondary,
-    lineHeight: 24,
-    marginBottom: 24,
+    marginBottom: sectionGap,
     textAlign: 'center',
   },
   section: {
-    marginBottom: 24,
+    marginBottom: sectionGap,
     backgroundColor: colors.cardBg,
     borderRadius: 16,
     borderWidth: 1,
@@ -288,15 +288,14 @@ const createStyles = (colors: any) => StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.03)',
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600' as const,
+    ...typeScale.headline,
     color: colors.text,
   },
   sectionContent: {
-    padding: 16,
+    padding: screenPaddingX,
   },
   paragraph: {
-    fontSize: 14,
+    ...typeScale.subhead,
     color: colors.textSecondary,
     lineHeight: 22,
     marginBottom: 12,

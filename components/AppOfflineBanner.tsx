@@ -3,7 +3,7 @@ import { Text, useTheme } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useIsOffline } from '@/lib/use-network-auth-offline';
-import { SPACING } from '@/theme/paperTheme';
+import { screenPaddingX, space } from '@/theme/iosDesign';
 
 /** Compact offline indicator for signed-in app areas (tabs, etc.). */
 export function AppOfflineBanner() {
@@ -19,7 +19,7 @@ export function AppOfflineBanner() {
       style={[
         styles.wrap,
         {
-          paddingTop: insets.top > 0 ? insets.top : SPACING.x2,
+          paddingTop: insets.top > 0 ? insets.top : space.space2,
           backgroundColor: theme.colors.errorContainer,
           borderBottomColor: theme.colors.outlineVariant,
         },
@@ -38,8 +38,8 @@ export function AppOfflineBanner() {
 
 const styles = StyleSheet.create({
   wrap: {
-    paddingHorizontal: SPACING.x3,
-    paddingBottom: SPACING.x2,
+    paddingHorizontal: screenPaddingX,
+    paddingBottom: space.space2,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
 });

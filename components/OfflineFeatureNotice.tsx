@@ -2,7 +2,7 @@ import { View, StyleSheet } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useIsOffline } from '@/lib/use-network-auth-offline';
-import { SPACING } from '@/theme/paperTheme';
+import { radiusMd, screenPaddingX, space } from '@/theme/iosDesign';
 
 /** Inline notice for screens that need network for fresh data (social, tutor, etc.). */
 export function OfflineFeatureNotice() {
@@ -26,9 +26,9 @@ export function OfflineFeatureNotice() {
 
 const styles = StyleSheet.create({
   box: {
-    marginHorizontal: SPACING.x3,
-    marginBottom: SPACING.x2,
-    padding: SPACING.x2,
-    borderRadius: 10,
+    marginHorizontal: screenPaddingX,
+    marginBottom: space.space2,
+    padding: space.space4,
+    borderRadius: radiusMd,
   },
 });

@@ -5,32 +5,37 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { TrendingUp, Target, Clock, ChevronRight, Bone, Heart, User, Brain, Stethoscope, Sparkles, Lock, EyeOff, Crown } from 'lucide-react-native';
+import { TrendingUp, Target, Clock, ChevronRight, Bone, Heart, User, Brain, Stethoscope, Sparkles, Lock, Crown } from 'lucide-react-native';
+import { Screen, HomeWelcomeHeader } from '@/components/layout';
 import { useRouter } from 'expo-router';
 import { Card, Button } from 'react-native-paper';
 import { UIButton } from '@/ui';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useTheme } from '@/providers/ThemeProvider';
-import { useAuth } from '@/providers/AuthProvider';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import ProgressRing from '@/components/ProgressRing';
 import PremiumBadge from '@/components/PremiumBadge';
 import { categories } from '@/mocks/questions';
 import { useQuizProgress } from '@/providers/QuizProgressProvider';
 import { FREE_QUIZ_ANSWER_LIMIT } from '@/constants/subscription';
-import { SPACING, TOUCH_TARGET_MIN } from '@/theme/paperTheme';
+import {
+  SPACING,
+  iconLg,
+  iconMd,
+  iconXl,
+  screenPaddingX,
+  touchTargetMin,
+  typeScale,
+} from '@/theme/iosDesign';
 import { log } from '@/lib/log';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { t, getModuleName } = useLanguage();
   const { colors } = useTheme();
-  const { profile } = useAuth();
   const { isPremium, isPaywallEnabled, getRemainingQuizzes } = useSubscription();
   const { dailyProgress, hasActiveSession, sessionState, lastSessionInfo, accuracy, formattedQuestionsCount, formattedStudyTime } = useQuizProgress();
 
@@ -94,65 +99,12 @@ export default function HomeScreen() {
   }, [hasActiveSession, sessionState, lastSessionInfo, router, hasReachedFreeQuizLimit, handleUpgradePress, t]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <LinearGradient
-        colors={[colors.background, colors.backgroundLight]}
-        style={StyleSheet.absoluteFill}
-      />
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <Image
-                source={require('../../assets/images/icon.png')}
-                style={styles.appIcon}
-              />
-              <View style={styles.headerTextWrap}>
-                <View style={styles.greetingRow}>
-                  <Text style={[styles.greeting, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {t(
-                      (() => {
-                        const hour = new Date().getHours();
-                        if (hour >= 18) return 'home.greetingEvening';
-                        if (hour >= 12) return 'home.greetingAfternoon';
-                        return 'home.greetingMorning';
-                      })()
-                    )}
-                  </Text>
-                  <TouchableOpacity 
-                    style={[styles.privacyBadge, { backgroundColor: colors.textMuted + '20' }]}
-                    onPress={() => router.push('/settings')}
-                    activeOpacity={0.7}
-                  >
-                    <EyeOff size={12} color={colors.textMuted} />
-                    <Text style={[styles.privacyBadgeText, { color: colors.textMuted }]}>
-                      {profile?.isPublic === false ? 'Private' : 'Public'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-                <Text style={[styles.userName, { color: colors.text }]} numberOfLines={1} ellipsizeMode="tail">
-                  {profile?.name?.split(' ')[0] || profile?.email || t('common.student')}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.headerRight}>
-              <TouchableOpacity onPress={() => router.push('/(tabs)/profile')}>
-                <Image
-                  key={`avatar:${profile?.id ?? 'anon'}:${profile?.profile_photo_url ?? profile?.avatar ?? 'default'}`}
-                  source={{
-                    uri:
-                      profile?.profile_photo_url ||
-                      profile?.avatar ||
-                      'https://api.dicebear.com/7.x/avataaars/png?seed=default',
-                  }}
-                  style={styles.avatar}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
+    <Screen withGradient edges={['top']} padded>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <HomeWelcomeHeader />
 
           <Card
             style={[styles.heroCard, { backgroundColor: colors.primary + '18', borderWidth: 1, borderColor: colors.glassBorder }]}
@@ -227,13 +179,13 @@ export default function HomeScreen() {
                 end={{ x: 1, y: 1 }}
               >
                 <View style={styles.upgradeBannerIcon}>
-                  <Crown color="#FFF" size={24} strokeWidth={2.5} />
+                  <Crown color="#FFF" size={iconXl} strokeWidth={2.5} />
                 </View>
                 <View style={styles.upgradeBannerText}>
                   <Text style={styles.upgradeBannerTitle}>{t('profile.upgradeToPremium')}</Text>
                   <Text style={styles.upgradeBannerSubtitle}>{t('profile.upgradeBannerSubtitleAll')}</Text>
                 </View>
-                <ChevronRight color="#FFF" size={22} />
+                <ChevronRight color="#FFF" size={iconLg} />
               </LinearGradient>
             </TouchableOpacity>
           )}
@@ -242,7 +194,7 @@ export default function HomeScreen() {
             <View style={styles.statCardWrapper}>
               <Card style={[styles.statCard, { borderWidth: 1, borderColor: colors.glassBorder }]} mode="elevated">
                 <Card.Content style={styles.statCardContent}>
-                  <TrendingUp color={colors.success} size={24} />
+                  <TrendingUp color={colors.success} size={iconXl} />
                   <Text style={[styles.statValue, { color: colors.text }]}>{accuracy.toFixed(1)}%</Text>
                   <Text style={[styles.statLabel, { color: colors.textSecondary }]} numberOfLines={1} ellipsizeMode="tail">
                     {t('home.accuracy')}
@@ -253,7 +205,7 @@ export default function HomeScreen() {
             <View style={styles.statCardWrapper}>
               <Card style={[styles.statCard, { borderWidth: 1, borderColor: colors.glassBorder }]} mode="elevated">
                 <Card.Content style={styles.statCardContent}>
-                  <Target color={colors.accentPink} size={24} />
+                  <Target color={colors.accentPink} size={iconXl} />
                   <Text style={[styles.statValue, { color: colors.text }]}>{formattedQuestionsCount}</Text>
                   <Text style={[styles.statLabel, { color: colors.textSecondary }]} numberOfLines={1} ellipsizeMode="tail">
                     {t('home.questions')}
@@ -264,7 +216,7 @@ export default function HomeScreen() {
             <View style={styles.statCardWrapper}>
               <Card style={[styles.statCard, { borderWidth: 1, borderColor: colors.glassBorder }]} mode="elevated">
                 <Card.Content style={styles.statCardContent}>
-                  <Clock color={colors.warning} size={24} />
+                  <Clock color={colors.warning} size={iconXl} />
                   <Text style={[styles.statValue, { color: colors.text }]}>{formattedStudyTime}</Text>
                   <Text style={[styles.statLabel, { color: colors.textSecondary }]} numberOfLines={1} ellipsizeMode="tail">
                     {t('home.studyTime')}
@@ -354,9 +306,9 @@ export default function HomeScreen() {
                 >
                   <View style={[styles.categoryIcon, { backgroundColor: category.color + '20' }]}>
                     {isLocked ? (
-                      <Lock color={category.color} size={20} strokeWidth={2.5} />
+                      <Lock color={category.color} size={iconMd} strokeWidth={2.5} />
                     ) : (
-                      <IconComponent color={category.color} size={20} />
+                      <IconComponent color={category.color} size={iconMd} />
                     )}
                   </View>
                   <View style={styles.categoryInfo}>
@@ -381,90 +333,22 @@ export default function HomeScreen() {
                     </Text>
                   </View>
                   {isLocked ? (
-                    <Lock color={colors.textMuted} size={20} strokeWidth={2} />
+                    <Lock color={colors.textMuted} size={iconMd} strokeWidth={2} />
                   ) : (
-                    <ChevronRight color={colors.textMuted} size={20} />
+                    <ChevronRight color={colors.textMuted} size={iconMd} />
                   )}
                 </TouchableOpacity>
               );
             })}
           </View>
-        </ScrollView>
-      </SafeAreaView>
-    </View>
+      </ScrollView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
   scrollContent: {
-    paddingHorizontal: SPACING.x3,
     paddingBottom: SPACING.x3,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.x3,
-    marginTop: SPACING.x1,
-  },
-  greeting: {
-    fontSize: 14,
-    flexShrink: 0,
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: '700' as const,
-    flexShrink: 1,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-    minWidth: 0,
-  },
-  headerTextWrap: {
-    flex: 1,
-    minWidth: 0,
-  },
-  greetingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    minWidth: 0,
-  },
-  privacyBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  privacyBadgeText: {
-    fontSize: 11,
-    fontWeight: '600' as const,
-  },
-  appIcon: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: TOUCH_TARGET_MIN / 2,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  avatar: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: TOUCH_TARGET_MIN / 2,
   },
   upgradeBanner: {
     marginBottom: SPACING.x3,
@@ -475,12 +359,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 16,
-    paddingHorizontal: 18,
+    paddingHorizontal: screenPaddingX,
   },
   upgradeBannerIcon: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: TOUCH_TARGET_MIN / 2,
+    width: touchTargetMin,
+    height: touchTargetMin,
+    borderRadius: touchTargetMin / 2,
     backgroundColor: 'rgba(255,255,255,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -649,8 +533,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.x2,
   },
   categoryIcon: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
+    width: touchTargetMin,
+    height: touchTargetMin,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
@@ -669,7 +553,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   categoryName: {
-    fontSize: 16,
+    ...typeScale.body,
     fontWeight: '600' as const,
     flexShrink: 1,
     minWidth: 0,

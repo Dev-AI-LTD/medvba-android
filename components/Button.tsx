@@ -10,7 +10,14 @@ import {
   View,
 } from 'react-native';
 import { useTheme } from '@/providers/ThemeProvider';
-import { spacing, typography, borderRadius, minTapTarget } from '@/constants/design';
+import {
+  spacing,
+  typography,
+  borderRadius,
+  minTapTarget,
+  buttonHeight,
+  iconMd,
+} from '@/constants/design';
 
 interface ButtonProps {
   title: string;
@@ -71,17 +78,17 @@ function ButtonComponent({
         };
       case 'large':
         return {
-          paddingVertical: spacing.lg,
+          paddingVertical: spacing.md,
           paddingHorizontal: spacing.xxl,
           fontSize: typography.bodySemibold.fontSize,
-          minHeight: 56,
+          minHeight: buttonHeight,
         };
       default:
         return {
-          paddingVertical: spacing.md,
-          paddingHorizontal: spacing.xl,
+          paddingVertical: spacing.sm,
+          paddingHorizontal: spacing.lg,
           fontSize: typography.bodySemibold.fontSize,
-          minHeight: minTapTarget,
+          minHeight: buttonHeight,
         };
     }
   };

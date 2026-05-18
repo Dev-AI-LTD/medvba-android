@@ -17,7 +17,7 @@ import Colors from '@/constants/colors';
 import { useRoomMessages, useSendMessage, RoomMessage } from '@/lib/supabase-hooks';
 import { useAuth } from '@/providers/AuthProvider';
 import { safeAvatarUri } from '@/lib/safe-image-uri';
-import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
+import { screenPaddingX, touchTargetMin } from '@/theme/iosDesign';
 
 interface RoomChatProps {
   roomId: string;
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   header: {
-    paddingHorizontal: 20,
+    paddingHorizontal: screenPaddingX,
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: Colors.cardBgLight,
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   messageBubble: {
-    paddingHorizontal: 14,
+    paddingHorizontal: screenPaddingX,
     paddingVertical: 10,
     borderRadius: 18,
   },
@@ -319,9 +319,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   sendButton: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: TOUCH_TARGET_MIN / 2,
+    width: touchTargetMin,
+    height: touchTargetMin,
+    borderRadius: touchTargetMin / 2,
     backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',

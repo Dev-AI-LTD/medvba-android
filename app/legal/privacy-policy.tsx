@@ -11,6 +11,7 @@ import { Shield, Database, Users, Lock, Mail, Globe } from 'lucide-react-native'
 import { Stack } from 'expo-router';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { screenPaddingX, sectionGap, space, typeScale } from '@/theme/iosDesign';
 
 const LAST_UPDATED_EN = 'January 12, 2026';
 const LAST_UPDATED_RO = '12 ianuarie 2026';
@@ -227,7 +228,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
+    padding: screenPaddingX,
     paddingBottom: 40,
   },
   header: {
@@ -272,8 +273,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.03)',
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600' as const,
+    ...typeScale.headline,
     color: colors.text,
   },
   sectionContent: {

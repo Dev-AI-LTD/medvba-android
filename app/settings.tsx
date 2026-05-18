@@ -55,7 +55,20 @@ import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage, Language } from '@/providers/LanguageProvider';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import { presentCustomerCenter } from '@/lib/revenuecat';
-import { SPACING, TOUCH_TARGET_MIN } from '@/theme/paperTheme';
+import {
+  SPACING,
+  iconLg,
+  iconMd,
+  iconSm,
+  inputMinHeight,
+  radiusLg,
+  radiusMd,
+  screenPaddingX,
+  sectionGap,
+  space,
+  touchTargetMin,
+  typeScale,
+} from '@/theme/iosDesign';
 import { useUserProfile, useUpdateUserProfile, uploadProfilePhoto } from '@/lib/supabase-hooks';
 import { APP_LAUNCH_ENGLISH_UI_ONLY } from '@/lib/app-ui-languages';
 import PhotoPicker from '@/components/PhotoPicker';
@@ -83,7 +96,7 @@ function SettingsItem({ icon, title, subtitle, onPress, showBorder = true, showC
         <Text style={[styles.settingsItemTitle, { color: colors.text }]}>{title}</Text>
         {subtitle && <Text style={[styles.settingsItemSubtitle, { color: colors.textSecondary }]}>{subtitle}</Text>}
       </View>
-      {showChevron && <ChevronRight color={colors.textMuted} size={20} />}
+      {showChevron && <ChevronRight color={colors.textMuted} size={iconMd} />}
     </TouchableOpacity>
   );
 }
@@ -258,7 +271,7 @@ export default function SettingsScreen() {
 
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={[styles.scrollContent, { paddingHorizontal: SPACING.x3, paddingBottom: SPACING.x4 }]}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: SPACING.x4 }]}
         >
           <View style={[styles.section, { marginBottom: SPACING.x3 }]}>
             <View style={[styles.sectionHeader, { marginBottom: SPACING.x2 }]}>
@@ -289,7 +302,7 @@ export default function SettingsScreen() {
 
               <View style={[styles.profileInputGroup, { borderBottomColor: colors.glassBorder }]}>
                 <View style={styles.inputLabel}>
-                  <User color={colors.primary} size={18} />
+                  <User color={colors.primary} size={iconSm} />
                   <Text style={[styles.inputLabelText, { color: colors.textSecondary }]}>{t('settings.nameLabel')}</Text>
                 </View>
                 <TextInput
@@ -304,7 +317,7 @@ export default function SettingsScreen() {
 
               <View style={[styles.profileInputGroup, { borderBottomColor: colors.glassBorder }]}>
                 <View style={styles.inputLabel}>
-                  <MapPin color={colors.accent} size={18} />
+                  <MapPin color={colors.accent} size={iconSm} />
                   <Text style={[styles.inputLabelText, { color: colors.textSecondary }]}>{t('settings.cityLabel')}</Text>
                 </View>
                 <TextInput
@@ -319,7 +332,7 @@ export default function SettingsScreen() {
 
               <View style={[styles.profileInputGroup, { borderBottomColor: colors.glassBorder }]}>
                 <View style={styles.inputLabel}>
-                  <School color={colors.secondary} size={18} />
+                  <School color={colors.secondary} size={iconSm} />
                   <Text style={[styles.inputLabelText, { color: colors.textSecondary }]}>{t('editProfile.universityFacultyLabel')}</Text>
                 </View>
                 <TextInput
@@ -334,7 +347,7 @@ export default function SettingsScreen() {
 
               <View style={[styles.profileInputGroup, { borderBottomColor: colors.glassBorder }]}>
                 <View style={styles.inputLabel}>
-                  <School color={colors.warning} size={18} />
+                  <School color={colors.warning} size={iconSm} />
                   <Text style={[styles.inputLabelText, { color: colors.textSecondary }]}>{t('editProfile.yearLabel')}</Text>
                 </View>
                 <View style={styles.yearSelector}>
@@ -359,7 +372,7 @@ export default function SettingsScreen() {
 
               <View style={[styles.profileInputGroup, { borderBottomColor: colors.glassBorder }]}>
                 <View style={styles.inputLabel}>
-                  <AlignLeft color={colors.accentPink} size={18} />
+                  <AlignLeft color={colors.accentPink} size={iconSm} />
                   <Text style={[styles.inputLabelText, { color: colors.textSecondary }]}>{t('editProfile.bioLabel')}</Text>
                 </View>
                 <TextInput
@@ -377,7 +390,7 @@ export default function SettingsScreen() {
 
               <View style={styles.privacySection}>
                 <View style={styles.privacyIcon}>
-                  {isPublic ? <Eye color={colors.success} size={22} /> : <EyeOff color={colors.textMuted} size={22} />}
+                  {isPublic ? <Eye color={colors.success} size={iconLg} /> : <EyeOff color={colors.textMuted} size={iconLg} />}
                 </View>
                 <View style={styles.privacyInfo}>
                   <Text style={styles.settingsItemTitle}>{t('editProfile.publicProfile')}</Text>
@@ -411,7 +424,7 @@ export default function SettingsScreen() {
               <View style={[styles.languageSection, { borderBottomColor: colors.glassBorder }]}>
                 <View style={styles.languageSectionHeader}>
                   <View style={styles.settingsItemIcon}>
-                    <Globe color={colors.primary} size={22} />
+                    <Globe color={colors.primary} size={iconLg} />
                   </View>
                   <View style={styles.settingsItemContent}>
                     <Text style={styles.settingsItemTitle}>{t('settings.language')}</Text>
@@ -458,13 +471,13 @@ export default function SettingsScreen() {
               </View>
               )}
               <SettingsItem
-                icon={<Bell color={colors.primary} size={22} />}
+                icon={<Bell color={colors.primary} size={iconLg} />}
                 title={t('settings.notifications')}
                 subtitle={t('settings.notificationsSubtitle')}
                 onPress={() => router.push('/notifications')}
               />
               <SettingsItem
-                icon={<Moon color={colors.accent} size={22} />}
+                icon={<Moon color={colors.accent} size={iconLg} />}
                 title={t('settings.appearance')}
                 subtitle={
                   themePreference === 'system'
@@ -488,7 +501,7 @@ export default function SettingsScreen() {
               />
               <View style={styles.blockedUsersHeader}>
                 <View style={styles.blockedUsersIcon}>
-                  <Ban color={colors.error} size={22} />
+                  <Ban color={colors.error} size={iconLg} />
                 </View>
                 <View style={styles.blockedUsersInfo}>
                   <Text style={styles.settingsItemTitle}>{t('settings.blockedUsers')}</Text>
@@ -526,7 +539,7 @@ export default function SettingsScreen() {
                         style={styles.unblockButton}
                         onPress={() => handleUnblockUser(user)}
                       >
-                        <UserX color={colors.error} size={18} />
+                        <UserX color={colors.error} size={iconSm} />
                         <Text style={[styles.unblockButtonText, { color: colors.error }]}>{t('settings.unblockButton')}</Text>
                       </TouchableOpacity>
                     </View>
@@ -544,13 +557,13 @@ export default function SettingsScreen() {
                 style={StyleSheet.absoluteFill}
               />
               <SettingsItem
-                icon={<HelpCircle color={colors.warning} size={22} />}
+                icon={<HelpCircle color={colors.warning} size={iconLg} />}
                 title={t('settings.helpCenter')}
                 subtitle={t('settings.helpCenterSubtitle')}
                 onPress={() => router.push('/support/help-center')}
               />
               <SettingsItem
-                icon={<BookOpen color={colors.accent} size={22} />}
+                icon={<BookOpen color={colors.accent} size={iconLg} />}
                 title={t('settings.showIntroAgain')}
                 subtitle={t('settings.showIntroAgainSubtitle')}
                 onPress={() =>
@@ -567,7 +580,7 @@ export default function SettingsScreen() {
                 }
               />
               <SettingsItem
-                icon={<Mail color={colors.accentPink} size={22} />}
+                icon={<Mail color={colors.accentPink} size={iconLg} />}
                 title={t('settings.contactSupport')}
                 subtitle={t('settings.contactSupportSubtitle')}
                 onPress={() => router.push('/support/contact-support')}
@@ -584,19 +597,19 @@ export default function SettingsScreen() {
                 style={StyleSheet.absoluteFill}
               />
               <SettingsItem
-                icon={<Shield color={colors.primary} size={22} />}
+                icon={<Shield color={colors.primary} size={iconLg} />}
                 title={t('settings.privacyPolicy')}
                 subtitle={t('settings.privacyPolicySubtitle')}
                 onPress={() => router.push('/legal/privacy-policy')}
               />
               <SettingsItem
-                icon={<FileText color={colors.accent} size={22} />}
+                icon={<FileText color={colors.accent} size={iconLg} />}
                 title={t('settings.termsOfService')}
                 subtitle={t('settings.termsOfServiceSubtitle')}
                 onPress={() => router.push('/legal/terms-of-service')}
               />
               <SettingsItem
-                icon={<Heart color={colors.success} size={22} />}
+                icon={<Heart color={colors.success} size={iconLg} />}
                 title={t('settings.codeOfConduct')}
                 subtitle={t('settings.codeOfConductSubtitle')}
                 onPress={() => router.push('/legal/code-of-conduct')}
@@ -615,7 +628,7 @@ export default function SettingsScreen() {
                 />
                 {isPremium ? (
                   <SettingsItem
-                    icon={<CreditCard color={colors.success} size={22} />}
+                    icon={<CreditCard color={colors.success} size={iconLg} />}
                     title={t('settings.manageSubscription')}
                     subtitle={t('settings.manageSubscriptionSubtitle')}
                     onPress={() => presentCustomerCenter()}
@@ -623,7 +636,7 @@ export default function SettingsScreen() {
                   />
                 ) : (
                   <SettingsItem
-                    icon={<Crown color={colors.warning} size={22} />}
+                    icon={<Crown color={colors.warning} size={iconLg} />}
                     title={t('profile.upgradeToPremium')}
                     subtitle={t('profile.upgradeBannerSubtitleAll')}
                     onPress={() => router.push('/paywall')}
@@ -647,13 +660,13 @@ export default function SettingsScreen() {
                 activeOpacity={0.7}
               >
                 <View style={styles.deleteAccountIcon}>
-                  <Trash2 color={colors.error} size={22} />
+                  <Trash2 color={colors.error} size={iconLg} />
                 </View>
                 <View style={styles.settingsItemContent}>
                   <Text style={[styles.deleteAccountTitle, { color: colors.error }]}>{t('settings.deleteAccount')}</Text>
                   <Text style={[styles.deleteAccountSubtitle, { color: colors.textMuted }]}>{t('settings.deleteAccountSubtitle')}</Text>
                 </View>
-                <ChevronRight color={colors.error} size={20} />
+                <ChevronRight color={colors.error} size={iconMd} />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.signOutItem}
@@ -680,13 +693,13 @@ export default function SettingsScreen() {
                 activeOpacity={0.7}
               >
                 <View style={styles.signOutIcon}>
-                  <LogOut color={colors.warning} size={22} />
+                  <LogOut color={colors.warning} size={iconLg} />
                 </View>
                 <View style={styles.settingsItemContent}>
                   <Text style={[styles.signOutTitle, { color: colors.warning }]}>{t('settings.signOut')}</Text>
                   <Text style={[styles.signOutSubtitle, { color: colors.textMuted }]}>{t('settings.signOutSubtitle')}</Text>
                 </View>
-                <ChevronRight color={colors.warning} size={20} />
+                <ChevronRight color={colors.warning} size={iconMd} />
               </TouchableOpacity>
             </View>
           </View>
@@ -699,7 +712,7 @@ export default function SettingsScreen() {
                 style={StyleSheet.absoluteFill}
               />
               <SettingsItem
-                icon={<Info color={colors.textSecondary} size={22} />}
+                icon={<Info color={colors.textSecondary} size={iconLg} />}
                 title={t('settings.appVersion')}
                 subtitle={appVersionLabel}
                 onPress={() => Alert.alert(t('settings.appVersion'), appVersionLabel)}
@@ -734,8 +747,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: screenPaddingX,
+    paddingVertical: space.space4,
     borderBottomWidth: 1,
   },
   title: {
@@ -743,19 +756,20 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
   },
   closeButton: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: TOUCH_TARGET_MIN / 2,
+    width: touchTargetMin,
+    height: touchTargetMin,
+    borderRadius: touchTargetMin / 2,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
   },
   scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
+    paddingHorizontal: screenPaddingX,
+    paddingTop: screenPaddingX,
+    paddingBottom: space.space8,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: sectionGap,
   },
   sectionTitle: {
     fontSize: 13,
@@ -766,32 +780,32 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   sectionCard: {
-    borderRadius: 16,
+    borderRadius: radiusLg,
     borderWidth: 1,
     overflow: 'hidden',
   },
   settingsItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: screenPaddingX,
   },
   settingsItemBorder: {
     borderBottomWidth: 1,
   },
   settingsItemIcon: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: 12,
+    width: touchTargetMin,
+    height: touchTargetMin,
+    borderRadius: radiusMd,
     backgroundColor: 'rgba(255,255,255,0.06)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   settingsItemContent: {
     flex: 1,
-    marginLeft: 14,
+    marginLeft: screenPaddingX,
   },
   settingsItemTitle: {
-    fontSize: 16,
+    ...typeScale.body,
     fontWeight: '600' as const,
   },
   settingsItemSubtitle: {
@@ -805,7 +819,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   footerText: {
-    fontSize: 16,
+    ...typeScale.body,
     fontWeight: '600' as const,
   },
   footerSubtext: {
@@ -815,19 +829,19 @@ const styles = StyleSheet.create({
   blockedUsersHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: screenPaddingX,
   },
   blockedUsersIcon: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: 12,
+    width: touchTargetMin,
+    height: touchTargetMin,
+    borderRadius: radiusMd,
     backgroundColor: 'rgba(255, 71, 87, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   blockedUsersInfo: {
     flex: 1,
-    marginLeft: 14,
+    marginLeft: screenPaddingX,
   },
   blockedUsersList: {
     borderTopWidth: 1,
@@ -835,16 +849,15 @@ const styles = StyleSheet.create({
   blockedUserItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    paddingLeft: 16,
+    padding: screenPaddingX,
   },
   blockedUserItemBorder: {
     borderBottomWidth: 1,
   },
   blockedUserAvatar: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: TOUCH_TARGET_MIN / 2,
+    width: touchTargetMin,
+    height: touchTargetMin,
+    borderRadius: touchTargetMin / 2,
   },
   blockedUserInfo: {
     flex: 1,
@@ -862,9 +875,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 71, 87, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 16,
+    paddingHorizontal: space.space3,
+    paddingVertical: space.space2,
+    borderRadius: radiusLg,
     gap: 6,
   },
   unblockButtonText: {
@@ -874,18 +887,18 @@ const styles = StyleSheet.create({
   deleteAccountItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: screenPaddingX,
   },
   deleteAccountIcon: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: 12,
+    width: touchTargetMin,
+    height: touchTargetMin,
+    borderRadius: radiusMd,
     backgroundColor: 'rgba(255, 71, 87, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   deleteAccountTitle: {
-    fontSize: 16,
+    ...typeScale.body,
     fontWeight: '600' as const,
   },
   deleteAccountSubtitle: {
@@ -895,18 +908,18 @@ const styles = StyleSheet.create({
   signOutItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: screenPaddingX,
   },
   signOutIcon: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: 12,
+    width: touchTargetMin,
+    height: touchTargetMin,
+    borderRadius: radiusMd,
     backgroundColor: 'rgba(255, 184, 0, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   signOutTitle: {
-    fontSize: 16,
+    ...typeScale.body,
     fontWeight: '600' as const,
   },
   signOutSubtitle: {
@@ -914,7 +927,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   languageSection: {
-    padding: 16,
+    padding: screenPaddingX,
     borderBottomWidth: 1,
   },
   languageSectionHeader: {
@@ -925,7 +938,7 @@ const styles = StyleSheet.create({
   languageSelector: {
     flexDirection: 'row',
     backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 12,
+    borderRadius: radiusMd,
     padding: 4,
     gap: 4,
     borderWidth: 1,
@@ -968,8 +981,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: screenPaddingX,
+    paddingVertical: space.space2,
     borderRadius: 20,
     borderWidth: 1,
   },
@@ -982,12 +995,12 @@ const styles = StyleSheet.create({
   },
   profilePhotoSection: {
     alignItems: 'center',
-    padding: 20,
-    paddingBottom: 16,
+    padding: screenPaddingX,
+    paddingBottom: space.space4,
     borderBottomWidth: 1,
   },
   profileInputGroup: {
-    padding: 16,
+    padding: screenPaddingX,
     borderBottomWidth: 1,
   },
   inputLabel: {
@@ -1002,10 +1015,11 @@ const styles = StyleSheet.create({
   },
   profileTextInput: {
     borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: screenPaddingX,
+    paddingVertical: space.space3,
     fontSize: 15,
     borderWidth: 1,
+    minHeight: inputMinHeight,
   },
   textArea: {
     minHeight: 80,
@@ -1022,9 +1036,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   yearButton: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: TOUCH_TARGET_MIN / 2,
+    width: touchTargetMin,
+    height: touchTargetMin,
+    borderRadius: touchTargetMin / 2,
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
@@ -1041,19 +1055,19 @@ const styles = StyleSheet.create({
   privacySection: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: screenPaddingX,
   },
   privacyIcon: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: 12,
+    width: touchTargetMin,
+    height: touchTargetMin,
+    borderRadius: radiusMd,
     backgroundColor: 'rgba(255,255,255,0.06)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   privacyInfo: {
     flex: 1,
-    marginLeft: 14,
-    marginRight: 12,
+    marginLeft: screenPaddingX,
+    marginRight: space.space3,
   },
 });

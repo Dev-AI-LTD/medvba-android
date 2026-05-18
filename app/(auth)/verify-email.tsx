@@ -15,7 +15,7 @@ import * as Haptics from 'expo-haptics';
 import { Appbar, Text, Card, useTheme } from 'react-native-paper';
 import { useAuth, AUTH_SIGN_IN_CANCELLED } from '@/providers/AuthProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { SPACING } from '@/theme/paperTheme';
+import { SPACING, radiusLg, screenPaddingX, typeScale } from '@/theme/iosDesign';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { isApiBaseUrlConfigured } from '@/lib/api-base-url';
 import { log } from '@/lib/log';
@@ -119,7 +119,7 @@ export default function VerifyEmailScreen() {
           contentContainerStyle={[
             styles.scrollContent,
             {
-              paddingHorizontal: SPACING.x3,
+              paddingHorizontal: screenPaddingX,
               paddingTop: SPACING.x2,
               paddingBottom: SPACING.x4,
             },
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   card: {
-    borderRadius: 16,
+    borderRadius: radiusLg,
   },
   cardContent: {
     gap: SPACING.x3,
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.x1,
   },
   linkText: {
-    fontSize: 16,
+    ...typeScale.body,
     fontWeight: '600',
     textDecorationLine: 'underline',
   },

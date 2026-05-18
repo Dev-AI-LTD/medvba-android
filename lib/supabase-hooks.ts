@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { readAsStringAsync, EncodingType } from 'expo-file-system/legacy';
 import { queryKeys } from './query-keys';
+import { ensureProfileExists } from '@/lib/ensure-profile';
 import { supabase } from './supabase';
 import type { UserAccount } from '@/types/user';
 import { getMergedExpoExtra } from '@/lib/expo-public-extra';
@@ -1345,6 +1346,21 @@ export interface DirectChat {
   participants: UserAccount[];
 }
 
+/** Inbox row for 1:1 (or titled group) direct chats */
+export interface DirectChatSummary {
+  id: string;
+  isGroup: boolean;
+  title?: string | null;
+  peerId: string;
+  peerName: string;
+  peerAvatar: string;
+  lastMessage: string;
+  lastMessageAt: string;
+  lastMessageUserId?: string;
+  unreadCount: number;
+  isOnline: boolean;
+}
+
 export interface DirectChatMessage {
   id: string;
   chatId: string;
@@ -1358,11 +1374,11 @@ export interface DirectChatMessage {
 export function useDirectChats(userId: string | undefined) {
   return useQuery({
     queryKey: ['directChats', userId],
-    queryFn: async () => {
+    queryFn: async (): Promise<DirectChatSummary[]> => {
       if (!userId) return [];
 
       console.log('[Supabase] Fetching direct chats for user:', userId);
-      
+
       const { data, error } = await supabase
         .from('direct_chat_participants')
         .select(`
@@ -1382,16 +1398,106 @@ export function useDirectChats(userId: string | undefined) {
         return [];
       }
 
-      console.log('[Supabase] Fetched', data?.length || 0, 'chats');
+      const rows = data || [];
+      if (rows.length === 0) return [];
 
-      return (data || []).map((item: any) => ({
-        id: item.direct_chats.id,
-        isGroup: item.direct_chats.is_group,
-        title: item.direct_chats.title,
-        createdBy: item.direct_chats.created_by,
-        createdAt: item.direct_chats.created_at,
-        participants: [],
-      })) as DirectChat[];
+      const chatIds = [...new Set(rows.map((item: { chat_id: string }) => item.chat_id))];
+
+      const { data: participantsData } = await supabase
+        .from('direct_chat_participants')
+        .select('chat_id, user_id')
+        .in('chat_id', chatIds);
+
+      const { data: messagesData } = await supabase
+        .from('direct_chat_messages')
+        .select('chat_id, user_id, content, created_at')
+        .in('chat_id', chatIds)
+        .order('created_at', { ascending: false });
+
+      const lastMessageByChat = new Map<string, { user_id: string; content: string; created_at: string }>();
+      for (const msg of messagesData || []) {
+        if (!lastMessageByChat.has(msg.chat_id)) {
+          lastMessageByChat.set(msg.chat_id, msg);
+        }
+      }
+
+      const peerIdsByChat = new Map<string, string[]>();
+      for (const p of participantsData || []) {
+        const list = peerIdsByChat.get(p.chat_id) ?? [];
+        list.push(p.user_id);
+        peerIdsByChat.set(p.chat_id, list);
+      }
+
+      const allPeerIds = new Set<string>();
+      for (const ids of peerIdsByChat.values()) {
+        for (const id of ids) {
+          if (id !== userId) allPeerIds.add(id);
+        }
+      }
+
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, name, avatar')
+        .in('id', [...allPeerIds]);
+
+      const profilesMap = new Map((profilesData || []).map((p) => [p.id, p]));
+
+      const fiveMinutesAgo = new Date();
+      fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
+      const { data: presenceData } = await supabase
+        .from('user_presence')
+        .select('user_id, last_seen')
+        .in('user_id', [...allPeerIds])
+        .gte('last_seen', fiveMinutesAgo.toISOString());
+
+      const onlineSet = new Set((presenceData || []).map((p: { user_id: string }) => p.user_id));
+
+      const { getChatLastReadAt } = await import('@/lib/messenger-read-state');
+
+      const summaries: DirectChatSummary[] = [];
+
+      for (const item of rows) {
+        const row = item as { chat_id: string; direct_chats: { id: string; is_group: boolean; title: string | null; created_at: string } | { id: string; is_group: boolean; title: string | null; created_at: string }[] };
+        const rawChat = row.direct_chats;
+        const chat = Array.isArray(rawChat) ? rawChat[0] : rawChat;
+        if (!chat?.id) continue;
+        const participantIds = peerIdsByChat.get(chat.id) ?? [];
+        const peerId = participantIds.find((id) => id !== userId) ?? userId;
+        const profile = profilesMap.get(peerId);
+        const last = lastMessageByChat.get(chat.id);
+        const lastRead = await getChatLastReadAt(chat.id);
+
+        let unreadCount = 0;
+        if (last && last.user_id !== userId) {
+          if (!lastRead || new Date(last.created_at) > new Date(lastRead)) {
+            unreadCount = 1;
+          }
+        }
+
+        summaries.push({
+          id: chat.id,
+          isGroup: chat.is_group,
+          title: chat.title,
+          peerId,
+          peerName: chat.is_group
+            ? (chat.title || 'Group')
+            : (profile?.name || 'Student'),
+          peerAvatar:
+            profile?.avatar || `https://api.dicebear.com/7.x/avataaars/png?seed=${peerId}`,
+          lastMessage: last?.content ?? '',
+          lastMessageAt: last?.created_at ?? chat.created_at,
+          lastMessageUserId: last?.user_id,
+          unreadCount,
+          isOnline: onlineSet.has(peerId),
+        });
+      }
+
+      summaries.sort(
+        (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime(),
+      );
+
+      console.log('[Supabase] Fetched', summaries.length, 'chat summaries');
+      return summaries;
     },
     enabled: !!userId,
     staleTime: 30000,
@@ -1409,6 +1515,9 @@ export function useCreateDirectChat() {
       showInFeed: boolean;
     }) => {
       console.log('[Supabase] Creating direct chat with participants:', input.participantIds.length);
+
+      await ensureProfileExists(input.createdBy);
+      await Promise.all(input.participantIds.map((id) => ensureProfileExists(id)));
 
       const isGroup = input.participantIds.length > 1;
       
@@ -1482,6 +1591,9 @@ export function useGetOrCreateDirectChat() {
       otherUserId: string;
     }) => {
       console.log('[Supabase] Getting or creating 1-on-1 chat between:', input.currentUserId, 'and', input.otherUserId);
+
+      await ensureProfileExists(input.currentUserId);
+      await ensureProfileExists(input.otherUserId);
 
       const { data: existingChats, error: searchError } = await supabase
         .from('direct_chat_participants')
@@ -1559,6 +1671,29 @@ export function useGetOrCreateDirectChat() {
   });
 }
 
+async function profileForChatUser(userId: string): Promise<{ name: string; avatar: string }> {
+  const { data } = await supabase.from('profiles').select('name, avatar').eq('id', userId).maybeSingle();
+  return {
+    name: data?.name || 'Student',
+    avatar: data?.avatar || `https://api.dicebear.com/7.x/avataaars/png?seed=${userId}`,
+  };
+}
+
+function mapDirectChatMessage(
+  msg: { id: string; chat_id: string; user_id: string; content: string; created_at: string },
+  profile?: { name?: string | null; avatar?: string | null },
+): DirectChatMessage {
+  return {
+    id: msg.id,
+    chatId: msg.chat_id,
+    userId: msg.user_id,
+    userName: profile?.name || 'Student',
+    userAvatar: profile?.avatar || `https://api.dicebear.com/7.x/avataaars/png?seed=${msg.user_id}`,
+    content: msg.content,
+    createdAt: msg.created_at,
+  };
+}
+
 export function useDirectChatMessages(chatId: string | undefined) {
   const [messages, setMessages] = useState<DirectChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -1576,7 +1711,7 @@ export function useDirectChatMessages(chatId: string | undefined) {
 
       const { data, error } = await supabase
         .from('direct_chat_messages')
-        .select('*')
+        .select('id, chat_id, user_id, content, created_at')
         .eq('chat_id', chatId)
         .order('created_at', { ascending: true })
         .limit(100);
@@ -1587,15 +1722,18 @@ export function useDirectChatMessages(chatId: string | undefined) {
         return;
       }
 
-      const formattedMessages: DirectChatMessage[] = (data || []).map((msg: any) => ({
-        id: msg.id,
-        chatId: msg.chat_id,
-        userId: msg.user_id,
-        userName: 'User',
-        userAvatar: `https://api.dicebear.com/7.x/avataaars/png?seed=${msg.user_id}`,
-        content: msg.content,
-        createdAt: msg.created_at,
-      }));
+      const raw = data || [];
+      const userIds = [...new Set(raw.map((m) => m.user_id))];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, name, avatar')
+        .in('id', userIds);
+
+      const profilesMap = new Map((profilesData || []).map((p) => [p.id, p]));
+
+      const formattedMessages: DirectChatMessage[] = raw.map((msg) =>
+        mapDirectChatMessage(msg, profilesMap.get(msg.user_id)),
+      );
 
       setMessages(formattedMessages);
       setIsLoading(false);
@@ -1616,18 +1754,20 @@ export function useDirectChatMessages(chatId: string | undefined) {
         },
         async (payload) => {
           console.log('[Supabase] New chat message received:', payload);
-          
-          const newMessage: DirectChatMessage = {
-            id: payload.new.id,
-            chatId: payload.new.chat_id,
-            userId: payload.new.user_id,
-            userName: 'User',
-            userAvatar: `https://api.dicebear.com/7.x/avataaars/png?seed=${payload.new.user_id}`,
-            content: payload.new.content,
-            createdAt: payload.new.created_at,
+          const row = payload.new as {
+            id: string;
+            chat_id: string;
+            user_id: string;
+            content: string;
+            created_at: string;
           };
-          setMessages((prev) => [...prev, newMessage]);
-        }
+          const profile = await profileForChatUser(row.user_id);
+          const newMessage = mapDirectChatMessage(row, profile);
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === newMessage.id)) return prev;
+            return [...prev, newMessage];
+          });
+        },
       )
       .subscribe();
 
@@ -1641,6 +1781,8 @@ export function useDirectChatMessages(chatId: string | undefined) {
 }
 
 export function useSendDirectMessage() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (input: {
       chatId: string;
@@ -1666,6 +1808,9 @@ export function useSendDirectMessage() {
 
       console.log('[Supabase] Chat message sent:', data.id);
       return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['directChats', variables.userId] });
     },
   });
 }

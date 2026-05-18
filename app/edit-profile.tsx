@@ -18,7 +18,20 @@ import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { ArrowLeft, Camera, Save, User, MapPin, School, BookOpen, Eye, EyeOff, X } from 'lucide-react-native';
 import { useTheme } from '@/providers/ThemeProvider';
-import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
+import {
+  buttonHeight,
+  iconLg,
+  iconMd,
+  iconSm,
+  iconXl,
+  inputMinHeight,
+  radiusLg,
+  radiusMd,
+  screenPaddingX,
+  space,
+  touchTargetMin,
+  typeScale,
+} from '@/theme/iosDesign';
 import { useAuth } from '@/providers/AuthProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import GlassCard from '@/components/GlassCard';
@@ -245,7 +258,7 @@ export default function EditProfileScreen() {
         <SafeAreaView style={styles.safeArea} edges={['top']}>
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
-              <ArrowLeft color={colors.text} size={24} />
+              <ArrowLeft color={colors.text} size={iconXl} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>{t('editProfile.title')}</Text>
             <View style={styles.backButton} />
@@ -267,7 +280,7 @@ export default function EditProfileScreen() {
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
-            <ArrowLeft color={colors.text} size={24} />
+            <ArrowLeft color={colors.text} size={iconXl} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Edit Profile</Text>
           <TouchableOpacity
@@ -279,7 +292,7 @@ export default function EditProfileScreen() {
             {updateProfileMutation.isPending ? (
               <ActivityIndicator size="small" color={colors.primary} />
             ) : (
-              <Save color={colors.primary} size={22} />
+              <Save color={colors.primary} size={iconLg} />
             )}
           </TouchableOpacity>
         </View>
@@ -300,7 +313,7 @@ export default function EditProfileScreen() {
               disabled={isUploadingPhoto}
               activeOpacity={0.7}
             >
-              <Camera color={colors.primary} size={18} />
+              <Camera color={colors.primary} size={iconSm} />
               <Text style={styles.changePhotoText}>{t('editProfile.changePhoto')}</Text>
             </TouchableOpacity>
           </GlassCard>
@@ -310,7 +323,7 @@ export default function EditProfileScreen() {
 
             <View style={styles.inputGroup}>
               <View style={styles.inputLabel}>
-                <User color={colors.textSecondary} size={18} />
+                <User color={colors.textSecondary} size={iconSm} />
                 <Text style={styles.labelText}>{t('editProfile.nameLabel')}</Text>
               </View>
               <TextInput
@@ -325,7 +338,7 @@ export default function EditProfileScreen() {
 
             <View style={styles.inputGroup}>
               <View style={styles.inputLabel}>
-                <BookOpen color={colors.textSecondary} size={18} />
+                <BookOpen color={colors.textSecondary} size={iconSm} />
                 <Text style={styles.labelText}>{t('editProfile.bioLabel')}</Text>
               </View>
               <TextInput
@@ -346,7 +359,7 @@ export default function EditProfileScreen() {
 
             <View style={styles.inputGroup}>
               <View style={styles.inputLabel}>
-                <MapPin color={colors.textSecondary} size={18} />
+                <MapPin color={colors.textSecondary} size={iconSm} />
                 <Text style={styles.labelText}>{t('editProfile.cityLabel')}</Text>
               </View>
               <TextInput
@@ -361,7 +374,7 @@ export default function EditProfileScreen() {
 
             <View style={styles.inputGroup}>
               <View style={styles.inputLabel}>
-                <School color={colors.textSecondary} size={18} />
+                <School color={colors.textSecondary} size={iconSm} />
                 <Text style={styles.labelText}>{t('editProfile.universityLabel')}</Text>
               </View>
               <TextInput
@@ -376,7 +389,7 @@ export default function EditProfileScreen() {
 
             <View style={styles.inputGroup}>
               <View style={styles.inputLabel}>
-                <BookOpen color={colors.textSecondary} size={18} />
+                <BookOpen color={colors.textSecondary} size={iconSm} />
                 <Text style={styles.labelText}>{t('editProfile.yearLabel')}</Text>
               </View>
               <TextInput
@@ -405,7 +418,7 @@ export default function EditProfileScreen() {
               activeOpacity={0.7}
             >
               <View style={styles.toggleLabel}>
-                {isPublic ? <Eye color={colors.success} size={20} /> : <EyeOff color={colors.textMuted} size={20} />}
+                {isPublic ? <Eye color={colors.success} size={iconMd} /> : <EyeOff color={colors.textMuted} size={iconMd} />}
                 <View style={styles.toggleTextContainer}>
                   <Text style={styles.toggleTitle}>{t('editProfile.publicProfile')}</Text>
                   <Text style={styles.toggleDescription}>
@@ -438,7 +451,7 @@ export default function EditProfileScreen() {
             }}
             activeOpacity={0.7}
           >
-            <X color={colors.text} size={24} />
+            <X color={colors.text} size={iconXl} />
           </TouchableOpacity>
         </View>
       )}
@@ -459,8 +472,8 @@ const createStyles = (colors: any) =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingHorizontal: 20,
-      paddingVertical: 16,
+      paddingHorizontal: screenPaddingX,
+      paddingVertical: space.space4,
       borderBottomWidth: 1,
       borderBottomColor: colors.glassBorder,
     },
@@ -470,9 +483,9 @@ const createStyles = (colors: any) =>
       color: colors.text,
     },
     backButton: {
-      width: TOUCH_TARGET_MIN,
-      height: TOUCH_TARGET_MIN,
-      borderRadius: TOUCH_TARGET_MIN / 2,
+      width: touchTargetMin,
+      height: touchTargetMin,
+      borderRadius: touchTargetMin / 2,
       backgroundColor: colors.cardBg,
       justifyContent: 'center',
       alignItems: 'center',
@@ -480,9 +493,9 @@ const createStyles = (colors: any) =>
       borderColor: colors.glassBorder,
     },
     saveButton: {
-      width: TOUCH_TARGET_MIN,
-      height: TOUCH_TARGET_MIN,
-      borderRadius: TOUCH_TARGET_MIN / 2,
+      width: touchTargetMin,
+      height: touchTargetMin,
+      borderRadius: touchTargetMin / 2,
       backgroundColor: colors.cardBg,
       justifyContent: 'center',
       alignItems: 'center',
@@ -503,8 +516,9 @@ const createStyles = (colors: any) =>
       marginTop: 16,
     },
     scrollContent: {
-      padding: 20,
-      paddingBottom: 40,
+      paddingHorizontal: screenPaddingX,
+      paddingTop: screenPaddingX,
+      paddingBottom: space.space8,
     },
     photoSection: {
       alignItems: 'center',
@@ -537,8 +551,9 @@ const createStyles = (colors: any) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
-      paddingHorizontal: 20,
+      paddingHorizontal: screenPaddingX,
       paddingVertical: 10,
+      minHeight: touchTargetMin,
       backgroundColor: colors.cardBgLight,
       borderRadius: 20,
       borderWidth: 1,
@@ -574,13 +589,14 @@ const createStyles = (colors: any) =>
     },
     input: {
       backgroundColor: colors.cardBgLight,
-      borderRadius: 12,
-      paddingHorizontal: 16,
-      paddingVertical: 14,
+      borderRadius: radiusMd,
+      paddingHorizontal: screenPaddingX,
+      paddingVertical: space.space3,
       fontSize: 15,
       color: colors.text,
       borderWidth: 1,
       borderColor: colors.glassBorder,
+      minHeight: inputMinHeight,
     },
     textArea: {
       minHeight: 100,
@@ -637,10 +653,10 @@ const createStyles = (colors: any) =>
     photoPickerClose: {
       position: 'absolute',
       top: 60,
-      right: 20,
-      width: 50,
-      height: 50,
-      borderRadius: 25,
+      right: screenPaddingX,
+      width: buttonHeight,
+      height: buttonHeight,
+      borderRadius: buttonHeight / 2,
       backgroundColor: colors.cardBg,
       justifyContent: 'center',
       alignItems: 'center',

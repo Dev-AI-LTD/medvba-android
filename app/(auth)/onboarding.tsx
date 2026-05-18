@@ -17,6 +17,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Brain, Users, Trophy, ChevronRight } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import colors from '@/constants/colors';
+import {
+  buttonHeight,
+  iconMd,
+  radiusLg,
+  screenPaddingX,
+  typeScale,
+} from '@/theme/iosDesign';
 import { useAuth } from '@/providers/AuthProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
 
@@ -309,7 +316,7 @@ export default function OnboardingScreen() {
             <Text style={styles.nextButtonText}>
               {currentIndex === slides.length - 1 ? t('onboarding.getStarted') : t('onboarding.next')}
             </Text>
-            <ChevronRight size={20} color="#fff" />
+            <ChevronRight size={iconMd} color="#fff" />
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -328,7 +335,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    paddingHorizontal: 20,
+    paddingHorizontal: screenPaddingX,
     paddingTop: 10,
   },
   skipButton: {
@@ -336,7 +343,7 @@ const styles = StyleSheet.create({
   },
   skipText: {
     color: colors.textSecondary,
-    fontSize: 16,
+    ...typeScale.body,
     fontWeight: '500',
   },
   slide: {
@@ -375,10 +382,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   description: {
-    fontSize: 16,
+    ...typeScale.body,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 24,
     paddingHorizontal: 10,
   },
   pagination: {
@@ -401,8 +407,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: buttonHeight,
     paddingVertical: 16,
-    borderRadius: 16,
+    borderRadius: radiusLg,
     gap: 8,
   },
   nextButtonText: {

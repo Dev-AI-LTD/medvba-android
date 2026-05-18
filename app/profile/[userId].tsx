@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, type Href } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import {
   ArrowLeft,
@@ -31,7 +31,18 @@ import { useAuth } from '@/providers/AuthProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import GlassCard from '@/components/GlassCard';
 import { useUserProfile, useGetOrCreateDirectChat, useUserProgress } from '@/lib/supabase-hooks';
-import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
+import {
+  buttonHeight,
+  iconMd,
+  iconSm,
+  iconXl,
+  radiusLg,
+  radiusMd,
+  screenPaddingX,
+  space,
+  touchTargetMin,
+  typeScale,
+} from '@/theme/iosDesign';
 import { safeAvatarUri } from '@/lib/safe-image-uri';
 
 export default function ProfileDetailScreen() {
@@ -62,7 +73,15 @@ export default function ProfileDetailScreen() {
         otherUserId: userId,
       });
 
-      router.push(`/direct-chat?chatId=${result.id}`);
+      router.push({
+        pathname: '/(tabs)/social/chat/[chatId]',
+        params: {
+          chatId: result.id,
+          peerId: userId,
+          peerName: profile?.name ?? t('messenger.unknownUser'),
+          peerAvatar: profile?.avatar ?? '',
+        },
+      } as unknown as Href);
     } catch (error) {
       console.error('Error starting chat:', error);
       if (Platform.OS !== 'web') {
@@ -90,7 +109,7 @@ export default function ProfileDetailScreen() {
         <SafeAreaView style={styles.safeArea} edges={['top']}>
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
-              <ArrowLeft color={colors.text} size={24} />
+              <ArrowLeft color={colors.text} size={iconXl} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>{t('profile')}</Text>
             <View style={styles.backButton} />
@@ -111,7 +130,7 @@ export default function ProfileDetailScreen() {
         <SafeAreaView style={styles.safeArea} edges={['top']}>
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
-              <ArrowLeft color={colors.text} size={24} />
+              <ArrowLeft color={colors.text} size={iconXl} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>{t('profile')}</Text>
             <View style={styles.backButton} />
@@ -151,7 +170,7 @@ export default function ProfileDetailScreen() {
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
-            <ArrowLeft color={colors.text} size={24} />
+            <ArrowLeft color={colors.text} size={iconXl} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('profile')}</Text>
           <View style={styles.backButton} />
@@ -181,7 +200,7 @@ export default function ProfileDetailScreen() {
               {profile.university && (
                 <View style={styles.infoRow}>
                   <View style={styles.infoIcon}>
-                    <School color={colors.secondary} size={18} />
+                    <School color={colors.secondary} size={iconSm} />
                   </View>
                   <Text style={styles.infoText}>{universityLine}</Text>
                 </View>
@@ -207,7 +226,7 @@ export default function ProfileDetailScreen() {
               <View style={styles.statsGrid}>
                 <View style={styles.statItem}>
                   <View style={[styles.statIcon, { backgroundColor: colors.primary + '20' }]}>
-                    <Target color={colors.primary} size={20} />
+                    <Target color={colors.primary} size={iconMd} />
                   </View>
                   <Text style={styles.statValue}>{progress.totalQuestionsAnswered}</Text>
                   <Text style={styles.statLabel}>{t('profile.questions')}</Text>
@@ -215,7 +234,7 @@ export default function ProfileDetailScreen() {
 
                 <View style={styles.statItem}>
                   <View style={[styles.statIcon, { backgroundColor: colors.success + '20' }]}>
-                    <TrendingUp color={colors.success} size={20} />
+                    <TrendingUp color={colors.success} size={iconMd} />
                   </View>
                   <Text style={styles.statValue}>{accuracy.toFixed(1)}%</Text>
                   <Text style={styles.statLabel}>{t('profile.accuracy')}</Text>
@@ -223,7 +242,7 @@ export default function ProfileDetailScreen() {
 
                 <View style={styles.statItem}>
                   <View style={[styles.statIcon, { backgroundColor: colors.accent + '20' }]}>
-                    <Award color={colors.accent} size={20} />
+                    <Award color={colors.accent} size={iconMd} />
                   </View>
                   <Text style={styles.statValue}>{progress.currentStreak}</Text>
                   <Text style={styles.statLabel}>{t('profile.dayStreak')}</Text>
@@ -231,7 +250,7 @@ export default function ProfileDetailScreen() {
 
                 <View style={styles.statItem}>
                   <View style={[styles.statIcon, { backgroundColor: colors.secondary + '20' }]}>
-                    <Clock color={colors.secondary} size={20} />
+                    <Clock color={colors.secondary} size={iconMd} />
                   </View>
                   <Text style={styles.statValue}>{studyHours.toFixed(1)}</Text>
                   <Text style={styles.statLabel}>{t('userProfile.studyHours')}</Text>
@@ -257,7 +276,7 @@ export default function ProfileDetailScreen() {
                 <ActivityIndicator size="small" color={colors.text} />
               ) : (
                 <>
-                  <MessageCircle color={colors.text} size={20} />
+                  <MessageCircle color={colors.text} size={iconMd} />
                   <Text style={styles.messageButtonText}>{t('userProfile.sendMessage')}</Text>
                 </>
               )}
@@ -267,7 +286,7 @@ export default function ProfileDetailScreen() {
           {isOwnProfile && (
             <TouchableOpacity style={styles.editButton} onPress={handleEditProfile} activeOpacity={0.8}>
               <View style={styles.editButtonContent}>
-                <BookOpen color={colors.primary} size={20} />
+                <BookOpen color={colors.primary} size={iconMd} />
                 <Text style={styles.editButtonText}>{t('editProfile.title')}</Text>
               </View>
             </TouchableOpacity>
@@ -291,8 +310,8 @@ const createStyles = (colors: any) =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingHorizontal: 20,
-      paddingVertical: 16,
+      paddingHorizontal: screenPaddingX,
+      paddingVertical: space.space4,
       borderBottomWidth: 1,
       borderBottomColor: colors.glassBorder,
     },
@@ -302,9 +321,9 @@ const createStyles = (colors: any) =>
       color: colors.text,
     },
     backButton: {
-      width: TOUCH_TARGET_MIN,
-      height: TOUCH_TARGET_MIN,
-      borderRadius: TOUCH_TARGET_MIN / 2,
+      width: touchTargetMin,
+      height: touchTargetMin,
+      borderRadius: touchTargetMin / 2,
       backgroundColor: colors.cardBg,
       justifyContent: 'center',
       alignItems: 'center',
@@ -328,13 +347,14 @@ const createStyles = (colors: any) =>
       paddingHorizontal: 40,
     },
     emptyText: {
-      fontSize: 16,
+      ...typeScale.body,
       color: colors.textSecondary,
       textAlign: 'center',
     },
     scrollContent: {
-      padding: 20,
-      paddingBottom: 40,
+      paddingHorizontal: screenPaddingX,
+      paddingTop: screenPaddingX,
+      paddingBottom: space.space8,
     },
     profileCard: {
       marginBottom: 16,
@@ -373,9 +393,9 @@ const createStyles = (colors: any) =>
       gap: 10,
       width: '100%',
       paddingVertical: 12,
-      paddingHorizontal: 16,
+      paddingHorizontal: screenPaddingX,
       backgroundColor: colors.cardBgLight,
-      borderRadius: 12,
+      borderRadius: radiusMd,
       marginBottom: 12,
     },
     infoIcon: {
@@ -395,7 +415,7 @@ const createStyles = (colors: any) =>
     bioSection: {
       width: '100%',
       paddingVertical: 16,
-      paddingHorizontal: 20,
+      paddingHorizontal: screenPaddingX,
       borderTopWidth: 1,
       borderBottomWidth: 1,
       borderColor: colors.glassBorder,
@@ -437,13 +457,13 @@ const createStyles = (colors: any) =>
       alignItems: 'center',
       padding: 16,
       backgroundColor: colors.cardBgLight,
-      borderRadius: 12,
+      borderRadius: radiusMd,
       borderWidth: 1,
       borderColor: colors.glassBorder,
     },
     statIcon: {
-      width: TOUCH_TARGET_MIN,
-      height: TOUCH_TARGET_MIN,
+      width: touchTargetMin,
+      height: touchTargetMin,
       borderRadius: 14,
       justifyContent: 'center',
       alignItems: 'center',
@@ -464,19 +484,20 @@ const createStyles = (colors: any) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingVertical: 16,
-      borderRadius: 16,
+      minHeight: buttonHeight,
+      paddingVertical: space.space4,
+      borderRadius: radiusLg,
       gap: 10,
       overflow: 'hidden',
       marginBottom: 16,
     },
     messageButtonText: {
-      fontSize: 16,
+      ...typeScale.body,
       fontWeight: '700' as const,
       color: colors.text,
     },
     editButton: {
-      borderRadius: 16,
+      borderRadius: radiusLg,
       borderWidth: 2,
       borderColor: colors.primary,
       overflow: 'hidden',
@@ -486,11 +507,12 @@ const createStyles = (colors: any) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingVertical: 16,
+      minHeight: buttonHeight,
+      paddingVertical: space.space4,
       gap: 10,
     },
     editButtonText: {
-      fontSize: 16,
+      ...typeScale.body,
       fontWeight: '700' as const,
       color: colors.primary,
     },

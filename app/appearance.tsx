@@ -9,14 +9,23 @@ import {
   ActivityIndicator,
   Animated,
 } from 'react-native';
-import * as Haptics from 'expo-haptics';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, Sun, Moon, Smartphone } from 'lucide-react-native';
+import { Sun, Moon, Smartphone } from 'lucide-react-native';
+import { Screen, ScreenHeader } from '@/components/layout';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useTheme } from '@/providers/ThemeProvider';
-import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
+import {
+  iconLg,
+  radiusLg,
+  radiusMd,
+  screenPaddingX,
+  sectionGap,
+  space,
+  touchTargetMin,
+  typeScale,
+} from '@/theme/iosDesign';
 
 type ThemeMode = 'auto' | 'light' | 'dark';
 
@@ -78,32 +87,14 @@ export default function AppearanceScreen() {
   const currentMode = preference === 'system' ? 'auto' : preference;
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={[colors.background, colors.backgroundLight, colors.background]}
-        style={StyleSheet.absoluteFill}
-        locations={[0, 0.5, 1]}
+    <Screen withGradient edges={['top', 'bottom']} padded={false}>
+      <ScreenHeader
+        layout="stack-centered"
+        onBack={() => router.back()}
+        title={t('appearance.title')}
+        backVariant="pill"
+        bordered
       />
-      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-        <View style={[styles.header, { borderBottomColor: colors.glassBorder }]}>
-          <TouchableOpacity
-            style={[
-              styles.backButton,
-              {
-                backgroundColor: colors.cardBg,
-                borderColor: colors.glassBorder,
-              },
-            ]}
-            onPress={() => router.back()}
-            activeOpacity={0.7}
-          >
-            <ChevronLeft color={colors.text} size={24} />
-          </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text }]}>
-            {t('appearance.title')}
-          </Text>
-          <View style={styles.placeholder} />
-        </View>
 
         <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
           <ScrollView
@@ -170,7 +161,7 @@ export default function AppearanceScreen() {
                         { backgroundColor: colors.cardBgLight },
                       ]}
                     >
-                      <Icon color={iconColors[option.mode]} size={22} />
+                      <Icon color={iconColors[option.mode]} size={iconLg} />
                     </View>
                     <View style={styles.themeInfo}>
                       <Text style={[styles.themeTitle, { color: colors.text }]}>
@@ -195,47 +186,18 @@ export default function AppearanceScreen() {
           </View>
         </ScrollView>
         </Animated.View>
-      </SafeAreaView>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    width: TOUCH_TARGET_MIN,
-    height: TOUCH_TARGET_MIN,
-    borderRadius: TOUCH_TARGET_MIN / 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '700' as const,
-  },
-  placeholder: {
-    width: TOUCH_TARGET_MIN,
-  },
   scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
+    paddingHorizontal: screenPaddingX,
+    paddingTop: screenPaddingX,
+    paddingBottom: space.space8,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: sectionGap,
   },
   sectionTitle: {
     fontSize: 13,
@@ -246,15 +208,15 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   sectionCard: {
-    borderRadius: 16,
+    borderRadius: radiusLg,
     borderWidth: 1,
     overflow: 'hidden',
   },
   themeOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    gap: 12,
+    padding: screenPaddingX,
+    gap: space.space3,
   },
   radioCircle: {
     width: 24,
@@ -272,7 +234,7 @@ const styles = StyleSheet.create({
   themeIconContainer: {
     width: 40,
     height: 40,
-    borderRadius: 12,
+    borderRadius: radiusMd,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -280,7 +242,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   themeTitle: {
-    fontSize: 16,
+    ...typeScale.body,
     fontWeight: '600' as const,
     marginBottom: 4,
   },

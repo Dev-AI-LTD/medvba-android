@@ -22,6 +22,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import GlassCard from '@/components/GlassCard';
 import Button from '@/components/Button';
 import { getSupportEmail, openSupportMail } from '@/lib/support-mail';
+import { inputMinHeight, screenPaddingX, space } from '@/theme/iosDesign';
 
 type CategoryOption = 'bug' | 'billing' | 'account' | 'other';
 
@@ -265,7 +266,7 @@ const createStyles = (colors: {
       borderWidth: 1,
       borderColor: colors.glassBorder,
       backgroundColor: colors.cardBg,
-      paddingHorizontal: 12,
+      paddingHorizontal: screenPaddingX,
       paddingVertical: 10,
       color: colors.text,
       fontSize: 14,
@@ -275,7 +276,7 @@ const createStyles = (colors: {
       borderWidth: 1,
       borderColor: colors.glassBorder,
       backgroundColor: colors.cardBg,
-      paddingHorizontal: 12,
+      paddingHorizontal: screenPaddingX,
       paddingVertical: 12,
       color: colors.text,
       fontSize: 14,
@@ -297,7 +298,7 @@ const createStyles = (colors: {
       borderRadius: 999,
       borderWidth: 1,
       borderColor: colors.glassBorder,
-      paddingHorizontal: 12,
+      paddingHorizontal: screenPaddingX,
       paddingVertical: 6,
       backgroundColor: colors.cardBgLight,
     },

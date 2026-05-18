@@ -40,7 +40,12 @@ export const persistOptions = {
   persister: asyncStoragePersister,
   maxAge: ONE_WEEK_MS,
   dehydrateOptions: {
-    shouldDehydrateQuery: (query: { queryKey: readonly unknown[] }) => {
+    shouldDehydrateQuery: (query: {
+      queryKey: readonly unknown[];
+      state: { status: string; dataUpdatedAt: number };
+    }) => {
+      // Skip in-flight queries — restoring them causes CancelledError on hydration in dev.
+      if (query.state.status === 'pending') return false;
       const root = query.queryKey[0];
       return typeof root === 'string' && PERSISTED_QUERY_ROOTS.has(root);
     },

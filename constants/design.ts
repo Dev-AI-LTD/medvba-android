@@ -1,87 +1,81 @@
-import { TOUCH_TARGET_MIN } from '@/theme/paperTheme';
+/**
+ * @deprecated Prefer importing from `@/theme/iosDesign` for new code.
+ * Re-exports iOS HIG tokens for backward compatibility.
+ */
+import {
+  space,
+  screenPaddingX,
+  screenPaddingXWide,
+  fieldGap,
+  sectionGap,
+  cardPadding,
+  touchTargetMin,
+  buttonHeight,
+  inputMinHeight,
+  listRowMinHeight,
+  iconSm,
+  iconMd,
+  iconLg,
+  iconXl,
+  radiusSm,
+  radiusMd,
+  radiusLg,
+  radiusPill,
+  typeScale,
+  TOUCH_TARGET_MIN,
+} from '@/theme/iosDesign';
 
 export const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  xxl: 24,
-  xxxl: 32,
-  huge: 40,
-  massive: 48,
+  xs: space.space1,
+  sm: space.space2,
+  md: space.space3,
+  lg: space.space4,
+  xl: space.space5,
+  xxl: space.space6,
+  xxxl: space.space7,
+  huge: space.space8,
+  massive: space.space9,
 } as const;
 
 export const typography = {
-  h1: {
-    fontSize: 32,
-    lineHeight: 40,
-    fontWeight: '700' as const,
-    letterSpacing: -0.5,
-  },
-  h2: {
-    fontSize: 24,
-    lineHeight: 32,
-    fontWeight: '700' as const,
-    letterSpacing: -0.3,
-  },
-  h3: {
-    fontSize: 20,
-    lineHeight: 28,
-    fontWeight: '600' as const,
-    letterSpacing: -0.2,
-  },
-  h4: {
-    fontSize: 18,
-    lineHeight: 24,
-    fontWeight: '600' as const,
-  },
-  body: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '400' as const,
-  },
-  bodyMedium: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '500' as const,
-  },
-  bodySemibold: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '600' as const,
-  },
-  small: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '400' as const,
-  },
-  smallMedium: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '500' as const,
-  },
-  caption: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '400' as const,
-  },
-  captionMedium: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '500' as const,
-  },
+  h1: typeScale.largeTitle,
+  h2: typeScale.title,
+  h3: typeScale.title2,
+  h4: typeScale.headline,
+  body: typeScale.body,
+  bodyMedium: typeScale.bodyMedium,
+  bodySemibold: typeScale.headline,
+  small: typeScale.subhead,
+  smallMedium: typeScale.subheadMedium,
+  caption: typeScale.caption,
+  captionMedium: typeScale.captionMedium,
 } as const;
 
 export const borderRadius = {
   xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
+  sm: radiusSm,
+  md: radiusMd,
+  lg: radiusLg,
   xl: 20,
   xxl: 24,
-  full: 9999,
+  full: radiusPill,
 } as const;
+
+export {
+  screenPaddingX,
+  screenPaddingXWide,
+  fieldGap,
+  sectionGap,
+  cardPadding,
+  touchTargetMin,
+  buttonHeight,
+  inputMinHeight,
+  listRowMinHeight,
+  iconSm,
+  iconMd,
+  iconLg,
+  iconXl,
+};
 
 export const elevation = {
   glass: {
@@ -141,11 +135,9 @@ export const animation = {
   },
 } as const;
 
-/** Prefer `TOUCH_TARGET_MIN`-sized layouts; use only when the visible control must stay small. */
 export const hitSlop = {
   default: { top: 8, right: 8, bottom: 8, left: 8 },
   large: { top: 12, right: 12, bottom: 12, left: 12 },
 } as const;
 
-/** Alias for `Button` min heights; same as `TOUCH_TARGET_MIN` from `@/theme/paperTheme`. */
 export const minTapTarget = TOUCH_TARGET_MIN;
