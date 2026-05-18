@@ -2,10 +2,15 @@
   "name": "expo-app",
   "main": "expo-router/entry",
   "version": "1.0.0",
+  "packageManager": "bun@1.3.6",
+  "trustedDependencies": [
+    "@sentry/cli"
+  ],
   "engines": {
     "node": ">=20"
   },
   "scripts": {
+    "eas-build-pre-install": "node scripts/eas-preinstall-cleanup.mjs",
     "start": "npx expo start",
     "start:local": "npx expo start",
     "start:web": "bunx expo start --web --port 8081 --clear",
@@ -45,7 +50,8 @@
     "build:dev:android": "node scripts/eas-build.mjs development",
     "build:aab": "node scripts/eas-build.mjs production",
     "release:android": "node scripts/eas-build.mjs production",
-    "postinstall": "node scripts/postinstall-dedupe-kinde-expo.mjs"
+    "postinstall": "node scripts/postinstall-dedupe-kinde-expo.mjs",
+    "prepare": "node scripts/postinstall-dedupe-kinde-expo.mjs"
   },
   "dependencies": {
     "@expo/ui": "^0.2.0-beta.9",

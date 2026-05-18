@@ -4,6 +4,8 @@
 node_modules/
 # Use Bun only: commit bun.lock. Do not commit package-lock.json (confuses expo-doctor / EAS package manager detection).
 package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
 # Expo
 .expo/

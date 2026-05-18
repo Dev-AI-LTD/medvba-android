@@ -40,7 +40,7 @@ const command = isWin ? "npx.cmd" : "npx";
 const result = spawnSync(command, args, {
   cwd: root,
   stdio: "inherit",
-  shell: false,
+  shell: isWin,
   env: process.env,
 });
 
