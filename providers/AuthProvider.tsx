@@ -36,6 +36,9 @@ import { PUBLIC_APP_NAME } from '@/lib/public-brand';
 import { isFacebookLoginEnabledForBuild } from '@/lib/auth-facebook-visibility';
 import { buildKindeSocialSignInHint } from '@/lib/kinde-hosted-hints';
 import { shouldClearMedvbaSessionAfterSyncFailure } from '@/lib/auth-sync-failure';
+import { isLikelyAuthConnectivityFailure } from '@/lib/auth-connectivity-errors';
+import { isConnectivityExchangeFailure } from '@/lib/session-exchange-errors';
+import { useOfflineReconnectEffect } from '@/lib/use-offline-reconnect';
 import { persistKindeRefreshTokenFromSdk } from '@/lib/kinde-refresh-persistence';
 import { clearAuthReturnDestination } from '@/lib/auth-return-url';
 import { shouldRefreshMedvbaAccessToken } from '@/lib/medvba-jwt-ttl';
@@ -157,6 +160,8 @@ interface AuthState {
   isBiometricEnabled: boolean;
   /** False when Facebook login is hidden (e.g. email-only builds). */
   isFacebookLoginEnabled: boolean;
+  /** True when sync/refresh failed due to connectivity but a usable local MEDVBA JWT remains. */
+  offlineSessionGrace: boolean;
 }
 
 interface AuthActions {
@@ -225,9 +230,11 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   const sessionRefreshInFlightRef = useRef(false);
   /** Hosted Kinde OAuth in progress (state so navigators re-render; ref alone would not). */
   const [hostedOAuthInFlight, setHostedOAuthInFlight] = useState(false);
+  const [offlineSessionGrace, setOfflineSessionGrace] = useState(false);
 
   const applyMedvbaSession = useCallback(
     async (accessToken: string, profileId: string, email?: string | null) => {
+      setOfflineSessionGrace(false);
       setMedvbaAccessToken(accessToken);
       await persistMedvbaAccessToken(accessToken);
       await promoteGuestOnboardingToUser(profileId);
@@ -239,6 +246,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   );
 
   const clearMedvbaSession = useCallback(() => {
+    setOfflineSessionGrace(false);
     setMedvbaAccessToken(null);
     void persistMedvbaAccessToken(null);
     void persistMedvbaKindeRefreshToken(null);
@@ -393,6 +401,14 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     const resolved = await resolveMedvbaSessionFromKindeAccessToken(kt, () => k.getUserProfile());
     perf('after_exchange_parallel_getUserProfile');
     if (!resolved.ok) {
+      if (
+        isConnectivityExchangeFailure(resolved.error, undefined, resolved.kind) &&
+        medvbaJwtHasMinTtlSeconds(0)
+      ) {
+        log.warn('[Auth] Session exchange deferred (offline); keeping local MEDVBA session');
+        setOfflineSessionGrace(true);
+        return;
+      }
       log.error('[Auth] Session exchange failed:', resolved.error);
       clearMedvbaSession();
       return;
@@ -428,6 +444,11 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
         if (!rt) return;
         const ex = await exchangeKindeRefreshToken(rt);
         if (!ex.ok) {
+          if (isConnectivityExchangeFailure(ex.error, ex.status, ex.kind) && medvbaJwtHasMinTtlSeconds(0)) {
+            log.warn('[Auth] MEDVBA refresh deferred (offline); keeping local session');
+            setOfflineSessionGrace(true);
+            return;
+          }
           log.warn('[Auth] MEDVBA refresh (Kinde refresh_token) failed:', ex.error);
           await persistMedvbaKindeRefreshToken(null);
           clearMedvbaSession();
@@ -470,6 +491,12 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     });
     return () => sub.remove();
   }, [session, refreshMedvbaIfNeeded]);
+
+  useOfflineReconnectEffect(() => {
+    if (session) {
+      void refreshMedvbaIfNeeded();
+    }
+  });
 
   const checkOnboardingStatus = useCallback(async () => {
     try {
@@ -624,7 +651,9 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
                 }
               } catch (syncErr) {
                 log.warn('[Auth] session sync failed or timed out:', syncErr);
-                if (shouldClearMedvbaSessionAfterSyncFailure()) {
+                if (isLikelyAuthConnectivityFailure(syncErr) && medvbaJwtHasMinTtlSeconds(0)) {
+                  setOfflineSessionGrace(true);
+                } else if (shouldClearMedvbaSessionAfterSyncFailure()) {
                   clearMedvbaSession();
                 }
               }
@@ -640,7 +669,11 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
         );
       } catch (e) {
         log.error('[Auth] init error:', e);
-        clearMedvbaSession();
+        if (isLikelyAuthConnectivityFailure(e) && medvbaJwtHasMinTtlSeconds(0)) {
+          setOfflineSessionGrace(true);
+        } else {
+          clearMedvbaSession();
+        }
       } finally {
         if (initSeq !== authInitSeqRef.current) {
           return;
@@ -1023,6 +1056,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     biometricCapabilities,
     isBiometricEnabled,
     isFacebookLoginEnabled,
+    offlineSessionGrace,
     signUp,
     signIn,
     signInWithBiometric,

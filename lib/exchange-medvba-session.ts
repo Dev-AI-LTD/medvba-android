@@ -1,9 +1,19 @@
 import { getApiBaseUrl } from "@/lib/api-base-url";
 import { log } from "@/lib/log";
+import {
+  classifySessionExchangeFailure,
+  type SessionExchangeFailureKind,
+} from "@/lib/session-exchange-errors";
+
+export type { SessionExchangeFailureKind };
 
 export type ExchangeSessionResult =
   | { ok: true; access_token: string; profile_id: string; refresh_token?: string }
-  | { ok: false; error: string; status?: number };
+  | { ok: false; error: string; status?: number; kind: SessionExchangeFailureKind };
+
+function failExchange(error: string, status?: number): Extract<ExchangeSessionResult, { ok: false }> {
+  return { ok: false, error, status, kind: classifySessionExchangeFailure(error, status) };
+}
 
 const SESSION_FETCH_TIMEOUT_MS = 22_000;
 
@@ -135,21 +145,21 @@ export async function exchangeKindeAccessToken(
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Network error";
-    return { ok: false, error: msg };
+    return failExchange(msg);
   }
   if (res.status === 404) {
-    return { ok: false, error: authEndpointNotFoundMessage(base, "/api/auth/session"), status: 404 };
+    return failExchange(authEndpointNotFoundMessage(base, "/api/auth/session"), 404);
   }
   const parsed = await parseSessionJson(res);
   if (!parsed.ok) {
-    return { ok: false, error: parsed.error, status: res.status };
+    return failExchange(parsed.error, res.status);
   }
   const json = parsed.json;
   if (!res.ok) {
-    return { ok: false, error: formatApiErrorMessage(json, res.statusText), status: res.status };
+    return failExchange(formatApiErrorMessage(json, res.statusText), res.status);
   }
   if (!json.access_token || !json.profile_id) {
-    return { ok: false, error: formatApiErrorMessage(json, "Invalid session response from server.") };
+    return failExchange(formatApiErrorMessage(json, "Invalid session response from server."));
   }
   const refresh_token =
     typeof json.refresh_token === "string" && json.refresh_token.length > 0
@@ -180,25 +190,21 @@ export async function exchangeKindeRefreshToken(refreshToken: string): Promise<E
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Network error";
-    return { ok: false, error: msg };
+    return failExchange(msg);
   }
   if (res.status === 404) {
-    return {
-      ok: false,
-      error: authEndpointNotFoundMessage(base, "/api/auth/session/refresh"),
-      status: 404,
-    };
+    return failExchange(authEndpointNotFoundMessage(base, "/api/auth/session/refresh"), 404);
   }
   const parsed = await parseSessionJson(res);
   if (!parsed.ok) {
-    return { ok: false, error: parsed.error, status: res.status };
+    return failExchange(parsed.error, res.status);
   }
   const json = parsed.json;
   if (!res.ok) {
-    return { ok: false, error: formatApiErrorMessage(json, res.statusText), status: res.status };
+    return failExchange(formatApiErrorMessage(json, res.statusText), res.status);
   }
   if (!json.access_token || !json.profile_id) {
-    return { ok: false, error: formatApiErrorMessage(json, "Invalid session response from server.") };
+    return failExchange(formatApiErrorMessage(json, "Invalid session response from server."));
   }
   const nextRefresh =
     typeof json.refresh_token === "string" && json.refresh_token.length > 0
@@ -236,10 +242,10 @@ export async function exchangeEmailPasswordSession(
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Network error";
-      return { ok: false, error: msg };
+      return failExchange(msg);
     }
     if (res.status === 404) {
-      return { ok: false, error: authEndpointNotFoundMessage(base, "/api/auth/session"), status: 404 };
+      return failExchange(authEndpointNotFoundMessage(base, "/api/auth/session"), 404);
     }
     const parsed = await parseSessionJson(res);
     if (__DEV__) {
@@ -253,7 +259,7 @@ export async function exchangeEmailPasswordSession(
       }
     }
     if (!parsed.ok) {
-      return { ok: false, error: parsed.error, status: res.status };
+      return failExchange(parsed.error, res.status);
     }
     const json = parsed.json;
     if (!res.ok) {
@@ -261,10 +267,10 @@ export async function exchangeEmailPasswordSession(
         await sleepMs(700 * attempt);
         continue;
       }
-      return { ok: false, error: formatApiErrorMessage(json, res.statusText), status: res.status };
+      return failExchange(formatApiErrorMessage(json, res.statusText), res.status);
     }
     if (!json.access_token || !json.profile_id) {
-      return { ok: false, error: formatApiErrorMessage(json, "Login failed.") };
+      return failExchange(formatApiErrorMessage(json, "Login failed."));
     }
     const refresh_token =
       typeof json.refresh_token === "string" && json.refresh_token.length > 0
@@ -278,7 +284,7 @@ export async function exchangeEmailPasswordSession(
     };
   }
 
-  return { ok: false, error: "Login failed after retries." };
+  return failExchange("Login failed after retries.");
 }
 
 /**
@@ -306,21 +312,21 @@ export async function registerEmailPasswordSession(
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Network error";
-    return { ok: false, error: msg };
+    return failExchange(msg);
   }
   if (res.status === 404) {
-    return { ok: false, error: authEndpointNotFoundMessage(base, "/api/auth/register"), status: 404 };
+    return failExchange(authEndpointNotFoundMessage(base, "/api/auth/register"), 404);
   }
   const parsed = await parseSessionJson(res);
   if (!parsed.ok) {
-    return { ok: false, error: parsed.error, status: res.status };
+    return failExchange(parsed.error, res.status);
   }
   const json = parsed.json;
   if (!res.ok) {
-    return { ok: false, error: formatApiErrorMessage(json, res.statusText), status: res.status };
+    return failExchange(formatApiErrorMessage(json, res.statusText), res.status);
   }
   if (!json.access_token || !json.profile_id) {
-    return { ok: false, error: formatApiErrorMessage(json, "Registration failed.") };
+    return failExchange(formatApiErrorMessage(json, "Registration failed."));
   }
   const refresh_token =
     typeof json.refresh_token === "string" && json.refresh_token.length > 0
