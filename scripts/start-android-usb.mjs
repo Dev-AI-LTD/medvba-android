@@ -11,20 +11,23 @@ const shell = process.platform === 'win32';
 /** Repo root (parent of `scripts/`) so Expo always loads `app.config.ts` + `.env` from this project. */
 const projectRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-const adb = spawnSync('adb', ['reverse', 'tcp:8081', 'tcp:8081'], { stdio: 'inherit', shell });
-if (adb.error) {
-  console.error('[start-android-usb]', adb.error.message);
-  process.exit(1);
-}
-if (adb.status !== 0) {
-  console.error(
-    '[start-android-usb] adb reverse failed (exit %s). Cable USB, depanare USB activă, apoi: adb devices',
-    adb.status,
-  );
-  process.exit(adb.status ?? 1);
+for (const port of [8081, 8082, 8083]) {
+  const adb = spawnSync('adb', ['reverse', `tcp:${port}`, `tcp:${port}`], { stdio: 'inherit', shell });
+  if (adb.error) {
+    console.error('[start-android-usb]', adb.error.message);
+    process.exit(1);
+  }
+  if (adb.status !== 0) {
+    console.error(
+      '[start-android-usb] adb reverse tcp:%s failed (exit %s). USB + USB debugging on, then: adb devices',
+      port,
+      adb.status,
+    );
+    process.exit(adb.status ?? 1);
+  }
 }
 
-const child = spawn('bunx', ['expo', 'start', '--localhost', '--clear'], {
+const child = spawn('bunx', ['expo', 'start', '--localhost', '--port', '8081', '--clear'], {
   stdio: 'inherit',
   shell,
   cwd: projectRoot,

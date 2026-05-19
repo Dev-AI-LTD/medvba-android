@@ -94,6 +94,8 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
   const updateSubscriptionMutation = useUpdateSubscription();
   const updateSubscriptionMutateAsyncRef = useRef(updateSubscriptionMutation.mutateAsync);
   updateSubscriptionMutateAsyncRef.current = updateSubscriptionMutation.mutateAsync;
+  const trpcUtils = trpc.useUtils();
+  const syncSubscriptionServer = trpc.subscription.syncFromClient.useMutation();
 
   const [state, setState] = useState<SubscriptionState>({
     isPremium: false,
@@ -107,10 +109,14 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
 
   const currentOfferingRef = useRef<any>(null);
   const didLogRevenueCatConfigErrorRef = useRef(false);
+  const revenueCatConfiguredRef = useRef(false);
+  const revenueCatListenerRef = useRef<((info: CustomerInfo) => void) | null>(null);
   /** Profile id last passed to RevenueCat logIn (skip logOut when already anonymous). */
   const lastRevenueCatUserIdRef = useRef<string | null>(null);
-  /** Tracks last premium state synced to Supabase (subscriptions row) for this session. */
-  const lastSupabasePremiumSyncRef = useRef<boolean | null>(null);
+  /** Debounced Supabase sync signature (premium:monthly | free). */
+  const lastSyncedSignatureRef = useRef<string | null>(null);
+  const premiumSyncDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastReportedPremiumRef = useRef<boolean | null>(null);
 
   const todayKey = getTodayKey();
 
@@ -175,7 +181,12 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
   }, [loadSubscriptionUsage]);
 
   useEffect(() => {
-    lastSupabasePremiumSyncRef.current = null;
+    lastSyncedSignatureRef.current = null;
+    lastReportedPremiumRef.current = null;
+    if (premiumSyncDebounceRef.current) {
+      clearTimeout(premiumSyncDebounceRef.current);
+      premiumSyncDebounceRef.current = null;
+    }
   }, [user?.id]);
 
   const canStartQuiz = useCallback((): boolean => {
@@ -284,17 +295,30 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     void syncAiQuestionCountFromServer();
   }, [PAYWALL_ENABLED, user?.id, state.isPremium, syncAiQuestionCountFromServer]);
 
+  const invalidateStudyQueries = useCallback(() => {
+    void trpcUtils.study.listChapters.invalidate();
+    void trpcUtils.study.getChapter.invalidate();
+    void trpcUtils.study.listModules.invalidate();
+  }, [trpcUtils]);
+
   const syncPremiumToSupabase = useCallback(
     (type: 'yearly' | 'monthly') => {
       if (!user?.id) return;
-      // May fail if Supabase RLS blocks self-serve premium (009 migration); DB is updated by RevenueCat webhook + REST sync.
-      updateSubscriptionMutateAsyncRef
-        .current({ userId: user.id, status: 'premium', type })
+      syncSubscriptionServer
+        .mutateAsync({ status: 'premium', type })
         .catch((err) => {
-        log.warn('[Subscription] Supabase premium sync failed (expected if RLS enforced):', err);
-      });
+          log.warn('[Subscription] Server premium sync failed, trying client upsert:', err);
+          return updateSubscriptionMutateAsyncRef.current({
+            userId: user.id,
+            status: 'premium',
+            type,
+          });
+        })
+        .catch((clientErr) => {
+          log.warn('[Subscription] Client premium sync failed:', clientErr);
+        });
     },
-    [user?.id],
+    [user?.id, syncSubscriptionServer],
   );
 
   const syncFreeToSupabase = useCallback(() => {
@@ -306,20 +330,62 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       });
   }, [user?.id]);
 
-  const applyRevenueCatPremiumToSupabase = useCallback(
-    (info: CustomerInfo, force: boolean) => {
+  const syncPremiumToSupabaseRef = useRef(syncPremiumToSupabase);
+  syncPremiumToSupabaseRef.current = syncPremiumToSupabase;
+  const syncFreeToSupabaseRef = useRef(syncFreeToSupabase);
+  syncFreeToSupabaseRef.current = syncFreeToSupabase;
+  const invalidateStudyQueriesRef = useRef(invalidateStudyQueries);
+  invalidateStudyQueriesRef.current = invalidateStudyQueries;
+
+  const scheduleRevenueCatSupabaseSync = useCallback(
+    (info: CustomerInfo) => {
       if (!PAYWALL_ENABLED || !user?.id) return;
+
       const premium = isPremiumFromCustomerInfo(info);
-      if (!force && lastSupabasePremiumSyncRef.current === premium) return;
-      lastSupabasePremiumSyncRef.current = premium;
-      if (premium) {
-        syncPremiumToSupabase(inferSubscriptionTypeFromCustomerInfo(info));
-      } else {
-        syncFreeToSupabase();
+      const signature = premium
+        ? `premium:${inferSubscriptionTypeFromCustomerInfo(info)}`
+        : 'free';
+
+      if (lastSyncedSignatureRef.current === signature) return;
+
+      if (premiumSyncDebounceRef.current) {
+        clearTimeout(premiumSyncDebounceRef.current);
       }
+
+      premiumSyncDebounceRef.current = setTimeout(() => {
+        premiumSyncDebounceRef.current = null;
+        if (lastSyncedSignatureRef.current === signature) return;
+        lastSyncedSignatureRef.current = signature;
+
+        if (premium) {
+          syncPremiumToSupabaseRef.current(inferSubscriptionTypeFromCustomerInfo(info));
+        } else {
+          syncFreeToSupabaseRef.current();
+        }
+      }, 800);
     },
-    [PAYWALL_ENABLED, user?.id, syncPremiumToSupabase, syncFreeToSupabase],
+    [PAYWALL_ENABLED, user?.id],
   );
+
+  const scheduleRevenueCatSupabaseSyncRef = useRef(scheduleRevenueCatSupabaseSync);
+  scheduleRevenueCatSupabaseSyncRef.current = scheduleRevenueCatSupabaseSync;
+
+  const handleCustomerInfo = useCallback((info: CustomerInfo) => {
+    const premium = isPremiumFromCustomerInfo(info);
+    const prevPremium = lastReportedPremiumRef.current;
+    lastReportedPremiumRef.current = premium;
+
+    setState((prev) => (prev.isPremium === premium ? prev : { ...prev, isPremium: premium }));
+
+    if ((prevPremium !== null && prevPremium !== premium) || (prevPremium === null && premium)) {
+      invalidateStudyQueriesRef.current();
+    }
+
+    scheduleRevenueCatSupabaseSyncRef.current(info);
+  }, []);
+
+  const handleCustomerInfoRef = useRef(handleCustomerInfo);
+  handleCustomerInfoRef.current = handleCustomerInfo;
 
   useEffect(() => {
     if (!PAYWALL_ENABLED || !REVENUECAT_API_KEY) {
@@ -336,13 +402,17 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
 
     const initRevenueCat = async () => {
       try {
-        Purchases.configure({ apiKey: REVENUECAT_API_KEY });
+        if (!revenueCatConfiguredRef.current) {
+          Purchases.configure({ apiKey: REVENUECAT_API_KEY });
+          revenueCatConfiguredRef.current = true;
+        }
+
         if (user?.id) {
-          const { customerInfo } = await Purchases.logIn(user.id);
-          lastRevenueCatUserIdRef.current = user.id;
-          const premium = isPremiumFromCustomerInfo(customerInfo);
-          setState((prev) => ({ ...prev, isPremium: premium }));
-          applyRevenueCatPremiumToSupabase(customerInfo, true);
+          if (lastRevenueCatUserIdRef.current !== user.id) {
+            const { customerInfo } = await Purchases.logIn(user.id);
+            lastRevenueCatUserIdRef.current = user.id;
+            handleCustomerInfoRef.current(customerInfo);
+          }
         } else if (lastRevenueCatUserIdRef.current) {
           try {
             await Purchases.logOut();
@@ -350,33 +420,47 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
             /* already anonymous */
           }
           lastRevenueCatUserIdRef.current = null;
+          lastSyncedSignatureRef.current = null;
+          lastReportedPremiumRef.current = null;
         }
 
-        const offerings = await Purchases.getOfferings();
-        const current = offerings.current;
-        if (current?.availablePackages?.length) {
-          currentOfferingRef.current = current;
-          const mapped: Offerings = {
-            availablePackages: current.availablePackages.map((pkg: any) => ({
-              identifier: pkg.identifier,
-              product: { priceString: pkg.product?.priceString ?? '' },
-            })),
-          };
-          setState((prev) => ({ ...prev, offerings: mapped }));
+        try {
+          const offerings = await Purchases.getOfferings();
+          const current = offerings.current;
+          if (current?.availablePackages?.length) {
+            currentOfferingRef.current = current;
+            const mapped: Offerings = {
+              availablePackages: current.availablePackages.map((pkg: any) => ({
+                identifier: pkg.identifier,
+                product: { priceString: pkg.product?.priceString ?? '' },
+              })),
+            };
+            setState((prev) => ({ ...prev, offerings: mapped }));
+          }
+        } catch (offeringsError) {
+          if (isRevenueCatConfigurationError(offeringsError)) {
+            if (!didLogRevenueCatConfigErrorRef.current) {
+              didLogRevenueCatConfigErrorRef.current = true;
+              log.warn(
+                '[Subscription] RevenueCat offerings unavailable (Play Console products/offerings). App works; purchases disabled until configured.',
+              );
+            }
+          } else {
+            log.warn('[Subscription] getOfferings failed:', offeringsError);
+          }
         }
 
         const customerInfo = await Purchases.getCustomerInfo();
-        const ciPremium = isPremiumFromCustomerInfo(customerInfo);
-        setState((prev) => ({ ...prev, isPremium: ciPremium, isLoading: false }));
-        if (user?.id) {
-          applyRevenueCatPremiumToSupabase(customerInfo, true);
-        }
+        handleCustomerInfoRef.current(customerInfo);
+        setState((prev) => ({ ...prev, isLoading: false }));
 
-        listener = (info: CustomerInfo) => {
-          setState((prev) => ({ ...prev, isPremium: isPremiumFromCustomerInfo(info) }));
-          applyRevenueCatPremiumToSupabase(info, false);
-        };
-        Purchases.addCustomerInfoUpdateListener(listener);
+        if (!revenueCatListenerRef.current) {
+          listener = (info: CustomerInfo) => {
+            handleCustomerInfoRef.current(info);
+          };
+          revenueCatListenerRef.current = listener;
+          Purchases.addCustomerInfoUpdateListener(listener);
+        }
       } catch (error) {
         if (isRevenueCatConfigurationError(error)) {
           if (!didLogRevenueCatConfigErrorRef.current) {
@@ -395,11 +479,12 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     void initRevenueCat();
 
     return () => {
-      if (listener) {
-        Purchases.removeCustomerInfoUpdateListener(listener);
+      if (premiumSyncDebounceRef.current) {
+        clearTimeout(premiumSyncDebounceRef.current);
+        premiumSyncDebounceRef.current = null;
       }
     };
-  }, [PAYWALL_ENABLED, REVENUECAT_API_KEY, IS_NATIVE, user?.id, applyRevenueCatPremiumToSupabase]);
+  }, [PAYWALL_ENABLED, REVENUECAT_API_KEY, IS_NATIVE, user?.id]);
 
   const purchasePackage = useCallback(
     async (packageId: string): Promise<boolean> => {
@@ -424,9 +509,13 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
         const { customerInfo } = await Purchases.purchasePackage(pkg);
         const premium = isPremiumFromCustomerInfo(customerInfo);
         if (premium) {
-          const isYearly = packageId === '$rc_annual' || packageId === 'yearly' || String(packageId).toLowerCase().includes('annual');
+          const isYearly =
+            packageId === '$rc_annual' ||
+            packageId === 'yearly' ||
+            String(packageId).toLowerCase().includes('annual');
+          lastSyncedSignatureRef.current = null;
+          handleCustomerInfoRef.current(customerInfo);
           syncPremiumToSupabase(isYearly ? 'yearly' : 'monthly');
-          lastSupabasePremiumSyncRef.current = true;
         }
         return premium;
       } catch (error: any) {
@@ -448,14 +537,14 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
 
     try {
       const customerInfo = await Purchases.restorePurchases();
-      const premium = isPremiumFromCustomerInfo(customerInfo);
-      applyRevenueCatPremiumToSupabase(customerInfo, true);
-      return premium;
+      lastSyncedSignatureRef.current = null;
+      handleCustomerInfoRef.current(customerInfo);
+      return isPremiumFromCustomerInfo(customerInfo);
     } catch (error) {
       log.error('[Subscription] Restore error:', error);
       return false;
     }
-  }, [PAYWALL_ENABLED, REVENUECAT_API_KEY, applyRevenueCatPremiumToSupabase]);
+  }, [PAYWALL_ENABLED, REVENUECAT_API_KEY]);
 
   const effectivePremium = PAYWALL_ENABLED ? state.isPremium : true;
 

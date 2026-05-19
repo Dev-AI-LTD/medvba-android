@@ -39,6 +39,7 @@ export const PREMIUM_FEATURE_KEYS = [
   'premium.feature6',
   'premium.feature7',
   'premium.feature8',
+  'premium.feature9',
 ];
 
 export const PRICING = {

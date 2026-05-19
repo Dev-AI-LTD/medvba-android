@@ -77,9 +77,11 @@ function cleanStaleAndroidNativeBuild() {
     path.join(projectRoot, 'android', '.gradle'),
     path.join(projectRoot, 'android', 'build'),
     path.join(projectRoot, 'android', 'app', 'build'),
+    path.join(projectRoot, 'android', 'app', '.cxx'),
     path.join(projectRoot, 'node_modules', 'expo-modules-core', 'android', '.cxx'),
     path.join(projectRoot, 'node_modules', 'react-native-screens', 'android', '.cxx'),
     path.join(projectRoot, 'node_modules', 'react-native-gesture-handler', 'android', '.cxx'),
+    path.join(projectRoot, 'node_modules', 'react-native-gesture-handler', 'android', 'build'),
   ];
   for (const target of targets) {
     if (!fs.existsSync(target)) continue;
