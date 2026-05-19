@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { readAsStringAsync, EncodingType } from 'expo-file-system/legacy';
 import { queryKeys } from './query-keys';
@@ -7,6 +7,10 @@ import { ensureProfileExists } from '@/lib/ensure-profile';
 import { supabase } from './supabase';
 import type { UserAccount } from '@/types/user';
 import { getMergedExpoExtra } from '@/lib/expo-public-extra';
+import { log } from '@/lib/log';
+
+/** Avoid spamming Metro when subscription sync runs in a tight loop. */
+let lastSubscriptionMutationLogKey: string | null = null;
 
 /** Profile “Zoom session requests” poll (`zoom_requests`). Off by default — no Supabase round-trip or console noise. */
 function fetchProfileZoomRequestsEnabled(): boolean {
@@ -1694,9 +1698,56 @@ function mapDirectChatMessage(
   };
 }
 
-export function useDirectChatMessages(chatId: string | undefined) {
+const OPTIMISTIC_MESSAGE_PREFIX = 'optimistic-';
+
+function mergeChatMessagesById(
+  existing: DirectChatMessage[],
+  incoming: DirectChatMessage[],
+): DirectChatMessage[] {
+  const byId = new Map<string, DirectChatMessage>();
+  for (const m of incoming) {
+    byId.set(m.id, m);
+  }
+  for (const m of existing) {
+    if (!byId.has(m.id)) {
+      byId.set(m.id, m);
+    }
+  }
+  return Array.from(byId.values()).sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  );
+}
+
+function appendDirectChatMessage(
+  prev: DirectChatMessage[],
+  newMessage: DirectChatMessage,
+): DirectChatMessage[] {
+  if (prev.some((m) => m.id === newMessage.id)) return prev;
+  const withoutMatchingOptimistic = prev.filter(
+    (m) =>
+      !(
+        m.id.startsWith(OPTIMISTIC_MESSAGE_PREFIX) &&
+        m.userId === newMessage.userId &&
+        m.content === newMessage.content
+      ),
+  );
+  return [...withoutMatchingOptimistic, newMessage];
+}
+
+export type DirectChatThreadUser = {
+  id: string;
+  name?: string | null;
+  avatar?: string | null;
+};
+
+export function useDirectChatThread(
+  chatId: string | undefined,
+  currentUser?: DirectChatThreadUser,
+) {
   const [messages, setMessages] = useState<DirectChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!chatId) {
@@ -1705,9 +1756,11 @@ export function useDirectChatMessages(chatId: string | undefined) {
       return;
     }
 
+    setMessages([]);
+    setIsLoading(true);
+
     const fetchMessages = async () => {
       console.log('[Supabase] Fetching messages for chat:', chatId);
-      setIsLoading(true);
 
       const { data, error } = await supabase
         .from('direct_chat_messages')
@@ -1735,7 +1788,7 @@ export function useDirectChatMessages(chatId: string | undefined) {
         mapDirectChatMessage(msg, profilesMap.get(msg.user_id)),
       );
 
-      setMessages(formattedMessages);
+      setMessages((prev) => mergeChatMessagesById(prev, formattedMessages));
       setIsLoading(false);
       console.log('[Supabase] Loaded', formattedMessages.length, 'chat messages');
     };
@@ -1763,10 +1816,7 @@ export function useDirectChatMessages(chatId: string | undefined) {
           };
           const profile = await profileForChatUser(row.user_id);
           const newMessage = mapDirectChatMessage(row, profile);
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === newMessage.id)) return prev;
-            return [...prev, newMessage];
-          });
+          setMessages((prev) => appendDirectChatMessage(prev, newMessage));
         },
       )
       .subscribe();
@@ -1777,9 +1827,79 @@ export function useDirectChatMessages(chatId: string | undefined) {
     };
   }, [chatId]);
 
+  const sendMessage = useCallback(
+    async (content: string) => {
+      const trimmed = content.trim();
+      if (!trimmed || !chatId || !currentUser?.id) return;
+
+      const optimisticId = `${OPTIMISTIC_MESSAGE_PREFIX}${Date.now()}`;
+      const optimisticMessage: DirectChatMessage = {
+        id: optimisticId,
+        chatId,
+        userId: currentUser.id,
+        userName: currentUser.name || 'Student',
+        userAvatar:
+          currentUser.avatar ||
+          `https://api.dicebear.com/7.x/avataaars/png?seed=${currentUser.id}`,
+        content: trimmed,
+        createdAt: new Date().toISOString(),
+      };
+
+      setMessages((prev) => [...prev, optimisticMessage]);
+      setIsSending(true);
+
+      try {
+        console.log('[Supabase] Sending message to chat:', chatId);
+        const { data, error } = await supabase
+          .from('direct_chat_messages')
+          .insert({
+            chat_id: chatId,
+            user_id: currentUser.id,
+            content: trimmed,
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error(
+            '[Supabase] Error sending chat message:',
+            JSON.stringify({ message: error.message, code: error.code, details: error.details }),
+          );
+          throw error;
+        }
+
+        console.log('[Supabase] Chat message sent:', data.id);
+        const confirmed = mapDirectChatMessage(data, {
+          name: currentUser.name,
+          avatar: currentUser.avatar,
+        });
+
+        setMessages((prev) => {
+          const withoutOptimistic = prev.filter((m) => m.id !== optimisticId);
+          return appendDirectChatMessage(withoutOptimistic, confirmed);
+        });
+
+        void queryClient.invalidateQueries({ queryKey: ['directChats', currentUser.id] });
+      } catch (error) {
+        setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
+        throw error;
+      } finally {
+        setIsSending(false);
+      }
+    },
+    [chatId, currentUser, queryClient],
+  );
+
+  return { messages, isLoading, sendMessage, isSending };
+}
+
+/** @deprecated Use useDirectChatThread instead */
+export function useDirectChatMessages(chatId: string | undefined) {
+  const { messages, isLoading } = useDirectChatThread(chatId);
   return { messages, isLoading };
 }
 
+/** @deprecated Use useDirectChatThread.sendMessage instead */
 export function useSendDirectMessage() {
   const queryClient = useQueryClient();
 
@@ -1986,7 +2106,16 @@ export function useUpdateSubscription() {
       type?: SubscriptionType;
       expiresAt?: string | null;
     }) => {
-      console.log('[Supabase] Updating subscription for user:', input.userId, 'to status:', input.status);
+      const subscriptionLogKey = `${input.userId}:${input.status}:${input.type ?? ''}`;
+      if (lastSubscriptionMutationLogKey !== subscriptionLogKey) {
+        lastSubscriptionMutationLogKey = subscriptionLogKey;
+        log.debug(
+          '[Supabase] Updating subscription for user:',
+          input.userId,
+          'to status:',
+          input.status,
+        );
+      }
 
       const updateData: any = {
         status: input.status,
@@ -2045,7 +2174,9 @@ export function useUpdateSubscription() {
         throw error;
       }
 
-      console.log('[Supabase] Subscription updated successfully');
+      if (lastSubscriptionMutationLogKey === subscriptionLogKey) {
+        log.debug('[Supabase] Subscription updated successfully');
+      }
       return data;
     },
     onSuccess: (data, variables) => {

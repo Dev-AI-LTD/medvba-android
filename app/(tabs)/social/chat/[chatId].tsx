@@ -21,11 +21,7 @@ import { ChatComposer } from '@/components/messenger/ChatComposer';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useAuth } from '@/providers/AuthProvider';
-import {
-  useDirectChatMessages,
-  useSendDirectMessage,
-  useOnlineFriends,
-} from '@/lib/supabase-hooks';
+import { useDirectChatThread, useOnlineFriends } from '@/lib/supabase-hooks';
 import { setChatLastReadAt } from '@/lib/messenger-read-state';
 import { addBlockedUserEntry } from '@/lib/blocked-users-storage';
 import {
@@ -58,8 +54,13 @@ export default function ChatThreadScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const keyboardHeight = useKeyboardHeight();
   const scrollToEndRef = useRef<(() => void) | null>(null);
-  const { messages, isLoading } = useDirectChatMessages(chatId);
-  const sendMessage = useSendDirectMessage();
+  const currentChatUser = user
+    ? { id: user.id, name: profile?.name, avatar: profile?.avatar }
+    : undefined;
+  const { messages, isLoading, sendMessage, isSending } = useDirectChatThread(
+    chatId,
+    currentChatUser,
+  );
   const isProfilePublic = profile?.isPublic !== false;
   const onlineQuery = useOnlineFriends(isProfilePublic ? user?.id : undefined);
   const isPeerOnline = (onlineQuery.data ?? []).some((u) => u.id === peerId);
@@ -76,19 +77,20 @@ export default function ChatThreadScreen() {
     }
   }, [keyboardHeight]);
 
-  const handleSend = useCallback(() => {
+  const handleSend = useCallback(async () => {
     const text = draft.trim();
-    if (!text || !user?.id || !chatId) return;
-    sendMessage.mutate(
-      { chatId, userId: user.id, content: text },
-      {
-        onSuccess: () => {
-          setDraft('');
-          void setChatLastReadAt(chatId, new Date().toISOString());
-        },
-      },
-    );
-  }, [draft, user?.id, chatId, sendMessage]);
+    if (!text || !user?.id || !chatId || isSending) return;
+
+    setDraft('');
+    try {
+      await sendMessage(text);
+      void setChatLastReadAt(chatId, new Date().toISOString());
+      scrollToEndRef.current?.();
+    } catch {
+      setDraft(text);
+      Alert.alert(t('chat.sendErrorTitle'), t('chat.sendErrorMessage'));
+    }
+  }, [draft, user?.id, chatId, isSending, sendMessage, t]);
 
   const handleBlock = useCallback(() => {
     Alert.alert(
@@ -174,7 +176,7 @@ export default function ChatThreadScreen() {
           onChangeText={setDraft}
           onSend={handleSend}
           placeholder={t('messenger.typeMessage')}
-          disabled={sendMessage.isPending}
+          disabled={isSending}
           onFocus={() => scrollToEndRef.current?.()}
         />
       </KeyboardAvoidingView>
