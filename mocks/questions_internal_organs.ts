@@ -27,20 +27,7 @@ export const internalOrgansQuestions: Question[] = [
   },
 ];
 
-export const headNeckQuestions: Question[] = [
-  {
-    id: 'hn-001',
-    category: 'head-neck',
-    difficulty: 'medium',
-    question: 'Which cranial nerve is responsible for facial expressions?',
-    question_ro: 'Care nerv cranian este responsabil pentru expresiile faciale?',
-    options: ['Trigeminal (V)', 'Facial (VII)', 'Glossopharyngeal (IX)', 'Vagus (X)'],
-    options_ro: ['Trigemen (V)', 'Facial (VII)', 'Glosofaringian (IX)', 'Vag (X)'],
-    correctAnswer: 1,
-    explanation: 'The facial nerve (CN VII) innervates the muscles of facial expression and also carries taste sensations from the anterior two-thirds of the tongue.',
-    explanation_ro: 'Nervul facial (CN VII) inervează mușchii expresiei faciale și transportă senzațiile gustative din două treimi anterioare ale limbii.',
-  },
-];
+export { headNeckHomeQuestions as headNeckQuestions } from './questions_head_neck_home';
 
 export const neuroanatomyQuestions: Question[] = [
   {

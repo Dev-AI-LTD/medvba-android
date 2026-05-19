@@ -1,0 +1,1111 @@
+{
+  "meta": {
+    "locale": "ro",
+    "skip": 0,
+    "max": null,
+    "generatedAt": "2026-05-19T16:48:25.689Z",
+    "writtenIds": 100
+  },
+  "byId": {
+    "hn-home-001": {
+      "question": "Care dintre următoarele oase NU aparține neurocraniului?",
+      "options": [
+        "Os frontal",
+        "Os etmoid",
+        "Os zigomatic",
+        "Os sphenoid",
+        "Os occipital"
+      ],
+      "explanation": "Neurocraniul este compus din 8 oase (frontal, etmoid, sphenoid, occipital, 2 parietale, 2 temporale) care înconjoară creierul. Osul zigomatic face parte din viscerocraniu (splanchnocranium), împreună cu maxila, mandibula, palatinele, lacrimalele, nazalele, vomerul și conchile nazale inferioare."
+    },
+    "hn-home-002": {
+      "question": "Câte oase pereche aparțin neurocraniului?",
+      "options": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "explanation": "Neurocraniul conține 2 oase pereche (parietal și temporal) și 4 oase nepereche (frontal, etmoid, sphenoid, occipital). Celelalte opțiuni nu corespund organizării anatomice clasice a craniului."
+    },
+    "hn-home-003": {
+      "question": "Crista galli este un reper anatomic situat pe:",
+      "options": [
+        "Os frontal",
+        "Os sphenoid",
+        "Os etmoid",
+        "Os occipital",
+        "Partea petroasă a osului temporal"
+      ],
+      "explanation": "Crista galli este o proeminență osoasă mediană pe placa cribiformă a osului etmoid, în fosa craniană anterioară, servind ca atașament pentru falx cerebri. Este, de asemenea, punctul de intersecție al pilonului etmoido-frontal (sprijin)."
+    },
+    "hn-home-004": {
+      "question": "Sella turcica, care găzduiește glanda pituitară, este situată pe:",
+      "options": [
+        "Suprafața endocraniană a osului frontal",
+        "Corpul osului sphenoid",
+        "Placa bazilară a osului occipital",
+        "Suprafața anterioară a osului temporal petros",
+        "Placa cribiformă a osului etmoid"
+      ],
+      "explanation": "Sella turcica este o depresie pe suprafața superioară a corpului osului sphenoid, delimitată anterior de tuberculum sellae și posterior de dorsum sellae. Glanda pituitară se află în fosa hipofizară din interiorul acesteia."
+    },
+    "hn-home-005": {
+      "question": "Care dintre următoarele structuri trece prin foramen rotundum?",
+      "options": [
+        "Nervul oftalmic (V1)",
+        "Nervul maxilar (V2)",
+        "Nervul mandibular (V3)",
+        "Artera meningiană medie",
+        "Nervul oculomotor"
+      ],
+      "explanation": "Nervul maxilar (V2) iese din endocraniu prin foramen rotundum, situat în aripa mare a osului sphenoid, intrând în fosa pterigopalatina. Nervul oftalmic trece prin fisura orbitală superioară, nervul mandibular prin foramen ovale, iar artera meningiană medie prin foramen spinos."
+    },
+    "hn-home-006": {
+      "question": "Nervul mandibular (V3) iese din endocraniu prin:",
+      "options": [
+        "Foramen rotundum",
+        "Fisura orbitală superioară",
+        "Foramen ovale",
+        "Foramen spinos",
+        "Foramen lui Vesalius"
+      ],
+      "explanation": "Nervul mandibular, cea mai mare ramură terminală a trigemenului, traversează baza craniană prin foramen ovale, în aripa mare a osului sphenoid. Aici este însoțit de artera meningiană accesorie și ajunge în fosa infratemporală."
+    },
+    "hn-home-007": {
+      "question": "Artera meningiană medie, ramura principală a arterei maxilare, intră în endocraniu prin:",
+      "options": [
+        "Foramen ovale",
+        "Foramen rotundum",
+        "Foramen spinos",
+        "Canalul carotidian",
+        "Hiatusul lui Fallopius"
+      ],
+      "explanation": "Artera meningiană medie este ramura intracraniană a arterei maxilare și intră prin foramen spinos în aripa mare a osului sphenoid. Leziunea acesteia (frecventă în fracturile pterionului) cauzează hematom epidural acut, o urgență neurochirurgicală."
+    },
+    "hn-home-008": {
+      "question": "Care dintre următoarele nervuri NU trece prin fisura orbitală superioară?",
+      "options": [
+        "Nervul oculomotor (III)",
+        "Nervul troclear (IV)",
+        "Nervul oftalmic (V1)",
+        "Nervul abducens (VI)",
+        "Nervul optic (II)"
+      ],
+      "explanation": "Nervul optic părăsește orbita prin canalul optic, însoțit de artera oftalmică. Prin fisura orbitală superioară trec III, IV, V1 (cu ramurile sale frontală, lacrimală și nazociliară), VI și vena oftalmică superioară."
+    },
+    "hn-home-009": {
+      "question": "Anulus lui Zinn (inelul tendinos comun al mușchilor drepti) este situat la nivelul:",
+      "options": [
+        "Canalului optic exclusiv",
+        "Fisurii orbitale inferioare",
+        "Fisurii orbitale superioare, înconjurând porțiunea sa medială",
+        "Foramenului etmoidal anterior",
+        "Canalului nazolacrimal"
+      ],
+      "explanation": "Anulus lui Zinn este un inel tendinos comun pentru cele patru mușchi drepti ai globului ocular, situat în porțiunea medială a fisurii orbitale superioare și înconjurând canalul optic. Prin el trec III, VI, nervul nazociliar și artera oftalmică."
+    },
+    "hn-home-010": {
+      "question": "Triada simptomatică a sindromului sinusului cavernous include leziunea următoarelor nervuri EXCEPȚIE:",
+      "options": [
+        "Nervul oculomotor (III)",
+        "Nervul troclear (IV)",
+        "Nervul oftalmic (V1)",
+        "Nervul abducens (VI)",
+        "Nervul facial (VII)"
+      ],
+      "explanation": "Sinusul cavernous conține în peretele său lateral nervii III, IV, V1, V2 (parțial), iar în lumenul său artera carotidă internă și nervul VI. Nervul facial nu are nicio relație anatomică cu sinusul cavernous; trece prin meatusul acustic intern și canalul facial din osul petros."
+    },
+    "hn-home-011": {
+      "question": "Mandibula se articulează cu osul temporal la:",
+      "options": [
+        "Sutura lambdoidă",
+        "Articulația temporomandibulară",
+        "Sutura sfenotemporală",
+        "Sutura squamosală",
+        "Articulația occipito-mandibulară"
+      ],
+      "explanation": "Articulația temporomandibulară este o articulație sinovială bicondilară (cu disc articular) între condilul mandibular și fosa mandibulară a osului temporal. Este singura articulație mobilă a craniului."
+    },
+    "hn-home-012": {
+      "question": "Disc articular al articulației temporomandibulare împarte cavitatea articulară în:",
+      "options": [
+        "Un singur compartiment unificat",
+        "Două compartimente: superior (meniscotemporal) și inferior (meniscomandibular)",
+        "Trei compartimente egale",
+        "Două compartimente verticale (medial și lateral)",
+        "Patru cadrane"
+      ],
+      "explanation": "Disc articular fibros separă articulația în compartimentul supradiscal (meniscotemporal), unde au loc mișcări de translație, și compartimentul infradiscal (meniscomandibular), unde au loc mișcări de rotație ale condilului. Această organizare permite mișcări masticatorii complexe."
+    },
+    "hn-home-013": {
+      "question": "Dislocarea anterioară a articulației temporomandibulare apare cel mai frecvent prin:",
+      "options": [
+        "Deplasarea posterioară a condilului peste tuberculul articular",
+        "Deplasarea anterioară a condilului peste tuberculul articular",
+        "Fractura gâtului mandibular",
+        "Ruptura ligamentului sfenomandibular",
+        "Leziune a nervului auriculotemporal"
+      ],
+      "explanation": "Dislocarea anterioară (cea mai frecventă, de exemplu, în timpul deschiderii largi a gurii sau a căscatului) constă în alunecarea condilului mandibular anterior peste tuberculul articular al osului temporal, devenind blocat în fosa pterigoidă. Reducerea se efectuează prin manevra hipocratică (presiune inferioară pe molari)."
+    },
+    "hn-home-014": {
+      "question": "Cei patru mușchi principali masticatori primesc inervație motorie de la:",
+      "options": [
+        "Nervul facial (VII)",
+        "Ramura mandibulară a trigemenului (V3)",
+        "Nervul glosofaringian (IX)",
+        "Nervul hipoglos (XII)",
+        "Plexul cervical"
+      ],
+      "explanation": "Maseterul, temporalis, pterygoidul medial și pterygoidul lateral primesc inervație motorie de la rădăcina motorie a trigemenului, care se alătură ramurii V3 (mandibulare). Acești mușchi derivă embriologic din primul arc faringian, explicând inervația trigeminală."
+    },
+    "hn-home-015": {
+      "question": "Mușchiul maseter are ca acțiune principală:",
+      "options": [
+        "Depresia mandibulei",
+        "Elevarea mandibulei (închiderea gurii)",
+        "Protruzia mandibulei",
+        "Lateralizarea limbii",
+        "Elevarea palatului moale"
+      ],
+      "explanation": "Maseterul este principalul elevatoare al mandibulei, împreună cu temporalis și pterygoidul medial. Inserția sa se desfășoară între arcul zigomatic și suprafața laterală a ramului mandibular. Depresia mandibulei este realizată de mușchii suprahioidali și pterygoidul lateral."
+    },
+    "hn-home-016": {
+      "question": "Care mușchi masticator este responsabil în principal pentru protruzia mandibulei?",
+      "options": [
+        "Maseter",
+        "Temporalis (fibre anterioare)",
+        "Temporalis (fibre posterioare)",
+        "Pterygoid lateral (acțiune bilaterală)",
+        "Pterygoid medial (acțiune unilaterală)"
+      ],
+      "explanation": "Contracția bilaterală a pterygoidului lateral trage condilul mandibular și discurile articulare anterior, producând protruzia mandibulei. Fibrele posterioare ale temporalis produc retracție, iar contracția unilaterală a pterygoizilor laterali produce mișcări de lateralitate (excursie laterală)."
+    },
+    "hn-home-017": {
+      "question": "Mușchii expresiei faciale (mușchii mimici) sunt inervați de:",
+      "options": [
+        "Nervul trigemen (V)",
+        "Nervul facial (VII)",
+        "Nervul glosofaringian (IX)",
+        "Nervul vag (X)",
+        "Nervul accesoriu (XI)"
+      ],
+      "explanation": "Toți mușchii expresiei faciale derivă din al doilea arc faringian și primesc inervație motorie exclusiv de la nervul facial (VII). Paralizia facială (Bell) produce asimetrie facială ipsilaterală, cu incapacitatea de a închide ochiul, aplatizarea pliului nasolabial și lăsarea comisurii bucale."
+    },
+    "hn-home-018": {
+      "question": "Mușchiul orbicularis oculi are ca acțiune principală:",
+      "options": [
+        "Deschiderea fisurii palpebrale",
+        "Închiderea fisurii palpebrale",
+        "Elevarea sprâncenei",
+        "Funcție lacrimală accesorie",
+        "Mișcarea ochiului"
+      ],
+      "explanation": "Orbicularis oculi închide fisura palpebrală (clipire și închidere forțată) și este inervat de ramuri ale nervului facial. Deschiderea pleoapei este realizată de mușchiul elevatoare palpebrae superioris (inervat de III) și de mușchiul lui Müller (simpatic)."
+    },
+    "hn-home-019": {
+      "question": "În paralizia nervului facial periferic (paralizia Bell), pacientul nu poate:",
+      "options": [
+        "Ridica brațul ipsilateral",
+        "Închide ochiul ipsilateral și așeza fruntea",
+        "Mișca limba spre stânga",
+        "Înghiți alimente solide",
+        "Întoarce capul spre partea contralaterală"
+      ],
+      "explanation": "Leziunea nervului facial periferic produce paralizia tuturor mușchilor mimici de pe partea afectată, inclusiv frontalis și orbicularis oculi. În paralizia centrală (supranucleară), inervația corticală duală a frontalis păstrează ridicarea frunții pe partea contralaterală leziunii corticale."
+    },
+    "hn-home-020": {
+      "question": "Mușchiul sternocleidomastoidian este inervat de:",
+      "options": [
+        "Plexul brahial",
+        "Nervul accesoriu (XI) și ramuri din plexul cervical profund",
+        "Nervul vag (X)",
+        "Nervul facial (VII)",
+        "Nervul hipoglos (XII)"
+      ],
+      "explanation": "SCM primește inervație duală: motorie în principal de la rădăcina spinală a nervului accesoriu (XI) și proprioceptivă/senzorială din plexul cervical (C2-C3). Acțiunea unilaterală flexează capul lateral spre aceeași parte și rotește fața spre partea opusă; acțiunea bilaterală flexează capul anterior."
+    },
+    "hn-home-021": {
+      "question": "Triunghiul cervical anterior este delimitat de:",
+      "options": [
+        "SCM, trapez și claviculă",
+        "Marginea anterioară a SCM, linia mediană și marginea inferioară a mandibulei",
+        "SCM, scalene anterioare și claviculă",
+        "Osul hioid, claviculă și SCM",
+        "Trapez, scalene medii și claviculă"
+      ],
+      "explanation": "Triunghiul cervical anterior este delimitat superior de marginea inferioară a mandibulei, posterior de marginea anterioară a SCM și medial de linia mediană. Este subdivizat în triunghiurile submental, submandibular (digastric), carotidian și muscular (omotracheal)."
+    },
+    "hn-home-022": {
+      "question": "Triunghiul carotidian conține următoarea structură vasculară majoră:",
+      "options": [
+        "Bifurcația arterei carotidiene comune",
+        "Venă subclaviculară",
+        "Trunchiul arterial brahiocefalic",
+        "Vena cavă superioară",
+        "Artera vertebrală în segmentul V1"
+      ],
+      "explanation": "Triunghiul carotidian (delimitat de SCM, burta superioară a omohioidului și burta posterioară a digastricului) conține bifurcația carotidiană (la marginea superioară a cartilajului tiroidian), vena jugulară internă, nervul vag, nervul hipoglos și ramuri ale ansa cervicalis."
+    },
+    "hn-home-023": {
+      "question": "Artera carotidiană comună bifurcă la nivelul:",
+      "options": [
+        "Marginea superioară a cartilajului tiroidian (C4)",
+        "Vertebra C7",
+        "Mandibulă",
+        "Arcul aortic",
+        "Temporal petros"
+      ],
+      "explanation": "Bifurcația carotidiană în arterele carotidiene interne și externe are loc de obicei la marginea superioară a cartilajului tiroidian (C3-C4). La acest nivel se află, de asemenea, sinusul carotidian (baroreceptor) și corpul carotidian (chemoreceptor), innervate de nervul lui Hering (ramură a IX)."
+    },
+    "hn-home-024": {
+      "question": "Originea arterei carotidiene comune drepte este din:",
+      "options": [
+        "Arcul aortic direct",
+        "Trunchiul brahiocefalic",
+        "Artera subclaviculară dreaptă",
+        "Artera tiroidiană superioară",
+        "Artera carotidiană internă"
+      ],
+      "explanation": "Artera carotidiană comună dreaptă provine din trunchiul brahiocefalic, în spatele articulației sternoclaviculare drepte. Artera carotidiană comună stângă, în schimb, provine direct din arcul aortic, fiind mai lungă decât cea dreaptă prin segmentul său intratoracic."
+    },
+    "hn-home-025": {
+      "question": "Referitor la artera carotidiană internă în segmentul cervical, următoarele sunt ADEVĂRATE:",
+      "options": [
+        "Emite numeroase ramuri colaterale pentru tiroidă",
+        "Emite ramura sa unică, artera tiroidiană superioară",
+        "Nu emite ramuri colaterale în regiunea cervicală",
+        "Dă naștere arterei meningiene medii",
+        "Dă naștere arterei maxilare"
+      ],
+      "explanation": "O caracteristică definitorie a arterei carotidiene interne este absența totală a ramurilor colaterale în segmentul cervical (de la bifurcație până la intrarea în canalul carotidian). Prima sa ramură este artera caroticotimpanica, situată în interiorul temporalului petros. Aceasta o distinge clar de artera carotidiană externă."
+    },
+    "hn-home-026": {
+      "question": "Care dintre următoarele NU este o ramură colaterală a arterei carotidiene externe?",
+      "options": [
+        "Artera tiroidiană superioară",
+        "Artera linguală",
+        "Artera facială",
+        "Artera oftalmică",
+        "Artera occipitală"
+      ],
+      "explanation": "Artera oftalmică este prima ramură intracraniană a arterei CAROTIDENE INTERNE, după ce iese din sinusul cavernos. Ramurile colaterale ale arterei carotidiene externe sunt: tiroidiană superioară, linguală, facială, occipitală, auriculară posterioară și faringiană ascendentă (6 colaterale)."
+    },
+    "hn-home-027": {
+      "question": "Cele două ramuri terminale ale arterei carotidiene externe sunt:",
+      "options": [
+        "Artera maxilară și artera temporală superficială",
+        "Artera facială și artera linguală",
+        "Artera oftalmică și artera meningiană medie",
+        "Artera tiroidiană superioară și inferioară",
+        "Artera occipitală și artera auriculară posterioară"
+      ],
+      "explanation": "La nivelul gâtului condilului mandibular, în cadrul logei parotide, artera carotidiană externă bifurcă în artera temporală superficială (continuare verticală) și artera maxilară (ramură profundă, mai mare, care intră în fosa infratemporală)."
+    },
+    "hn-home-028": {
+      "question": "Artera facială provine din artera carotidiană externă și intră în față după ce se învârte în jurul:",
+      "options": [
+        "Arcul zigomatic",
+        "Marginea inferioară a mandibulei, anterior de mușchiul maseter",
+        "Apofiza mastoidă",
+        "Osul hioid",
+        "Linia milohioidă"
+      ],
+      "explanation": "Artera facială apare pe față după ce se învârte în jurul marginii inferioare a mandibulei, în notchiul pre-maseteric (anterior de inserția maseterului). Aici poate fi palpat pulsul facial. Apoi, aceasta se ridică sinuos spre comisura orală și unghiul nasolabial, terminându-se ca artera angulară la canthusul medial al ochiului."
+    },
+    "hn-home-029": {
+      "question": "Anastomoza între artera angulară (ramură terminală a arterei faciale) și artera nazală dorsală (ramură a arterei oftalmice) este importantă clinic deoarece:",
+      "options": [
+        "Constituie o alimentare colaterală în stenoză carotidiană internă",
+        "Conectează sistemele carotidiene externe și interne (rută pentru embolizarea septic la sinusul cavernos)",
+        "Permite drenajul venos cerebral",
+        "Alimentează doar glanda lacrimală",
+        "Este utilizată pentru cateterizarea arterială"
+      ],
+      "explanation": "Anastomoza angulară-nazală dorsală leagă teritoriul carotidian extern (facial) de artera carotidiană internă (oftalmică). Clinic, infecțiile faciale în \"triunghiul periculos\" pot progresa retrograd prin venele faciale fără valve, ajungând la sinusul cavernos și provocând tromboflebită septic."
+    },
+    "hn-home-030": {
+      "question": "Artera maxilară, în porțiunea sa pterigopalatină (a treia), dă ca ramuri terminale:",
+      "options": [
+        "Artera meningiană medie",
+        "Artera alveolară inferioară",
+        "Artera infraorbitală și artera sfenopalatină",
+        "Artera temporală profundă posterioară",
+        "Artera bucală"
+      ],
+      "explanation": "Porțiunea pterigopalatină (a treia) a arterei maxilare se află în fosa pterigopalatină și dă ramuri terminale: infraorbitală, sfenopalatină (artera nasului), palatină descendentă și artera canalului pterigoid. Arterele meningiană medie și alveolară inferioară provin din prima porțiune (mandibulară)."
+    },
+    "hn-home-031": {
+      "question": "În epistaxis severă refractară la tamponare, artera cel mai frecvent responsabilă (90% din epistaxisul posterior) este:",
+      "options": [
+        "Artera etmoidală anterioară",
+        "Artera etmoidală posterioară",
+        "Artera sfenopalatina",
+        "Artera palatină mare",
+        "Artera labială superioară"
+      ],
+      "explanation": "Artera sfenopalatina (ramura terminală a arterei maxilare) irigă partea posterioară a foselor nazale și este responsabilă pentru cea mai mare parte a epistaxisului sever posterior. Tratamentul chirurgical (ligatura transnazală endoscopică) vizează această arteră. Plexul lui Kiesselbach (zona lui Little) este responsabil pentru epistaxisul anterior."
+    },
+    "hn-home-032": {
+      "question": "Artera temporală superficială este utilă clinic deoarece:",
+      "options": [
+        "Iriga creierul",
+        "Pulsul său este palpabil anterior de tragus și este locul de biopsie în arterita Horton",
+        "Drenează limfa orbitală",
+        "Conține valve venoase",
+        "Inervează glanda parotidă"
+      ],
+      "explanation": "Artera temporală superficială, ramura terminală a arterei carotidă externe, are un puls palpabil pre-tragal. Biopsia sa este standardul de aur pentru diagnosticul arteritei cu celule gigant (Horton), o vasculită care poate provoca orbire dacă nu este tratată prompt cu corticosteroizi."
+    },
+    "hn-home-033": {
+      "question": "Artera vertebrală provine din:",
+      "options": [
+        "Carotida comună",
+        "Carotida externă",
+        "Artera subclavie (primul segment)",
+        "Arcul aortic direct",
+        "Trunchiul brahiocefalic"
+      ],
+      "explanation": "Artera vertebrală este prima și cea mai mare ramură a arterei subclavii (segment I, prescalene). Are 4 segmente: V1 (prevertebral), V2 (transversal, prin foramenele transversale C6-C1), V3 (suboccipital) și V4 (intracranian, până la formarea trunchiului bazilar)."
+    },
+    "hn-home-034": {
+      "question": "Venă jugulară internă își are originea la nivelul:",
+      "options": [
+        "Articulației sternoclaviculare",
+        "Foramenului jugular (la baza craniană), ca o continuare a sinusului sigmoid",
+        "Hiatusului diafragmatic",
+        "Bifurcației carotidiene",
+        "Trunchiului tiro-cervical"
+      ],
+      "explanation": "Venă jugulară internă începe la foramenul jugular ca o dilatare numită bulb superior al jugularului (continuare a sinusului sigmoid). Coboară în teaca carotidiană, lateral de carotidă, și se unește cu vena subclavie pentru a forma trunchiul venos brahiocefalic."
+    },
+    "hn-home-035": {
+      "question": "În teaca carotidiană, nervul vag este situat:",
+      "options": [
+        "Anterior de carotida comună",
+        "Medial de vena jugulară internă",
+        "În unghiul dihedral posterior între artera carotidă și vena jugulară internă",
+        "Lateral de vena jugulară internă",
+        "Anterior de esofag"
+      ],
+      "explanation": "În teaca carotidiană, nervul vag (X) este situat posterior, în unghiul dihedral (groove) între artera carotidă comună (medial) și vena jugulară internă (lateral). Această relație este constantă și esențială pentru abordările chirurgicale cervicale (de exemplu, endarterectomia carotidiană)."
+    },
+    "hn-home-036": {
+      "question": "Sindromul Horner este cauzat de o leziune a:",
+      "options": [
+        "Plexului cervical",
+        "Nervului vag",
+        "Lanțului simpatic cervical",
+        "Nervului glosofaringian",
+        "Nervului hipoglos"
+      ],
+      "explanation": "Sindromul Horner (Claude Bernard-Horner) constă în ptoză palpebrală parțială (paralizia mușchiului lui Müller), miosă (paralizia dilatatorului pupilar) și anhidroză hemifacială ipsilaterală, cauzată de o leziune a lanțului simpatic cervical sau a căilor sale (de exemplu, tumora Pancoast a vârfului pulmonar, disecția carotidă internă)."
+    },
+    "hn-home-037": {
+      "question": "Nervul frenic (C3-C5) inervează:",
+      "options": [
+        "Mușchiul deltoid",
+        "Diafragma",
+        "SCM",
+        "Mușchii intercostali",
+        "Trapezul"
+      ],
+      "explanation": "Nervul frenic, ramura motorie principală a plexului cervical (rădăcinile C3, C4, C5), coboară pe suprafața anterioară a mușchiului scalene anterior și inervează diafragma. Leziunea sa unilaterală produce paralizia hemidiafragmei și elevarea pe radiografia toracică."
+    },
+    "hn-home-038": {
+      "question": "Ganglionii limfatici cervicali profunzi sunt grupați în jurul:",
+      "options": [
+        "Arterei carotidă externe",
+        "Venei jugulare interne",
+        "Esofagului cervical",
+        "Plexului brahial",
+        "Nervului accesoriu"
+      ],
+      "explanation": "Lanțul limfatic cervical profund (jugular intern) este principalul colector limfatic al capului și gâtului, aranjat în jurul venei jugulare interne. Include grupurile jugulodigastric, jugulo-omohioid și supraclavicular (nodul Virchow - important în metastazele din cancerele abdominale)."
+    },
+    "hn-home-039": {
+      "question": "Ductul toracic, principalul colector limfatic al corpului, se golește cel mai frecvent în:",
+      "options": [
+        "Vena cava superioară",
+        "Unghiul venos jugulo-subclavicular stâng (junctura Pirogoff)",
+        "Vena azygos",
+        "Vena jugulară internă dreaptă",
+        "Atriu drept"
+      ],
+      "explanation": "Ductul toracic se golește la confluenta venoasă între venele jugulară internă stângă și subclavie stângă (unghiul Pirogoff stâng). Drenează limfa din întregul corp, cu excepția hemicefalului drept, hemitoracelui drept și membrului superior drept, care sunt drenate de ductul limfatic mare drept."
+    },
+    "hn-home-040": {
+      "question": "Glanda tiroidă este situată anterior de:",
+      "options": [
+        "Trahee",
+        "Esofag",
+        "Coloana cervicală",
+        "Glanda parotidă",
+        "Glanda submaxilară"
+      ],
+      "explanation": "Glanda tiroidă se află în regiunea cervicală anterioară, în fața cartilajelor laringiene și a primelor inele traheale (2-4). Cele două lobi laterali sunt conectați printr-un istm anterior de trahee, la nivelul inelelor 2-3. Lobul piramidal (Lalouette) este un rest embriologic al ductului tirogloasal."
+    },
+    "hn-home-041": {
+      "question": "Vascularizația glandei tiroide este asigurată în principal de:",
+      "options": [
+        "Artera tiroidiană superioară (din artera carotidă externă) și artera tiroidiană inferioară (din trunchiul thyrocervical)",
+        "Artera vertebrală",
+        "Artera carotidă internă",
+        "Artera maxilară",
+        "Artera facială"
+      ],
+      "explanation": "Tiroida primește o vascularizație dublă: artera tiroidiană superioară (prima ramură colaterală a arterei carotidă externe) și artera tiroidiană inferioară (ramură a trunchiului thyrocervical din subclavie). Ocazional există și artera thyroidea ima (Neubauer), o ramură inconstantă din arcul aortic sau din trunchiul brahiocefalic."
+    },
+    "hn-home-042": {
+      "question": "Leziunea nervului laringian recurent în timpul tiroidectomiei produce:",
+      "options": [
+        "Anestezie laringiană supraglottică",
+        "Paralizie a corzilor vocale ipsilaterale cu disfonie (sau dispnee/afonie dacă este bilaterală)",
+        "Pierderea senzației gustative pe 2/3 anterioare ale limbii",
+        "Paralizie cricotiroidiană și voce de ton joasă",
+        "Disfagie totală"
+      ],
+      "explanation": "Nervul laringian recurent (ramură vagală) oferă inervație motorie tuturor mușchilor intrinseci ai laringelui, cu excepția cricotiroidianului. Leziunea unilaterală produce paralizie a corzilor vocale ipsilaterale (disfonie); leziunea bilaterală cauzează dispnee severă prin adducția corzilor (care necesită traheostomie). Are relații intime cu artera tiroidiană inferioară."
+    },
+    "hn-home-043": {
+      "question": "Nervul laringian superior, o ramură a vagului, inervează motor:",
+      "options": [
+        "Toți mușchii intrinseci ai laringelui",
+        "Numai cricotiroidianul (prin ramura sa externă)",
+        "Mușchiul tirohioidian",
+        "Mușchii suprahioidieni",
+        "Mușchii faringieni"
+      ],
+      "explanation": "Nervul laringian superior se împarte într-o ramură internă (sensibilă pentru mucoasa supraglottică) și o ramură externă (motorie pentru cricotiroidian, tensor al corzilor vocale). Leziunea ramurii externe (comună în tiroidectomii) cauzează o voce monotonă, oboseală vocală - importantă pentru cântăreți și profesori."
+    },
+    "hn-home-044": {
+      "question": "Glandele paratiroide se găsesc cel mai frecvent:",
+      "options": [
+        "În interiorul glandei tiroide, pe suprafața profundă a capsulei",
+        "Atașate de cartilajul cricoid",
+        "În mediastinul superior",
+        "În logea parotidă",
+        "Sublingual"
+      ],
+      "explanation": "Glandele paratiroide (de obicei 4 - 2 superioare, 2 inferioare) sunt situate pe suprafața posterioară a lobilor tiroidieni, între capsula adevărată tiroidiană și capsula fascială (chirurgicală). Embriologic, cele superioare derivă din pungi faringiene IV, iar cele inferioare din III (împreună cu timusul)."
+    },
+    "hn-home-045": {
+      "question": "Glanda parotidă este traversată de următoarele structuri CU EXCEPȚIA:",
+      "options": [
+        "Nervului facial",
+        "Artera carotidă externă cu ramurile sale terminale",
+        "Vena retromandibulară",
+        "Artera carotidă internă",
+        "Nervul auriculotemporal"
+      ],
+      "explanation": "Logea parotidă este traversată superficial până la profund de: nervul facial (cel mai superficial, împărțit în plexul intraparotid), vena retromandibulară (intermediară) și artera carotidă externă cu ramurile sale terminale (cea mai profundă). Artera carotidă internă trece posterior de logea parotidă (compartiment retrostyloid)."
+    },
+    "hn-home-046": {
+      "question": "În parotidectomie, structura cea mai expusă la leziuni iatrogenice este:",
+      "options": [
+        "Nervul accesoriu",
+        "Nervul facial cu cele 5 ramuri terminale",
+        "Nervul vag",
+        "Artera carotidă internă",
+        "Nervul hipoglos"
+      ],
+      "explanation": "Nervul facial, după ce iese din foramenul stilomastoid, intră în logea parotidă și se ramifică în plexul intraparotid (\"pes anserinus\"), dând cele 5 ramuri terminale: temporală, zigomatică, bucală, mandibulară marginală și cervicală. Disecția atentă este crucială în timpul parotidectomiilor pentru a evita paralizia facială."
+    },
+    "hn-home-047": {
+      "question": "Ductul Stenson (ductul excretor parotid) se deschide în cavitatea bucală opus:",
+      "options": [
+        "Caninului superior",
+        "Primului molar superior",
+        "Al doilea molar superior",
+        "Molarului inferior de gradul trei",
+        "Incizivii mediali"
+      ],
+      "explanation": "Ductul parotid (Stenson) are ~5 cm lungime, traversează suprafața laterală a maseterului, străpunge mușchiul buccinator și se deschide în vestibulul oral printr-o papilă situată opus celui de-al doilea molar superior (maxilar). Acest reper anatomic este esențial pentru cateterizarea ductală în sialografie."
+    },
+    "hn-home-048": {
+      "question": "Inervația secretorie parasimpatică a glandei parotide este asigurată de:",
+      "options": [
+        "Nervul facial prin chorda tympani",
+        "Nervul glossofaringian (IX), prin nervul lui Jacobson, ganglionul otic și nervul auriculotemporal",
+        "Nervul vag direct",
+        "Plexul simpatic carotidian",
+        "Nervul trigemen direct"
+      ],
+      "explanation": "Calea parasimpatică parotidă implică: nucleul salivator inferior → IX → nervul timpanic (Jacobson) → plexul timpanic → nervul petrosal mic → ganglionul otic (Arnold) → fibre postganglionare atașate de nervul auriculotemporal (V3) → glanda parotidă. Inervația simpatică (vasomotorie) provine din plexul carotidian extern."
+    },
+    "hn-home-049": {
+      "question": "Ductul Wharton este canalul excretor al:",
+      "options": [
+        "Glandei parotide",
+        "Glandei submandibulare",
+        "Glandei sublinguale",
+        "Glandei lacrimale",
+        "Glandei tiroide"
+      ],
+      "explanation": "Ductul Wharton este ductul excretor al glandei submandibulare. Are ~5 cm lungime, se ridică pe partea medială a glandei sublinguale și se deschide pe fundul cavității bucale, lateral de frenul lingual, la caruncula sublinguală. Este un loc frecvent de litiază salivară (sialolitiază) datorită cursului său ascendent."
+    },
+    "hn-home-050": {
+      "question": "Inervația secretorie parasimpatică a glandelor submandibulare și sublinguale este asigurată prin:",
+      "options": [
+        "Ganglionul otic și nervul auriculotemporal",
+        "Chorda tympani (din facial) → ganglionul submandibular",
+        "Nervul vag direct",
+        "Nervul glossofaringian direct",
+        "Plexul simpatic carotidian"
+      ],
+      "explanation": "Fibrele secretorii parasimpatice provin din nucleul salivator superior, traversează nervul intermediar (Wrisberg), ies prin chorda tympani (ramură a nervului facial), se unesc cu nervul lingual (din V3) și ajung la ganglionul submandibular. Fibrele postganglionare inervează ambele glande (submandibulară și sublinguală)."
+    },
+    "hn-home-051": {
+      "question": "Pacient cu litiază submandibulară: ductul lui Wharton este cel mai bine palpabil clinic:",
+      "options": [
+        "Posterior de palatul moale",
+        "Pe fundul cavității bucale, bimanual (un deget intraoral, celălalt submandibular)",
+        "Retrotonsilar",
+        "În fosa pterigopalatina",
+        "La nivelul molarului superior de gradul trei"
+      ],
+      "explanation": "Palparea bimanuală a ductului lui Wharton (un deget plasat pe fundul cavității bucale, lateral de frenul lingual, și altul submandibular) permite identificarea calculilor salivari. Aceștia sunt adesea vizibili intraoral în apropierea carunculei sublinguale sau pot necesita sialografie/ultrasonografie pentru o localizare mai profundă."
+    },
+    "hn-home-052": {
+      "question": "Limba primește inervație motorie de la:",
+      "options": [
+        "Trigeminal (V)",
+        "Facial (VII)",
+        "Glossofaringian (IX)",
+        "Hipoglos (XII)",
+        "Vagus (X)"
+      ],
+      "explanation": "Toate mușchii intrinseci și extrinseci ai limbii (cu excepția palatoglosului - inervat de plexul faringian X) primesc inervație motorie de la nervul hipoglos (XII). Leziunea acestuia provoacă paralizia hemilingualului ipsilateral, cu deviere spre partea afectată la protruzie (din cauza genioglosului contralateral neafectat)."
+    },
+    "hn-home-053": {
+      "question": "Inervația senzorială somatică a 2/3 anterioare ale limbii este asigurată de:",
+      "options": [
+        "Nervul glossofaringian (IX)",
+        "Nervul lingual (ramură a V3) - din trigeminal",
+        "Chorda tympani (din facial)",
+        "Vagus (X)",
+        "Hipoglos (XII)"
+      ],
+      "explanation": "Inervația limbii este complexă: 2/3 anterioare - senzorial general prin nervul lingual (V3), gust prin chorda tympani (VII); 1/3 posterioară (în spatele sulcusului terminal) - senzorial și gust prin nervul glossofaringian (IX); rădăcina limbii și vallecula - prin nervul laringian superior (X)."
+    },
+    "hn-home-054": {
+      "question": "Într-o leziune a nervului hipoglos drept, la protruzie vârful limbii se abate:",
+      "options": [
+        "Drept înainte (fără deviație)",
+        "Spre stânga",
+        "Spre dreapta (partea afectată)",
+        "În jos",
+        "În sus"
+      ],
+      "explanation": "La protruzia limbii, genioglosul sănătos contralateral împinge limba spre partea paralizată. Astfel, într-o leziune dreaptă a nervului XII, limba se abate spre dreapta (partea afectată). Acest semn este cunoscut sub numele de semnul Bonnier și este util pentru localizarea leziunilor neuronale motorii periferice ale nervului hipoglos."
+    },
+    "hn-home-055": {
+      "question": "Laringele este situat anterior față de:",
+      "options": [
+        "Trahee",
+        "Esofag",
+        "Coloana cervicală",
+        "Glanda tiroidă",
+        "SCM"
+      ],
+      "explanation": "Laringele se află în regiunea cervicală anterioară, în fața hipofaringelui (laringofaringel) și a esofagului cervical, între care se află spațiul retrofaringian. Posterior, laringele este legat de corpurile vertebrale C4-C6 prin intermediul faringelui."
+    },
+    "hn-home-056": {
+      "question": "Cartilajul cricoid se află la nivelul vertebrei:",
+      "options": [
+        "C2",
+        "C3",
+        "C4",
+        "C6",
+        "T1"
+      ],
+      "explanation": "Cartilajul cricoid, singurul inel cartilaginos complet al căilor respiratorii, se proiectează la nivelul vertebrei C6. Este un reper anatomic important: marchează tranziția între laringe și trahee, între faringe și esofag, și locul unde nervul laringian recurent se ramifică la ligamentului Berry."
+    },
+    "hn-home-057": {
+      "question": "Singurul mușchi laringian intrinsec care NU este inervat de nervul laringian recurent este:",
+      "options": [
+        "Cricoaritenoid posterior",
+        "Cricoaritenoid lateral",
+        "Tiroaritenoid",
+        "Cricoid",
+        "Aritenoid transvers"
+      ],
+      "explanation": "Cricoidul (\"tensor vocal\") este singurul mușchi laringian intrinsec inervat de ramura externă a nervului laringian superior (din vagus), nu de nervul recurent. Acțiunea sa este de a tensiona corzile vocale (ton înalt). Toți ceilalți mușchi intrinseci primesc inervație de la nervul laringian recurent."
+    },
+    "hn-home-058": {
+      "question": "Singurul mușchi laringian care abduce corzile vocale (deschide glota) este:",
+      "options": [
+        "Cricoaritenoid lateral",
+        "Cricoaritenoid posterior",
+        "Tiroaritenoid",
+        "Aritenoid transvers",
+        "Cricoid"
+      ],
+      "explanation": "Cricoaritenoidul posterior (\"posticus\") este singurul abductor al corzilor vocale, deschizând fanta glotică pentru respirație. Paralizia recurentă bilaterală produce paralizie aductoare (respirație păstrată) sau, mai grav, paralizie abductoare (cricoaritenoid posterior), ducând la aducerea corzilor și asfixie - necesitând traheostomie."
+    },
+    "hn-home-059": {
+      "question": "Faringele se extinde de la baza craniană până la:",
+      "options": [
+        "Cartilajul tiroid",
+        "Marginea inferioară a cartilajului cricoid (C6)",
+        "Osul hioid",
+        "Vertebra T1",
+        "Glanda tiroidă"
+      ],
+      "explanation": "Faringele este un tub musculofibros de aproximativ 12-14 cm lungime, extinzându-se de la baza craniană (tubercul faringian al occipitalului) până la vertebra C6 (marginea inferioară a cartilajului cricoid), unde continuă cu esofagul. Este împărțit în nazofaringe, orofaringe și laringofaringe (hipofaringe)."
+    },
+    "hn-home-060": {
+      "question": "Tubul Eustachian (tub auditiv) se deschide în:",
+      "options": [
+        "Orofaringe, la nivelul amigdalelor palatine",
+        "Nazofaringe (rinofaringe), la nivelul concha nazală inferioară",
+        "Hipofaringe",
+        "Cavitatea bucală",
+        "Sinusul maxilar"
+      ],
+      "explanation": "Tubul Eustachian (faringotimpan) leagă cavitatea timpanică de nazofaringe, deschizându-se pe peretele lateral al rinofaringelui (ostium faringian al tubului), aproape de concha nazală inferioară. Este înconjurat de torus tubarius și amigdala tubară (Gerlach). Disfuncția sa explică otita medie la copii."
+    },
+    "hn-home-061": {
+      "question": "Inelul limfatic Waldeyer al faringelui include următoarele formațiuni, CU EXCEPȚIA:",
+      "options": [
+        "Amigdala faringiană (Luschka)",
+        "Amigdalele palatine",
+        "Amigdala linguală",
+        "Amigdalele tubare (Gerlach)",
+        "Amigdala sublinguală"
+      ],
+      "explanation": "Inelul limfatic Waldeyer reprezintă o barieră imunologică în formă de inel la intrarea în tractul digestiv, format din: amigdala faringiană (adenoizi la copii), amigdalele tubare, amigdalele palatine și amigdala linguală. Nu există \"amigdala sublinguală\" în această clasificare anatomică clasică."
+    },
+    "hn-home-062": {
+      "question": "Plexul faringian motor este format din ramuri din:",
+      "options": [
+        "V și VII",
+        "IX, X (vag) și ramuri simpatice; motor predominant din vag (cu excepția stilofaringianului - IX)",
+        "VII și XII",
+        "III și IV",
+        "V și XI"
+      ],
+      "explanation": "Plexul faringian primește contribuții senzoriale de la nervul glosofaringian (IX), motor predominant din vag (X) și simpatic din ganglionul cervical superior. Toți mușchii faringieni (constrictori și elevatori) sunt innervați motor de vag, cu excepția stilofaringianului - innervat de IX, și tensor veli palatini - innervat de V3."
+    },
+    "hn-home-063": {
+      "question": "Esofagul cervical începe la nivelul vertebrei:",
+      "options": [
+        "C3",
+        "C4",
+        "C6",
+        "T1",
+        "T4"
+      ],
+      "explanation": "Esofagul cervical începe la nivelul cartilajului cricoid (C6), unde mușchiul cricofaringian formează sfincterul esofagian superior. Are o lungime de aproximativ 5 cm și continuă cu esofagul toracic la nivelul orificiului toracic superior (T1)."
+    },
+    "hn-home-064": {
+      "question": "Traheea cervicală este situată:",
+      "options": [
+        "Posterior față de esofag",
+        "Anterior față de esofag și posterior față de istmul tiroidian",
+        "Lateral față de carotida comună",
+        "În interiorul glandei parotide",
+        "Posterior față de coloana cervicală"
+      ],
+      "explanation": "Traheea cervicală este situată medial, anterior față de esofag (separată de șanțul traheoesofagian în care nervul laringian recurent se ridică) și posterior față de istmul tiroidian (la nivelul inelelor 2-4). Anterior, este în relație cu mușchii strap, fascia cervicală și vasele tiroidiene."
+    },
+    "hn-home-065": {
+      "question": "În traheostomia de urgență, incizia este efectuată electiv:",
+      "options": [
+        "Suprahioid",
+        "La nivelul membranei cricotiroidiene (cricotiroidotomie), sau între inelele traheale 2-3 (sub istmul tiroidian)",
+        "La nivelul cartilajului tiroidian",
+        "Direct prin istmul tiroidian la primul inel",
+        "Subclavicular"
+      ],
+      "explanation": "Cricotiroidotomia de urgență este efectuată prin membrana cricotiroidiană (avasculară, palpabilă subtiroidian). Traheostomia electivă este efectuată între inelele traheale 2-3 sau 3-4, sub istmul tiroidian (care poate fi disecat sau secționat între ligaturi). Repere anatomice: cartilajul tiroidian, cricoid și jugular anterior trebuie identificate."
+    },
+    "hn-home-066": {
+      "question": "Nervul olfactiv (I) traversează endocraniul prin:",
+      "options": [
+        "Canalul optic",
+        "Fisura orbitală superioară",
+        "Placa cribriformă a etmoidului",
+        "Foramen rotund",
+        "Foramen jugular"
+      ],
+      "explanation": "Fibrele nervului olfactiv (I) își au originea din mucoasa olfactivă a foselor nazale și traversează numeroasele deschideri ale plăcii cribriforme (\"sita etmoidului\") pentru a se termina în bulbul olfactiv. Fracturile plăcii cribriforme produc anosmie și risc de rinoree cu lichid cefalorahidian."
+    },
+    "hn-home-067": {
+      "question": "Nervul optic (II) părăsește endocraniul prin:",
+      "options": [
+        "Fisura orbitală superioară",
+        "Canalul optic, în aripa mică a sfenoidului",
+        "Foramen rotund",
+        "Foramen oval",
+        "Foramen jugular"
+      ],
+      "explanation": "Nervul optic trece prin canalul optic în aripa mică a sfenoidului, însoțit de artera oftalmică (inferolateral). Chiasma optică se află deasupra selli turcice, în strânsă relație cu glanda pituitară - tumorile pituitare pot comprima chiasma, producând hemianopsie bitemporală."
+    },
+    "hn-home-068": {
+      "question": "Nervul oculomotor (III) innervează toți mușchii extrinseci ai globului ocular, CU EXCEPȚIA:",
+      "options": [
+        "Rectus superior",
+        "Rectus medial",
+        "Rectus inferior",
+        "Oblic superior și rectus lateral",
+        "Oblic inferior"
+      ],
+      "explanation": "Mușchiul oblic superior este innervat de nervul troclear (IV) - mnemonic \"SO4\", iar rectus lateral de nervul abducens (VI) - \"LR6\". Restul (rectus superior, medial, inferior, oblic inferior, elevatoarele pleoapei superioare) sunt innervate de nervul oculomotor (III), care transportă de asemenea fibre parasimpatice către sfincterul pupilar și mușchiul ciliar."
+    },
+    "hn-home-069": {
+      "question": "Pacient cu strabism divergent, ptosis palpebral complet, midriază areactivă și diplopie la ochiul afectat. Diagnosticul:",
+      "options": [
+        "Pareză IV",
+        "Pareză completă a nervului oculomotor (III)",
+        "Pareză VI",
+        "Sindromul Horner",
+        "Oftalmopatia tiroidiană"
+      ],
+      "explanation": "Pareză completă a nervului oculomotor (III) produce: ptosis palpebral (paralizia elevatoare pleoapei superioare), ochiul deviat \"jos și afară\" - strabism divergent și inferior (acțiunea necontrolată a oblicului superior și rectus lateral), midriază fixă și pierderea acomodării (paralizia fibrelor parasimpatice). Cauze: anevrism de comunicare posterioară, hernie tentorială."
+    },
+    "hn-home-070": {
+      "question": "Nervul abducens (VI) are un curs intracranian lung și innervează:",
+      "options": [
+        "Rectus superior",
+        "Rectus lateral",
+        "Oblic superior",
+        "Oblic inferior",
+        "Toți mușchii extrinseci"
+      ],
+      "explanation": "Nervul VI traversează endocraniul, se ridică pe suprafața posterioară a temporalului petros (canalul Dorello), trece prin sinusul cavernous (în lumenul său, lateral de carotidă) și intră în orbită prin fisura orbitală superioară (prin inelul Zinn). Leziunea sa produce strabism convergent și diplopie orizontală la privirea către partea afectată."
+    },
+    "hn-home-071": {
+      "question": "Nervul glossofaringian (IX) părăsește endocraniul prin:",
+      "options": [
+        "Foramenul jugular (împreună cu X și XI)",
+        "Foramenul oval",
+        "Foramenul stilomastoid",
+        "Canalul hipoglos",
+        "Fisura orbitală superioară"
+      ],
+      "explanation": "Nervii cranieni IX, X și XI ies din neurocraniu prin foramenul jugular, împreună cu sinusul sigmoid (continuând ca bulb superior al jugularului). Leziunea simultană a acestor nervi (sindromul foramenului posterior, Vernet) apare în tumori, fracturi ale bazei craniului."
+    },
+    "hn-home-072": {
+      "question": "Reflexul gag (faringian) are calea sa aferentă pe nervul:",
+      "options": [
+        "Trigeminal",
+        "Facial",
+        "Glossofaringian (IX)",
+        "Hipoglos",
+        "Accesoriu"
+      ],
+      "explanation": "Reflexul faringian este declanșat de stimularea mucoasei orofaringiene (piloni tonsilari, peretele faringian posterior). Calea aferentă este nervul glossofaringian (IX), iar cea eferentă este vagul (X) - prin contracția constrictorilor faringieni. Pierderea reflexului indică o leziune a IX sau X."
+    },
+    "hn-home-073": {
+      "question": "Nervul facial (VII) iese din neurocraniu prin:",
+      "options": [
+        "Foramenul oval",
+        "Foramenul rotund",
+        "Foramenul stilomastoid",
+        "Foramenul jugular",
+        "Canalul hipoglos"
+      ],
+      "explanation": "Nervul facial intră în meatusul acustic intern (împreună cu VIII și nervul intermediar Wrisberg), traversează canalul facial în temporalul petros (cu 3 segmente: labirintic, timpanic, mastoid) și iese prin foramenul stilomastoid, după care intră în logea parotidă unde se ramifică."
+    },
+    "hn-home-074": {
+      "question": "Ramura nervului facial care transmite fibre gustative pentru 2/3 anterioare ale limbii și fibre secretorii parasimpatice pentru glandele submandibulare și sublinguale este:",
+      "options": [
+        "Nervul petros superficial mare",
+        "Chorda tympani",
+        "Nervul stapedius",
+        "Ramura auriculară posterioară",
+        "Ramura comunicantă cu vagul"
+      ],
+      "explanation": "Chorda tympani, o ramură din nervul facial în segmentul mastoid, conține: fibre gustative pentru 2/3 anterioare ale limbii (primul neuron în ganglionul geniculat) și fibre parasimpatice preganglionice destinate ganglionului submandibular. Se unește cu nervul lingual (V3) pentru distribuție. Leziunea sa produce ageuzie a 2/3 anterioare ale limbii."
+    },
+    "hn-home-075": {
+      "question": "Nervul accesoriu (XI) inervează motor:",
+      "options": [
+        "Mușchii faringieni",
+        "Mușchii SCM și trapez",
+        "Mușchii limbii",
+        "Diafragma",
+        "Mușchii laringelui"
+      ],
+      "explanation": "Rădăcina spinală a nervului accesoriu (din segmentele cervicale C1-C5) inervează motor sternocleidomastoidul și trapezul. Rădăcina craniană (bulbară) se unește cu vagul și inervează musculatura faringolaringiană. Leziunea XI produce \"umeri căzuți\" (paralizia trapezului) și slăbiciune la rotația capului spre partea opusă."
+    },
+    "hn-home-076": {
+      "question": "Ansa cervicalis (ansa hipoglosi) inervează:",
+      "options": [
+        "Diafragma",
+        "Mușchii infrahioidieni (cu excepția tirohioidului - inervat direct de C1 prin XII)",
+        "SCM și trapez",
+        "Mușchii limbii",
+        "Faringe"
+      ],
+      "explanation": "Ansa cervicalis este formată prin unirea rădăcinii superioare (fibre C1 \"împrumutând\" traiectul hipoglosului) cu rădăcina inferioară (C2-C3). Inervează mușchii de tip bandă: omohioid, sternohioid, sternotirohid. Tirohioidul este inervat direct de C1 prin XII (\"împrumut\")."
+    },
+    "hn-home-077": {
+      "question": "Ganglionul Gasser (trigeminal) este situat în:",
+      "options": [
+        "Endocraniu, în cavitatea lui Meckel pe suprafața anterioară a temporalului petros",
+        "Fosa pterigopalatina",
+        "Sinusul cavernous",
+        "Canalul hipoglos",
+        "Fosa infratemporală"
+      ],
+      "explanation": "Ganglionul trigeminal (semilunar, Gasser) se află într-o loge durală (cavitatea lui Meckel) pe suprafața antero-superioară a temporalului petros, aproape de vârf. Conține corpurile celulare ale primelor neuroni senzoriali ai trigemenului. De aici apar cele trei ramuri terminale: V1, V2 și V3."
+    },
+    "hn-home-078": {
+      "question": "Nevralgia trigeminală idiopatică (\"tic douloureux\") este mai frecventă în teritoriul:",
+      "options": [
+        "V1",
+        "V2 și/sau V3",
+        "Numai V1",
+        "Nervul facial",
+        "IX"
+      ],
+      "explanation": "Nevralgia trigeminală esențială afectează predominant ramurile V2 (maxilar) și V3 (mandibular), cu durere unilaterală paroxistică declanșată de \"zone declanșatoare\" (atingere ușoară, masticație, periaj dentar). O cauză frecventă este conflictul neurovascular cu o buclă a arterei cerebeloase superioare la rădăcina nervului - tratabil prin decompresie microchirurgicală Jannetta."
+    },
+    "hn-home-079": {
+      "question": "Ganglionul ciliar, un ganglion parasimpatic din orbită, primește fibre preganglionice de la:",
+      "options": [
+        "Nervul facial",
+        "Nervul oculomotor (III), prin rădăcina motorie scurtă",
+        "Nervul oftalmic V1",
+        "Nervul abducens",
+        "Plexul simpatic carotidian"
+      ],
+      "explanation": "Ganglionul ciliar primește 3 rădăcini: motorie scurtă (fibre parasimpatice preganglionice din III, din nucleul Edinger-Westphal - pentru sfincterul pupilar și mușchiul ciliar), senzorială lungă (din V1, nasociliar - senzorial pentru cornee și iris) și simpatică (din plexul carotidian - pentru dilatatorul pupilar)."
+    },
+    "hn-home-080": {
+      "question": "Ganglionul sfenopalatine (pterigopalatine, Meckel) este situat în:",
+      "options": [
+        "Orbită",
+        "Fosa pterigopalatina",
+        "Endocraniu",
+        "Logea parotidă",
+        "Cavitatea orală"
+      ],
+      "explanation": "Ganglionul sfenopalatine se află în fosa pterigopalatina, suspendat de nervul maxilar (V2) prin nervii pterigopalatini. Primește fibre parasimpatice preganglionice prin nervul petros superficial mare (din VII), fibre simpatice prin nervul petros profund (din plexul carotidian) și fibre senzoriale din V2. Inervează glandele lacrimale, nazale și palatine."
+    },
+    "hn-home-081": {
+      "question": "Referitor la artera carotidă internă în segmentul cavernos, următoarele sunt ADEVĂRATE:",
+      "options": [
+        "Are un curs liniar",
+        "Descrie siphonul carotidian, având relații în peretele sinusului lateral cu III, IV, V1 și V2",
+        "Emite numeroase ramuri către tiroidă",
+        "Trebuie prin foramenul oval",
+        "Se varsă în vena jugulară"
+      ],
+      "explanation": "În sinusul cavernos, artera carotidă internă descrie \"siphonul carotidian\" (formă de S inversat), însoțită de nervul VI și plexul simpatic carotidian. În peretele sinusului lateral, de la superior la inferior, se află nervii III, IV, V1 și V2. Aneurismele intracavernoase pot comprima acești nervi (sindromul sinusului cavernos)."
+    },
+    "hn-home-082": {
+      "question": "Referitor la cercul lui Willis, următoarele sunt ADEVĂRATE:",
+      "options": [
+        "Se află la baza creierului și conectează sistemele carotidă și vertebrobazilară",
+        "Se află pe convexitatea cerebrală",
+        "Drenează sângele venos al creierului",
+        "Conține doar artere venoase",
+        "Se află în cerebel"
+      ],
+      "explanation": "Cercul lui Willis (cercul arterial cerebral) se află în spațiul interpeduncular, înconjurând chiasma optică și pediculul hipofizar. Este format anterior din ACA și artera comunicantă anterioară, lateral din arterele carotidă internă și arterele comunicante posterioare, și posterior din PCA și trunchiul bazilar. Oferă un aport colateral vital."
+    },
+    "hn-home-083": {
+      "question": "Nervul vag (X) furnizează inervație parasimpatică pentru:",
+      "options": [
+        "Numai inimă",
+        "Toate viscerele toraco-abdominale până la flexura splenică a colonului",
+        "Glandele lacrimale",
+        "Numai tiroidă",
+        "Mușchii oculari"
+      ],
+      "explanation": "Nervul vag furnizează inervație parasimpatică pentru viscerele cervicale (faringe, laringe), toracice (inimă, plămâni) și abdominale (stomac, intestin subțire, până la 2/3 proximale ale colonului transversal - până la flexura splenică). Inervația parasimpatică a colonului distal și pelvisului provine din nervii splanchinici pelvici (S2-S4)."
+    },
+    "hn-home-084": {
+      "question": "Plexul cervical superficial emite următoarele ramuri cutanate CU EXCEPȚIA:",
+      "options": [
+        "Nervul occipital mic",
+        "Nervul auricular mare",
+        "Nervul cervical transversal",
+        "Nervii supraclaviculari",
+        "Nervul auriculotemporal"
+      ],
+      "explanation": "Plexul cervical superficial (din C2-C4) emite 4 ramuri cutanate: occipital mic (C2), auricular mare (C2-C3), cervical transversal (C2-C3) și supraclaviculari (C3-C4). Nervul auriculotemporal este o ramură a nervului mandibular (V3) și inervează regiunea temporală și ATM (nu provine din plexul cervical)."
+    },
+    "hn-home-085": {
+      "question": "Referitor la embriologia arcurilor faringiene, derivatele celui de-al doilea arc faringian includ:",
+      "options": [
+        "Mușchii masticatori, maxilar, mandibulă",
+        "Mușchii mimici, stapes, procesul stiloid, ligamentului stilohioid, cornița mică a hioidului",
+        "Constrictorii faringieni superiori, hipofiza",
+        "Tiroida, glandele paratiroide superioare",
+        "Mușchii intrinseci ai laringelui"
+      ],
+      "explanation": "Al II-lea arc faringian (hioid) este inervat de nervul facial (VII) și dă naștere mușchilor mimici, stapedius, burtica posterioară a digastricului, stilohioid. Derivatele scheletice includ stapes, procesul stiloid, ligamentului stilohioid, cornița mică și porțiunea superioară a corpului hioid."
+    },
+    "hn-home-086": {
+      "question": "Glanda tiroidă derivă embriologic din:",
+      "options": [
+        "Diverticulul tirogloasal al endodermului podelei primitive a faringelui, între tuberculul impar și copulă",
+        "Al III-lea arc faringian",
+        "Mezoderm somatic",
+        "Crestă neurală",
+        "Punga faringiană IV exclusiv"
+      ],
+      "explanation": "Tiroida derivă din diverticulul median al podelei faringiene (foramenul cecum al limbii). Aceasta coboară prin ductul tirogloasal la nivelul cervical anterior. Resturile ductului dau naștere chistului tirogloasal median (adesea suprahioid). Celulele C parafoliculare (secreționând calcitonină) derivă din corpurile ultimobranchiale (derivate ale pungilor IV-V)."
+    },
+    "hn-home-087": {
+      "question": "Ce os pereche participă la peretele medial al orbitei?",
+      "options": [
+        "Osul zigomatic",
+        "Osul lacrimal",
+        "Osul palatin",
+        "Mandibula",
+        "Vomer"
+      ],
+      "explanation": "Peretele medial al orbitei este format din 4 oase (de la anterior la posterior): procesul frontal al maxilarului, osul lacrimal (cu fosa pentru sacul lacrimal), lamela orbitală a etmoidului (lamina papyracea - cea mai fragilă) și corpul sfenoidului. Osul lacrimal găzduiește șanțul lacrimo-nazal."
+    },
+    "hn-home-088": {
+      "question": "Cavitățile nazale comunică cu nazofaringele prin:",
+      "options": [
+        "Apertura piriformă",
+        "Choanae (deschiderile nazale posterioare)",
+        "Placa cribriformă",
+        "Sinusul frontal",
+        "Tubul Eustachian"
+      ],
+      "explanation": "Choanele sunt deschiderile posterioare ale cavităților nazale, delimitate medial de vomer, procesele pterigoide (lateral), corpul sfenoidului (superior) și marginea posterioară a oaselor palatine (inferior). Prin choane, cavitățile nazale se deschid în rinofaringe. Apertura piriformă este deschiderea anterioară."
+    },
+    "hn-home-089": {
+      "question": "Sinusul maxilar se deschide în:",
+      "options": [
+        "Meatul nazal superior",
+        "Meatul nazal mijlociu, prin hiatusul semilunar",
+        "Meatul nazal inferior",
+        "Recesul sfenoetmoidal",
+        "Choana"
+      ],
+      "explanation": "Sinusul maxilar se deschide în meatu nazal mijlociu (sub concha mijlocie), la hiatusul semilunar, împreună cu celulele etmoide anterioare și sinusul frontal. Sinusul sfenoidal se deschide în recesul sfenoetmoidal, celulele etmoide posterioare în meatu superior, iar canalul nazolacrimal în meatu inferior."
+    },
+    "hn-home-090": {
+      "question": "Sinuzita maxilară odontogenă apare frecvent din extinderea infecției de la:",
+      "options": [
+        "Incisivii superiori",
+        "Premolarii și molarii superiori (rădăcinile lor se proiectează în podeaua sinusului)",
+        "Caninul inferior",
+        "Molarii de minte inferiori",
+        "Numai incisivii inferiori"
+      ],
+      "explanation": "Rădăcinile premolarului secund și molarilor maxilari (în special molarul întâi) sunt în relație intimă cu podeaua sinusului maxilar, separate doar printr-o lamelă osoasă subțire sau mucoasă. Infecțiile periapicale sau procedurile dentare pot produce o comunicare oroantrală și sinuzită maxilară odontogenă."
+    },
+    "hn-home-091": {
+      "question": "Fosa pterigopalatina comunică cu orbita prin:",
+      "options": [
+        "Fisura orbitală superioară",
+        "Fisura orbitală inferioară",
+        "Canalul optic",
+        "Foramenul rotund",
+        "Canalul nazolacrimal"
+      ],
+      "explanation": "Fosa pterigopalatina prezintă multiple comunicații: cu endocraniul (foramen rotund, canalul vidian), cu orbita (fisura orbitală inferioară), cu cavitățile nazale (foramenul sfenopalatinal), cu cavitatea orală (canalul palatin mare) și cu fosa infratemporală (fisura pterigomaxilară). Este un adevărat \"crosroad neurovascular\"."
+    },
+    "hn-home-092": {
+      "question": "\"Triunghiul periculos\" al feței, cu risc de tromboflebită septică a sinusului cavernos, corespunde:",
+      "options": [
+        "Regiunea frontală",
+        "Regiunea dintre rădăcina nasului și comisurile orale",
+        "Regiunea submandibulară",
+        "Regiunea occipitală",
+        "Regiunea parotidă"
+      ],
+      "explanation": "Zona perioral-orbitală (triunghiul periculos) dintre rădăcina nazală și comisurile orale conține vene faciale fără valve. Infecțiile (furuncule, abcesuri) pot disemina retrograd prin vena angulară → vena oftalmică superioară → sinusul cavernos, producând tromboflebită cavernasă - o urgență medicală cu mortalitate ridicată în era pre-antibiotică."
+    },
+    "hn-home-093": {
+      "question": "Drenajul venos al feței se realizează în principal prin:",
+      "options": [
+        "Vena facială, drenând în vena jugulară internă (uneori printr-un trunchi comun thyrolinguofacial)",
+        "Vena jugulară externă direct",
+        "Vena vertebrală",
+        "Sinusul sagital",
+        "Vena cefalică"
+      ],
+      "explanation": "Vena facială (continuarea venei angulare) coboară sinuos pe față, primește numeroase tributare și drenează în vena jugulară internă, adesea printr-un trunchi venos comun cu vena linguală și tiroidă superioară (trunchiul thyrolinguofacial al lui Farabeuf). Această aranjare este esențială în chirurgia cervicală."
+    },
+    "hn-home-094": {
+      "question": "Mușchiul digastric are două burtici (anterior și posterior) innervate respectiv de:",
+      "options": [
+        "Trigeminal (V3 - nervul milohioidian) și facial (VII)",
+        "Facial pentru ambele",
+        "Hipoglos pentru ambele",
+        "Trigeminal pentru ambele",
+        "Plexul cervical"
+      ],
+      "explanation": "Digastricul ilustrează diferitele origini embriologice ale celor două burtici: burta anterioară derivă din arcul I (mezodermul mandibular) - innervată de nervul milohioidian (ramură a V3), iar burta posterioară din arcul II (mezodermul hioidian) - innervată de facial (VII). Cele două burtici sunt unite prin tendonul intermediar."
+    },
+    "hn-home-095": {
+      "question": "Sinusurile durale drenează în:",
+      "options": [
+        "Vena jugulară externă",
+        "Vena jugulară internă, prin sinusul sigmoid și foramenul jugular",
+        "Vena vertebrală",
+        "Vena facială direct",
+        "Plexul venos pterigoid exclusiv"
+      ],
+      "explanation": "Drenajul venos cerebral profund se realizează prin sistemul sinusurilor durale, care converge la confluens sinuum (torcular Herophili). De acolo, sângele este preluat de sinusurile transvers și sigmoid, ajungând la foramenul jugular, unde continuă cu vena jugulară internă. Există anastomoze cu venele superficiale extracraniene prin venele emisarii (importanță în propagarea infecției)."
+    },
+    "hn-home-096": {
+      "question": "Care anastomoză venos endo-exocraniană trece prin foramenul mastoidian?",
+      "options": [
+        "Vena emisară a lui Santorini",
+        "Vena emisară mastoidiană (între sinusul sigmoid și vena occipitală/posterior auriculară)",
+        "Vena oftalmică superioară",
+        "Plexul pterigoid-sinus cavernos",
+        "Vena emisară condilară"
+      ],
+      "explanation": "Vena emisară mastoidiană traversează foramenul mastoidian, conectând sinusul sigmoid (intracranian) cu venele occipitală sau posterioare auriculare (extracraniene). Aceste comunicații fără valve explică propagarea infecțiilor mastoidiene (otomastoidită) către sinusurile durale, cu risc de tromboflebită și abces cerebral."
+    },
+    "hn-home-097": {
+      "question": "Referitor la regiunea suboccipitală, următoarele sunt ADEVĂRATE:",
+      "options": [
+        "Conține artera carotidă internă",
+        "Conține segmentul V3 al arterei vertebrale (suboccipital), nervul occipital mare (Arnold) și mușchii suboccipitali",
+        "Conține glanda parotidă",
+        "Conține sinusul cavernos",
+        "Conține nervul facial"
+      ],
+      "explanation": "Triunghiul suboccipital (îngrădit de rectus capitis posterior major, obliquus capitis superior și obliquus capitis inferior) conține segmentul V3 al arterei vertebrale (orizontal, în șanțul de pe arcul posterior al atlasului) și nervul suboccipital (C1). Nervul occipital mare (Arnold - C2) iese inferior, sub oblicul inferior, și inervează scalpul occipital."
+    },
+    "hn-home-098": {
+      "question": "Nervul occipital mare (Arnold) este o ramură din:",
+      "options": [
+        "Plexul cervical superficial",
+        "Ramura posterioară a nervului spinal C2",
+        "Nervul accesoriu",
+        "Nervul vag",
+        "Plexul brahial"
+      ],
+      "explanation": "Nervul occipital mare (Arnold) este ramura medială (cutanată) a ramurii dorsale a nervului spinal C2. Oferă inervație senzorială pielii regiunii occipitale, până la vârful capului. Compresia sa la mușchiul semispinalis capitis produce nevralgia lui Arnold - durere occipitală paroxistică, frecventă în patologia cervicală superioară."
+    },
+    "hn-home-099": {
+      "question": "Limita inferioară a regiunii cervicale anterioare este:",
+      "options": [
+        "Marginea inferioară a mandibulei",
+        "Notch-ul jugular al sternului și clavicula",
+        "Osul hioid",
+        "Cartilajul cricoid",
+        "Articulația sternoclaviculară doar pe partea dreaptă"
+      ],
+      "explanation": "Regiunea cervicală anterioară (gâtul propriu-zis) are ca limite: superior marginea inferioară a mandibulei și o linie prin vârful procesului mastoidian, iar inferior notch-ul jugular al manubriului sternului, clavicula și o linie care se îndreaptă spre procesul acromial. Lateral este îngrădită de marginea anterioară a trapezului."
+    },
+    "hn-home-100": {
+      "question": "Pacient cu disfagie progresivă, regurgitare alimentară și respirație urât mirositoare. Diverticulul Zenker apare prin hernierea mucoasei prin:",
+      "options": [
+        "Triunghiul lui Killian (zonă de slăbiciune între constrictorul inferior și cricofaringian)",
+        "Triunghiul Killian-Jamieson",
+        "Triunghiul Laimer-Hackerman",
+        "Hiatusul esofagian",
+        "Sinusul piriform"
+      ],
+      "explanation": "Diverticulul Zenker (faringoesofagian) apare prin hernierea mucoasei prin triunghiul lui Killian, o zonă de slăbiciune între fibrele oblice ale constrictorului faringian inferior și fibrele orizontale ale mușchiului cricofaringian (sfincterul esofagian superior). Disfuncția cricofaringiană crește presiunea faringiană, favorizând hernierea. Tratamentul este chirurgical (myotomie cricofaringiană + diverticulectomie)."
+    }
+  }
+}

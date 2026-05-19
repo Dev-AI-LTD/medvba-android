@@ -838,7 +838,7 @@ export const neuroanatomyChapters: ModuleChapters = {
   ]
 };
 
-export const medAdmissionBarronsChapters: ModuleChapters = {
+export const medAdmissionChapters: ModuleChapters = {
   moduleId: 'med-admission-barrons',
   moduleName: '', // Display name comes from getModuleName() / locales
   chapters: [
@@ -870,12 +870,19 @@ export const moduleChaptersMap: Record<string, ModuleChapters> = {
   'internal-organs': internalOrgansChapters,
   'head-neck': headNeckChapters,
   'neuroanatomy': neuroanatomyChapters,
-  'med-admission-barrons': medAdmissionBarronsChapters,
+  'med-admission-barrons': medAdmissionChapters,
 };
 
 export function getChaptersForModule(moduleId: string): Chapter[] {
   const moduleChapters = moduleChaptersMap[moduleId];
   return moduleChapters ? moduleChapters.chapters : [];
+}
+
+export function getModuleQuestionCount(moduleId: string): number {
+  return getChaptersForModule(moduleId).reduce(
+    (sum, chapter) => sum + chapter.questions.length,
+    0,
+  );
 }
 
 export function getAllQuestionsWithChapters(moduleId: string): { question: Question; chapterId: string; chapterName: string }[] {

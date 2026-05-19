@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { X, Clock, CheckCircle, XCircle, ChevronRight, Copy, Lock, Crown } from 'lucide-react-native';
+import { X, Clock, CheckCircle, XCircle, ChevronRight, Copy, Lock, Crown, BookOpen } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -45,11 +45,26 @@ import {
   allQuestions,
   allUpperLowerLimbsQuestions,
   headNeckAllQuestions,
+  headNeckExamSimulationQuestions,
   internalOrgansAllQuestions,
   medAdmissionAllQuestions,
   neuroanatomyAllQuestions,
+  neuroanatomyExamQuestions,
   upperLowerLimbsSubcategories,
 } from '@/lib/quizSessionQuestionPool';
+import {
+  getCorrectAnswerIndices,
+  isAnswerCorrect,
+  isMultiSelectQuestion,
+  toggleSelectedIndex,
+} from '@/lib/questionAnswer';
+import {
+  filterUnseenQuestions,
+  fisherYatesShuffle,
+  getSeenQuestionsStorageKey,
+  selectUniqueQuestions,
+} from '@/lib/quizQuestionSelection';
+import { buildQuestionsWithChapters } from '@/lib/questionChapterLink';
 
 const QUESTION_COUNTS = {
   quick: 10,
@@ -62,6 +77,7 @@ interface QuestionWithChapter {
   question: Question;
   chapterId: string;
   chapterName: string;
+  moduleId: string;
 }
 
 let canonicalQuestionById: Map<string, Question> | null = null;
@@ -84,18 +100,9 @@ function questionsToCanonicalInSessionOrder(ordered: Question[]): Question[] {
   return ordered.map((q) => map.get(q.id) ?? q);
 }
 
-function fisherYatesShuffle<T>(array: T[]): T[] {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
-
-async function getSeenQuestionIds(category: string): Promise<Set<string>> {
+async function getSeenQuestionIds(category: string, mode?: string): Promise<Set<string>> {
   try {
-    const key = `user_seen_questions_${category}`;
+    const key = getSeenQuestionsStorageKey(category, mode);
     const stored = await AsyncStorage.getItem(key);
     if (stored) {
       const ids = JSON.parse(stored) as string[];
@@ -107,20 +114,16 @@ async function getSeenQuestionIds(category: string): Promise<Set<string>> {
   return new Set();
 }
 
-async function markQuestionsAsSeen(category: string, questionIds: string[]): Promise<void> {
+async function markQuestionsAsSeen(category: string, questionIds: string[], mode?: string): Promise<void> {
   try {
-    const key = `user_seen_questions_${category}`;
-    const existingIds = await getSeenQuestionIds(category);
+    const key = getSeenQuestionsStorageKey(category, mode);
+    const existingIds = await getSeenQuestionIds(category, mode);
     questionIds.forEach(id => existingIds.add(id));
     await AsyncStorage.setItem(key, JSON.stringify([...existingIds]));
     log.info(`Marked ${questionIds.length} questions as seen for category: ${category}`);
   } catch (error) {
     log.warn('Error saving seen questions:', error);
   }
-}
-
-function filterUnseenQuestions(questions: Question[], seenIds: Set<string>): Question[] {
-  return questions.filter(q => !seenIds.has(q.id));
 }
 
 function selectBalancedFromSubcategories(
@@ -144,20 +147,33 @@ function selectBalancedFromSubcategories(
   return fisherYatesShuffle(selected);
 }
 
+function selectFromPool(pool: Question[], count: number, seenIds: Set<string>, mode: string): Question[] {
+  if (mode === 'exam') {
+    return selectUniqueQuestions(pool, count, seenIds);
+  }
+
+  const availableQuestions = filterUnseenQuestions(pool, seenIds);
+  const seenQuestions = pool.filter((question) => seenIds.has(question.id));
+  if (availableQuestions.length < count) {
+    const need = count - availableQuestions.length;
+    return [...fisherYatesShuffle(availableQuestions), ...fisherYatesShuffle(seenQuestions).slice(0, need)];
+  }
+  return fisherYatesShuffle(availableQuestions).slice(0, count);
+}
+
 async function selectQuestionsForQuiz(
   category: string,
   mode: string,
   count: number
 ): Promise<{ questions: Question[]; resetHistory: boolean }> {
   log.info(`Selecting ${count} questions for category: ${category}, mode: ${mode}`);
-  
-  const seenIds = await getSeenQuestionIds(category);
+
+  const seenIds = await getSeenQuestionIds(category, mode);
   log.info(`Previously seen questions: ${seenIds.size}`);
-  
-  let availableQuestions: Question[];
+
   let selectedQuestions: Question[];
-  let resetHistory = false;
-  
+  const resetHistory = false;
+
   if (category === 'upper-lower-limbs') {
     const unseenSubcats: Record<string, Question[]> = {};
     let totalUnseen = 0;
@@ -178,50 +194,17 @@ async function selectQuestionsForQuiz(
       selectedQuestions = selectBalancedFromSubcategories(unseenSubcats, count, seenIds);
     }
   } else if (category === 'internal-organs') {
-    availableQuestions = filterUnseenQuestions(internalOrgansAllQuestions, seenIds);
-    const seenQuestions = internalOrgansAllQuestions.filter(q => seenIds.has(q.id));
-    if (availableQuestions.length < count) {
-      const need = count - availableQuestions.length;
-      selectedQuestions = [...fisherYatesShuffle(availableQuestions), ...fisherYatesShuffle(seenQuestions).slice(0, need)];
-    } else {
-      selectedQuestions = fisherYatesShuffle(availableQuestions).slice(0, count);
-    }
+    selectedQuestions = selectFromPool(internalOrgansAllQuestions, count, seenIds, mode);
   } else if (category === 'head-neck') {
-    availableQuestions = filterUnseenQuestions(headNeckAllQuestions, seenIds);
-    const seenQuestions = headNeckAllQuestions.filter(q => seenIds.has(q.id));
-    if (availableQuestions.length < count) {
-      const need = count - availableQuestions.length;
-      selectedQuestions = [...fisherYatesShuffle(availableQuestions), ...fisherYatesShuffle(seenQuestions).slice(0, need)];
-    } else {
-      selectedQuestions = fisherYatesShuffle(availableQuestions).slice(0, count);
-    }
+    const examPool = mode === 'exam' ? headNeckExamSimulationQuestions : headNeckAllQuestions;
+    selectedQuestions = selectFromPool(examPool, count, seenIds, mode);
   } else if (category === 'neuroanatomy') {
-    availableQuestions = filterUnseenQuestions(neuroanatomyAllQuestions, seenIds);
-    const seenQuestions = neuroanatomyAllQuestions.filter(q => seenIds.has(q.id));
-    if (availableQuestions.length < count) {
-      const need = count - availableQuestions.length;
-      selectedQuestions = [...fisherYatesShuffle(availableQuestions), ...fisherYatesShuffle(seenQuestions).slice(0, need)];
-    } else {
-      selectedQuestions = fisherYatesShuffle(availableQuestions).slice(0, count);
-    }
+    const examPool = mode === 'exam' ? neuroanatomyExamQuestions : neuroanatomyAllQuestions;
+    selectedQuestions = selectFromPool(examPool, count, seenIds, mode);
   } else if (category === 'med-admission-barrons') {
-    availableQuestions = filterUnseenQuestions(medAdmissionAllQuestions, seenIds);
-    const seenQuestions = medAdmissionAllQuestions.filter(q => seenIds.has(q.id));
-    if (availableQuestions.length < count) {
-      const need = count - availableQuestions.length;
-      selectedQuestions = [...fisherYatesShuffle(availableQuestions), ...fisherYatesShuffle(seenQuestions).slice(0, need)];
-    } else {
-      selectedQuestions = fisherYatesShuffle(availableQuestions).slice(0, count);
-    }
+    selectedQuestions = selectFromPool(medAdmissionAllQuestions, count, seenIds, mode);
   } else {
-    availableQuestions = filterUnseenQuestions(allQuestions, seenIds);
-    const seenQuestions = allQuestions.filter(q => seenIds.has(q.id));
-    if (availableQuestions.length < count) {
-      const need = count - availableQuestions.length;
-      selectedQuestions = [...fisherYatesShuffle(availableQuestions), ...fisherYatesShuffle(seenQuestions).slice(0, need)];
-    } else {
-      selectedQuestions = fisherYatesShuffle(availableQuestions).slice(0, count);
-    }
+    selectedQuestions = selectFromPool(allQuestions, count, seenIds, mode);
   }
   
   log.info(`Selected ${selectedQuestions.length} questions`);
@@ -266,7 +249,7 @@ export default function QuizSessionScreen() {
   const [questionsWithChapters, setQuestionsWithChapters] = useState<QuestionWithChapter[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(mode === 'exam' ? 180 * 60 : 0);
@@ -360,6 +343,9 @@ export default function QuizSessionScreen() {
             );
 
             setQuestions(resumedQuestions);
+            setQuestionsWithChapters(
+              buildQuestionsWithChapters(canonicalOrdered, category || 'mixed'),
+            );
             setCurrentIndex(savedSession.currentIndex);
             setScore(savedSession.score);
             setAnsweredInSession(savedSession.answeredInSession);
@@ -408,7 +394,12 @@ export default function QuizSessionScreen() {
               baseQuestions,
               quizTranslateLanguage
             );
-            setQuestionsWithChapters(orderedWithChapters);
+            setQuestionsWithChapters(
+              orderedWithChapters.map((entry) => ({
+                ...entry,
+                moduleId: cat,
+              })),
+            );
             setQuestions(translatedQuestions);
             setIsLoading(false);
           }
@@ -464,9 +455,13 @@ export default function QuizSessionScreen() {
               setQuestions(translatedQuestions);
             }
 
+            setQuestionsWithChapters(
+              buildQuestionsWithChapters(selectedQuestions, category || 'mixed'),
+            );
+
             if (selectedQuestions.length > 0) {
               const questionIds = selectedQuestions.map((q) => q.id);
-              await markQuestionsAsSeen(category || 'mixed', questionIds);
+              await markQuestionsAsSeen(category || 'mixed', questionIds, mode || undefined);
               log.info(
                 `[QuizSession] Marked ${questionIds.length} questions as seen on load`
               );
@@ -518,7 +513,10 @@ export default function QuizSessionScreen() {
     const reTranslated = translateAndShuffleQuestions(canonical, lang);
     sessionLanguageRef.current = currentLanguage;
     setQuestions(reTranslated);
-    setSelectedAnswer(null);
+    setQuestionsWithChapters(
+      buildQuestionsWithChapters(canonical, categoryRef.current || 'mixed'),
+    );
+    setSelectedAnswers([]);
     setShowResult(false);
 
     if (modeRef.current !== 'sequential') {
@@ -565,7 +563,7 @@ export default function QuizSessionScreen() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleAnswerSelect = useCallback(async (index: number) => {
+  const finalizeAnswer = useCallback(async (answers: number[]) => {
     if (showResult || !currentQuestionRef.current || !questionsRef.current[currentIndexRef.current]) {
       log.warn('[QuizSession] Invalid state for answer selection');
       return;
@@ -573,12 +571,10 @@ export default function QuizSessionScreen() {
 
     const question = currentQuestionRef.current;
     const currentIdx = currentIndexRef.current;
+    const isCorrect = isAnswerCorrect(question, answers);
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSelectedAnswer(index);
+    setSelectedAnswers(answers);
     setShowResult(true);
-
-    const isCorrect = index === question.correctAnswer;
 
     if (isCorrect) {
       setScore(prev => prev + 1);
@@ -588,7 +584,7 @@ export default function QuizSessionScreen() {
     }
 
     await updateDailyProgress(isCorrect, question.id);
-    await markQuestionsAsSeen(categoryRef.current || 'mixed', [question.id]);
+    await markQuestionsAsSeen(categoryRef.current || 'mixed', [question.id], modeRef.current || undefined);
 
     const withinLimit = await incrementQuestionAnsweredCount();
     if (!withinLimit) {
@@ -614,6 +610,23 @@ export default function QuizSessionScreen() {
     }
   }, [showResult, updateDailyProgress, saveSessionState, incrementQuestionAnsweredCount]);
 
+  const handleAnswerSelect = useCallback(async (index: number) => {
+    if (showResult || !currentQuestionRef.current) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await finalizeAnswer([index]);
+  }, [showResult, finalizeAnswer]);
+
+  const handleOptionToggle = useCallback((index: number) => {
+    if (showResult || !currentQuestionRef.current) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedAnswers(prev => toggleSelectedIndex(prev, index));
+  }, [showResult]);
+
+  const handleSubmitMultiSelect = useCallback(async () => {
+    if (showResult || selectedAnswers.length === 0) return;
+    await finalizeAnswer(selectedAnswers);
+  }, [showResult, selectedAnswers, finalizeAnswer]);
+
   const handleNext = useCallback(async () => {
     if (!questionsRef.current || questionsRef.current.length === 0) {
       log.error('[QuizSession] No questions available');
@@ -628,7 +641,7 @@ export default function QuizSessionScreen() {
         useNativeDriver: true,
       }).start(() => {
         setCurrentIndex(prev => prev + 1);
-        setSelectedAnswer(null);
+        setSelectedAnswers([]);
         setShowResult(false);
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -676,6 +689,25 @@ export default function QuizSessionScreen() {
       Alert.alert(t('session.explanationCopied'));
     }
   }, [currentQuestion, t]);
+
+  const activeChapterMeta = questionsWithChapters[currentIndex];
+  const activeChapterId =
+    activeChapterMeta?.chapterId || chapterIdRef.current || chapterId;
+  const activeModuleId =
+    activeChapterMeta?.moduleId || categoryRef.current || category;
+
+  const handleOpenChapterSummary = useCallback(() => {
+    if (!activeChapterId || !activeModuleId) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push({
+      pathname: '/study/chapter/[chapterId]',
+      params: {
+        chapterId: activeChapterId,
+        moduleId: activeModuleId,
+        fromQuiz: '1',
+      },
+    });
+  }, [activeChapterId, activeModuleId, router]);
 
   if (isLoading) {
     return (
@@ -830,6 +862,9 @@ export default function QuizSessionScreen() {
     );
   }
 
+  const isMultiSelect = isMultiSelectQuestion(currentQuestion);
+  const correctIndices = new Set(getCorrectAnswerIndices(currentQuestion));
+
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -867,10 +902,19 @@ export default function QuizSessionScreen() {
         <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollContentContainer}>
           <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
             <View style={styles.questionContainer}>
-              {mode === 'sequential' && questionsWithChapters[currentIndex] && (
-                <View style={styles.chapterBadge}>
-                  <Text style={styles.chapterText}>{t('session.chapter')}: {getChapterTitle(questionsWithChapters[currentIndex].chapterId)}</Text>
-                </View>
+              {activeChapterId && (
+                <TouchableOpacity
+                  onPress={handleOpenChapterSummary}
+                  activeOpacity={0.75}
+                  style={styles.chapterBadge}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('session.readChapterSummary')}
+                >
+                  <BookOpen color={colors.primary} size={iconSm} />
+                  <Text style={styles.chapterText}>
+                    {t('session.chapter')}: {getChapterTitle(activeChapterId)}
+                  </Text>
+                </TouchableOpacity>
               )}
               {currentQuestion.difficulty && (
                 <View style={styles.difficultyBadge}>
@@ -882,19 +926,22 @@ export default function QuizSessionScreen() {
                 </View>
               )}
               <Text style={styles.questionText}>{currentQuestion.question || t('session.questionUnavailable')}</Text>
+              {isMultiSelect && !showResult && (
+                <Text style={styles.multiSelectHint}>{t('session.multiSelectHint')}</Text>
+              )}
             </View>
 
             <View style={styles.optionsContainer}>
               {(currentQuestion.options || []).map((option, index) => {
-                const isSelected = selectedAnswer === index;
-                const isCorrect = index === currentQuestion.correctAnswer;
+                const isSelected = selectedAnswers.includes(index);
+                const isCorrect = correctIndices.has(index);
                 const showCorrect = showResult && isCorrect;
                 const showWrong = showResult && isSelected && !isCorrect;
                 
                 return (
                   <TouchableOpacity
                     key={index}
-                    onPress={() => handleAnswerSelect(index)}
+                    onPress={() => (isMultiSelect ? handleOptionToggle(index) : handleAnswerSelect(index))}
                     disabled={showResult}
                   >
                     <GlassCard
@@ -937,10 +984,41 @@ export default function QuizSessionScreen() {
                   </TouchableOpacity>
                 </View>
                 <Text style={styles.explanationText}>{currentQuestion.explanation}</Text>
+                {activeChapterId && activeModuleId && (
+                  <TouchableOpacity
+                    style={styles.summaryLink}
+                    onPress={handleOpenChapterSummary}
+                    activeOpacity={0.8}
+                  >
+                    <BookOpen color={colors.primary} size={iconSm} />
+                    <Text style={[styles.summaryLinkText, { color: colors.primary }]}>
+                      {t('session.readChapterSummary')}
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </GlassCard>
             )}
           </Animated.View>
         </ScrollView>
+
+        {!showResult && isMultiSelect && (
+          <View style={[styles.footer, { paddingBottom: bottomPadding + 8 }]}>
+            <TouchableOpacity
+              style={[styles.nextButton, selectedAnswers.length === 0 && styles.submitButtonDisabled]}
+              onPress={handleSubmitMultiSelect}
+              disabled={selectedAnswers.length === 0}
+            >
+              <LinearGradient
+                colors={[colors.primary, colors.primaryDark]}
+                style={styles.nextButtonGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Text style={styles.nextButtonText}>{t('session.confirmAnswer')}</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {showResult && (
           <View style={[styles.footer, { paddingBottom: bottomPadding + 8 }]}>
@@ -1060,6 +1138,9 @@ const createStyles = (colors: any) => StyleSheet.create({
     marginBottom: 24,
   },
   chapterBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.space2,
     alignSelf: 'flex-start',
     backgroundColor: colors.primary + '25',
     paddingHorizontal: screenPaddingX,
@@ -1068,6 +1149,19 @@ const createStyles = (colors: any) => StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1,
     borderColor: colors.primary + '40',
+  },
+  summaryLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.space2,
+    marginTop: space.space4,
+    paddingTop: space.space3,
+    borderTopWidth: 1,
+    borderTopColor: colors.glassBorder,
+  },
+  summaryLinkText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   chapterText: {
     fontSize: 13,
@@ -1093,6 +1187,12 @@ const createStyles = (colors: any) => StyleSheet.create({
     fontWeight: '600' as const,
     color: colors.text,
     lineHeight: 28,
+  },
+  multiSelectHint: {
+    marginTop: space.space3,
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.textSecondary,
   },
   optionsContainer: {
     gap: 12,
@@ -1184,6 +1284,9 @@ const createStyles = (colors: any) => StyleSheet.create({
   nextButton: {
     borderRadius: radiusLg,
     overflow: 'hidden',
+  },
+  submitButtonDisabled: {
+    opacity: 0.45,
   },
   nextButtonGradient: {
     flexDirection: 'row',

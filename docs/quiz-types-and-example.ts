@@ -157,10 +157,10 @@ export const categoriesExcerpt: Category[] = [
   },
 ];
 
-// ============== 5. MODUL BARRON'S (excerpt) ==============
+// ============== 5. MODUL ADMITERE (excerpt) ==============
 
 /** Exemplu modul Medical School Entrance Exam – capitole cu cardiovascular populat. */
-export const medAdmissionBarronsChaptersExcerpt: ModuleChapters = {
+export const medAdmissionChaptersExcerpt: ModuleChapters = {
   moduleId: 'med-admission-barrons',
   moduleName: 'Medical School Entrance Exam',
   chapters: [

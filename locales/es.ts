@@ -160,6 +160,8 @@ export const es: Record<string, string> = {
   'session.goBack': 'Volver',
   'session.chapter': 'Capítulo',
   'session.explanation': 'Explicación',
+  'session.multiSelectHint': 'Selecciona todas las afirmaciones correctas y pulsa Comprobar.',
+  'session.confirmAnswer': 'Comprobar respuestas',
   'session.nextQuestion': 'Siguiente pregunta',
   'session.seeResults': 'Ver resultados',
   'session.greatJob': '¡Muy bien!',
@@ -185,7 +187,7 @@ export const es: Record<string, string> = {
   'module.internalOrgans': 'Órganos internos',
   'module.headNeck': 'Cabeza y cuello',
   'module.neuroanatomy': 'Neuroanatomía',
-  'module.medAdmissionBarrons': 'Admisión Medicina',
+  'module.medAdmission': 'Admisión Medicina',
 
   // Medical Subjects
   'subject.anatomy': 'Anatomía',

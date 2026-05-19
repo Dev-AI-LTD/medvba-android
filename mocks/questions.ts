@@ -1,3 +1,5 @@
+import { getModuleQuestionCount } from './chapters';
+
 import { 
   internalOrgansQuestions, 
   headNeckQuestions, 
@@ -177,15 +179,21 @@ import {
   ankleJointQuestions
 } from './questions_joints';
 
+export type QuestionFormat = 'single' | 'multiple';
+
 export interface Question {
   id: string;
   category: string;
   difficulty: 'easy' | 'medium' | 'hard';
+  /** Defaults to single-choice when omitted. */
+  format?: QuestionFormat;
   question: string;
   question_ro?: string;
   options: string[];
   options_ro?: string[];
   correctAnswer: number;
+  /** Multi-select questions: all correct option indices (variable count). */
+  correctAnswers?: number[];
   explanation: string;
   explanation_ro?: string;
 }
@@ -202,7 +210,7 @@ export interface Category {
 export const categories: Category[] = [
   { id: 'upper-lower-limbs', name: 'Upper/Lower Limbs', icon: 'bone', color: '#FF6B6B', questionCount: 8200, completedCount: 1240 },
   { id: 'internal-organs', name: 'Internal Organs', icon: 'heart', color: '#4ECDC4', questionCount: 7500, completedCount: 980 },
-  { id: 'head-neck', name: 'Head and Neck', icon: 'user', color: '#45B7D1', questionCount: 6800, completedCount: 720 },
+  { id: 'head-neck', name: 'Head and Neck', icon: 'user', color: '#45B7D1', questionCount: getModuleQuestionCount('head-neck'), completedCount: 720 },
   { id: 'neuroanatomy', name: 'Neuroanatomy', icon: 'brain', color: '#DDA0DD', questionCount: 5555, completedCount: 450 },
   { id: 'med-admission-barrons', name: 'Medical School Entrance Exam', icon: 'stethoscope', color: '#8E44AD', questionCount: 200, completedCount: 0 },
 ];

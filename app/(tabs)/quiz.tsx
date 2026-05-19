@@ -15,6 +15,7 @@ import {
   User, 
   Brain,
   Stethoscope,
+  GraduationCap,
   Clock,
   Zap,
   Trophy,
@@ -31,6 +32,8 @@ import { useTheme } from '@/providers/ThemeProvider';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import { useQuizProgress } from '@/providers/QuizProgressProvider';
 import { log } from '@/lib/log';
+import { STUDY_PILOT_MODULE_ID } from '@/constants/study';
+import { getEffectivePublishedSummaryCount } from '@/lib/study-preview';
 import {
   iconSm,
   iconXl,
@@ -117,6 +120,16 @@ export default function QuizScreen() {
     }
     handleCategorySelect(categoryId);
   };
+
+  const openStudyChapters = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push({
+      pathname: '/study/chapters',
+      params: { moduleId: STUDY_PILOT_MODULE_ID },
+    });
+  };
+
+  const studySummaryCount = getEffectivePublishedSummaryCount(STUDY_PILOT_MODULE_ID, 0);
 
   return (
     <Screen withGradient edges={['top']} padded>
@@ -243,10 +256,79 @@ export default function QuizScreen() {
                 const IconComponent = categoryIcons[category.id] || Zap;
                 const isSelected = selectedCategory === category.id;
                 const progress = (category.completedCount / category.questionCount) * 100;
-                
+
+                if (category.id === 'med-admission-barrons') {
+                  return (
+                    <View key={category.id} style={styles.admissionPairRow}>
+                      <TouchableOpacity
+                        onPress={() => handleCategoryPress(category.id)}
+                        accessibilityRole="button"
+                        accessibilityLabel={getModuleName(category.id)}
+                        accessibilityState={{ selected: isSelected }}
+                        style={styles.admissionPairCardWrap}
+                      >
+                        <GlassCard
+                          style={StyleSheet.flatten([
+                            styles.categoryCard,
+                            styles.categoryCardInPair,
+                            isSelected ? styles.categoryCardSelected : null,
+                            isSelected ? { borderColor: category.color } : null,
+                          ])}
+                          variant={isSelected ? 'light' : 'default'}
+                        >
+                          <View style={[styles.categoryIconContainer, { backgroundColor: category.color + '25' }]}>
+                            <IconComponent color={category.color} size={iconXl} />
+                          </View>
+                          <Text style={[styles.categoryName, { color: colors.text }]} numberOfLines={2}>
+                            {getModuleName(category.id)}
+                          </Text>
+                          <Text style={[styles.categoryCount, { color: colors.textSecondary }]}>
+                            {category.questionCount.toLocaleString()} {t('quiz.questionsShort')}
+                          </Text>
+                          <View style={[styles.categoryProgressBar, { backgroundColor: colors.cardBgLight }]}>
+                            <View
+                              style={[
+                                styles.categoryProgressFill,
+                                { width: `${progress}%`, backgroundColor: category.color },
+                              ]}
+                            />
+                          </View>
+                          <Text style={[styles.categoryProgressText, { color: colors.textMuted }]}>
+                            {progress.toFixed(0)}%
+                          </Text>
+                        </GlassCard>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        onPress={openStudyChapters}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('quiz.studyCardTitle')}
+                        accessibilityHint={t('quiz.studyCardSubtitle')}
+                        style={styles.admissionPairCardWrap}
+                      >
+                        <GlassCard style={[styles.categoryCard, styles.categoryCardInPair]}>
+                          <View style={[styles.categoryIconContainer, { backgroundColor: colors.primary + '25' }]}>
+                            <GraduationCap color={colors.primary} size={iconXl} />
+                          </View>
+                          <Text style={[styles.categoryName, { color: colors.text }]} numberOfLines={2}>
+                            {t('quiz.studyCardTitle')}
+                          </Text>
+                          <Text style={[styles.categoryCount, { color: colors.textSecondary }]} numberOfLines={2}>
+                            {t('quiz.studyCardSubtitle')}
+                          </Text>
+                          <Text style={[styles.studySummaryCount, { color: colors.primary }]}>
+                            {t('study.moduleSummaries').replace('{published}', String(studySummaryCount))}
+                          </Text>
+                        </GlassCard>
+                      </TouchableOpacity>
+                    </View>
+                  );
+                }
+
                 return (
                   <TouchableOpacity
                     key={category.id}
+                    style={styles.categoryCardWrap}
                     onPress={() => handleCategoryPress(category.id)}
                     accessibilityRole="button"
                     accessibilityLabel={getModuleName(category.id)}
@@ -367,13 +449,35 @@ const styles = StyleSheet.create({
   categoriesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    justifyContent: 'space-between',
+    rowGap: 12,
+  },
+  categoryCardWrap: {
+    width: '48%',
+  },
+  admissionPairRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 12,
+  },
+  admissionPairCardWrap: {
+    width: '48%',
+  },
+  studySummaryCount: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 8,
+    textAlign: 'center',
   },
   categoryCard: {
-    width: 160,
+    width: '100%',
     height: 180,
     alignItems: 'center',
     paddingVertical: 20,
+  },
+  categoryCardInPair: {
+    width: '100%',
   },
   categoryCardSelected: {
     borderWidth: 2,

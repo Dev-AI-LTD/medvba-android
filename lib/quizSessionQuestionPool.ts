@@ -3,6 +3,7 @@
  * and canonical-id lookup (must match quiz session logic).
  */
 import type { Question } from '@/mocks/questions';
+import { getAllQuestionsWithChapters } from '@/mocks/chapters';
 
 import {
   generalVertebraeQuestions,
@@ -70,7 +71,6 @@ import {
 
 import {
   internalOrgansQuestions,
-  headNeckQuestions,
   pulmonaryAndBronchialCirculationQuestions,
   systemicAndPortalCirculationQuestions,
   fetalCirculationQuestions,
@@ -83,6 +83,11 @@ import {
 } from '@/mocks/questions_internal_organs';
 
 import { neuroanatomyQuestionBank } from '@/mocks/neuroanatomyQuestionBank';
+import { neuroUmfExamQuestions } from '@/mocks/questions_neuro_umf_exam';
+import { headNeckExamQuestions } from '@/mocks/questions_head_neck_exam';
+import {
+  dedupeQuestionsByStem,
+} from '@/lib/quizQuestionSelection';
 
 import {
   cardioAdmissionSet1,
@@ -181,9 +186,27 @@ export const internalOrgansAllQuestions: Question[] = [
   ...lymphaticSystemOverviewQuestions,
 ];
 
-export const headNeckAllQuestions: Question[] = [...headNeckQuestions];
+/** All head-neck chapter questions (deduped by id), including Home intro bank. */
+export const headNeckAllQuestions: Question[] = (() => {
+  const seen = new Set<string>();
+  const out: Question[] = [];
+  for (const { question } of getAllQuestionsWithChapters('head-neck')) {
+    if (seen.has(question.id)) continue;
+    seen.add(question.id);
+    out.push(question);
+  }
+  return out;
+})();
+
+/** Head & Neck exam simulation — 100 unique questions, separate from chapter practice banks. */
+export const headNeckExamSimulationQuestions: Question[] = dedupeQuestionsByStem(headNeckExamQuestions);
 
 export const neuroanatomyAllQuestions: Question[] = neuroanatomyQuestionBank;
+
+/** UMF Iași-style affirmation questions (multi-select) for neuroanatomy exam simulation. */
+export const neuroanatomyExamQuestions: Question[] = neuroUmfExamQuestions.filter(
+  (question) => (question.correctAnswers?.length ?? 0) > 0,
+);
 
 export const medAdmissionAllQuestions: Question[] = [
   ...introAnatPhysAdmissionSet1,
@@ -231,6 +254,8 @@ export const allQuestions: Question[] = [
   ...allUpperLowerLimbsQuestions,
   ...internalOrgansAllQuestions,
   ...headNeckAllQuestions,
+  ...headNeckExamSimulationQuestions,
   ...neuroanatomyAllQuestions,
+  ...neuroanatomyExamQuestions,
   ...medAdmissionAllQuestions,
 ];
