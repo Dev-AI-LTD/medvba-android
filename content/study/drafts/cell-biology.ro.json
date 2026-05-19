@@ -1,0 +1,9 @@
+{
+  "moduleId": "med-admission-barrons",
+  "chapterId": "cell-biology",
+  "locale": "ro",
+  "title": "Celula și fiziologia celulară",
+  "summaryMarkdown": "## Ce înveți în acest capitol\n\nCelula este unitatea structurală și funcțională a vieții. Membrana plasmatică controlează schimburile; organitele îndeplinesc roluri specializate; diviziunea și moartea celulară reglează creșterea țesuturilor.\n\n## Concepte cheie\n\n- **Membrană**: fosfolipide bilayer, proteină integrale/periferice, transport pasiv și activ.\n- **Organite**: nucleu, mitocondrii (ATP), RER/REL, aparat Golgi, lizozomi, peroxizomi.\n- **Citoplasma și citoscheletul**: microtubuli, filamente de actină, suport și motilitate.\n- **Transport**: difuzie, osmoză, canale, pompe (Na⁺/K⁺), endocitoză/exocitoză.\n- **Ciclu celular**: interfază, mitoză; reglare prin puncte de control.\n- **Apoptoză** vs **necroză**: moarte programată vs leziune.\n\n## Legături clinice și admitere\n\n- Transportul activ consumă ATP — legătură cu mitocondrii și metabolism.\n- Cancerul și hiperplazia apar prin dereglarea ciclului celular.\n\n## Capcane frecvente la examen\n\n- **Osmoză**: mișcarea apei spre soluția hipertonă, nu a solutului.\n- Mitocondria vs cloroplast (doar la plante) — la om doar mitocondrii pentru ATP aerob.\n\n## Mini-rezumat\n\nCelula integrează structură și funcție prin membrană, organite și metabolism energetic. Transportul și diviziunea celulară sunt baza fiziologiei țesuturilor și a homeostaziei.",
+  "summaryVersion": 1,
+  "status": "published"
+}

@@ -1,0 +1,9 @@
+{
+  "moduleId": "med-admission-barrons",
+  "chapterId": "chem-basics",
+  "locale": "en",
+  "title": "Chemical basis of the human body",
+  "summaryMarkdown": "## What you learn in this chapter\n\nThe human body is composed of organic and inorganic molecules. You will understand chemical bonds, solutions, pH, and essential macromolecules: carbohydrates, lipids, proteins, and nucleic acids.\n\n## Key concepts\n\n- **Bonds**: ionic, covalent, hydrogen (stability and solubility).\n- **Water**: universal solvent; cohesion, adhesion, heat capacity.\n- **pH**: logarithmic scale; acids, bases, buffering (e.g., bicarbonate system).\n- **Carbohydrates**: glucose, glycogen; quick source of energy.\n- **Lipids**: phospholipids in membranes; triglycerides — energy reserve.\n- **Proteins**: primary to quaternary structure; enzymes, receptors, antibodies.\n- **Nucleic acids**: DNA (genetic information), RNA (gene expression).\n\n## Clinical and exam connections\n\n- Acid-base imbalances (acidosis/alkalosis) affect respiration and renal function.\n- Enzymatic defects (proteins) explain metabolic diseases in multiple-choice questions.\n\n## Common exam pitfalls\n\n- Confusion between **primary structure** (AA sequence) and **tertiary structure** (3D folding).\n- pH: one unit = tenfold change in H⁺ concentration.\n\n## Mini-summary\n\nChemistry explains the matter of life: water and pH regulate the internal environment; macromolecules define structure, energy, and information. Proteins and enzymes connect this chapter to metabolism and cellular physiology.",
+  "summaryVersion": 1,
+  "status": "published"
+}

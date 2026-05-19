@@ -11,6 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { TrendingUp, Target, Clock, ChevronRight, Bone, Heart, User, Brain, Stethoscope, Sparkles, Lock, Crown } from 'lucide-react-native';
 import { Screen, HomeWelcomeHeader } from '@/components/layout';
 import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { Card, Button } from 'react-native-paper';
 import { UIButton } from '@/ui';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -286,18 +287,33 @@ export default function HomeScreen() {
                   return;
                 }
 
+                const mode =
+                  category.id === 'head-neck' ? 'quick' : 'sequential';
                 router.push({
                   pathname: '/quiz-session',
-                  params: { category: category.id, mode: 'sequential' }
+                  params: { category: category.id, mode },
                 });
               };
 
               const label = getModuleName(category.id) || category.name;
+
+              const openHeadNeckSummary = () => {
+                if (isLocked) return;
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push({
+                  pathname: '/study/chapter/[chapterId]',
+                  params: { chapterId: 'head-neck-intro', moduleId: 'head-neck' },
+                });
+              };
+
               return (
                 <TouchableOpacity
                   key={category.id}
                   activeOpacity={0.7}
                   onPress={handleCategoryPress}
+                  onLongPress={
+                    category.id === 'head-neck' ? openHeadNeckSummary : undefined
+                  }
                   style={[
                     styles.categoryCard,
                     { backgroundColor: colors.cardBg ?? colors.backgroundLight, borderWidth: 1, borderColor: colors.glassBorder },

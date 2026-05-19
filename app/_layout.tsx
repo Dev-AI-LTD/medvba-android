@@ -288,6 +288,14 @@ function RootLayoutNav({ splashAvailable }: { splashAvailable: boolean }) {
           animation: 'slide_from_right'
         }} 
       />
+      <Stack.Screen
+        name="study"
+        options={{
+          headerShown: false,
+          presentation: 'card',
+          animation: 'slide_from_right',
+        }}
+      />
       <Stack.Screen 
         name="settings" 
         options={{ 

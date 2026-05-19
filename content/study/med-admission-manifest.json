@@ -1,0 +1,26 @@
+{
+  "moduleId": "med-admission-barrons",
+  "locales": ["ro", "en"],
+  "chapters": [
+    { "chapterId": "intro-anat-phys", "status": "published", "version": 1, "freePreview": true, "locales": ["ro", "en"] },
+    { "chapterId": "chem-basics", "status": "published", "version": 1, "freePreview": true, "locales": ["ro", "en"] },
+    { "chapterId": "cell-biology", "status": "published", "version": 1, "freePreview": true, "locales": ["ro", "en"] },
+    { "chapterId": "tissues", "status": "published", "version": 1, "freePreview": false, "locales": ["ro", "en"] },
+    { "chapterId": "integumentary", "status": "published", "version": 1, "freePreview": false, "locales": ["ro", "en"] },
+    { "chapterId": "skeletal", "status": "published", "version": 1, "freePreview": false, "locales": ["ro", "en"] },
+    { "chapterId": "muscular", "status": "published", "version": 1, "freePreview": false, "locales": ["ro", "en"] },
+    { "chapterId": "nervous", "status": "published", "version": 1, "freePreview": false, "locales": ["ro", "en"] },
+    { "chapterId": "senses", "status": "published", "version": 1, "freePreview": false, "locales": ["ro", "en"] },
+    { "chapterId": "endocrine", "status": "published", "version": 1, "freePreview": false, "locales": ["ro", "en"] },
+    { "chapterId": "blood", "status": "published", "version": 1, "freePreview": false, "locales": ["ro", "en"] },
+    { "chapterId": "cardiovascular", "status": "published", "version": 1, "freePreview": false, "locales": ["ro", "en"] },
+    { "chapterId": "lymphatic", "status": "published", "version": 1, "freePreview": false, "locales": ["ro", "en"] },
+    { "chapterId": "respiratory", "status": "published", "version": 1, "freePreview": false, "locales": ["ro", "en"] },
+    { "chapterId": "digestive", "status": "published", "version": 1, "freePreview": false, "locales": ["ro", "en"] },
+    { "chapterId": "metabolism", "status": "published", "version": 1, "freePreview": false, "locales": ["ro", "en"] },
+    { "chapterId": "urinary", "status": "published", "version": 1, "freePreview": false, "locales": ["ro", "en"] },
+    { "chapterId": "repro-male", "status": "published", "version": 1, "freePreview": false, "locales": ["ro", "en"] },
+    { "chapterId": "repro-female", "status": "published", "version": 1, "freePreview": false, "locales": ["ro", "en"] },
+    { "chapterId": "embryology", "status": "published", "version": 1, "freePreview": false, "locales": ["ro", "en"] }
+  ]
+}

@@ -51,3 +51,9 @@ rork-eslint.config.js
 
 # Generated audit / batch reports (local only)
 scripts/*-report.txt
+
+# Study source books (Archive PDF / OCR — local only)
+content/study/sources/
+
+# Local script inventories (regenerate with list:chapters)
+scripts/output/

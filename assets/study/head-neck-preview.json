@@ -1,0 +1,25 @@
+{
+  "moduleId": "head-neck",
+  "chaptersByLocale": {
+    "ro": {
+      "head-neck-intro": {
+        "chapterId": "head-neck-intro",
+        "title": "Cap și Gât - Introducere",
+        "summaryMarkdown": "## Ce înveți în acest capitol\n\nCapitolul Home acoperă anatomia regiunii capului și gâtului la nivel de admitere: neurocraniu și viscerocraniu, articulația temporomandibulară, mușchi masticatori și mimic, vase și nervi cervicale, glande salivare, faringe, laringe, nervi cranieni și repere clinice frecvente.\n\n## Concepte cheie\n\n- **Neurocraniu**: 8 oase (frontal, etmoid, sfenoid, occipital, 2 parietale, 2 temporale); zigomaticul aparține viscerocraniului.\n- **Sella turcica**: pe corpul sfenoidului; adăpostește hipofiza.\n- **Foramen rotund / oval / spinosum**: V2, V3, artera meningeală medie.\n- **Fisura orbitală superioară**: III, IV, V1, VI — nu nervul optic (canal optic).\n- **ATM**: disc articular, protruzie bilaterală prin pterigoidian lateral.\n- **Mușchi masticatori**: inervație V3; mimic: nerv facial (VII).\n- **Carotida**: bifurcație la marginea superioară a cartilajului tiroid (C4); carotida internă fără colaterale cervicale.\n- **Nervi cranieni**: I — placa cribrosă; II — canal optic; IX–XI — foramen jugular.\n\n## Legături clinice și admitere\n\n- **Sindrom sinus cavernos**: III, IV, V1, VI + carotida internă; VII nu traversează sinusul.\n- **Triunghiul facial periculos**: infecții → sinus cavernos.\n- **Paralizie facială periferică**: imposibilitatea închiderii ochiului și încruntării frontale.\n- **Recurent laringian**: lezare la tiroidectomie → dizfonie.\n- **Diverticul Zenker**: herniere prin triunghiul lui Killian.\n\n## Capcane frecvente la examen\n\n- Confundarea oaselor neurocraniului cu cele ale viscerocraniului.\n- Optic (II) nu trece prin fisura orbitală superioară.\n- Artera oftalmică este ramură a carotidei interne, nu a celei externe.\n- Mușchiul cricoaritenoidian posterior este singurul abductor glotic.\n\n## Mini-rezumat\n\nHome reunește reperele esențiale ale capului și gâtului: oase și articulații, mușchi, vascularizație, organe și nervi cranieni, cu accent pe foramenii de trecere, inervație și corelații clinice. Folosește quiz-ul de 10 întrebări pentru a fixa grila tip admitere.",
+        "summaryVersion": 1,
+        "audioUrl": null,
+        "audioDurationSec": null
+      }
+    },
+    "en": {
+      "head-neck-intro": {
+        "chapterId": "head-neck-intro",
+        "title": "Head and Neck - Introduction",
+        "summaryMarkdown": "## What you learn in this chapter\n\nThe Home chapter covers head and neck anatomy for entrance exams: neurocranium vs viscerocranium, the temporomandibular joint, masticatory and facial muscles, cervical vessels and nerves, salivary glands, pharynx, larynx, cranial nerves, and common clinical correlations.\n\n## Key concepts\n\n- **Neurocranium**: 8 bones; the zygomatic belongs to the viscerocranium.\n- **Sella turcica**: on the sphenoid body; houses the pituitary.\n- **Foramen rotundum / ovale / spinosum**: V2, V3, middle meningeal artery.\n- **Superior orbital fissure**: III, IV, V1, VI — not the optic nerve (optic canal).\n- **TMJ**: articular disc; bilateral lateral pterygoid produces protrusion.\n- **Masticatory muscles**: V3; facial expression: facial nerve (VII).\n- **Carotid**: bifurcation at upper border of thyroid cartilage (C4); internal carotid has no cervical branches.\n- **Cranial nerves**: I — cribriform plate; II — optic canal; IX–XI — jugular foramen.\n\n## Clinical and exam links\n\n- **Cavernous sinus syndrome**: III, IV, V1, VI + internal carotid; VII is not in the sinus.\n- **Danger triangle of the face**: infection may spread to the cavernous sinus.\n- **Peripheral facial palsy**: cannot close the eye or wrinkle the forehead.\n- **Recurrent laryngeal nerve**: thyroidectomy → dysphonia.\n- **Zenker diverticulum**: Killian's triangle.\n\n## Common exam pitfalls\n\n- Mixing neurocranial and viscerocranial bones.\n- Optic (II) does not pass through the superior orbital fissure.\n- Ophthalmic artery is a branch of the internal carotid, not the external.\n- Posterior cricoarytenoid is the only glottic abductor.\n\n## Mini-summary\n\nHome consolidates essential head and neck landmarks: bones and joints, muscles, vasculature, organs, and cranial nerves, with emphasis on foramina, innervation, and clinical correlations. Use the 10-question quiz to practice entrance-style MCQs.",
+        "summaryVersion": 1,
+        "audioUrl": null,
+        "audioDurationSec": null
+      }
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "moduleId": "med-admission-barrons",
+  "chaptersByLocale": {
+    "ro": {
+      "intro-anat-phys": {
+        "chapterId": "intro-anat-phys",
+        "title": "Introducere în anatomie și fiziologie",
+        "summaryMarkdown": "## Ce înveți în acest capitol\n\nAnatomia descrie structura corpului; fiziologia explică funcțiile. La admitere trebuie să recunoști planurile și secțiunile corpului, termenii direcționali și organizarea de la cel la organ.\n\n## Concepte cheie\n\n- **Anatomie** vs **fiziologie**: formă și funcție sunt complementare.\n- **Planuri și secțiuni**: sagital, frontal (coronal), transversal (orizontal).\n- **Termeni direcționali**: superior/inferior, anterior/posterior, medial/lateral, proximal/distal.\n- **Niveluri de organizare**: chimic → celular → țesut → organ → sistem → organism.\n- **Homeostază**: menținerea parametrilor interni în limite normale prin feedback.\n\n## Legături clinice și admitere\n\n- Greșelile la planuri/secțiuni duc la interpretări greșite ale imaginilor (RX, CT).\n- Termenii direcționali sunt folosiți în descrierea leziunilor și procedurilor.\n\n## Capcane frecvente la examen\n\n- Confuzie **proximal/distal** (se aplică la membre, nu la ax) vs **superior/inferior**.\n- Amestecarea planurilor sagital și coronal la desene simple.\n\n## Mini-rezumat\n\nCapitolul introduce limbajul anatomiei și fiziologiei: planuri, secțiuni, orientare spațială și ierarhia structurală. Homeostazia leagă structura de funcția adaptativă. Stăpânește termenii direcționali — apar în toate modulele următoare.",
+        "summaryVersion": 1,
+        "audioUrl": "https://utbcxdtcznitejbhhquh.supabase.co/storage/v1/object/public/study-audio/med-admission-barrons/intro-anat-phys-ro.mp3",
+        "audioDurationSec": null
+      },
+      "chem-basics": {
+        "chapterId": "chem-basics",
+        "title": "Bazele chimice ale corpului uman",
+        "summaryMarkdown": "## Ce înveți în acest capitol\n\nCorpul uman este format din molecule organice și anorganice. Înțelegi legăturile chimice, soluțiile, pH-ul și macromoleculele esențiale: carbohidrați, lipide, proteine și acizi nucleici.\n\n## Concepte cheie\n\n- **Legături**: ionice, covalente, hidrogen (stabilitate și solubilitate).\n- **Apă**: solvent universal; coeziune, adeziune, capacitate termică.\n- **pH**: scară logaritmică; acizi, baze, tamponare (ex. sistem bicarbonat).\n- **Carbohidrați**: glucoză, glicogen; sursă rapidă de energie.\n- **Lipide**: fosfolipide în membrane; trigliceride — rezervă energetică.\n- **Proteine**: structură primară–cuaternară; enzime, receptori, anticorpi.\n- **Acizi nucleici**: ADN (informație genetică), ARN (expresie genică).\n\n## Legături clinice și admitere\n\n- Dezechilibrele acido-bazice (acidoză/alcaloză) afectează respirația și funcția renală.\n- Defectele enzimatice (proteine) explică boli metabolice în itemi de grilă.\n\n## Capcane frecvente la examen\n\n- Confuzie între **structură primară** (secvență AA) și **terțiară** (plierea 3D).\n- pH: o unitate = tenfold în concentrația H⁺.\n\n## Mini-rezumat\n\nChimia explică materia vieții: apă și pH reglează mediul intern; macromoleculele definesc structura, energia și informația. Proteinele și enzimele leagă acest capitol de metabolism și fiziologie celulară.",
+        "summaryVersion": 1,
+        "audioUrl": "https://utbcxdtcznitejbhhquh.supabase.co/storage/v1/object/public/study-audio/med-admission-barrons/chem-basics-ro.mp3",
+        "audioDurationSec": null
+      },
+      "cell-biology": {
+        "chapterId": "cell-biology",
+        "title": "Celula și fiziologia celulară",
+        "summaryMarkdown": "## Ce înveți în acest capitol\n\nCelula este unitatea structurală și funcțională a vieții. Membrana plasmatică controlează schimburile; organitele îndeplinesc roluri specializate; diviziunea și moartea celulară reglează creșterea țesuturilor.\n\n## Concepte cheie\n\n- **Membrană**: fosfolipide bilayer, proteină integrale/periferice, transport pasiv și activ.\n- **Organite**: nucleu, mitocondrii (ATP), RER/REL, aparat Golgi, lizozomi, peroxizomi.\n- **Citoplasma și citoscheletul**: microtubuli, filamente de actină, suport și motilitate.\n- **Transport**: difuzie, osmoză, canale, pompe (Na⁺/K⁺), endocitoză/exocitoză.\n- **Ciclu celular**: interfază, mitoză; reglare prin puncte de control.\n- **Apoptoză** vs **necroză**: moarte programată vs leziune.\n\n## Legături clinice și admitere\n\n- Transportul activ consumă ATP — legătură cu mitocondrii și metabolism.\n- Cancerul și hiperplazia apar prin dereglarea ciclului celular.\n\n## Capcane frecvente la examen\n\n- **Osmoză**: mișcarea apei spre soluția hipertonă, nu a solutului.\n- Mitocondria vs cloroplast (doar la plante) — la om doar mitocondrii pentru ATP aerob.\n\n## Mini-rezumat\n\nCelula integrează structură și funcție prin membrană, organite și metabolism energetic. Transportul și diviziunea celulară sunt baza fiziologiei țesuturilor și a homeostaziei.",
+        "summaryVersion": 1,
+        "audioUrl": "https://utbcxdtcznitejbhhquh.supabase.co/storage/v1/object/public/study-audio/med-admission-barrons/cell-biology-ro.mp3",
+        "audioDurationSec": null
+      }
+    },
+    "en": {
+      "intro-anat-phys": {
+        "chapterId": "intro-anat-phys",
+        "title": "Introduction to anatomy and physiology",
+        "summaryMarkdown": "## What you learn in this chapter\n\nAnatomy describes the structure of the body; physiology explains its functions. For admission, you must recognize the planes and sections of the body, directional terms, and the organization from cell to organ.\n\n## Key concepts\n\n- **Anatomy** vs **physiology**: form and function are complementary.\n- **Planes and sections**: sagittal, frontal (coronal), transverse (horizontal).\n- **Directional terms**: superior/inferior, anterior/posterior, medial/lateral, proximal/distal.\n- **Levels of organization**: chemical → cellular → tissue → organ → system → organism.\n- **Homeostasis**: maintaining internal parameters within normal limits through feedback.\n\n## Clinical and exam connections\n\n- Mistakes in planes/sections lead to misinterpretations of images (X-ray, CT).\n- Directional terms are used in describing injuries and procedures.\n\n## Common exam pitfalls\n\n- Confusion between **proximal/distal** (applies to limbs, not to the axis) vs **superior/inferior**.\n- Mixing up the sagittal and coronal planes in simple drawings.\n\n## Mini-summary\n\nThis chapter introduces the language of anatomy and physiology: planes, sections, spatial orientation, and structural hierarchy. Homeostasis connects structure to adaptive function. Master the directional terms—they appear in all subsequent modules.",
+        "summaryVersion": 1,
+        "audioUrl": "https://utbcxdtcznitejbhhquh.supabase.co/storage/v1/object/public/study-audio/med-admission-barrons/intro-anat-phys-en.mp3",
+        "audioDurationSec": null
+      },
+      "chem-basics": {
+        "chapterId": "chem-basics",
+        "title": "Chemical basis of the human body",
+        "summaryMarkdown": "## What you learn in this chapter\n\nThe human body is composed of organic and inorganic molecules. You will understand chemical bonds, solutions, pH, and essential macromolecules: carbohydrates, lipids, proteins, and nucleic acids.\n\n## Key concepts\n\n- **Bonds**: ionic, covalent, hydrogen (stability and solubility).\n- **Water**: universal solvent; cohesion, adhesion, heat capacity.\n- **pH**: logarithmic scale; acids, bases, buffering (e.g., bicarbonate system).\n- **Carbohydrates**: glucose, glycogen; quick source of energy.\n- **Lipids**: phospholipids in membranes; triglycerides — energy reserve.\n- **Proteins**: primary to quaternary structure; enzymes, receptors, antibodies.\n- **Nucleic acids**: DNA (genetic information), RNA (gene expression).\n\n## Clinical and exam connections\n\n- Acid-base imbalances (acidosis/alkalosis) affect respiration and renal function.\n- Enzymatic defects (proteins) explain metabolic diseases in multiple-choice questions.\n\n## Common exam pitfalls\n\n- Confusion between **primary structure** (AA sequence) and **tertiary structure** (3D folding).\n- pH: one unit = tenfold change in H⁺ concentration.\n\n## Mini-summary\n\nChemistry explains the matter of life: water and pH regulate the internal environment; macromolecules define structure, energy, and information. Proteins and enzymes connect this chapter to metabolism and cellular physiology.",
+        "summaryVersion": 1,
+        "audioUrl": "https://utbcxdtcznitejbhhquh.supabase.co/storage/v1/object/public/study-audio/med-admission-barrons/chem-basics-en.mp3",
+        "audioDurationSec": null
+      },
+      "cell-biology": {
+        "chapterId": "cell-biology",
+        "title": "Cell biology",
+        "summaryMarkdown": "## What you learn in this chapter\n\nThe cell is the structural and functional unit of life. The plasma membrane controls exchanges; organelles perform specialized roles; cell division and death regulate tissue growth.\n\n## Key concepts\n\n- **Membrane**: phospholipid bilayer, integral/peripheral proteins, passive and active transport.\n- **Organelles**: nucleus, mitochondria (ATP), rough/smooth endoplasmic reticulum, Golgi apparatus, lysosomes, peroxisomes.\n- **Cytoplasm and cytoskeleton**: microtubules, actin filaments, support and motility.\n- **Transport**: diffusion, osmosis, channels, pumps (Na⁺/K⁺), endocytosis/exocytosis.\n- **Cell cycle**: interphase, mitosis; regulation through checkpoints.\n- **Apoptosis** vs **necrosis**: programmed cell death vs injury.\n\n## Clinical and exam connections\n\n- Active transport consumes ATP — connection with mitochondria and metabolism.\n- Cancer and hyperplasia arise from dysregulation of the cell cycle.\n\n## Common exam pitfalls\n\n- **Osmosis**: the movement of water towards the hypertonic solution, not the solute.\n- Mitochondria vs chloroplasts (only in plants) — in humans, only mitochondria for aerobic ATP production.\n\n## Mini-summary\n\nThe cell integrates structure and function through the membrane, organelles, and energy metabolism. Transport and cell division are the foundation of tissue physiology and homeostasis.",
+        "summaryVersion": 1,
+        "audioUrl": "https://utbcxdtcznitejbhhquh.supabase.co/storage/v1/object/public/study-audio/med-admission-barrons/cell-biology-en.mp3",
+        "audioDurationSec": null
+      }
+    }
+  }
+}

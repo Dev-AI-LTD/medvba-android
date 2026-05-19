@@ -1,0 +1,9 @@
+{
+  "moduleId": "med-admission-barrons",
+  "chapterId": "cell-biology",
+  "locale": "en",
+  "title": "Cell biology",
+  "summaryMarkdown": "## What you learn in this chapter\n\nThe cell is the structural and functional unit of life. The plasma membrane controls exchanges; organelles perform specialized roles; cell division and death regulate tissue growth.\n\n## Key concepts\n\n- **Membrane**: phospholipid bilayer, integral/peripheral proteins, passive and active transport.\n- **Organelles**: nucleus, mitochondria (ATP), rough/smooth endoplasmic reticulum, Golgi apparatus, lysosomes, peroxisomes.\n- **Cytoplasm and cytoskeleton**: microtubules, actin filaments, support and motility.\n- **Transport**: diffusion, osmosis, channels, pumps (Na⁺/K⁺), endocytosis/exocytosis.\n- **Cell cycle**: interphase, mitosis; regulation through checkpoints.\n- **Apoptosis** vs **necrosis**: programmed cell death vs injury.\n\n## Clinical and exam connections\n\n- Active transport consumes ATP — connection with mitochondria and metabolism.\n- Cancer and hyperplasia arise from dysregulation of the cell cycle.\n\n## Common exam pitfalls\n\n- **Osmosis**: the movement of water towards the hypertonic solution, not the solute.\n- Mitochondria vs chloroplasts (only in plants) — in humans, only mitochondria for aerobic ATP production.\n\n## Mini-summary\n\nThe cell integrates structure and function through the membrane, organelles, and energy metabolism. Transport and cell division are the foundation of tissue physiology and homeostasis.",
+  "summaryVersion": 1,
+  "status": "published"
+}

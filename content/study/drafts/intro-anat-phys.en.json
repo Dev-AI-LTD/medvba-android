@@ -1,0 +1,9 @@
+{
+  "moduleId": "med-admission-barrons",
+  "chapterId": "intro-anat-phys",
+  "locale": "en",
+  "title": "Introduction to anatomy and physiology",
+  "summaryMarkdown": "## What you learn in this chapter\n\nAnatomy describes the structure of the body; physiology explains its functions. For admission, you must recognize the planes and sections of the body, directional terms, and the organization from cell to organ.\n\n## Key concepts\n\n- **Anatomy** vs **physiology**: form and function are complementary.\n- **Planes and sections**: sagittal, frontal (coronal), transverse (horizontal).\n- **Directional terms**: superior/inferior, anterior/posterior, medial/lateral, proximal/distal.\n- **Levels of organization**: chemical → cellular → tissue → organ → system → organism.\n- **Homeostasis**: maintaining internal parameters within normal limits through feedback.\n\n## Clinical and exam connections\n\n- Mistakes in planes/sections lead to misinterpretations of images (X-ray, CT).\n- Directional terms are used in describing injuries and procedures.\n\n## Common exam pitfalls\n\n- Confusion between **proximal/distal** (applies to limbs, not to the axis) vs **superior/inferior**.\n- Mixing up the sagittal and coronal planes in simple drawings.\n\n## Mini-summary\n\nThis chapter introduces the language of anatomy and physiology: planes, sections, spatial orientation, and structural hierarchy. Homeostasis connects structure to adaptive function. Master the directional terms—they appear in all subsequent modules.",
+  "summaryVersion": 1,
+  "status": "published"
+}

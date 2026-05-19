@@ -1,0 +1,9 @@
+{
+  "moduleId": "med-admission-barrons",
+  "chapterId": "intro-anat-phys",
+  "locale": "ro",
+  "title": "Introducere în anatomie și fiziologie",
+  "summaryMarkdown": "## Ce înveți în acest capitol\n\nAnatomia descrie structura corpului; fiziologia explică funcțiile. La admitere trebuie să recunoști planurile și secțiunile corpului, termenii direcționali și organizarea de la cel la organ.\n\n## Concepte cheie\n\n- **Anatomie** vs **fiziologie**: formă și funcție sunt complementare.\n- **Planuri și secțiuni**: sagital, frontal (coronal), transversal (orizontal).\n- **Termeni direcționali**: superior/inferior, anterior/posterior, medial/lateral, proximal/distal.\n- **Niveluri de organizare**: chimic → celular → țesut → organ → sistem → organism.\n- **Homeostază**: menținerea parametrilor interni în limite normale prin feedback.\n\n## Legături clinice și admitere\n\n- Greșelile la planuri/secțiuni duc la interpretări greșite ale imaginilor (RX, CT).\n- Termenii direcționali sunt folosiți în descrierea leziunilor și procedurilor.\n\n## Capcane frecvente la examen\n\n- Confuzie **proximal/distal** (se aplică la membre, nu la ax) vs **superior/inferior**.\n- Amestecarea planurilor sagital și coronal la desene simple.\n\n## Mini-rezumat\n\nCapitolul introduce limbajul anatomiei și fiziologiei: planuri, secțiuni, orientare spațială și ierarhia structurală. Homeostazia leagă structura de funcția adaptativă. Stăpânește termenii direcționali — apar în toate modulele următoare.",
+  "summaryVersion": 1,
+  "status": "published"
+}

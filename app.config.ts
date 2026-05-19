@@ -103,6 +103,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     // react-native-edge-to-edge: prevents react-native-screens from using deprecated setStatusBarColor/setNavigationBarColor APIs
     'react-native-edge-to-edge',
     'expo-notifications',
+    'expo-audio',
     [
       'expo-build-properties',
       {
