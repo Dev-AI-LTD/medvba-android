@@ -12,6 +12,7 @@ import Constants from "expo-constants";
 
 import { PaperProvider } from "react-native-paper";
 import { QuizProgressProvider } from "@/providers/QuizProgressProvider";
+import { QuizFontsProvider, useQuizFontsContext } from "@/providers/QuizFontsProvider";
 import { LanguageProvider, useLanguage } from "@/providers/LanguageProvider";
 import { KindeAuthContext, KindeAuthProvider } from "@kinde/expo";
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
@@ -151,14 +152,18 @@ function NativeSplashFailsafe() {
   return null;
 }
 
-function useProtectedRoute(splashAvailable: boolean, languageBootstrap: boolean) {
+function useProtectedRoute(
+  splashAvailable: boolean,
+  languageBootstrap: boolean,
+  quizFontsLoaded: boolean,
+) {
   const { isAuthenticated, isLoading, isAuthBusy, hasCompletedOnboarding } = useAuth();
   const segments = useSegments();
   const router = useRouter();
   const [splashHidden, setSplashHidden] = React.useState(false);
 
   useEffect(() => {
-    if (isLoading || isAuthBusy || languageBootstrap) return;
+    if (isLoading || isAuthBusy || languageBootstrap || !quizFontsLoaded) return;
 
     const segs = segments as readonly string[];
     if (segs.length === 0 || segs[0] === undefined) {
@@ -215,15 +220,21 @@ function useProtectedRoute(splashAvailable: boolean, languageBootstrap: boolean)
     splashHidden,
     splashAvailable,
     languageBootstrap,
+    quizFontsLoaded,
   ]);
 
-  return isLoading || isAuthBusy || languageBootstrap;
+  return isLoading || isAuthBusy || languageBootstrap || !quizFontsLoaded;
 }
 
 function RootLayoutNav({ splashAvailable }: { splashAvailable: boolean }) {
   const { isLoading: isLanguageBootstrapping } = useLanguage();
+  const { loaded: quizFontsLoaded } = useQuizFontsContext();
   /** Auth bootstrap overlay — Stack stays mounted so `Redirect` / `router.replace` to `(auth)` always has a navigator. */
-  const showAuthBootstrapOverlay = useProtectedRoute(splashAvailable, isLanguageBootstrapping);
+  const showAuthBootstrapOverlay = useProtectedRoute(
+    splashAvailable,
+    isLanguageBootstrapping,
+    quizFontsLoaded,
+  );
   const segments = useSegments();
   const { colors, colorScheme } = useTheme();
   const inAuthGroup = segments[0] === "(auth)";
@@ -420,13 +431,15 @@ function AppProvidersTree() {
             <PaperProviderWrapper>
               <AuthProvider>
                 <LanguageProvider>
-                  <SubscriptionProvider>
-                    <QuizProgressProvider>
-                      <GestureHandlerRootView style={{ flex: 1 }}>
-                        <RootLayoutNav splashAvailable={splashScreenAvailable} />
-                      </GestureHandlerRootView>
-                    </QuizProgressProvider>
-                  </SubscriptionProvider>
+                  <QuizFontsProvider>
+                    <SubscriptionProvider>
+                      <QuizProgressProvider>
+                        <GestureHandlerRootView style={{ flex: 1 }}>
+                          <RootLayoutNav splashAvailable={splashScreenAvailable} />
+                        </GestureHandlerRootView>
+                      </QuizProgressProvider>
+                    </SubscriptionProvider>
+                  </QuizFontsProvider>
                 </LanguageProvider>
               </AuthProvider>
             </PaperProviderWrapper>

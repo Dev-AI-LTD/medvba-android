@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "fetal-circulation",
+  "locale": "ro",
+  "title": "Circulația Fetală",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## Ce înveți în acest capitol\n\nCirculația fetală ocolește plămânii neventilați prin shunturi (foramen oval, ductus arteriosus) și folosește circulația placentară pentru schimbul gazos.\n\n## Concepte cheie\n\n- **Foramen ovale**: comunicare atrială dreapta → stânga; direcționat de presiuni.\n- **Ductus arteriosus**: leagă trunchiul pulmonar de aorta, ocolește plămânii.\n- **Ductus venosus**: ocolește parțial ficatul; sânge de la vena ombilicală.\n- **Placenta**: locul schimbului gazos și nutrițional fetal.\n- **Tranziție la naștere**: închiderea shunturilor și creșterea rezistenței pulmonare.\n\n## Legături clinice și admitere\n\n- **Persistență ductus arteriosus**: șunt stânga-dreapta postnatal.\n- **Cianoză neonatală**: defecte care mențin shunt dreapta-stânga.\n\n## Capcane frecvente la examen\n\n- Confuzia direcției **foramenului oval** fetal (dreapta → stânga).\n- Credința că plămânii fetal sunt complet perfuzați ca la adult.\n\n## Mini-rezumat\n\nFătul ocolește plămânii prin foramen oval și ductus arteriosus, iar placenta asigură oxigenarea. La naștere, shunturile se închid și circulația pulmonară devine funcțională. Defectele persistente explică cianoza neonatală.",
+  "summaryVersion": 1,
+  "status": "published"
+}

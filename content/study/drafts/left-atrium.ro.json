@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "left-atrium",
+  "locale": "ro",
+  "title": "Atriul Stâng",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## Ce înveți în acest capitol\n\nAtriul stâng primește sângele oxigenat din plămâni și îl trimite spre ventriculul stâng. Anatomia sa internă și raporturile cu venele pulmonare sunt esențiale.\n\n## Concepte cheie\n\n- **Vene pulmonare**: de obicei patru orificii în peretele posterior al atriului stâng.\n- **Valva mitrală**: controlă fluxul spre ventriculul stâng; are două cuspe.\n- **Peretele posterior**: subțire, în raport cu esofagul (util la ecografie transesofagiană).\n- **Auricul stâng**: extensie anterioară; loc frecvent al formațiunii trombotice în fibrilație atrială.\n- **Septul interatrial**: separă atriile; comunicări patologice pot shunta sânge.\n\n## Legături clinice și admitere\n\n- **Stenoză mitrală**: dilatare atrială stângă și risc de embolie.\n- **Ecografie**: măsurarea atriului stâng e prognostic în insuficiență cardiacă.\n\n## Capcane frecvente la examen\n\n- Confuzia **numărului venelor pulmonare** (4 orificii tipice, nu 2).\n- Credința că valva mitrală are trei cuspe (este bicuspă).\n\n## Mini-rezumat\n\nAtriul stâng primește sângele oxigenat prin venele pulmonare și îl pasează prin valva mitrală. Peretele posterior și auricul stâng au relevanță clinică în aritmii și embolii.",
+  "summaryVersion": 1,
+  "status": "published"
+}

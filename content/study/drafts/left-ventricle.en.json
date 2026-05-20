@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "left-ventricle",
+  "locale": "en",
+  "title": "Left Ventricle",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## What you learn in this chapter\n\nThe left ventricle generates systemic pressure and pumps blood into the aorta. Thick myocardium and the aortic valve define systemic pumping.\n\n## Key concepts\n\n- **Thick wall**: adapted for high pressure; conical toward apex.\n- **Aortic valve**: three semilunar cusps; prevents diastolic reflux.\n- **Interventricular septum**: separates ventricles; membranous superior part.\n- **Papillary muscles and chordae**: anchor mitral cusps during systole.\n- **Aortic orifice**: posterior and right of the mitral orifice.\n\n## Clinical and exam connections\n\n- **Anterior infarction**: often affects LV wall.\n- **Aortic regurgitation**: compensatory LV dilation.\n\n## Common exam pitfalls\n\n- Forgetting the **LV wall is much thicker** than the RV.\n- Assuming the aortic valve is normally bicuspid.\n\n## Mini-summary\n\nThe left ventricle is the systemic pumping chamber with a thick wall and aortic valve. Papillary muscles support the mitral valve. The interventricular septum separates it from the right ventricle.",
+  "summaryVersion": 1,
+  "status": "published"
+}

@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "aortic-arch",
+  "locale": "en",
+  "title": "Aortic Arch",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## What you learn in this chapter\n\nThe aortic arch curves superiorly and gives supra-aortic branches supplying the head, neck, and upper limbs.\n\n## Key concepts\n\n- **Brachiocephalic trunk**: splits into right common carotid and right subclavian.\n- **Left common carotid**: direct arch branch in most individuals.\n- **Left subclavian**: last major arch branch.\n- **Ligamentum arteriosum**: fetal ductus arteriosus remnant.\n- **Relations**: trachea and esophagus posteriorly; left recurrent laryngeal under arch.\n\n## Clinical and exam connections\n\n- **Arch pathology**: assessed by CT angiography and ultrasound.\n- **Recurrent laryngeal**: arch anatomy explains its course.\n\n## Common exam pitfalls\n\n- Assuming **symmetric** bilateral origins from the arch (brachiocephalic is right-only).\n- Confusing left and right **common carotid** origins.\n\n## Mini-summary\n\nThe arch gives brachiocephalic trunk, left common carotid, and left subclavian. The ligamentum arteriosum marks the fetal ductus. Relations to trachea and recurrent laryngeal nerve are surgically important.",
+  "summaryVersion": 1,
+  "status": "published"
+}

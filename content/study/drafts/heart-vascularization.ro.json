@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "heart-vascularization",
+  "locale": "ro",
+  "title": "Vascularizația Cordului",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## Ce înveți în acest capitol\n\nVascularizația cordului descrie arterele și venele coronariene care hrănesc miocardul. Înțelegi originea, cursul principal și zonele de risc ischemic.\n\n## Concepte cheie\n\n- **Arterele coronariene**: dreaptă (de obicei din sinusul aortic drept) și stângă (din stânga, cu ramuri circumflexă și interventriculară anterioară).\n- **Dominanță**: dreaptă, stângă sau codominantă — raportul între ramura posterioară și circumflexă.\n- **Venele cardiace**: mici (în peretele miocardic) și mari (sinus coronarian → atriul drept).\n- **Sinusul coronarian**: colectează majoritatea sângelui venos coronarian.\n- **Zone de watershed**: zone limitrofe între teritorii arteriale, vulnerabile la ischemie.\n\n## Legături clinice și admitere\n\n- **Infarct miocardic**: teritoriul depinde de artera ocluzată (IVA, CX, CD).\n- **Bypass coronarian**: țintele chirurgicale urmează anatomia coronariană.\n\n## Capcane frecvente la examen\n\n- Confuzia **origine arteră coronară stângă** (un singur orificiu sinusal) cu două artere separate.\n- Amestecarea **venelor pulmonare** (sânge oxigenat spre stânga) cu venele coronariene.\n\n## Mini-rezumat\n\nCirculația coronariană asigură perfuzia miocardului prin artere și vene cardiace. Dominanța și ramurile IVA/CX/CD definesc teritoriile ischemice. Sinusul coronarian drenează sângele venos al peretelui.",
+  "summaryVersion": 1,
+  "status": "published"
+}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -23,8 +23,9 @@ import {
   screenPaddingX,
   sectionGap,
   space,
-  typeScale,
 } from '@/theme/iosDesign';
+import { useQuizFontsContext } from '@/providers/QuizFontsProvider';
+import { createQuizTypography } from '@/theme/quizTypography';
 
 export default function QuizChaptersScreen() {
   const router = useRouter();
@@ -36,6 +37,12 @@ export default function QuizChaptersScreen() {
   const chapters = category ? getChaptersForModule(category) : [];
   const moduleName = category ? getModuleName(category) : '';
   const studyEnabled = category === STUDY_PILOT_MODULE_ID;
+  const { loaded: quizFontsLoaded, families: quizFontFamilies } = useQuizFontsContext();
+  const quizTypography = useMemo(
+    () => createQuizTypography(quizFontsLoaded, quizFontFamilies),
+    [quizFontsLoaded, quizFontFamilies],
+  );
+  const styles = useMemo(() => createChapterListStyles(quizTypography), [quizTypography]);
 
   const startQuiz = async (chapterId: string) => {
     if (isPaywallEnabled && !canStartQuiz()) {
@@ -121,7 +128,8 @@ export default function QuizChaptersScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createChapterListStyles = (quizTypo: ReturnType<typeof createQuizTypography>) =>
+  StyleSheet.create({
   scroll: {
     flex: 1,
   },
@@ -144,11 +152,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   chapterName: {
-    ...typeScale.body,
-    fontWeight: '600',
+    ...quizTypo.question,
+    fontSize: 17,
+    lineHeight: 22,
+    textAlign: 'left',
   },
   chapterCount: {
-    fontSize: 13,
+    ...quizTypo.cardMeta,
+    textAlign: 'left',
     marginTop: 2,
   },
   summaryBtn: {
@@ -159,7 +170,7 @@ const styles = StyleSheet.create({
     paddingBottom: space.space2,
   },
   summaryBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...quizTypo.badge,
+    textAlign: 'left',
   },
 });

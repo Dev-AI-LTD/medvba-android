@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "coronary-circulation",
+  "locale": "ro",
+  "title": "Circulația Coronariană",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## Ce înveți în acest capitol\n\nCirculația coronariană descrie fluxul arterial și venos care hrănește miocardul, inclusiv variațiile în timpul ciclului cardiac și factorii care influențează perfuzia.\n\n## Concepte cheie\n\n- **Perfuzie diastolică**: arterele coronariene se umplu în principal în diastolă.\n- **Autoreglare**: capacitatea de a menține fluxul în limite de presiune perfuzie.\n- **Metabolism miocardic**: necesar ridicat de oxigen; extragere mare din sânge.\n- **Colaterale**: se dezvoltă lent în obstrucții cronice.\n- **Sinusurile aortice**: originea tipică a coronarelor drepte și stângi.\n\n## Legături clinice și admitere\n\n- **Angină**: dezechilibru între cerință și aport coronarian.\n- **Tahicardie**: scurtează diastola și poate reduce perfuzia coronariană.\n\n## Capcane frecvente la examen\n\n- Confuzia perfuziei coronariene în **sistolă** (predominent diastolică).\n- Ignorarea **dominanței coronariene** la interpretarea teritoriilor.\n\n## Mini-rezumat\n\nCirculația coronariană asigură oxigenarea miocardului, cu umplere diastolică și autoreglare. Originea din sinusurile aortice și rețeaua venoasă cardiacă completează schema. Înțelegerea lor explică ischemia la efort sau tahicardie.",
+  "summaryVersion": 1,
+  "status": "published"
+}

@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack, router } from 'expo-router';
+import { Stack, router, Redirect } from 'expo-router';
 import { ChevronLeft, Download, AlertCircle, CheckCircle } from 'lucide-react-native';
 import {
   batchTranslateQuestions,
@@ -24,6 +24,10 @@ import {
 import { allQuestions } from '@/lib/quizSessionQuestionPool';
 
 export default function BatchTranslateScreen() {
+  if (!__DEV__) {
+    return <Redirect href="/(tabs)" />;
+  }
+
   const [isTranslating, setIsTranslating] = useState(false);
   const [progress, setProgress] = useState<TranslationProgress | null>(null);
   const [result, setResult] = useState<TranslationResult | null>(null);

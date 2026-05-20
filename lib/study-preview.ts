@@ -1,5 +1,6 @@
 import medAdmissionPreview from '@/assets/study/med-admission-preview.json';
 import headNeckPreview from '@/assets/study/head-neck-preview.json';
+import internalOrgansPreview from '@/assets/study/internal-organs-preview.json';
 import {
   STUDY_PILOT_MODULE_ID,
   isStudyFreePreviewChapter,
@@ -24,6 +25,7 @@ type PreviewBundle = {
 const bundlesByModuleId: Record<string, PreviewBundle> = {
   [STUDY_PILOT_MODULE_ID]: medAdmissionPreview as PreviewBundle,
   'head-neck': headNeckPreview as PreviewBundle,
+  'internal-organs': internalOrgansPreview as PreviewBundle,
 };
 
 function getBundle(moduleId: string): PreviewBundle | null {
@@ -63,11 +65,7 @@ export function getLocalPreviewChapter(
   if (!getBundle(effectiveModuleId)) return null;
   if (!isStudyFreePreviewChapter(chapterId, effectiveModuleId)) return null;
   const chapters = getChaptersForLocale(effectiveModuleId, locale);
-  return (
-    chapters[chapterId] ??
-    (locale === 'en' ? getChaptersForLocale(effectiveModuleId, 'ro')[chapterId] : null) ??
-    null
-  );
+  return chapters[chapterId] ?? null;
 }
 
 export function listLocalPreviewChapterIds(

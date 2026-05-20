@@ -40,6 +40,8 @@ import {
   touchTargetMin,
   typeScale,
 } from '@/theme/iosDesign';
+import { useQuizFontsContext } from '@/providers/QuizFontsProvider';
+import { createQuizTypography } from '@/theme/quizTypography';
 
 import {
   allQuestions,
@@ -65,6 +67,8 @@ import {
   selectUniqueQuestions,
 } from '@/lib/quizQuestionSelection';
 import { buildQuestionsWithChapters } from '@/lib/questionChapterLink';
+import { getParentStudyChapter } from '@/lib/quizToStudyChapter';
+import { STUDY_PILOT_MODULE_ID } from '@/constants/study';
 
 const QUESTION_COUNTS = {
   quick: 10,
@@ -283,7 +287,15 @@ export default function QuizSessionScreen() {
   const chapterIdRef = useRef(chapterId);
   chapterIdRef.current = chapterId;
 
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { loaded: quizFontsLoaded, families: quizFontFamilies } = useQuizFontsContext();
+  const quizTypography = useMemo(
+    () => createQuizTypography(quizFontsLoaded, quizFontFamilies),
+    [quizFontsLoaded, quizFontFamilies],
+  );
+  const styles = useMemo(
+    () => createStyles(colors, quizTypography),
+    [colors, quizTypography],
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -691,13 +703,21 @@ export default function QuizSessionScreen() {
   }, [currentQuestion, t]);
 
   const activeChapterMeta = questionsWithChapters[currentIndex];
-  const activeChapterId =
-    activeChapterMeta?.chapterId || chapterIdRef.current || chapterId;
+  const activeChapterId = activeChapterMeta?.chapterId ?? '';
   const activeModuleId =
     activeChapterMeta?.moduleId || categoryRef.current || category;
+  const showChapterContext = mode !== 'exam' && Boolean(activeChapterId);
 
   const handleOpenChapterSummary = useCallback(() => {
     if (!activeChapterId || !activeModuleId) return;
+
+    const parent = getParentStudyChapter(activeModuleId, activeChapterId);
+    const isDirectStudyModule = activeModuleId === STUDY_PILOT_MODULE_ID;
+    if (!parent && !isDirectStudyModule) {
+      Alert.alert(t('study.summaryNotFound'));
+      return;
+    }
+
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push({
       pathname: '/study/chapter/[chapterId]',
@@ -707,7 +727,7 @@ export default function QuizSessionScreen() {
         fromQuiz: '1',
       },
     });
-  }, [activeChapterId, activeModuleId, router]);
+  }, [activeChapterId, activeModuleId, router, t]);
 
   if (isLoading) {
     return (
@@ -902,13 +922,13 @@ export default function QuizSessionScreen() {
         <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollContentContainer}>
           <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
             <View style={styles.questionContainer}>
-              {activeChapterId && (
+              {showChapterContext && (
                 <TouchableOpacity
                   onPress={handleOpenChapterSummary}
                   activeOpacity={0.75}
                   style={styles.chapterBadge}
                   accessibilityRole="button"
-                  accessibilityLabel={t('session.readChapterSummary')}
+                  accessibilityLabel={t('session.openStudyChapter')}
                 >
                   <BookOpen color={colors.primary} size={iconSm} />
                   <Text style={styles.chapterText}>
@@ -984,7 +1004,7 @@ export default function QuizSessionScreen() {
                   </TouchableOpacity>
                 </View>
                 <Text style={styles.explanationText}>{currentQuestion.explanation}</Text>
-                {activeChapterId && activeModuleId && (
+                {showChapterContext && activeModuleId && (
                   <TouchableOpacity
                     style={styles.summaryLink}
                     onPress={handleOpenChapterSummary}
@@ -1042,7 +1062,10 @@ export default function QuizSessionScreen() {
   );
 }
 
-const createStyles = (colors: any) => StyleSheet.create({
+const createStyles = (
+  colors: any,
+  quizTypo: ReturnType<typeof createQuizTypography>,
+) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -1160,12 +1183,11 @@ const createStyles = (colors: any) => StyleSheet.create({
     borderTopColor: colors.glassBorder,
   },
   summaryLinkText: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...quizTypo.badge,
+    textAlign: 'left',
   },
   chapterText: {
-    fontSize: 13,
-    fontWeight: '600' as const,
+    ...quizTypo.badge,
     color: colors.primary,
   },
   difficultyBadge: {
@@ -1183,15 +1205,12 @@ const createStyles = (colors: any) => StyleSheet.create({
     textTransform: 'capitalize',
   },
   questionText: {
-    fontSize: 20,
-    fontWeight: '600' as const,
+    ...quizTypo.question,
     color: colors.text,
-    lineHeight: 28,
   },
   multiSelectHint: {
+    ...quizTypo.hint,
     marginTop: space.space3,
-    fontSize: 14,
-    lineHeight: 20,
     color: colors.textSecondary,
   },
   optionsContainer: {
@@ -1233,15 +1252,13 @@ const createStyles = (colors: any) => StyleSheet.create({
     backgroundColor: colors.error,
   },
   optionLetterText: {
-    fontSize: 14,
-    fontWeight: '700' as const,
+    ...quizTypo.optionLetter,
     color: colors.text,
   },
   optionText: {
+    ...quizTypo.option,
     flex: 1,
-    fontSize: 15,
     color: colors.text,
-    lineHeight: 22,
   },
   explanationCard: {
     backgroundColor: 'rgba(0, 180, 216, 0.1)',
@@ -1273,9 +1290,8 @@ const createStyles = (colors: any) => StyleSheet.create({
     color: colors.primary,
   },
   explanationText: {
-    fontSize: 14,
+    ...quizTypo.explanation,
     color: colors.textSecondary,
-    lineHeight: 20,
   },
   footer: {
     paddingHorizontal: screenPaddingX,

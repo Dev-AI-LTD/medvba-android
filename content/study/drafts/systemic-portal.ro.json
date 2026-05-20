@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "systemic-portal",
+  "locale": "ro",
+  "title": "Circulația Sistemică și Portală",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## Ce înveți în acest capitol\n\nCirculația sistemică distribuie sângele oxigenat de la ventriculul stâng la țesuturi. Circulația portală hepatică colectează sângele digestiv înainte de a ajunge la sistemul cava.\n\n## Concepte cheie\n\n- **Aorta**: vas de ieșire al VS; arc, toracică, abdominală cu ramuri majore.\n- **Circulație sistemică**: artere → capilare → vene → atriu drept.\n- **Circulație portală**: vena portă leagă capilarele digestive de sinusoidele hepatice.\n- **Vena cava superioară și inferioară**: retur sistemic la atriul drept.\n- **Anastomoze**: între sisteme port și cava în caz de hipertensiune portală.\n\n## Legături clinice și admitere\n\n- **Varice esofagiene**: shunt porto-sistemic prin plexuri venoase.\n- **Șoc**: redistribuirea fluxului sistemic afectează perfuzia organelor.\n\n## Capcane frecvente la examen\n\n- Confuzia **circulației portale** (două capilare) cu **sistemica** (una).\n- Amestecarea **venei porte** cu **venei cave** la origine.\n\n## Mini-rezumat\n\nCirculația sistemică livrează oxigen și nutrienți la țesuturi, apoi returnează sângele la atriul drept. Circulația portală filtrează sângele intestinal prin ficat. Înțelegerea ambelor explică ciroza și varicele.",
+  "summaryVersion": 1,
+  "status": "published"
+}

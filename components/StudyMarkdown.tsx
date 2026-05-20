@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { resolveStudyContentLocale } from '@/lib/study-content-locale';
 import { useTheme } from '@/providers/ThemeProvider';
 import {
   classifyStudySectionHeading,
@@ -102,7 +103,7 @@ function renderInline(text: string, boldStyle: object, baseStyle: object) {
 export function StudyMarkdown({ markdown }: { markdown: string }) {
   const { colors } = useTheme();
   const { currentLanguage } = useLanguage();
-  const locale = currentLanguage === 'ro' ? 'ro' : 'en';
+  const locale = resolveStudyContentLocale(currentLanguage);
 
   const sections = useMemo(() => {
     const blocks = parseMarkdown(markdown, locale);

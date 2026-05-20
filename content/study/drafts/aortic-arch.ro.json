@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "aortic-arch",
+  "locale": "ro",
+  "title": "Arcul Aortic",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## Ce înveți în acest capitol\n\nArcul aortic curbează vasul de la nivel toracic superior și dă naștere la ramuri supraaortice care vascularizează capul, gâtul și membrele superioare.\n\n## Concepte cheie\n\n- **Trunchi brahiocefalic**: se bifurcă în artera carotidă comună dreaptă și subclavie dreaptă.\n- **Carotida comună stângă**: ram direct din arc (majoritatea indivizilor).\n- **Subclavia stângă**: ultima ramură majoră a arcului.\n- **Ligamentum arteriosum**: remanent fetal al ductus arteriosus.\n- **Raporturi**: trahee și esofag posterior; nerv stâng recurent sub arc.\n\n## Legături clinice și admitere\n\n- **Sincope**: compresie la nivelul arcului (rare).\n- **Imagistică vasculară**: arcul este evaluat în angio-CT și ecografie.\n\n## Capcane frecvente la examen\n\n- Confuzia **trunchiului brahiocefalic** (doar dreapta) cu ramuri bilaterale simetrice.\n- Amestecarea **carotidei comune stângi** cu dreapta (origini diferite).\n\n## Mini-rezumat\n\nArcul aortic dă cele trei ramuri supraaortice: brahiocefalic, carotidă comună stângă și subclavie stângă. Ligamentul arteriosum amintește de ductus fetal. Raporturile cu traheea și nervul recurent sunt importante chirurgical.",
+  "summaryVersion": 1,
+  "status": "published"
+}

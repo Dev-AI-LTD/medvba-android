@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "heart-vascularization",
+  "locale": "en",
+  "title": "Heart Vascularization",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## What you learn in this chapter\n\nHeart vascularization covers coronary arteries and cardiac veins supplying the myocardium. You learn origin, main course, and ischemic risk zones.\n\n## Key concepts\n\n- **Coronary arteries**: right (usually from right aortic sinus) and left (circumflex and LAD branches).\n- **Dominance**: right, left, or codominant — posterior descending vs circumflex relationship.\n- **Cardiac veins**: small (myocardial) and great (coronary sinus → right atrium).\n- **Coronary sinus**: collects most coronary venous blood.\n- **Watershed zones**: border territories between arterial supplies, prone to ischemia.\n\n## Clinical and exam connections\n\n- **Myocardial infarction**: territory depends on occluded artery (LAD, CX, RCA).\n- **CABG**: surgical targets follow coronary anatomy.\n\n## Common exam pitfalls\n\n- Treating the **left main** as two separate arterial origins from the aorta.\n- Confusing **pulmonary veins** (oxygenated to left heart) with coronary veins.\n\n## Mini-summary\n\nCoronary circulation perfuses the myocardium via arteries and cardiac veins. Dominance and LAD/CX/RCA branches define ischemic territories. The coronary sinus drains most venous blood from the wall.",
+  "summaryVersion": 1,
+  "status": "published"
+}

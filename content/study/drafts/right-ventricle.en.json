@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "right-ventricle",
+  "locale": "en",
+  "title": "Right Ventricle",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## What you learn in this chapter\n\nThe right ventricle pumps blood to the lungs via the pulmonary artery. Trabeculae, septomarginal band, and pulmonary valve distinguish the right heart.\n\n## Key concepts\n\n- **Trabeculae carneae**: muscular ridges aiding ejection.\n- **Septomarginal band**: carries conduction tissue; links septum to wall.\n- **Pulmonary valve**: three semilunar cusps to pulmonary trunk.\n- **Pulmonary infundibulum**: muscular outflow tract to pulmonary artery.\n- **Anterior wall**: thin; related to sternum (penetrating trauma).\n\n## Clinical and exam connections\n\n- **Pulmonary hypertension**: RV hypertrophy and dilation.\n- **Bundle branch block**: septomarginal band contains conduction tissue.\n\n## Common exam pitfalls\n\n- Confusing **right ventricle** with **right atrium** for tricuspid location.\n- Mixing **pulmonary artery** (deoxygenated) with the aorta.\n\n## Mini-summary\n\nThe right ventricle ejects deoxygenated blood to the lungs. Trabeculae, septomarginal band, and pulmonary valve are internal landmarks. The thin anterior wall is trauma-prone.",
+  "summaryVersion": 1,
+  "status": "published"
+}

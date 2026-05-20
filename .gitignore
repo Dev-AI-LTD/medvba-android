@@ -52,8 +52,14 @@ rork-eslint.config.js
 # Generated audit / batch reports (local only)
 scripts/*-report.txt
 
+# EAS release downloads (AAB, mapping.txt zip — local only)
+release-artifacts/
+
 # Study source books (Archive PDF / OCR — local only)
 content/study/sources/
 
 # Local script inventories (regenerate with list:chapters)
 scripts/output/
+
+# Supabase CLI temp (pooler URLs, local state — never commit)
+supabase/.temp/

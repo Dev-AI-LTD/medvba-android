@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "pulmonary-circulation",
+  "locale": "en",
+  "title": "Pulmonary Circulation",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## What you learn in this chapter\n\nPulmonary circulation carries deoxygenated blood from the right ventricle to the lungs and returns oxygenated blood to the left atrium. Pressures are low compared with the systemic circuit.\n\n## Key concepts\n\n- **Pulmonary trunk**: exits RV; bifurcates into right and left pulmonary arteries.\n- **Pulmonary arterioles**: carry deoxygenated blood to alveolar capillaries.\n- **Pulmonary capillaries**: site of gas exchange.\n- **Pulmonary veins**: carry oxygenated blood to the left atrium.\n- **Low-pressure bed**: adapted for gas exchange, not high systemic pressure.\n\n## Clinical and exam connections\n\n- **Pulmonary embolism**: acute arterial obstruction.\n- **Pulmonary hypertension**: vascular remodeling and RV strain.\n\n## Common exam pitfalls\n\n- Confusing **pulmonary artery** (deoxygenated) with the **aorta**.\n- Treating pulmonary veins like systemic veins.\n\n## Mini-summary\n\nPulmonary circulation oxygenates blood between the right ventricle and left atrium. Pulmonary arteries carry deoxygenated blood; pulmonary veins return oxygenated blood. Low pressure is characteristic.",
+  "summaryVersion": 1,
+  "status": "published"
+}

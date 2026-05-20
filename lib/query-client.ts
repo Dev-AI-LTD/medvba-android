@@ -30,11 +30,18 @@ export const queryClient = new QueryClient({
   },
 });
 
+export const REACT_QUERY_CACHE_KEY = '@medvba_react_query_cache';
+
 export const asyncStoragePersister = createAsyncStoragePersister({
   storage: AsyncStorage,
-  key: '@medvba_react_query_cache',
+  key: REACT_QUERY_CACHE_KEY,
   throttleTime: 2000,
 });
+
+/** Clears persisted React Query cache (profile, subscription, progress) on sign-out. */
+export async function clearPersistedQueryCache(): Promise<void> {
+  await AsyncStorage.removeItem(REACT_QUERY_CACHE_KEY).catch(() => {});
+}
 
 export const persistOptions = {
   persister: asyncStoragePersister,

@@ -93,6 +93,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       },
     ],
     'expo-web-browser',
+    'expo-asset',
     [
       'expo-image-picker',
       {
@@ -170,12 +171,15 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         foregroundImage: './assets/images/adaptive-icon.png',
         backgroundColor: '#000000',
       },
-      versionCode: 37,
+      versionCode: 38,
       package: 'com.devaieood.medvba',
       // Play: upload mapping.txt per release (Deobfuscation). Native: native-debug-symbols.zip (Symbols); both are buildArtifactPaths in eas.json.
+      allowBackup: false,
       blockedPermissions: [
         'android.permission.CAMERA',
         'android.permission.RECORD_AUDIO',
+        'android.permission.ACCESS_FINE_LOCATION',
+        'android.permission.ACCESS_COARSE_LOCATION',
         // Strip AAID permission so Play Console „Advertising ID” can match „not used for ads”
         // (Facebook plugin already has advertiserIDCollectionEnabled: false).
         'com.google.android.gms.permission.AD_ID',

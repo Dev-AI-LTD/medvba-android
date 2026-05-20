@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "microcirculation",
+  "locale": "en",
+  "title": "Microcirculation",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## What you learn in this chapter\n\nMicrocirculation includes arterioles, capillaries, and venules where tissue exchange occurs. Local mechanisms regulate flow and permeability.\n\n## Key concepts\n\n- **Capillaries**: small-diameter exchange network.\n- **Precapillary arterioles**: muscular tone controls flow.\n- **Starling filtration**: hydrostatic vs oncotic balance.\n- **Venules**: collect blood; high venous capacitance.\n- **Local autoregulation**: metabolites, hypoxia, mechanical stimuli.\n\n## Clinical and exam connections\n\n- **Edema**: capillary filtration imbalance.\n- **Shock**: microcirculatory flow redistribution.\n\n## Common exam pitfalls\n\n- Assigning **exchange** to veins instead of capillaries.\n- Ignoring **precapillary tone** in flow control.\n\n## Mini-summary\n\nMicrocirculation is where tissue exchange occurs via capillaries and precapillary control. Starling forces explain edema. Local autoregulation matches flow to metabolic need.",
+  "summaryVersion": 1,
+  "status": "published"
+}

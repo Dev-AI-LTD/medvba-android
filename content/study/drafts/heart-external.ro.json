@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "heart-external",
+  "locale": "ro",
+  "title": "Inima - Anatomie Externă",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## Ce înveți în acest capitol\n\nStudiezi forma externă a inimii, fețele și marginile cordului, raporturile cu plămânii, diafragmul și vasele mari. Aceste repere permit orientarea la examenul clinic și pe secțiuni imagistice.\n\n## Concepte cheie\n\n- **Formă și orientare**: piramidă ovoidă, bază sus și mare, apex orientat stânga-înainte-jos.\n- **Fețe**: sternocostală (anterior), diafragmatică (inferioară), pulmonară stângă și dreaptă.\n- **Marginea stângă**: formată în principal de ventriculul stâng; marginea dreaptă de atriul drept.\n- **Sulcus coronarian**: șanț între atrii și ventricule; conține vase coronariene.\n- **Apex cordis**: situat în al 5-lea spațiu intercostal stâng, pe linia medio-claviculară.\n- **Raporturi**: posterior cu esofag și aortă; lateral cu plămânii; inferior cu diafragm.\n\n## Legături clinice și admitere\n\n- **Auscultația**: fețele și valvele se corelează cu focarele de ascultare.\n- **Imagistică toracică**: conturul cardiac și poziția apexului pe radiografie.\n\n## Capcane frecvente la examen\n\n- Confuzia **apex** (ventricul stâng) cu **baza** (atrii și vase mari).\n- Credința că marginea dreaptă este formată de ventriculul drept (predomină atriul drept).\n\n## Mini-rezumat\n\nAnatomia externă a inimii oferă repere topografice: apex, baze, fețe și sulcus coronarian. Raporturile cu plămânii și diafragmul explică proiecția clinică. Stăpânește orientarea cordului înainte de camere și valve.",
+  "summaryVersion": 1,
+  "status": "published"
+}

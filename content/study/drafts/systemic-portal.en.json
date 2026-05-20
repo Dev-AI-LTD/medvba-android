@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "systemic-portal",
+  "locale": "en",
+  "title": "Systemic and Portal Circulation",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## What you learn in this chapter\n\nSystemic circulation distributes oxygenated blood from the left ventricle to tissues. Portal circulation routes gastrointestinal blood through the liver before the caval system.\n\n## Key concepts\n\n- **Aorta**: LV outflow; arch, thoracic, and abdominal segments with major branches.\n- **Systemic circuit**: arteries → capillaries → veins → right atrium.\n- **Portal circuit**: portal vein links gut capillaries to hepatic sinusoids.\n- **SVC and IVC**: systemic venous return to the right atrium.\n- **Portosystemic anastomoses**: open when portal pressure rises.\n\n## Clinical and exam connections\n\n- **Esophageal varices**: portosystemic shunting.\n- **Shock**: systemic flow redistribution affects organ perfusion.\n\n## Common exam pitfalls\n\n- Confusing **portal** (two capillary beds) with **systemic** (one).\n- Mixing **portal vein** origin with caval veins.\n\n## Mini-summary\n\nSystemic circulation delivers oxygen and nutrients, then returns blood to the right atrium. Portal circulation filters intestinal blood in the liver. Both explain cirrhosis and varices.",
+  "summaryVersion": 1,
+  "status": "published"
+}

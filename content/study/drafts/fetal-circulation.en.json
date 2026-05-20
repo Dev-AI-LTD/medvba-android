@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "fetal-circulation",
+  "locale": "en",
+  "title": "Fetal Circulation",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## What you learn in this chapter\n\nFetal circulation bypasses unventilated lungs via shunts (foramen ovale, ductus arteriosus) and uses the placenta for gas exchange.\n\n## Key concepts\n\n- **Foramen ovale**: right-to-left atrial flow driven by pressures.\n- **Ductus arteriosus**: pulmonary trunk to aorta; bypasses lungs.\n- **Ductus venosus**: partial hepatic bypass from umbilical vein.\n- **Placenta**: fetal gas and nutrient exchange organ.\n- **Birth transition**: shunt closure and rising pulmonary vascular resistance.\n\n## Clinical and exam connections\n\n- **PDA**: persistent left-to-right shunt after birth.\n- **Neonatal cyanosis**: right-to-left shunt lesions.\n\n## Common exam pitfalls\n\n- Reversing **foramen ovale** fetal direction (right → left).\n- Assuming fetal lungs are fully perfused like adult lungs.\n\n## Mini-summary\n\nThe fetus bypasses lungs via foramen ovale and ductus arteriosus; the placenta oxygenates blood. At birth, shunts close and pulmonary circulation becomes functional. Persistent shunts cause neonatal cyanosis or PDA.",
+  "summaryVersion": 1,
+  "status": "published"
+}

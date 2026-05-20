@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -42,6 +42,8 @@ import {
   space,
   typeScale,
 } from '@/theme/iosDesign';
+import { useQuizFontsContext } from '@/providers/QuizFontsProvider';
+import { createQuizTypography } from '@/theme/quizTypography';
 
 const categoryIcons: Record<string, React.ComponentType<{ color: string; size: number }>> = {
   'upper-lower-limbs': Bone,
@@ -130,6 +132,12 @@ export default function QuizScreen() {
   };
 
   const studySummaryCount = getEffectivePublishedSummaryCount(STUDY_PILOT_MODULE_ID, 0);
+  const { loaded: quizFontsLoaded, families: quizFontFamilies } = useQuizFontsContext();
+  const quizTypography = useMemo(
+    () => createQuizTypography(quizFontsLoaded, quizFontFamilies),
+    [quizFontsLoaded, quizFontFamilies],
+  );
+  const styles = useMemo(() => createQuizTabStyles(quizTypography), [quizTypography]);
 
   return (
     <Screen withGradient edges={['top']} padded>
@@ -392,7 +400,8 @@ export default function QuizScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createQuizTabStyles = (quizTypo: ReturnType<typeof createQuizTypography>) =>
+  StyleSheet.create({
   scrollContent: {
     paddingBottom: screenPaddingX,
   },
@@ -429,11 +438,10 @@ const styles = StyleSheet.create({
     gap: space.space3,
   },
   modeTitle: {
-    fontSize: 18,
-    fontWeight: '700' as const,
+    ...quizTypo.modeTitle,
   },
   modeSubtitle: {
-    fontSize: 13,
+    ...quizTypo.modeSubtitle,
     color: 'rgba(255,255,255,0.8)',
     flex: 1,
   },
@@ -465,10 +473,9 @@ const styles = StyleSheet.create({
     width: '48%',
   },
   studySummaryCount: {
+    ...quizTypo.cardMeta,
     fontSize: 11,
-    fontWeight: '600',
     marginTop: 8,
-    textAlign: 'center',
   },
   categoryCard: {
     width: '100%',
@@ -491,12 +498,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   categoryName: {
-    ...typeScale.subheadMedium,
-    fontWeight: '600' as const,
+    ...quizTypo.cardTitle,
     marginBottom: 4,
   },
   categoryCount: {
-    fontSize: 12,
+    ...quizTypo.cardMeta,
     marginBottom: 8,
   },
   categoryProgressBar: {

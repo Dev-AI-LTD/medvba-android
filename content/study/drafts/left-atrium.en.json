@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "left-atrium",
+  "locale": "en",
+  "title": "Left Atrium",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## What you learn in this chapter\n\nThe left atrium receives oxygenated blood from the lungs and sends it to the left ventricle. Pulmonary venous anatomy and mitral valve relations are essential.\n\n## Key concepts\n\n- **Pulmonary veins**: typically four openings in the posterior wall.\n- **Mitral valve**: two cusps; controls flow to the left ventricle.\n- **Posterior wall**: thin; related to esophagus (transesophageal echo).\n- **Left auricle**: anterior extension; common site of thrombus in AF.\n- **Interatrial septum**: separates atria; pathologic shunts may occur.\n\n## Clinical and exam connections\n\n- **Mitral stenosis**: left atrial dilation and embolic risk.\n- **Echo**: left atrial size is prognostic in heart failure.\n\n## Common exam pitfalls\n\n- Assuming **two pulmonary veins** instead of four typical openings.\n- Believing the mitral valve has three cusps (it is bicuspid).\n\n## Mini-summary\n\nThe left atrium receives oxygenated blood via pulmonary veins and passes it through the mitral valve. The posterior wall and auricle matter in arrhythmia and embolism.",
+  "summaryVersion": 1,
+  "status": "published"
+}

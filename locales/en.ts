@@ -184,6 +184,7 @@ export const en: Record<string, string> = {
   'session.noQuestions': 'No questions available for this category.',
   'session.goBack': 'Go back',
   'session.chapter': 'Chapter',
+  'session.openStudyChapter': 'Open study chapter summary',
   'session.explanation': 'Explanation',
   'session.multiSelectHint': 'Select all correct answers, then tap Check.',
   'session.confirmAnswer': 'Check answers',
@@ -341,6 +342,9 @@ export const en: Record<string, string> = {
   'study.lockedMessage': 'The first 3 chapters are free. Unlock all summaries with Premium.',
   'study.minRead': '~{minutes} min read',
   'study.fromQuiz': 'Opened from quiz',
+  'study.partOfChapter': 'Part of: {chapter}',
+  'study.topicSummaryFallback':
+    'The detailed summary for this sub-chapter is in progress. See the general chapter summary below.',
 
   // Tab bar (main navigation)
   'tabs.home': 'Home',

@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "coronary-circulation",
+  "locale": "en",
+  "title": "Coronary Circulation",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## What you learn in this chapter\n\nCoronary circulation describes arterial and venous flow feeding the myocardium, including cycle-dependent perfusion and factors affecting coronary flow.\n\n## Key concepts\n\n- **Diastolic perfusion**: coronary arteries fill mainly in diastole.\n- **Autoregulation**: maintains flow across perfusion pressure ranges.\n- **Myocardial metabolism**: high O₂ demand; high oxygen extraction.\n- **Collateral vessels**: develop slowly in chronic obstruction.\n- **Aortic sinuses**: typical origin of right and left coronaries.\n\n## Clinical and exam connections\n\n- **Angina**: supply–demand mismatch.\n- **Tachycardia**: shortens diastole and may reduce coronary filling.\n\n## Common exam pitfalls\n\n- Assuming significant **systolic** coronary filling (mainly diastolic).\n- Ignoring **coronary dominance** when interpreting territories.\n\n## Mini-summary\n\nCoronary circulation oxygenates the myocardium with diastolic filling and autoregulation. Aortic sinus origins and cardiac veins complete the circuit. Ischemia appears with demand or tachycardia.",
+  "summaryVersion": 1,
+  "status": "published"
+}

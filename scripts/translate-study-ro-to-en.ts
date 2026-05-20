@@ -60,7 +60,7 @@ async function translateOne(ro: RoDraft) {
       {
         role: "system",
         content:
-          "You are a medical translator. Translate Romanian study summaries to professional English. Keep markdown structure with these exact headings: ## What you learn in this chapter, ## Key concepts, ## Clinical and exam connections, ## Common exam pitfalls, ## Mini-summary. Output markdown only.",
+          "You are a medical translator. Translate Romanian study summaries to professional English. Keep markdown structure with these exact headings: ## What you learn in this chapter, ## Key concepts, ## Clinical and exam connections, ## Common exam pitfalls, ## Mini-summary. Translate ALL text to English, including bold lead terms before colons in bullets (e.g. **Main divisions**: not **Diviziuni principale**:). Output markdown only.",
       },
       {
         role: "user",

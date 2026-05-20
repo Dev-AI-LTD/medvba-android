@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "ascending-aorta",
+  "locale": "ro",
+  "title": "Aorta Ascendentă",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## Ce înveți în acest capitol\n\nAorta ascendentă pleacă de la ventriculul stâng și se continuă cu arcul aortic. Originea arterelor coronariene și raporturile cu inima sunt puncte frecvente la examen.\n\n## Concepte cheie\n\n- **Origine**: de la orificiul aortic, imediat superior valvei aortice.\n- **Raporturi**: în față cu inima, lateral cu plămânii, posterior cu atriul stâng.\n- **Arterele coronariene**: emerg de obicei din sinusurile aortice în porțiunea inițială.\n- **Pericard**: aorta ascendentă este în relație cu sacul pericardic.\n- **Extensie**: până la nivelul manubriului sternal unde începe arcul aortic.\n\n## Legături clinice și admitere\n\n- **Disecție aortică**: poate începe în aorta ascendentă (tip A).\n- **Imagistică**: conturul aortic pe radiografie toracică.\n\n## Capcane frecvente la examen\n\n- Confuzia **aortei ascendente** cu **trunchiul pulmonar** (ambele ies din inimă).\n- Localizarea greșită a originii coronarienelor la valva mitrală.\n\n## Mini-rezumat\n\nAorta ascendentă este segmentul inițial post-aortic, cu originea coronarienelor în sinusuri. Raporturile cu inima și pericardul sunt relevante clinic. Continuă cranial cu arcul aortic.",
+  "summaryVersion": 1,
+  "status": "published"
+}

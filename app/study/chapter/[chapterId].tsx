@@ -19,6 +19,7 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import { useStudyChapterContent } from '@/lib/study-hooks';
+import { resolveStudyContentLocale } from '@/lib/study-content-locale';
 import { STUDY_PILOT_MODULE_ID } from '@/constants/study';
 import {
   iconMd,
@@ -43,7 +44,7 @@ export default function StudyChapterReaderScreen() {
   const { t, getChapterTitle, currentLanguage } = useLanguage();
   const { colors } = useTheme();
   const { isPremium, isPaywallEnabled } = useSubscription();
-  const locale = currentLanguage === 'ro' ? 'ro' : 'en';
+  const locale = resolveStudyContentLocale(currentLanguage);
   const { content, isLoading, isError } = useStudyChapterContent(
     moduleId ?? '',
     chapterId ?? '',
@@ -51,9 +52,30 @@ export default function StudyChapterReaderScreen() {
   );
 
   const title = useMemo(() => {
+    if (fromQuiz === '1' && chapterId) {
+      return getChapterTitle(chapterId);
+    }
     if (content && 'title' in content && content.title) return content.title;
     return chapterId ? getChapterTitle(chapterId) : '';
-  }, [content, chapterId, getChapterTitle]);
+  }, [content, chapterId, getChapterTitle, fromQuiz]);
+
+  const parentChapter = content && 'parentChapter' in content ? content.parentChapter : null;
+  const isFallbackToParent =
+    content && 'isFallbackToParent' in content && content.isFallbackToParent;
+  const isTopicSummary =
+    content && 'isTopicSummary' in content && content.isTopicSummary;
+
+  const openParentChapter = () => {
+    if (!parentChapter) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push({
+      pathname: '/study/chapter/[chapterId]',
+      params: {
+        chapterId: parentChapter.studyChapterId,
+        moduleId: parentChapter.studyModuleId,
+      },
+    });
+  };
 
   if (!moduleId || !chapterId) {
     router.replace('/(tabs)/quiz');
@@ -179,6 +201,24 @@ export default function StudyChapterReaderScreen() {
             {t('study.summaryOfflinePreview')}
           </Text>
         )}
+        {isFallbackToParent && (
+          <GlassCard style={styles.fallbackBanner}>
+            <Text style={[styles.fallbackText, { color: colors.textSecondary }]}>
+              {t('study.topicSummaryFallback')}
+            </Text>
+          </GlassCard>
+        )}
+        {fromQuiz === '1' && isTopicSummary && parentChapter && (
+          <TouchableOpacity onPress={openParentChapter} style={styles.parentLink}>
+            <Text style={[styles.parentLinkLabel, { color: colors.textSecondary }]}>
+              {t('study.partOfChapter').replace(
+                '{chapter}',
+                getChapterTitle(parentChapter.studyChapterId),
+              )}
+            </Text>
+            <ChevronRight color={colors.primary} size={iconMd} />
+          </TouchableOpacity>
+        )}
         <StudyAudioPlayer
           key={`${chapterId}-${locale}`}
           audioUrl={audioUrl}
@@ -190,7 +230,7 @@ export default function StudyChapterReaderScreen() {
         <GlassCard style={styles.bodyCard}>
           <StudyMarkdown markdown={markdown} />
         </GlassCard>
-        {moduleId === STUDY_PILOT_MODULE_ID && (
+        {moduleId === STUDY_PILOT_MODULE_ID || fromQuiz === '1' ? (
           <TouchableOpacity onPress={startQuiz} style={styles.quizBtn}>
             <LinearGradient
               colors={[colors.primary, colors.primaryDark]}
@@ -202,7 +242,7 @@ export default function StudyChapterReaderScreen() {
               <ChevronRight color={colors.text} size={iconMd} />
             </LinearGradient>
           </TouchableOpacity>
-        )}
+        ) : null}
       </ScrollView>
     </Screen>
   );
@@ -227,6 +267,23 @@ const styles = StyleSheet.create({
     ...typeScale.footnote,
     textAlign: 'center',
     paddingHorizontal: screenPaddingX,
+  },
+  fallbackBanner: {
+    padding: space.space3,
+  },
+  fallbackText: {
+    ...typeScale.footnote,
+    textAlign: 'center',
+  },
+  parentLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: space.space1,
+  },
+  parentLinkLabel: {
+    ...typeScale.subheadline,
+    flex: 1,
   },
   lockedWrap: {
     flex: 1,

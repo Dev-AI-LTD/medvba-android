@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "right-atrium",
+  "locale": "en",
+  "title": "Right Atrium",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## What you learn in this chapter\n\nThe right atrium receives systemic venous blood and directs it to the right ventricle. Internal structures (tricuspid valve, crista terminalis, venous openings) are common exam topics.\n\n## Key concepts\n\n- **Venous inflow**: superior and inferior vena cava plus coronary sinus.\n- **Tricuspid valve**: at right AV orifice; prevents systolic reflux into the atrium.\n- **Crista terminalis**: separates smooth (sinus venarum) from rough (auricle) parts.\n- **Fossa ovalis**: remnant of fetal foramen ovale in the interatrial septum.\n- **SA node**: in right atrial wall near the SVC opening — primary pacemaker.\n\n## Clinical and exam connections\n\n- **Atrial fibrillation**: often involves right and left atrial tissue.\n- **ASD**: patent foramen or communication through fossa ovalis.\n\n## Common exam pitfalls\n\n- Confusing **coronary sinus** (vein) with an arterial structure.\n- Placing the **SA node** in the left atrium.\n\n## Mini-summary\n\nThe right atrium collects systemic venous blood and passes it through the tricuspid valve. Crista terminalis and fossa ovalis are septal landmarks. The SA node in the right wall initiates cardiac rhythm.",
+  "summaryVersion": 1,
+  "status": "published"
+}

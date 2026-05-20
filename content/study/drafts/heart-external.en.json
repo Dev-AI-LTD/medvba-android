@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "heart-external",
+  "locale": "en",
+  "title": "Heart - External Anatomy",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## What you learn in this chapter\n\nYou study the external shape of the heart, its surfaces and borders, and relations to the lungs, diaphragm, and great vessels. These landmarks guide clinical and imaging orientation.\n\n## Key concepts\n\n- **Shape and orientation**: ovoid pyramid; base superior and broad; apex left-anterior-inferior.\n- **Surfaces**: sternocostal (anterior), diaphragmatic (inferior), left and right pulmonary.\n- **Left border**: mainly left ventricle; right border mainly right atrium.\n- **Coronary sulcus**: groove between atria and ventricles; contains coronary vessels.\n- **Apex of heart**: 5th left intercostal space, midclavicular line.\n- **Relations**: posterior to esophagus and aorta; lateral to lungs; inferior to diaphragm.\n\n## Clinical and exam connections\n\n- **Auscultation**: surfaces and valves match listening areas.\n- **Chest imaging**: cardiac silhouette and apex on radiographs.\n\n## Common exam pitfalls\n\n- Confusing **apex** (left ventricle) with **base** (atria and great vessels).\n- Assuming the right border is formed by the right ventricle (right atrium predominates).\n\n## Mini-summary\n\nExternal heart anatomy provides topographic landmarks: apex, base, surfaces, and coronary sulcus. Relations to lungs and diaphragm explain clinical projection. Master orientation before chambers and valves.",
+  "summaryVersion": 1,
+  "status": "published"
+}

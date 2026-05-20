@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "internal-organs-intro",
+  "locale": "ro",
+  "title": "Organe Interne - Introducere",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## Ce înveți în acest capitol\n\nCapitolul introduce organizarea cavităților toracice și abdominale și relația dintre organe, vase și structuri de susținere. Este baza pentru capitolele detaliate despre inimă, plămâni și vase mari.\n\n## Concepte cheie\n\n- **Cavitatea toracică**: conține inima, plămânii, traheea, esofagul toracic și vasele mari.\n- **Cavitatea abdominală**: organe digestive, splina, rinichii și vasele abdominale.\n- **Mediastin**: compartiment central între plămâni, împărțit funcțional în anterior, mijlociu și posterior.\n- **Peritoneu**: membrană seroasă care învelește organele abdominale și formează mezenterul.\n- **Raporturi anatomice**: poziția unui organ față de vecini este esențială la examen.\n\n## Legături clinice și admitere\n\n- **Imagistică**: planurile și compartimentele explică localizarea leziunilor pe CT/RX.\n- **Chirurgie**: inciziile și abordările respectă straturile și lojile anatomice.\n\n## Capcane frecvente la examen\n\n- Confuzia între **mediastin** (spațiu) și **pericard** (înveliș al inimii).\n- Amestecarea cavității abdominale cu pelviană la organe genitale inferioare.\n\n## Mini-rezumat\n\nIntroducerea stabilește cadrul topografic: torace pentru circulație și respirație, abdomen pentru digestie și vase. Mediastinul și peritoneul organizează raporturile. Aceste repere vor fi folosiți în toate sub-capitolele Organe Interne.",
+  "summaryVersion": 1,
+  "status": "published"
+}

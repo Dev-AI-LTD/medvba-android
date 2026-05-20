@@ -44,4 +44,15 @@ const result = spawnSync(command, args, {
   env: process.env,
 });
 
+if (result.status === 0) {
+  console.log(`
+--- After build FINISHED (do not skip) ---
+1. Artifacts on expo.dev: .aab + mapping.txt (+ native-debug-symbols.zip)
+2. Download locally:
+     bun run release:artifacts -- --latest
+   or open build page → Artifacts
+3. Play Console → App bundle explorer → same versionCode → Deobfuscation file → upload mapping.txt
+---`);
+}
+
 process.exit(result.status ?? 1);

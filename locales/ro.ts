@@ -184,6 +184,7 @@ export const ro: Record<string, string> = {
   'session.noQuestions': 'Nu există întrebări pentru această categorie.',
   'session.goBack': 'Înapoi',
   'session.chapter': 'Capitol',
+  'session.openStudyChapter': 'Deschide rezumatul capitolului de studiu',
   'session.explanation': 'Explicație',
   'session.multiSelectHint': 'Selectează toate afirmațiile corecte, apoi apasă Verifică.',
   'session.confirmAnswer': 'Verifică răspunsurile',
@@ -264,6 +265,9 @@ export const ro: Record<string, string> = {
   'study.lockedMessage': 'Primele 3 capitole sunt gratuite. Deblochează toate rezumatele cu Premium.',
   'study.minRead': '~{minutes} min citire',
   'study.fromQuiz': 'Deschis din quiz',
+  'study.partOfChapter': 'Parte din: {chapter}',
+  'study.topicSummaryFallback':
+    'Rezumatul detaliat pentru acest sub-capitol este în lucru. Vezi mai jos rezumatul capitolului general.',
 
   // Tab bar (main navigation)
   'tabs.home': 'Acasă',

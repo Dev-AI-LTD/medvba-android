@@ -35,6 +35,7 @@ import { getMergedExpoExtra } from '@/lib/expo-public-extra';
 import { PUBLIC_APP_NAME } from '@/lib/public-brand';
 import { isFacebookLoginEnabledForBuild } from '@/lib/auth-facebook-visibility';
 import { buildKindeSocialSignInHint } from '@/lib/kinde-hosted-hints';
+import { clearPersistedQueryCache } from '@/lib/query-client';
 import { shouldClearMedvbaSessionAfterSyncFailure } from '@/lib/auth-sync-failure';
 import { isLikelyAuthConnectivityFailure } from '@/lib/auth-connectivity-errors';
 import { isConnectivityExchangeFailure } from '@/lib/session-exchange-errors';
@@ -904,6 +905,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     coldStartAuthBootstrapDoneRef.current = false;
     clearMedvbaSession();
     queryClient.clear();
+    await clearPersistedQueryCache();
   }, [kinde, clearMedvbaSession, queryClient]);
 
   const resetPassword = useCallback(async (email: string) => {

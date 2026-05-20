@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "left-ventricle",
+  "locale": "ro",
+  "title": "Ventriculul Stâng",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## Ce înveți în acest capitol\n\nVentriculul stâng generează presiunea sistemică și pompează sângele în aortă. Peretele gros muscular și valva aortică definesc funcția de pompare sistemică.\n\n## Concepte cheie\n\n- **Perete gros**: adaptat pentru presiuni mari; forma conică spre apex.\n- **Valva aortică**: trei cuspe semilunare la ieșire; previne refluxul.\n- **Septul interventricular**: separă ventriculele; partea membranoasă superior.\n- **Papilare și coarde tendinoase**: fixează cuspele mitrale în sistolă.\n- **Orificiul aortic**: situat posterior și dreapta față de orificiul mitral.\n\n## Legături clinice și admitere\n\n- **Infarct anterior**: afectează frecvent peretele ventriculului stâng.\n- **Insuficiență aortică**: dilatare ventriculară compensatorie.\n\n## Capcane frecvente la examen\n\n- Confuzia **grosimii peretelui**: VS mult mai gros decât VD.\n- Credința că valva aortică are două cuspe (normal tricuspidă).\n\n## Mini-rezumat\n\nVentriculul stâng este camera de pompare sistemică, cu perete gros și valvă aortică. Papilarele și coardele susțin valva mitrală. Septul interventricular îl separă de ventriculul drept.",
+  "summaryVersion": 1,
+  "status": "published"
+}

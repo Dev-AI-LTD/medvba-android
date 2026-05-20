@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "hemodynamics",
+  "locale": "ro",
+  "title": "Hemodinamică",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## Ce înveți în acest capitol\n\nHemodinamica descrie relația între presiune, flux și rezistență vasculară. Legile de continuitate și reglarea presiunii arteriale sunt centrale la admitere.\n\n## Concepte cheie\n\n- **Debit cardiac**: volum pompat pe minut; productul frecvență × volum sistolic.\n- **Rezistență vasculară**: opoziție la flux; reglată de tonus arteriolar.\n- **Presiune arterială**: determinată de debit și rezistență periferică.\n- **Legea continuității**: debitul este similar în serie (cu excepția shunturilor).\n- **Distribuția fluxului**: organele primesc fracțiuni variabile din debit.\n\n## Legături clinice și admitere\n\n- **Hipotensiune**: scădere debit sau rezistență disproporționată.\n- **Antihipertensive**: acționează pe rezistență sau volum.\n\n## Capcane frecvente la examen\n\n- Confuzia **presiunii** cu **debitului** (pot fi disociate).\n- Credința că rezistența este constantă (variază cu tonusul).\n\n## Mini-rezumat\n\nHemodinamica leagă debitul, rezistența și presiunea arterială. Debitul cardiac și tonusul arteriolar sunt reglatoare cheie. Înțelegerea lor explică șocul, hipertensiunea și răspunsul la tratament.",
+  "summaryVersion": 1,
+  "status": "published"
+}

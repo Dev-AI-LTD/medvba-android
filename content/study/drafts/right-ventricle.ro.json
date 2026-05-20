@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "right-ventricle",
+  "locale": "ro",
+  "title": "Ventriculul Drept",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## Ce înveți în acest capitol\n\nVentriculul drept pompează sângele spre plămâni prin artera pulmonară. Morfologia sa (trabecule, bandă septomarginală, valvă pulmonară) diferențiază partea dreaptă a inimii.\n\n## Concepte cheie\n\n- **Trabecule carnee**: relief muscular intern care ajută evacuarea.\n- **Bandă septomarginală (moderator)**: conține ramuri din plexul His; leagă septul de perete.\n- **Valva pulmonară**: la ieșire; trei cuspe semilunare spre trunchiul pulmonar.\n- **Infundibul pulmonar**: canal de ieșire, muscular, spre artera pulmonară.\n- **Peretele anterior**: subțire, în raport cu sternul (traume penetrante).\n\n## Legături clinice și admitere\n\n- **Hipertensiune pulmonară**: hipertrofie și dilatare ventriculară dreaptă.\n- **Bloc de ramură**: banda septomarginală conține conținut de conducere.\n\n## Capcane frecvente la examen\n\n- Confuzia **ventricul drept** cu **atriu drept** la localizarea valvei tricuspide.\n- Amestecarea **arterei pulmonare** (sânge neoxigenat) cu aorta.\n\n## Mini-rezumat\n\nVentriculul drept evacuează sângele neoxigenat spre plămâni. Trabeculele, banda septomarginală și valva pulmonară sunt repere interne. Peretele anterior subțire îl face vulnerabil la traume.",
+  "summaryVersion": 1,
+  "status": "published"
+}

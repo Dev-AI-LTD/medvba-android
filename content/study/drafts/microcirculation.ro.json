@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "microcirculation",
+  "locale": "ro",
+  "title": "Microcirculație",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## Ce înveți în acest capitol\n\nMicrocirculația cuprinde arteriole, metarteriole, capilare și venule unde are loc schimbul cu țesuturile. Mecanismele locale reglează fluxul și permeabilitatea.\n\n## Concepte cheie\n\n- **Capilare**: rețea cu diametru mic; schimb difuziv și filtrare.\n- **Precapilare**: arteriole cu tonus muscular — reglează fluxul.\n- **Filtare starling**: echilibru între presiune hidrostatică și oncotică.\n- **Venițe**: colectează sângele; capacitance mare în sistemul venos.\n- **Autoreglare locală**: răspuns la metaboliti, hipoxie, stres mecanic.\n\n## Legături clinice și admitere\n\n- **Edem**: dezechilibru în filtrare/reabsorbție capilară.\n- **Șoc**: redistribuirea fluxului microcirculator afectează perfuzia țesuturilor.\n\n## Capcane frecvente la examen\n\n- Confuzia **capilarelor** cu **venelor** la funcția de schimb.\n- Ignorarea rolului **tonusului precapilar** în reglarea fluxului.\n\n## Mini-rezumat\n\nMicrocirculația este locul schimbului cu țesuturile, prin capilare și reglare precapilară. Echilibrul Starling explică edemul. Autoreglarea locală adaptează fluxul la nevoile metabolice.",
+  "summaryVersion": 1,
+  "status": "published"
+}

@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "pulmonary-circulation",
+  "locale": "ro",
+  "title": "Circulația Pulmonară",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## Ce înveți în acest capitol\n\nCirculația pulmonară transportă sângele neoxigenat de la ventriculul drept la plămâni și înapoi oxigenat la atriul stâng. Presiunile sunt scăzute comparativ cu circulația sistemică.\n\n## Concepte cheie\n\n- **Trunchiul pulmonar**: iese din VD; se bifurcă în artere pulmonare dreaptă și stângă.\n- **Arteriole pulmonare**: duc sânge neoxigenat spre capilarele alveolare.\n- **Capilare pulmonare**: locul schimbului gazos.\n- **Venele pulmonare**: duc sânge oxigenat spre atriul stâng (unică venă cu O₂ ridicat).\n- **Presiune scăzută**: sistem de basă presiune, adaptat schimbului gazos.\n\n## Legături clinice și admitere\n\n- **Embolie pulmonară**: obstrucție arterială pulmonară acută.\n- **Hipertensiune pulmonară**: remodelare vasculară și suprasarcină pe VD.\n\n## Capcane frecvente la examen\n\n- Confuzia **arterei pulmonare** (sânge neoxigenat) cu **aorta**.\n- Credința că venele pulmonare sunt „vene sistemice”.\n\n## Mini-rezumat\n\nCirculația pulmonară realizează oxigenarea sângelui între ventriculul drept și atriul stâng. Arterele pulmonare poartă sânge neoxigenat; venele pulmonare îl returnează oxigenat. Presiunile scăzute caracterizează acest pat.",
+  "summaryVersion": 1,
+  "status": "published"
+}

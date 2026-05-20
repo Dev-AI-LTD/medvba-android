@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "internal-organs-intro",
+  "locale": "en",
+  "title": "Internal Organs - Introduction",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## What you learn in this chapter\n\nThis chapter introduces the organization of the thoracic and abdominal cavities and how organs, vessels, and supporting structures relate to one another. It is the foundation for detailed chapters on the heart, lungs, and great vessels.\n\n## Key concepts\n\n- **Thoracic cavity**: contains the heart, lungs, thoracic trachea, esophagus, and great vessels.\n- **Abdominal cavity**: digestive organs, spleen, kidneys, and abdominal vessels.\n- **Mediastinum**: central compartment between the lungs (anterior, middle, posterior).\n- **Peritoneum**: serous membrane lining abdominal organs and forming the mesentery.\n- **Anatomical relations**: an organ's position relative to neighbors is essential on exams.\n\n## Clinical and exam connections\n\n- **Imaging**: compartments explain lesion location on CT/X-ray.\n- **Surgery**: incisions follow anatomical layers and lodges.\n\n## Common exam pitfalls\n\n- Confusing **mediastinum** (space) with **pericardium** (heart sac).\n- Mixing abdominal and pelvic cavities for inferior genital organs.\n\n## Mini-summary\n\nThe introduction sets the topographic frame: thorax for circulation and respiration, abdomen for digestion and vessels. Mediastinum and peritoneum organize relations used in all Internal Organs sub-chapters.",
+  "summaryVersion": 1,
+  "status": "published"
+}

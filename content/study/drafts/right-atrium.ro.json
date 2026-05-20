@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "right-atrium",
+  "locale": "ro",
+  "title": "Atriul Drept",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## Ce înveți în acest capitol\n\nAtriul drept primește sângele venos sistemic și îl direcționează spre ventriculul drept. Structurile interne (valvă tricuspidă, creste, orificii venoase) sunt frecvent testate la admitere.\n\n## Concepte cheie\n\n- **Aport venos**: vene cave superioară și inferioară, plus sinus venos coronarian.\n- **Valva tricuspidă**: la orificiul atrioventricular drept; previne refluxul în atriu.\n- **Cresta terminală**: separă partea netedă (sinus venarum) de partea rugoasă (auricul).\n- **Fossa ovalis**: remanent al foramenului oval fetal pe septul interatrial.\n- **Nodul sinusal**: în peretele atriului drept, lângă deschiderea venei cave superioare.\n\n## Legături clinice și admitere\n\n- **Fibrilație atrială**: originea frecventă în țesutul atrial drept și stâng.\n- **Defect sept atrial**: foramen patent sau comunicare prin fossa ovalis.\n\n## Capcane frecvente la examen\n\n- Confuzia **sinus venos coronarian** (venă) cu **sinus coronarian** anatomic al inimii.\n- Localizarea greșită a **nodului sinusal** în atriul stâng.\n\n## Mini-rezumat\n\nAtriul drept colectează sângele venos sistemic și îl trimite prin valva tricuspidă. Cresta terminală și fossa ovalis sunt repere septale. Nodul sinusal, în peretele drept, inițiază ritmul cardiac.",
+  "summaryVersion": 1,
+  "status": "published"
+}

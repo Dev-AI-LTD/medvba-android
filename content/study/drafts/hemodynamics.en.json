@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "hemodynamics",
+  "locale": "en",
+  "title": "Hemodynamics",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## What you learn in this chapter\n\nHemodynamics relates pressure, flow, and vascular resistance. Continuity and arterial pressure regulation are central to admission exams.\n\n## Key concepts\n\n- **Cardiac output**: volume per minute; heart rate × stroke volume.\n- **Vascular resistance**: opposes flow; set by arteriolar tone.\n- **Arterial pressure**: depends on output and peripheral resistance.\n- **Continuity**: serial segments share flow (except shunts).\n- **Flow distribution**: organs receive variable fractions of output.\n\n## Clinical and exam connections\n\n- **Hypotension**: low output or mismatched resistance.\n- **Antihypertensives**: act on resistance or volume.\n\n## Common exam pitfalls\n\n- Equating **pressure** with **flow** (they can diverge).\n- Assuming resistance is fixed (it varies with tone).\n\n## Mini-summary\n\nHemodynamics links output, resistance, and arterial pressure. Cardiac output and arteriolar tone are key regulators. This explains shock, hypertension, and drug effects.",
+  "summaryVersion": 1,
+  "status": "published"
+}

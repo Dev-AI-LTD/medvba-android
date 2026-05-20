@@ -1,4 +1,5 @@
 import medAdmissionFull from '@/assets/study/med-admission-full.json';
+import internalOrgansFull from '@/assets/study/internal-organs-full.json';
 import { STUDY_PILOT_MODULE_ID } from '@/constants/study';
 import type { LocalStudyChapter } from '@/lib/study-preview';
 
@@ -7,9 +8,17 @@ type FullBundle = {
   chaptersByLocale?: Record<'ro' | 'en', Record<string, LocalStudyChapter>>;
 };
 
-const bundle = medAdmissionFull as FullBundle;
+const bundlesByModuleId: Record<string, FullBundle> = {
+  [STUDY_PILOT_MODULE_ID]: medAdmissionFull as FullBundle,
+  'internal-organs': internalOrgansFull as FullBundle,
+};
 
-function chaptersForLocale(locale: 'ro' | 'en'): Record<string, LocalStudyChapter> {
+function chaptersForLocale(
+  moduleId: string,
+  locale: 'ro' | 'en',
+): Record<string, LocalStudyChapter> {
+  const bundle = bundlesByModuleId[moduleId];
+  if (!bundle) return {};
   return bundle.chaptersByLocale?.[locale] ?? {};
 }
 
@@ -18,13 +27,11 @@ export function getFullBundleChapter(
   chapterId: string,
   locale: 'ro' | 'en' = 'ro',
 ): LocalStudyChapter | null {
-  if (moduleId !== STUDY_PILOT_MODULE_ID) return null;
-  return chaptersForLocale(locale)[chapterId] ?? null;
+  return chaptersForLocale(moduleId, locale)[chapterId] ?? null;
 }
 
 export function listFullBundleChapterIds(moduleId: string, locale: 'ro' | 'en' = 'ro'): string[] {
-  if (moduleId !== STUDY_PILOT_MODULE_ID) return [];
-  return Object.keys(chaptersForLocale(locale));
+  return Object.keys(chaptersForLocale(moduleId, locale));
 }
 
 export function hasFullBundleChapter(
@@ -33,4 +40,8 @@ export function hasFullBundleChapter(
   locale: 'ro' | 'en' = 'ro',
 ): boolean {
   return getFullBundleChapter(moduleId, chapterId, locale) !== null;
+}
+
+export function hasFullBundleModule(moduleId: string): boolean {
+  return moduleId in bundlesByModuleId;
 }

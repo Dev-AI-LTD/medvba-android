@@ -1,0 +1,11 @@
+{
+  "moduleId": "internal-organs",
+  "chapterId": "ascending-aorta",
+  "locale": "en",
+  "title": "Ascending Aorta",
+  "parentModuleId": "med-admission-barrons",
+  "parentChapterId": "cardiovascular",
+  "summaryMarkdown": "## What you learn in this chapter\n\nThe ascending aorta leaves the left ventricle and continues as the aortic arch. Coronary origins and cardiac relations are high-yield.\n\n## Key concepts\n\n- **Origin**: from aortic orifice just above the aortic valve.\n- **Relations**: anterior to heart, lateral to lungs, posterior to left atrium.\n- **Coronary arteries**: usually from sinuses in the proximal segment.\n- **Pericardium**: ascending aorta lies within pericardial reflection.\n- **Extent**: to manubrium level where the arch begins.\n\n## Clinical and exam connections\n\n- **Type A dissection**: may start in ascending aorta.\n- **Imaging**: aortic contour on chest radiographs.\n\n## Common exam pitfalls\n\n- Confusing **ascending aorta** with **pulmonary trunk**.\n- Placing coronary origins at the mitral valve.\n\n## Mini-summary\n\nThe ascending aorta is the initial post-valvular segment with coronary sinus origins. Relations to heart and pericardium matter clinically. It continues cranially as the arch.",
+  "summaryVersion": 1,
+  "status": "published"
+}
