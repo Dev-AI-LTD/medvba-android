@@ -5,7 +5,7 @@ import path from 'path';
 type EnvMap = Record<string, string>;
 
 /** Keep in sync with store releases; bare workflow requires a string runtimeVersion (no policy). */
-const APP_VERSION = '1.0.29';
+const APP_VERSION = '1.0.30';
 
 const readEnvText = (filePath: string): string => {
   const buf = fs.readFileSync(filePath);
@@ -155,7 +155,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       supportsTablet: false,
       bundleIdentifier: 'com.devaieood.medvba',
       icon: './assets/images/icon.png',
-      buildNumber: '48',
+      buildNumber: '49',
       // Required for @invertase/react-native-apple-authentication (EAS / prebuild).
       entitlements: {
         'com.apple.developer.applesignin': ['Default'],
@@ -171,7 +171,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         foregroundImage: './assets/images/adaptive-icon.png',
         backgroundColor: '#000000',
       },
-      versionCode: 39,
+      versionCode: 40,
       package: 'com.devaieood.medvba',
       // Play: upload mapping.txt per release (Deobfuscation). Native: native-debug-symbols.zip (Symbols); both are buildArtifactPaths in eas.json.
       allowBackup: false,
