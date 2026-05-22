@@ -2,6 +2,7 @@ import React, { Component, ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { AlertTriangle, RefreshCw } from 'lucide-react-native';
 import Colors from '@/constants/colors';
+import { logError } from '@/lib/monitoring';
 
 interface Props {
   children: ReactNode;
@@ -55,6 +56,7 @@ export class ErrorBoundary extends Component<Props, State> {
     }
     
     console.error('[ErrorBoundary] Caught error:', error, errorInfo);
+    logError(error, { componentStack: errorInfo.componentStack ?? undefined });
 
     this.setState({
       error,

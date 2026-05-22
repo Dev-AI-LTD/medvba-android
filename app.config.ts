@@ -224,10 +224,11 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         envFromFile.EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID || process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID,
       // Local / USB dev: default on so limits + paywall can be tested without forgetting .env.
       // EAS cloud & local EAS builds set EAS_BUILD=true → default off unless secret / .env sets true.
+      // Default true for store builds; set EXPO_PUBLIC_PAYWALL_ENABLED=false only for internal/dev EAS if needed.
       EXPO_PUBLIC_PAYWALL_ENABLED:
         envFromFile.EXPO_PUBLIC_PAYWALL_ENABLED ??
         process.env.EXPO_PUBLIC_PAYWALL_ENABLED ??
-        (process.env.EAS_BUILD === 'true' ? 'false' : 'true'),
+        'true',
       EXPO_PUBLIC_KINDE_ISSUER_URL:
         envFromFile.EXPO_PUBLIC_KINDE_ISSUER_URL || process.env.EXPO_PUBLIC_KINDE_ISSUER_URL,
       EXPO_PUBLIC_KINDE_CLIENT_ID:
@@ -247,9 +248,13 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       EXPO_PUBLIC_KINDE_SCOPES:
         envFromFile.EXPO_PUBLIC_KINDE_SCOPES || process.env.EXPO_PUBLIC_KINDE_SCOPES,
       EXPO_PUBLIC_SHOW_FACEBOOK_LOGIN:
-        envFromFile.EXPO_PUBLIC_SHOW_FACEBOOK_LOGIN || process.env.EXPO_PUBLIC_SHOW_FACEBOOK_LOGIN,
+        envFromFile.EXPO_PUBLIC_SHOW_FACEBOOK_LOGIN ??
+        process.env.EXPO_PUBLIC_SHOW_FACEBOOK_LOGIN ??
+        'false',
       EXPO_PUBLIC_FACEBOOK_LOGIN_ENABLED:
-        envFromFile.EXPO_PUBLIC_FACEBOOK_LOGIN_ENABLED || process.env.EXPO_PUBLIC_FACEBOOK_LOGIN_ENABLED,
+        envFromFile.EXPO_PUBLIC_FACEBOOK_LOGIN_ENABLED ??
+        process.env.EXPO_PUBLIC_FACEBOOK_LOGIN_ENABLED ??
+        'false',
       EXPO_PUBLIC_FETCH_ZOOM_REQUESTS:
         envFromFile.EXPO_PUBLIC_FETCH_ZOOM_REQUESTS ??
         process.env.EXPO_PUBLIC_FETCH_ZOOM_REQUESTS ??

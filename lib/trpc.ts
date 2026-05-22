@@ -1,4 +1,4 @@
-import { httpLink } from "@trpc/client";
+import { createTRPCProxyClient, httpLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import superjson from "superjson";
 
@@ -7,6 +7,27 @@ import { getMedvbaAccessToken } from "@/lib/medvba-access-token";
 import { getApiBaseUrl } from "@/lib/api-base-url";
 
 export const trpc = createTRPCReact<AppRouter>();
+
+let vanillaTrpcClient: ReturnType<typeof createTRPCProxyClient<AppRouter>> | null = null;
+
+/** Imperative tRPC client (outside React), e.g. report submit from callbacks. */
+export function getTrpcVanillaClient() {
+  if (!vanillaTrpcClient) {
+    vanillaTrpcClient = createTRPCProxyClient<AppRouter>({
+      links: [
+        httpLink({
+          url: `${getBaseUrl()}/api/trpc`,
+          transformer: superjson,
+          async headers() {
+            const token = getMedvbaAccessToken();
+            return token ? { Authorization: `Bearer ${token}` } : {};
+          },
+        }),
+      ],
+    });
+  }
+  return vanillaTrpcClient;
+}
 
 const getBaseUrl = () => {
   const url = getApiBaseUrl();

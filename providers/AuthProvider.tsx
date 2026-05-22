@@ -34,7 +34,11 @@ import { withTimeout } from '@/lib/with-timeout';
 import { getMergedExpoExtra } from '@/lib/expo-public-extra';
 import { PUBLIC_APP_NAME } from '@/lib/public-brand';
 import { isFacebookLoginEnabledForBuild } from '@/lib/auth-facebook-visibility';
-import { buildKindeSocialSignInHint } from '@/lib/kinde-hosted-hints';
+import {
+  buildKindeRegisterHint,
+  buildKindeSignInHint,
+  buildKindeSocialSignInHint,
+} from '@/lib/kinde-hosted-hints';
 import { clearPersistedQueryCache } from '@/lib/query-client';
 import { shouldClearMedvbaSessionAfterSyncFailure } from '@/lib/auth-sync-failure';
 import { isLikelyAuthConnectivityFailure } from '@/lib/auth-connectivity-errors';
@@ -189,6 +193,10 @@ interface AuthActions {
   signInWithGoogle: () => Promise<{ error: AuthError | null }>;
   signInWithFacebook: () => Promise<{ error: AuthError | null }>;
   signInWithApple: () => Promise<{ error: AuthError | null }>;
+  /** Kinde PKCE in browser — Email + password on Kinde page (not ROPC in app). */
+  signInWithEmailHosted: (email?: string) => Promise<{ error: AuthError | null }>;
+  signUpWithEmailHosted: (email?: string) => Promise<{ error: AuthError | null }>;
+  isEmailHostedAuthEnabled: boolean;
   signInWithKindeHosted: (loginHint?: LoginMethodParams) => Promise<{ error: AuthError | null }>;
   signUpWithKindeHosted: (registerHint?: LoginMethodParams) => Promise<{ error: AuthError | null }>;
 }
@@ -834,6 +842,53 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     (extraConfig as Record<string, unknown>).EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID ?? '',
   ).trim();
 
+  const emailConnectionId = String(
+    (extraConfig as Record<string, unknown>).EXPO_PUBLIC_KINDE_EMAIL_CONNECTION_ID ?? '',
+  ).trim();
+
+  const isEmailHostedAuthEnabled = emailConnectionId.length > 0;
+
+  const signInWithEmailHosted = useCallback(
+    async (email?: string) => {
+      if (Platform.OS === 'web') {
+        return { error: { message: 'Email sign-in is not available on web' } as AuthError };
+      }
+      if (!emailConnectionId) {
+        log.warn(
+          '[Auth] EXPO_PUBLIC_KINDE_EMAIL_CONNECTION_ID is empty. Kinde → Authentication → Email + password → Connection ID.',
+        );
+        return {
+          error: { message: 'Email sign-in is not configured for this build.' } as AuthError,
+        };
+      }
+      const hint = buildKindeSignInHint({
+        emailConnectionId,
+        email: email?.trim(),
+      });
+      return signInWithKindeHosted(hint);
+    },
+    [emailConnectionId, signInWithKindeHosted],
+  );
+
+  const signUpWithEmailHosted = useCallback(
+    async (email?: string) => {
+      if (Platform.OS === 'web') {
+        return { error: { message: 'Email sign-up is not available on web' } as AuthError };
+      }
+      if (!emailConnectionId) {
+        return {
+          error: { message: 'Email sign-up is not configured for this build.' } as AuthError,
+        };
+      }
+      const hint = buildKindeRegisterHint({
+        emailConnectionId,
+        email: email?.trim(),
+      });
+      return signUpWithKindeHosted(hint);
+    },
+    [emailConnectionId, signUpWithKindeHosted],
+  );
+
   const signInWithGoogle = useCallback(async () => {
     return signInWithKindeHosted(
       buildKindeSocialSignInHint(googleConnectionId || undefined),
@@ -857,8 +912,13 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   }, [facebookConnectionId, isFacebookLoginEnabled, signInWithKindeHosted]);
 
   const signInWithApple = useCallback(async () => {
-    if (Platform.OS !== 'ios') {
-      return { error: { message: 'Apple Sign-In is not available on this device' } as AuthError };
+    if (Platform.OS === 'web') {
+      return { error: { message: 'Apple Sign-In is not available on web' } as AuthError };
+    }
+    if (!appleConnectionId) {
+      log.warn(
+        '[Auth] EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID is empty. Add the Connection ID from Kinde (Settings → Authentication → Apple).',
+      );
     }
     return signInWithKindeHosted(
       buildKindeSocialSignInHint(appleConnectionId || undefined),
@@ -1073,6 +1133,9 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     signInWithGoogle,
     signInWithFacebook,
     signInWithApple,
+    signInWithEmailHosted,
+    signUpWithEmailHosted,
+    isEmailHostedAuthEnabled,
     signInWithKindeHosted,
     signUpWithKindeHosted,
   };

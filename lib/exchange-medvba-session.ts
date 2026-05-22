@@ -108,6 +108,10 @@ async function parseSessionJson(res: Response): Promise<
 
 function formatApiErrorMessage(json: SessionResponseJson, fallback: string): string {
   const base = (typeof json.error === "string" && json.error.trim()) || fallback;
+  const hint = typeof json.hint === "string" ? json.hint.trim() : "";
+  if (isKindeToken502Json(json)) {
+    return hint ? `${base}\n\n${hint}` : base;
+  }
   const detail = json.detail;
   let body = base;
   if (typeof detail === "string" && detail.trim()) {
@@ -120,7 +124,6 @@ function formatApiErrorMessage(json: SessionResponseJson, fallback: string): str
       /* ignore */
     }
   }
-  const hint = typeof json.hint === "string" ? json.hint.trim() : "";
   if (hint) {
     body = `${body}\n\n${hint}`;
   }

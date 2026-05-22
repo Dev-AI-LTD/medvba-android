@@ -9,6 +9,23 @@ import type { UserAccount } from '@/types/user';
 import { getMergedExpoExtra } from '@/lib/expo-public-extra';
 import { log } from '@/lib/log';
 
+/** Verbose Supabase diagnostics — development only (reduces production log leakage). */
+const nativeConsole = globalThis.console;
+function devLog(...args: unknown[]): void {
+  if (__DEV__) nativeConsole.log(...args);
+}
+function devWarn(...args: unknown[]): void {
+  if (__DEV__) nativeConsole.warn(...args);
+}
+function devError(...args: unknown[]): void {
+  if (__DEV__) {
+    nativeConsole.error(...args);
+    return;
+  }
+  const msg = typeof args[0] === 'string' ? args[0] : '[Supabase] Error';
+  log.error(msg, args.length > 1 ? { detail: args.slice(1) } : undefined);
+}
+
 /** Avoid spamming Metro when subscription sync runs in a tight loop. */
 let lastSubscriptionMutationLogKey: string | null = null;
 
@@ -103,7 +120,7 @@ export function useStudyRooms() {
   return useQuery({
     queryKey: queryKeys.studyRoomsList(),
     queryFn: async () => {
-      console.log('[Supabase] Fetching study rooms...');
+      devLog('[Supabase] Fetching study rooms...');
       const { data, error } = await supabase
         .from('study_rooms')
         .select('*')
@@ -111,11 +128,11 @@ export function useStudyRooms() {
         .limit(20);
 
       if (error) {
-        console.error('[Supabase] Error fetching study rooms:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        devError('[Supabase] Error fetching study rooms:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
         return [];
       }
 
-      console.log('[Supabase] Fetched', data?.length || 0, 'study rooms');
+      devLog('[Supabase] Fetched', data?.length || 0, 'study rooms');
 
       return (data || []).map((room: any) => ({
         id: room.id,
@@ -150,7 +167,7 @@ export function useCreateStudyRoom() {
       category: string;
       maxParticipants: number;
     }) => {
-      console.log('[Supabase] Creating study room:', input.name);
+      devLog('[Supabase] Creating study room:', input.name);
       
       const { data, error } = await supabase
         .from('study_rooms')
@@ -163,11 +180,11 @@ export function useCreateStudyRoom() {
         .single();
 
       if (error) {
-        console.error('[Supabase] Error creating study room:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        devError('[Supabase] Error creating study room:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
         throw error;
       }
 
-      console.log('[Supabase] Study room created:', data.id);
+      devLog('[Supabase] Study room created:', data.id);
       return data;
     },
     onSuccess: () => {
@@ -184,7 +201,7 @@ export function useUpdateStudyRoom() {
       roomId: string;
       meetingUrl?: string;
     }) => {
-      console.log('[Supabase] Updating study room:', input.roomId);
+      devLog('[Supabase] Updating study room:', input.roomId);
 
       const updateData: any = {};
       if (input.meetingUrl !== undefined) updateData.meeting_url = input.meetingUrl;
@@ -197,11 +214,11 @@ export function useUpdateStudyRoom() {
         .single();
 
       if (error) {
-        console.error('[Supabase] Error updating study room:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        devError('[Supabase] Error updating study room:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
         throw error;
       }
 
-      console.log('[Supabase] Study room updated:', data.id);
+      devLog('[Supabase] Study room updated:', data.id);
       return data;
     },
     onSuccess: () => {
@@ -214,7 +231,7 @@ export function useUpcomingSessions() {
   return useQuery({
     queryKey: ['upcomingSessions'],
     queryFn: async () => {
-      console.log('[Supabase] Fetching upcoming sessions...');
+      devLog('[Supabase] Fetching upcoming sessions...');
       
       const now = new Date().toISOString();
       const { data, error } = await supabase
@@ -225,11 +242,11 @@ export function useUpcomingSessions() {
         .limit(20);
 
       if (error) {
-        console.error('[Supabase] Error fetching sessions:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        devError('[Supabase] Error fetching sessions:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
         return [];
       }
 
-      console.log('[Supabase] Fetched', data?.length || 0, 'upcoming sessions');
+      devLog('[Supabase] Fetched', data?.length || 0, 'upcoming sessions');
 
       return (data || []).map((session: any) => ({
         id: session.id,
@@ -272,7 +289,7 @@ export function useCreateSession() {
       category: string;
       meetingUrl?: string;
     }) => {
-      console.log('[Supabase] Creating session:', input.title);
+      devLog('[Supabase] Creating session:', input.title);
 
       const { data: roomData } = await supabase
         .from('study_rooms')
@@ -301,11 +318,11 @@ export function useCreateSession() {
         .single();
 
       if (error) {
-        console.error('[Supabase] Error creating session:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        devError('[Supabase] Error creating session:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
         throw error;
       }
 
-      console.log('[Supabase] Session created:', data.id);
+      devLog('[Supabase] Session created:', data.id);
       return data;
     },
     onSuccess: () => {
@@ -323,7 +340,7 @@ export function useUpdateSession() {
       status?: 'SCHEDULED' | 'LIVE' | 'ENDED';
       meetingUrl?: string;
     }) => {
-      console.log('[Supabase] Updating session:', input.sessionId);
+      devLog('[Supabase] Updating session:', input.sessionId);
 
       const updateData: any = {};
       if (input.status !== undefined) updateData.status = input.status;
@@ -337,11 +354,11 @@ export function useUpdateSession() {
         .single();
 
       if (error) {
-        console.error('[Supabase] Error updating session:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        devError('[Supabase] Error updating session:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
         throw error;
       }
 
-      console.log('[Supabase] Session updated:', data.id);
+      devLog('[Supabase] Session updated:', data.id);
       return data;
     },
     onSuccess: () => {
@@ -372,7 +389,7 @@ export function useRoomMessages(roomId: string) {
     }
 
     const fetchMessages = async () => {
-      console.log('[Supabase] Fetching messages for room:', roomId);
+      devLog('[Supabase] Fetching messages for room:', roomId);
       setIsLoading(true);
 
       const { data: messagesData, error: messagesError } = await supabase
@@ -383,7 +400,7 @@ export function useRoomMessages(roomId: string) {
         .limit(100);
 
       if (messagesError) {
-        console.error('[Supabase] Error fetching messages:', JSON.stringify({ message: messagesError.message, code: messagesError.code, details: messagesError.details }));
+        devError('[Supabase] Error fetching messages:', JSON.stringify({ message: messagesError.message, code: messagesError.code, details: messagesError.details }));
         setIsLoading(false);
         return;
       }
@@ -391,7 +408,7 @@ export function useRoomMessages(roomId: string) {
       if (!messagesData || messagesData.length === 0) {
         setMessages([]);
         setIsLoading(false);
-        console.log('[Supabase] No messages found');
+        devLog('[Supabase] No messages found');
         return;
       }
 
@@ -420,7 +437,7 @@ export function useRoomMessages(roomId: string) {
 
       setMessages(formattedMessages);
       setIsLoading(false);
-      console.log('[Supabase] Loaded', formattedMessages.length, 'messages');
+      devLog('[Supabase] Loaded', formattedMessages.length, 'messages');
     };
 
     fetchMessages();
@@ -436,7 +453,7 @@ export function useRoomMessages(roomId: string) {
           filter: `room_id=eq.${roomId}`,
         },
         async (payload) => {
-          console.log('[Supabase] New message received:', payload);
+          devLog('[Supabase] New message received:', payload);
           
           const { data: profile } = await supabase
             .from('profiles')
@@ -459,7 +476,7 @@ export function useRoomMessages(roomId: string) {
       .subscribe();
 
     return () => {
-      console.log('[Supabase] Unsubscribing from room:', roomId);
+      devLog('[Supabase] Unsubscribing from room:', roomId);
       supabase.removeChannel(channel);
     };
   }, [roomId]);
@@ -474,7 +491,7 @@ export function useSendMessage() {
       userId: string;
       message: string;
     }) => {
-      console.log('[Supabase] Sending message to room:', input.roomId);
+      devLog('[Supabase] Sending message to room:', input.roomId);
 
       const { data, error } = await supabase
         .from('room_messages')
@@ -487,11 +504,11 @@ export function useSendMessage() {
         .single();
 
       if (error) {
-        console.error('[Supabase] Error sending message:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        devError('[Supabase] Error sending message:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
         throw error;
       }
 
-      console.log('[Supabase] Message sent:', data.id);
+      devLog('[Supabase] Message sent:', data.id);
       return data;
     },
   });
@@ -519,7 +536,7 @@ export function useZoomRequests(userId: string | undefined) {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('[Supabase] Error fetching zoom requests:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        devError('[Supabase] Error fetching zoom requests:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
         throw error;
       }
 
@@ -545,7 +562,7 @@ export function useCreateZoomRequest() {
       studyTopic: string;
       preferredDate: string;
     }) => {
-      console.log('[Supabase] Creating zoom request:', input.studyTopic);
+      devLog('[Supabase] Creating zoom request:', input.studyTopic);
 
       const { data, error } = await supabase
         .from('zoom_requests')
@@ -559,11 +576,11 @@ export function useCreateZoomRequest() {
         .single();
 
       if (error) {
-        console.error('[Supabase] Error creating zoom request:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        devError('[Supabase] Error creating zoom request:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
         throw error;
       }
 
-      console.log('[Supabase] Zoom request created:', data.id);
+      devLog('[Supabase] Zoom request created:', data.id);
       return data;
     },
     onSuccess: (_, variables) => {
@@ -580,7 +597,7 @@ export function useStudyPartners(filters?: {
   return useQuery({
     queryKey: ['studyPartners', filters],
     queryFn: async () => {
-      console.log('[Supabase] Fetching study partners with filters:', filters);
+      devLog('[Supabase] Fetching study partners with filters:', filters);
       
       let query = supabase
         .from('profiles')
@@ -608,11 +625,11 @@ export function useStudyPartners(filters?: {
         .limit(50);
 
       if (error) {
-        console.error('[Supabase] Error fetching study partners:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        devError('[Supabase] Error fetching study partners:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
         throw error;
       }
 
-      console.log('[Supabase] Fetched', data?.length || 0, 'study partners');
+      devLog('[Supabase] Fetched', data?.length || 0, 'study partners');
 
       return (data || []).map((user: any) => ({
         id: user.id,
@@ -637,7 +654,7 @@ export function useUserProfile(userId: string | undefined) {
     queryFn: async () => {
       if (!userId) return null;
 
-      console.log('[Supabase] Fetching user profile:', userId);
+      devLog('[Supabase] Fetching user profile:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -645,12 +662,12 @@ export function useUserProfile(userId: string | undefined) {
         .maybeSingle();
 
       if (error) {
-        console.error('[Supabase] Error fetching user profile:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        devError('[Supabase] Error fetching user profile:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
         throw error;
       }
 
       if (!data) {
-        console.log('[Supabase] No profile row yet for user (will retry when created):', userId);
+        devLog('[Supabase] No profile row yet for user (will retry when created):', userId);
         return null;
       }
 
@@ -686,7 +703,7 @@ export function useUpdateUserProfile() {
       is_public?: boolean;
       profile_photo_url?: string;
     }) => {
-      console.log('[Supabase] Updating user profile:', input.userId);
+      devLog('[Supabase] Updating user profile:', input.userId);
 
       const updateData: any = {};
       if (input.name !== undefined) updateData.name = input.name;
@@ -709,11 +726,11 @@ export function useUpdateUserProfile() {
         .single();
 
       if (error) {
-        console.error('[Supabase] Error updating user profile:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        devError('[Supabase] Error updating user profile:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
         throw error;
       }
 
-      console.log('[Supabase] User profile updated');
+      devLog('[Supabase] User profile updated');
       return data;
     },
     onSuccess: (_, variables) => {
@@ -725,7 +742,7 @@ export function useUpdateUserProfile() {
 
 export async function uploadProfilePhoto(userId: string, uri: string): Promise<string> {
   try {
-    console.log('[Supabase] Uploading profile photo for user:', userId);
+    devLog('[Supabase] Uploading profile photo for user:', userId);
 
     const { arrayBuffer, mimeType: rawMime } = await profilePhotoUriToArrayBuffer(uri);
     let mimeType = rawMime;
@@ -741,20 +758,20 @@ export async function uploadProfilePhoto(userId: string, uri: string): Promise<s
       });
 
     if (uploadError) {
-      console.error('[Supabase] Error uploading photo:', JSON.stringify({ message: uploadError.message, code: (uploadError as any).statusCode }));
+      devError('[Supabase] Error uploading photo:', JSON.stringify({ message: uploadError.message, code: (uploadError as any).statusCode }));
       throw new Error(`Upload failed: ${uploadError.message}`);
     }
 
-    console.log('[Supabase] Photo uploaded, path:', uploadData.path);
+    devLog('[Supabase] Photo uploaded, path:', uploadData.path);
     const { data: urlData } = supabase.storage
       .from('profile-photos')
       .getPublicUrl(filePath);
 
     const publicUrl = urlData.publicUrl.split('?')[0];
-    console.log('[Supabase] Photo uploaded successfully:', publicUrl);
+    devLog('[Supabase] Photo uploaded successfully:', publicUrl);
     return publicUrl;
   } catch (error: any) {
-    console.error('[Supabase] Error in uploadProfilePhoto:', JSON.stringify({ message: error?.message, stack: error?.stack }));
+    devError('[Supabase] Error in uploadProfilePhoto:', JSON.stringify({ message: error?.message, stack: error?.stack }));
     throw error;
   }
 }
@@ -789,7 +806,7 @@ export function useUserProgress(userId: string | undefined) {
     queryFn: async () => {
       if (!userId) return null;
 
-      console.log('[Supabase] Fetching user progress for:', userId);
+      devLog('[Supabase] Fetching user progress for:', userId);
       
       const { data, error } = await supabase
         .from('user_progress')
@@ -799,11 +816,11 @@ export function useUserProgress(userId: string | undefined) {
 
       if (error) {
         if (error.code === 'PGRST116') {
-          console.log('[Supabase] No user progress found, will create on first update');
+          devLog('[Supabase] No user progress found, will create on first update');
           return null;
         }
         // Fail gracefully: app continues with local data (no throw = no red error overlay)
-        console.warn('[Supabase] Error fetching user progress (using local data):', error.message);
+        devWarn('[Supabase] Error fetching user progress (using local data):', error.message);
         return null;
       }
 
@@ -842,7 +859,7 @@ export function useUpsertUserProgress() {
       longestStreak: number;
       lastActivityDate: string | null;
     }) => {
-      console.log('[Supabase] Upserting user progress for:', input.userId);
+      devLog('[Supabase] Upserting user progress for:', input.userId);
 
       const { data, error } = await supabase
         .from('user_progress')
@@ -861,11 +878,11 @@ export function useUpsertUserProgress() {
         .single();
 
       if (error) {
-        console.error('[Supabase] Error upserting user progress:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        devError('[Supabase] Error upserting user progress:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
         throw error;
       }
 
-      console.log('[Supabase] User progress upserted successfully');
+      devLog('[Supabase] User progress upserted successfully');
       return data;
     },
     onSuccess: (_, variables) => {
@@ -887,14 +904,14 @@ export function useLeaderboard(period: 'daily' | 'weekly' | 'monthly' | 'allTime
   return useQuery({
     queryKey: ['leaderboard', period, limit],
     queryFn: async () => {
-      console.log('[Supabase] Fetching leaderboard:', period);
+      devLog('[Supabase] Fetching leaderboard:', period);
       const { data, error } = await supabase.rpc('get_leaderboard', {
         p_period: period,
         p_limit: limit,
       });
 
       if (error) {
-        console.error('[Supabase] Error fetching leaderboard:', JSON.stringify({ message: error.message, code: error.code }));
+        devError('[Supabase] Error fetching leaderboard:', JSON.stringify({ message: error.message, code: error.code }));
         return [];
       }
 
@@ -919,7 +936,7 @@ export function useDailyProgress(userId: string | undefined, date: string) {
     queryFn: async () => {
       if (!userId) return null;
 
-      console.log('[Supabase] Fetching daily progress for:', userId, date);
+      devLog('[Supabase] Fetching daily progress for:', userId, date);
       const { data, error } = await supabase
         .from('daily_progress')
         .select('*')
@@ -929,10 +946,10 @@ export function useDailyProgress(userId: string | undefined, date: string) {
 
       if (error) {
         if (error.code === 'PGRST116') {
-          console.log('[Supabase] No daily progress found for date:', date);
+          devLog('[Supabase] No daily progress found for date:', date);
           return null;
         }
-        console.error('[Supabase] Error fetching daily progress:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        devError('[Supabase] Error fetching daily progress:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
         throw error;
       }
 
@@ -957,7 +974,7 @@ export function useWeeklyProgress(userId: string | undefined, startDate: string,
     queryFn: async () => {
       if (!userId) return [];
 
-      console.log('[Supabase] Fetching weekly progress for:', userId, startDate, 'to', endDate);
+      devLog('[Supabase] Fetching weekly progress for:', userId, startDate, 'to', endDate);
       
       const { data, error } = await supabase
         .from('daily_progress')
@@ -968,11 +985,11 @@ export function useWeeklyProgress(userId: string | undefined, startDate: string,
         .order('date', { ascending: true });
 
       if (error) {
-        console.error('[Supabase] Error fetching weekly progress:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        devError('[Supabase] Error fetching weekly progress:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
         throw error;
       }
 
-      console.log('[Supabase] Fetched', data?.length || 0, 'daily records');
+      devLog('[Supabase] Fetched', data?.length || 0, 'daily records');
 
       return (data || []).map((day: any) => ({
         id: day.id,
@@ -1005,7 +1022,7 @@ export function useUpsertDailyProgress() {
       correctAnswers: number;
       studyTimeSeconds: number;
     }) => {
-      console.log('[Supabase] Upserting daily progress for:', input.userId, input.date);
+      devLog('[Supabase] Upserting daily progress for:', input.userId, input.date);
 
       const { data, error } = await supabase
         .from('daily_progress')
@@ -1022,11 +1039,11 @@ export function useUpsertDailyProgress() {
         .single();
 
       if (error) {
-        console.error('[Supabase] Error upserting daily progress:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        devError('[Supabase] Error upserting daily progress:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
         throw error;
       }
 
-      console.log('[Supabase] Daily progress upserted successfully');
+      devLog('[Supabase] Daily progress upserted successfully');
       return data;
     },
     onSuccess: (_, variables) => {
@@ -1086,7 +1103,7 @@ export function useUserAchievements(userId: string | undefined) {
     queryFn: async () => {
       if (!userId) return [];
 
-      console.log('[Supabase] Fetching achievements for user:', userId);
+      devLog('[Supabase] Fetching achievements for user:', userId);
       const { data, error } = await supabase
         .from('user_achievements')
         .select('*')
@@ -1094,11 +1111,11 @@ export function useUserAchievements(userId: string | undefined) {
         .order('earned_at', { ascending: false });
 
       if (error) {
-        console.error('[Supabase] Error fetching user achievements:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        devError('[Supabase] Error fetching user achievements:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
         throw error;
       }
 
-      console.log('[Supabase] Fetched', data?.length || 0, 'achievements');
+      devLog('[Supabase] Fetched', data?.length || 0, 'achievements');
 
       return (data || []).map((achievement: any) => ({
         id: achievement.id,
@@ -1121,7 +1138,7 @@ export function useAllRecentAchievements(limit: number = 20) {
   return useQuery({
     queryKey: ['recentAchievements', limit],
     queryFn: async () => {
-      console.log('[Supabase] Fetching recent achievements from all users with user info');
+      devLog('[Supabase] Fetching recent achievements from all users with user info');
       
       const { data: achievementsData, error: achievementsError } = await supabase
         .from('user_achievements')
@@ -1130,12 +1147,12 @@ export function useAllRecentAchievements(limit: number = 20) {
         .limit(limit);
 
       if (achievementsError) {
-        console.error('[Supabase] Error fetching recent achievements:', JSON.stringify({ message: achievementsError.message, code: achievementsError.code, details: achievementsError.details }));
+        devError('[Supabase] Error fetching recent achievements:', JSON.stringify({ message: achievementsError.message, code: achievementsError.code, details: achievementsError.details }));
         throw achievementsError;
       }
 
       if (!achievementsData || achievementsData.length === 0) {
-        console.log('[Supabase] No achievements found');
+        devLog('[Supabase] No achievements found');
         return [];
       }
 
@@ -1147,7 +1164,7 @@ export function useAllRecentAchievements(limit: number = 20) {
         .in('id', userIds);
 
       if (usersError) {
-        console.error('[Supabase] Error fetching user info:', JSON.stringify({ message: usersError.message, code: usersError.code, details: usersError.details }));
+        devError('[Supabase] Error fetching user info:', JSON.stringify({ message: usersError.message, code: usersError.code, details: usersError.details }));
       }
 
       const usersMap = new Map(
@@ -1160,7 +1177,7 @@ export function useAllRecentAchievements(limit: number = 20) {
         ])
       );
 
-      console.log('[Supabase] Fetched', achievementsData.length, 'recent achievements with user info');
+      devLog('[Supabase] Fetched', achievementsData.length, 'recent achievements with user info');
 
       return achievementsData.map((achievement: any) => {
         const userInfo = usersMap.get(achievement.user_id) || {
@@ -1194,7 +1211,7 @@ export function useGrantAchievement() {
 
   return useMutation({
     mutationFn: async (achievementId: AchievementType): Promise<boolean> => {
-      console.log('[Supabase] Granting achievement:', achievementId, 'for current user');
+      devLog('[Supabase] Granting achievement:', achievementId, 'for current user');
 
       const { data, error } = await supabase.rpc('grant_my_achievement', {
         p_achievement: achievementId,
@@ -1209,20 +1226,20 @@ export function useGrantAchievement() {
         };
 
         if (error.message?.includes('Not authenticated')) {
-          console.warn('[Supabase] grant_my_achievement not authenticated:', JSON.stringify(errorDetails, null, 2));
+          devWarn('[Supabase] grant_my_achievement not authenticated:', JSON.stringify(errorDetails, null, 2));
           return false;
         }
 
-        console.error('[Supabase] grant_my_achievement error:', JSON.stringify(errorDetails, null, 2));
+        devError('[Supabase] grant_my_achievement error:', JSON.stringify(errorDetails, null, 2));
         return false;
       }
 
       if (!data) {
-        console.warn('[Supabase] grant_my_achievement returned no data');
+        devWarn('[Supabase] grant_my_achievement returned no data');
         return false;
       }
 
-      console.log('[Supabase] Achievement granted:', data);
+      devLog('[Supabase] Achievement granted:', data);
       return true;
     },
     onSuccess: () => {
@@ -1245,7 +1262,7 @@ export function useCheckAchievements(userId: string | undefined) {
         return { earned: [], progress: {} as Record<AchievementType, { current: number; required: number }> };
       }
 
-      console.log('[Supabase] Checking achievements for user:', userId);
+      devLog('[Supabase] Checking achievements for user:', userId);
 
       const [userProgressResult, achievementsResult] = await Promise.all([
         supabase.from('user_progress').select('*').eq('user_id', userId).single(),
@@ -1253,12 +1270,12 @@ export function useCheckAchievements(userId: string | undefined) {
       ]);
 
       if (userProgressResult.error && userProgressResult.error.code !== 'PGRST116') {
-        console.error('[Supabase] Error fetching user progress:', JSON.stringify({ message: userProgressResult.error.message, code: userProgressResult.error.code, details: userProgressResult.error.details }));
+        devError('[Supabase] Error fetching user progress:', JSON.stringify({ message: userProgressResult.error.message, code: userProgressResult.error.code, details: userProgressResult.error.details }));
         throw userProgressResult.error;
       }
 
       if (achievementsResult.error) {
-        console.error('[Supabase] Error fetching achievements:', JSON.stringify({ message: achievementsResult.error.message, code: achievementsResult.error.code, details: achievementsResult.error.details }));
+        devError('[Supabase] Error fetching achievements:', JSON.stringify({ message: achievementsResult.error.message, code: achievementsResult.error.code, details: achievementsResult.error.details }));
         throw achievementsResult.error;
       }
 
@@ -1326,7 +1343,7 @@ export function useCheckAchievements(userId: string | undefined) {
         progressMap['grand_master'] = { current: currentStreak, required: 100 };
       }
 
-      console.log('[Supabase] Achievement check complete:', earned.length, 'new achievements earned');
+      devLog('[Supabase] Achievement check complete:', earned.length, 'new achievements earned');
       
       return {
         earned,
@@ -1381,7 +1398,7 @@ export function useDirectChats(userId: string | undefined) {
     queryFn: async (): Promise<DirectChatSummary[]> => {
       if (!userId) return [];
 
-      console.log('[Supabase] Fetching direct chats for user:', userId);
+      devLog('[Supabase] Fetching direct chats for user:', userId);
 
       const { data, error } = await supabase
         .from('direct_chat_participants')
@@ -1398,7 +1415,7 @@ export function useDirectChats(userId: string | undefined) {
         .eq('user_id', userId);
 
       if (error) {
-        console.error('[Supabase] Error fetching direct chats:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        devError('[Supabase] Error fetching direct chats:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
         return [];
       }
 
@@ -1500,7 +1517,7 @@ export function useDirectChats(userId: string | undefined) {
         (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime(),
       );
 
-      console.log('[Supabase] Fetched', summaries.length, 'chat summaries');
+      devLog('[Supabase] Fetched', summaries.length, 'chat summaries');
       return summaries;
     },
     enabled: !!userId,
@@ -1518,7 +1535,7 @@ export function useCreateDirectChat() {
       title?: string;
       showInFeed: boolean;
     }) => {
-      console.log('[Supabase] Creating direct chat with participants:', input.participantIds.length);
+      devLog('[Supabase] Creating direct chat with participants:', input.participantIds.length);
 
       await ensureProfileExists(input.createdBy);
       await Promise.all(input.participantIds.map((id) => ensureProfileExists(id)));
@@ -1536,7 +1553,7 @@ export function useCreateDirectChat() {
         .single();
 
       if (chatError) {
-        console.error('[Supabase] Error creating chat:', JSON.stringify({ message: chatError.message, code: chatError.code, details: chatError.details }));
+        devError('[Supabase] Error creating chat:', JSON.stringify({ message: chatError.message, code: chatError.code, details: chatError.details }));
         throw chatError;
       }
 
@@ -1552,7 +1569,7 @@ export function useCreateDirectChat() {
         .insert(participantRecords);
 
       if (participantsError) {
-        console.error('[Supabase] Error adding participants:', JSON.stringify({ message: participantsError.message, code: participantsError.code, details: participantsError.details }));
+        devError('[Supabase] Error adding participants:', JSON.stringify({ message: participantsError.message, code: participantsError.code, details: participantsError.details }));
         throw participantsError;
       }
 
@@ -1572,11 +1589,11 @@ export function useCreateDirectChat() {
           });
 
         if (feedError) {
-          console.error('[Supabase] Error creating feed item:', JSON.stringify({ message: feedError.message, code: feedError.code, details: feedError.details }));
+          devError('[Supabase] Error creating feed item:', JSON.stringify({ message: feedError.message, code: feedError.code, details: feedError.details }));
         }
       }
 
-      console.log('[Supabase] Direct chat created:', chatData.id);
+      devLog('[Supabase] Direct chat created:', chatData.id);
       return chatData;
     },
     onSuccess: (_, variables) => {
@@ -1594,7 +1611,7 @@ export function useGetOrCreateDirectChat() {
       currentUserId: string;
       otherUserId: string;
     }) => {
-      console.log('[Supabase] Getting or creating 1-on-1 chat between:', input.currentUserId, 'and', input.otherUserId);
+      devLog('[Supabase] Getting or creating 1-on-1 chat between:', input.currentUserId, 'and', input.otherUserId);
 
       await ensureProfileExists(input.currentUserId);
       await ensureProfileExists(input.otherUserId);
@@ -1612,7 +1629,7 @@ export function useGetOrCreateDirectChat() {
         .eq('user_id', input.currentUserId);
 
       if (searchError) {
-        console.error('[Supabase] Error searching for existing chat:', JSON.stringify({ message: searchError.message, code: searchError.code, details: searchError.details }));
+        devError('[Supabase] Error searching for existing chat:', JSON.stringify({ message: searchError.message, code: searchError.code, details: searchError.details }));
         throw searchError;
       }
 
@@ -1630,7 +1647,7 @@ export function useGetOrCreateDirectChat() {
             if (!participantsError && participants && participants.length === 2) {
               const userIds = participants.map((p: any) => p.user_id);
               if (userIds.includes(input.currentUserId) && userIds.includes(input.otherUserId)) {
-                console.log('[Supabase] Found existing 1-on-1 chat:', chatId);
+                devLog('[Supabase] Found existing 1-on-1 chat:', chatId);
                 return { id: chatId, created: false };
               }
             }
@@ -1638,7 +1655,7 @@ export function useGetOrCreateDirectChat() {
         }
       }
 
-      console.log('[Supabase] No existing chat found, creating new one');
+      devLog('[Supabase] No existing chat found, creating new one');
       const { data: newChat, error: createError } = await supabase
         .from('direct_chats')
         .insert({
@@ -1650,7 +1667,7 @@ export function useGetOrCreateDirectChat() {
         .single();
 
       if (createError) {
-        console.error('[Supabase] Error creating new chat:', JSON.stringify({ message: createError.message, code: createError.code, details: createError.details }));
+        devError('[Supabase] Error creating new chat:', JSON.stringify({ message: createError.message, code: createError.code, details: createError.details }));
         throw createError;
       }
 
@@ -1662,11 +1679,11 @@ export function useGetOrCreateDirectChat() {
         ]);
 
       if (participantsError) {
-        console.error('[Supabase] Error adding participants:', JSON.stringify({ message: participantsError.message, code: participantsError.code, details: participantsError.details }));
+        devError('[Supabase] Error adding participants:', JSON.stringify({ message: participantsError.message, code: participantsError.code, details: participantsError.details }));
         throw participantsError;
       }
 
-      console.log('[Supabase] Created new 1-on-1 chat:', newChat.id);
+      devLog('[Supabase] Created new 1-on-1 chat:', newChat.id);
       return { id: newChat.id, created: true };
     },
     onSuccess: (_, variables) => {
@@ -1760,7 +1777,7 @@ export function useDirectChatThread(
     setIsLoading(true);
 
     const fetchMessages = async () => {
-      console.log('[Supabase] Fetching messages for chat:', chatId);
+      devLog('[Supabase] Fetching messages for chat:', chatId);
 
       const { data, error } = await supabase
         .from('direct_chat_messages')
@@ -1770,7 +1787,7 @@ export function useDirectChatThread(
         .limit(100);
 
       if (error) {
-        console.error('[Supabase] Error fetching chat messages:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        devError('[Supabase] Error fetching chat messages:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
         setIsLoading(false);
         return;
       }
@@ -1790,7 +1807,7 @@ export function useDirectChatThread(
 
       setMessages((prev) => mergeChatMessagesById(prev, formattedMessages));
       setIsLoading(false);
-      console.log('[Supabase] Loaded', formattedMessages.length, 'chat messages');
+      devLog('[Supabase] Loaded', formattedMessages.length, 'chat messages');
     };
 
     fetchMessages();
@@ -1806,7 +1823,7 @@ export function useDirectChatThread(
           filter: `chat_id=eq.${chatId}`,
         },
         async (payload) => {
-          console.log('[Supabase] New chat message received:', payload);
+          devLog('[Supabase] New chat message received:', payload);
           const row = payload.new as {
             id: string;
             chat_id: string;
@@ -1822,7 +1839,7 @@ export function useDirectChatThread(
       .subscribe();
 
     return () => {
-      console.log('[Supabase] Unsubscribing from chat:', chatId);
+      devLog('[Supabase] Unsubscribing from chat:', chatId);
       supabase.removeChannel(channel);
     };
   }, [chatId]);
@@ -1849,7 +1866,7 @@ export function useDirectChatThread(
       setIsSending(true);
 
       try {
-        console.log('[Supabase] Sending message to chat:', chatId);
+        devLog('[Supabase] Sending message to chat:', chatId);
         const { data, error } = await supabase
           .from('direct_chat_messages')
           .insert({
@@ -1861,14 +1878,14 @@ export function useDirectChatThread(
           .single();
 
         if (error) {
-          console.error(
+          devError(
             '[Supabase] Error sending chat message:',
             JSON.stringify({ message: error.message, code: error.code, details: error.details }),
           );
           throw error;
         }
 
-        console.log('[Supabase] Chat message sent:', data.id);
+        devLog('[Supabase] Chat message sent:', data.id);
         const confirmed = mapDirectChatMessage(data, {
           name: currentUser.name,
           avatar: currentUser.avatar,
@@ -1909,7 +1926,7 @@ export function useSendDirectMessage() {
       userId: string;
       content: string;
     }) => {
-      console.log('[Supabase] Sending message to chat:', input.chatId);
+      devLog('[Supabase] Sending message to chat:', input.chatId);
 
       const { data, error } = await supabase
         .from('direct_chat_messages')
@@ -1922,11 +1939,11 @@ export function useSendDirectMessage() {
         .single();
 
       if (error) {
-        console.error('[Supabase] Error sending chat message:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        devError('[Supabase] Error sending chat message:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
         throw error;
       }
 
-      console.log('[Supabase] Chat message sent:', data.id);
+      devLog('[Supabase] Chat message sent:', data.id);
       return data;
     },
     onSuccess: (_, variables) => {
@@ -1952,7 +1969,7 @@ export function useActivityFeed(userId?: string, limit = 20) {
   return useQuery({
     queryKey: ['activityFeed', userId, limit],
     queryFn: async () => {
-      console.log('[Supabase] Fetching activity feed...');
+      devLog('[Supabase] Fetching activity feed...');
       const { data, error } = await supabase
         .from('activity_feed')
         .select('id, actor_id, type, payload, created_at, chat_id')
@@ -1960,7 +1977,7 @@ export function useActivityFeed(userId?: string, limit = 20) {
         .limit(limit);
 
       if (error) {
-        console.error('[Supabase] Error fetching activity feed:', JSON.stringify({
+        devError('[Supabase] Error fetching activity feed:', JSON.stringify({
           message: error.message, code: error.code, details: error.details
         }));
         return [];
@@ -1978,7 +1995,7 @@ export function useActivityFeed(userId?: string, limit = 20) {
         .in('id', actorIds);
 
       if (profilesError) {
-        console.error('[Supabase] Error fetching activity actor profiles:', JSON.stringify({
+        devError('[Supabase] Error fetching activity actor profiles:', JSON.stringify({
           message: profilesError.message, code: profilesError.code, details: profilesError.details
         }));
       }
@@ -2042,7 +2059,7 @@ export function useSubscriptionStatus(userId: string | undefined) {
         };
       }
 
-      console.log('[Supabase] Fetching subscription for user:', userId);
+      devLog('[Supabase] Fetching subscription for user:', userId);
       
       const { data, error } = await supabase
         .from('subscriptions')
@@ -2052,7 +2069,7 @@ export function useSubscriptionStatus(userId: string | undefined) {
 
       if (error) {
         if (error.code === 'PGRST116') {
-          console.log('[Supabase] No subscription found, returning free status');
+          devLog('[Supabase] No subscription found, returning free status');
           return {
             isPremium: false,
             status: 'free',
@@ -2060,7 +2077,7 @@ export function useSubscriptionStatus(userId: string | undefined) {
             expiresAt: null,
           };
         }
-        console.error('[Supabase] Error fetching subscription:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        devError('[Supabase] Error fetching subscription:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
         throw error;
       }
 
@@ -2071,7 +2088,7 @@ export function useSubscriptionStatus(userId: string | undefined) {
         const expiresAt = new Date(data.expires_at);
         const now = new Date();
         if (expiresAt < now) {
-          console.log('[Supabase] Subscription expired, treating as free');
+          devLog('[Supabase] Subscription expired, treating as free');
           return {
             isPremium: false,
             status: 'free',
@@ -2081,7 +2098,7 @@ export function useSubscriptionStatus(userId: string | undefined) {
         }
       }
 
-      console.log('[Supabase] Subscription status:', status, 'isPremium:', isPremium);
+      devLog('[Supabase] Subscription status:', status, 'isPremium:', isPremium);
       
       return {
         isPremium,
@@ -2157,19 +2174,19 @@ export function useUpdateSubscription() {
         const isRlsViolation =
           error.code === '42501' || /row-level security policy/i.test(String(error.message));
         if (isRlsViolation) {
-          console.warn(
+          devWarn(
             '[Supabase] Subscription sync skipped by RLS (expected for writes when policies or JWT claims disallow):',
             JSON.stringify(payload),
           );
           return null;
         }
         if (error.code === '23503') {
-          console.warn(
+          devWarn(
             '[Supabase] Subscription sync skipped (profile not linked in DB yet — run migration 014/037):',
             JSON.stringify(payload),
           );
         } else {
-          console.error('[Supabase] Error updating subscription:', JSON.stringify(payload));
+          devError('[Supabase] Error updating subscription:', JSON.stringify(payload));
         }
         throw error;
       }
@@ -2193,7 +2210,7 @@ export function useUserPresence(userId?: string) {
     queryFn: async () => {
       if (!userId) return null;
       
-      console.log('[Supabase] Fetching user presence:', userId);
+      devLog('[Supabase] Fetching user presence:', userId);
       const { data, error } = await supabase
         .from('user_presence')
         .select('*')
@@ -2204,7 +2221,7 @@ export function useUserPresence(userId?: string) {
         if (error.code === 'PGRST116') {
           return null;
         }
-        console.error('[Supabase] Error fetching user presence:', error);
+        devError('[Supabase] Error fetching user presence:', error);
         return null;
       }
 
@@ -2228,7 +2245,7 @@ export function useUserPresence(userId?: string) {
 export function useUpdatePresence() {
   return useMutation({
     mutationFn: async (userId: string) => {
-      console.log('[Supabase] Updating presence for:', userId);
+      devLog('[Supabase] Updating presence for:', userId);
       const { error } = await supabase
         .from('user_presence')
         .upsert({
@@ -2237,7 +2254,7 @@ export function useUpdatePresence() {
         }, { onConflict: 'user_id' });
 
       if (error) {
-        console.error('[Supabase] Error updating presence:', error);
+        devError('[Supabase] Error updating presence:', error);
         throw error;
       }
     },
@@ -2250,7 +2267,7 @@ export function useOnlineFriends(userId?: string) {
     queryFn: async () => {
       if (!userId) return [];
       
-      console.log('[Supabase] Fetching online friends for:', userId);
+      devLog('[Supabase] Fetching online friends for:', userId);
       
       const fiveMinutesAgo = new Date();
       fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
@@ -2268,10 +2285,10 @@ export function useOnlineFriends(userId?: string) {
           (presenceError.message && (presenceError.message.includes('abort') || presenceError.message.includes('signal is aborted')));
         
         if (isAbortError) {
-          console.log('[Supabase] Online friends query cancelled (component unmounted)');
+          devLog('[Supabase] Online friends query cancelled (component unmounted)');
           return [];
         }
-        console.error('[Supabase] Error fetching online friends:', JSON.stringify({ message: presenceError.message, code: presenceError.code, details: presenceError.details }));
+        devError('[Supabase] Error fetching online friends:', JSON.stringify({ message: presenceError.message, code: presenceError.code, details: presenceError.details }));
         return [];
       }
 
@@ -2293,10 +2310,10 @@ export function useOnlineFriends(userId?: string) {
           (usersError.message && (usersError.message.includes('abort') || usersError.message.includes('signal is aborted')));
         
         if (isAbortError) {
-          console.log('[Supabase] Online friends user data query cancelled');
+          devLog('[Supabase] Online friends user data query cancelled');
           return [];
         }
-        console.error('[Supabase] Error fetching user data for online friends:', JSON.stringify({ message: usersError.message, code: usersError.code, details: usersError.details }));
+        devError('[Supabase] Error fetching user data for online friends:', JSON.stringify({ message: usersError.message, code: usersError.code, details: usersError.details }));
         return [];
       }
 
@@ -2326,7 +2343,7 @@ export function useFriendActivity(userId?: string, limit = 20) {
     queryFn: async () => {
       if (!userId) return [];
       
-      console.log('[Supabase] Fetching friend activity...');
+      devLog('[Supabase] Fetching friend activity...');
       
       const thirtyMinutesAgo = new Date();
       thirtyMinutesAgo.setMinutes(thirtyMinutesAgo.getMinutes() - 30);
@@ -2346,10 +2363,10 @@ export function useFriendActivity(userId?: string, limit = 20) {
           (presenceError.message && (presenceError.message.includes('abort') || presenceError.message.includes('signal is aborted')));
         
         if (isAbortError) {
-          console.log('[Supabase] Friend activity query cancelled');
+          devLog('[Supabase] Friend activity query cancelled');
           return [];
         }
-        console.error('[Supabase] Error fetching friend activity:', JSON.stringify({ message: presenceError.message, code: presenceError.code, details: presenceError.details }));
+        devError('[Supabase] Error fetching friend activity:', JSON.stringify({ message: presenceError.message, code: presenceError.code, details: presenceError.details }));
         return [];
       }
 
@@ -2371,10 +2388,10 @@ export function useFriendActivity(userId?: string, limit = 20) {
           (usersError.message && (usersError.message.includes('abort') || usersError.message.includes('signal is aborted')));
         
         if (isAbortError) {
-          console.log('[Supabase] Friend activity user data query cancelled');
+          devLog('[Supabase] Friend activity user data query cancelled');
           return [];
         }
-        console.error('[Supabase] Error fetching user data for friend activity:', JSON.stringify({ message: usersError.message, code: usersError.code, details: usersError.details }));
+        devError('[Supabase] Error fetching user data for friend activity:', JSON.stringify({ message: usersError.message, code: usersError.code, details: usersError.details }));
         return [];
       }
 
@@ -2416,7 +2433,7 @@ export function usePresenceSubscription(userId?: string, onPresenceChange?: (pre
   useEffect(() => {
     if (!userId || !onPresenceChange) return;
 
-    console.log('[Supabase] Setting up presence subscription...');
+    devLog('[Supabase] Setting up presence subscription...');
     
     const channel = supabase
       .channel('presence-changes')
@@ -2428,14 +2445,14 @@ export function usePresenceSubscription(userId?: string, onPresenceChange?: (pre
           table: 'user_presence',
         },
         (payload) => {
-          console.log('[Supabase] Presence change:', payload);
+          devLog('[Supabase] Presence change:', payload);
           onPresenceChange(payload);
         }
       )
       .subscribe();
 
     return () => {
-      console.log('[Supabase] Cleaning up presence subscription');
+      devLog('[Supabase] Cleaning up presence subscription');
       supabase.removeChannel(channel);
     };
   }, [userId, onPresenceChange]);

@@ -22,6 +22,9 @@
       "env": {
         "EXPO_DOCTOR_ENABLE_DIRECTORY_CHECK": "0"
       },
+      "ios": {
+        "resourceClass": "m-medium"
+      },
       "android": {
         "buildType": "app-bundle",
         "buildArtifactPaths": [
@@ -36,6 +39,9 @@
       "env": {
         "EXPO_DOCTOR_ENABLE_DIRECTORY_CHECK": "0"
       },
+      "ios": {
+        "resourceClass": "m-medium"
+      },
       "android": {
         "buildType": "app-bundle",
         "buildArtifactPaths": [
@@ -47,10 +53,16 @@
   },
   "submit": {
     "internal": {
-      "android": { "track": "internal" }
+      "android": { "track": "internal" },
+      "ios": {
+        "bundleIdentifier": "com.devaieood.medvba"
+      }
     },
     "production": {
-      "android": { "track": "production" }
+      "android": { "track": "production" },
+      "ios": {
+        "bundleIdentifier": "com.devaieood.medvba"
+      }
     }
   }
 }

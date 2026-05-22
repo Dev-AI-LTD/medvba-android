@@ -1,6 +1,10 @@
-# MEDVBA Android Release Checklist
+# MEDVBA Release Checklist
 
-Reusable runbook for production Android releases with Bun + Expo EAS.
+Reusable runbook for production releases with Bun + Expo EAS.
+
+**App Store (iOS) first:** [`docs/PRE_LAUNCH_CHECKLIST_APP_STORE.md`](docs/PRE_LAUNCH_CHECKLIST_APP_STORE.md) · metadata [`docs/app-store-metadata-en.md`](docs/app-store-metadata-en.md)
+
+**Google Play (Android):** [`docs/PRE_LAUNCH_CHECKLIST_GOOGLE_PLAY.md`](docs/PRE_LAUNCH_CHECKLIST_GOOGLE_PLAY.md)
 
 ---
 

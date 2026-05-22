@@ -1,0 +1,33 @@
+MEDVBA — Voiceover română (Concept A, 60 sec)
+================================================
+Ritm: calm, profesional, ~130 cuvinte/minut.
+Pauze: | = pauză scurtă (0.3s), || = pauză medie (0.6s)
+
+--- TIMELINE ---
+
+[0:00 - 0:08] INTRO (pe Hunyuan)
+Pregătirea la medicină nu se oprește la amfiteatru. ||
+MEDVBA — în buzunarul studentului.
+
+[0:08 - 0:18] STUDY
+Rezumate structurate pe capitole. ||
+Studenții înțeleg materia înainte de grilă — cu text sau audio.
+
+[0:18 - 0:30] QUIZ
+Apoi exersarea: mii de întrebări tip grilă. ||
+Anatomie, membre, organe interne, neuroanatomie — aliniate la examen.
+
+[0:30 - 0:42] HOME
+Progres vizibil pentru student și profesor: ||
+câte întrebări au parcurs — peste douăzeci și una de mii în bancă —, acuratețe și timp de studiu.
+
+[0:42 - 0:52] TUTOR
+La blocaj, Tutorul AI clarifică conceptul — imediat, în app.
+
+[0:52 - 1:00] OUTRO
+Recomandați MEDVBA studenților voștri. ||
+medvba.app — disponibil pe Google Play.
+
+--- TEXT CONTINUU (pentru TTS sau o singură luare) ---
+
+Pregătirea la medicină nu se oprește la amfiteatru. MEDVBA — în buzunarul studentului. Rezumate structurate pe capitole. Studenții înțeleg materia înainte de grilă — cu text sau audio. Apoi exersarea: mii de întrebări tip grilă. Anatomie, membre, organe interne, neuroanatomie — aliniate la examen. Progres vizibil: câte întrebări au parcurs — peste douăzeci și una de mii în bancă —, acuratețe și timp de studiu. La blocaj, Tutorul AI clarifică conceptul — imediat, în app. Recomandați MEDVBA studenților voștri. medvba.app — disponibil pe Google Play.

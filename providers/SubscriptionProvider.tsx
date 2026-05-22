@@ -20,7 +20,7 @@ function freeQuizAnswersDailyStorageKey(userId: string, dateKey: string): string
 
 function getPaywallConfig() {
   const extra = Constants.expoConfig?.extra ?? (Constants as any)?.manifest?.extra ?? {};
-  const paywallEnabled = String(extra.EXPO_PUBLIC_PAYWALL_ENABLED ?? 'false') === 'true';
+  const paywallEnabled = String(extra.EXPO_PUBLIC_PAYWALL_ENABLED ?? 'true') === 'true';
   const apiKeyIos = extra.EXPO_PUBLIC_REVENUECAT_API_KEY_IOS as string | undefined;
   const apiKeyAndroid = extra.EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID as string | undefined;
   const apiKey = Platform.OS === 'ios' ? apiKeyIos : apiKeyAndroid;

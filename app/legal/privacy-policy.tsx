@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import Constants from 'expo-constants';
 import { Shield, Database, Users, Lock, Mail, Globe } from 'lucide-react-native';
 import { Stack } from 'expo-router';
 import { useTheme } from '@/providers/ThemeProvider';
@@ -48,6 +49,11 @@ export default function PrivacyPolicyScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   
   const lastUpdatedDate = currentLanguage === 'ro' ? LAST_UPDATED_RO : LAST_UPDATED_EN;
+  const sentryEnabled = Boolean(
+    process.env.EXPO_PUBLIC_SENTRY_DSN ||
+      (Constants.expoConfig?.extra as { EXPO_PUBLIC_SENTRY_DSN?: string } | undefined)
+        ?.EXPO_PUBLIC_SENTRY_DSN,
+  );
 
   return (
     <View style={styles.container}>
@@ -90,7 +96,7 @@ export default function PrivacyPolicyScreen() {
               <Text style={styles.bold}>{t('privacy.studySessionData')}</Text> {t('privacy.studySessionDataDesc')}
             </Text>
             <Text style={styles.paragraph}>
-              <Text style={styles.bold}>{t('privacy.videoCallData')}</Text> {t('privacy.videoCallDataDesc')}
+              <Text style={styles.bold}>{t('privacy.messagingData')}</Text> {t('privacy.messagingDataDesc')}
             </Text>
             <Text style={styles.paragraph}>
               <Text style={styles.bold}>{t('privacy.deviceInfo')}</Text> {t('privacy.deviceInfoDesc')}
@@ -106,8 +112,19 @@ export default function PrivacyPolicyScreen() {
             </Text>
             <View style={styles.bulletList}>
               <Text style={styles.bulletItem}>
+                • <Text style={styles.bold}>{t('privacy.kinde')}</Text> {t('privacy.kindeDesc')}
+              </Text>
+              <Text style={styles.bulletItem}>
                 • <Text style={styles.bold}>{t('privacy.supabase')}</Text> {t('privacy.supabaseDesc')}
               </Text>
+              <Text style={styles.bulletItem}>
+                • <Text style={styles.bold}>{t('privacy.revenueCat')}</Text> {t('privacy.revenueCatDesc')}
+              </Text>
+              {sentryEnabled ? (
+                <Text style={styles.bulletItem}>
+                  • <Text style={styles.bold}>{t('privacy.sentry')}</Text> {t('privacy.sentryDesc')}
+                </Text>
+              ) : null}
             </View>
             <Text style={styles.paragraph}>
               {t('privacy.thirdPartyNote')}

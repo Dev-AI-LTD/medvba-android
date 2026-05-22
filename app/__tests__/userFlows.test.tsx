@@ -66,46 +66,59 @@ describe('User flows (integration-style)', () => {
   });
 
   describe('Login', () => {
-    it('shows hosted email entry and welcome copy', async () => {
+    it('shows email/password form and welcome copy', async () => {
       renderWithApp(<LoginScreen />);
 
       expect(await findText(enCopy('auth.welcomeUnifiedTitle'))).toBeTruthy();
-      expect(screen.getByTestId('loginHostedEmail')).toBeTruthy();
-      expect(screen.getByText(enCopy('auth.createAccountWithEmail'))).toBeTruthy();
-      expect(screen.getByTestId('loginHostedEmailSignIn')).toBeTruthy();
-      expect(screen.getByText(enCopy('auth.signInWithEmail'))).toBeTruthy();
+      expect(screen.getByTestId('loginEmailInput')).toBeTruthy();
+      expect(screen.getByTestId('loginPasswordInput')).toBeTruthy();
+      expect(screen.getByTestId('loginEmailSubmit')).toBeTruthy();
+      expect(screen.getByText(enCopy('auth.signIn'))).toBeTruthy();
     });
 
-    it('navigates to tabs after successful hosted email sign-up when onboarding is complete', async () => {
+    it('navigates to tabs after successful email sign-in when onboarding is complete', async () => {
       renderWithApp(<LoginScreen />);
 
       expect(await findText(enCopy('auth.welcomeUnifiedTitle'))).toBeTruthy();
 
+      fireEvent.changeText(screen.getByTestId('loginEmailInput'), 'user@example.com');
+      fireEvent.changeText(screen.getByTestId('loginPasswordInput'), 'password1234');
+
       await act(async () => {
-        fireEvent.press(screen.getByTestId('loginHostedEmail'));
+        fireEvent.press(screen.getByTestId('loginEmailSubmit'));
       });
 
       await waitFor(() => {
         expect(router.replace).toHaveBeenCalledWith('/(tabs)');
       });
-      expect(getKindeAuthMocks().register).toHaveBeenCalled();
       expect(getKindeAuthMocks().login).not.toHaveBeenCalled();
       expect(global.fetch).toHaveBeenCalled();
+      const urls = (global.fetch as jest.Mock).mock.calls.map((c) => String(c[0]));
+      expect(urls.some((u) => u.includes('/api/auth/session'))).toBe(true);
     });
 
-    it('calls kinde.login when signing in with email', async () => {
+    it('registers via API when in sign-up mode', async () => {
       renderWithApp(<LoginScreen />);
 
       expect(await findText(enCopy('auth.welcomeUnifiedTitle'))).toBeTruthy();
 
       await act(async () => {
-        fireEvent.press(screen.getByTestId('loginHostedEmailSignIn'));
+        fireEvent.press(screen.getByTestId('loginToggleSignUp'));
+      });
+
+      fireEvent.changeText(screen.getByTestId('loginNameInput'), 'Test User');
+      fireEvent.changeText(screen.getByTestId('loginEmailInput'), 'new@example.com');
+      fireEvent.changeText(screen.getByTestId('loginPasswordInput'), 'password1234');
+
+      await act(async () => {
+        fireEvent.press(screen.getByTestId('loginEmailSubmit'));
       });
 
       await waitFor(() => {
-        expect(getKindeAuthMocks().login).toHaveBeenCalled();
+        expect(router.replace).toHaveBeenCalledWith('/(tabs)');
       });
-      expect(getKindeAuthMocks().register).not.toHaveBeenCalled();
+      const urls = (global.fetch as jest.Mock).mock.calls.map((c) => String(c[0]));
+      expect(urls.some((u) => u.includes('/api/auth/register'))).toBe(true);
     });
 
     it('navigates to forgot password', async () => {
@@ -132,8 +145,11 @@ describe('User flows (integration-style)', () => {
       renderWithApp(<LoginScreen />);
       expect(await findText(enCopy('auth.welcomeUnifiedTitle'))).toBeTruthy();
 
+      fireEvent.changeText(screen.getByTestId('loginEmailInput'), 'user@example.com');
+      fireEvent.changeText(screen.getByTestId('loginPasswordInput'), 'password1234');
+
       await act(async () => {
-        fireEvent.press(screen.getByTestId('loginHostedEmailSignIn'));
+        fireEvent.press(screen.getByTestId('loginEmailSubmit'));
       });
 
       await waitFor(() => {
@@ -155,6 +171,12 @@ describe('User flows (integration-style)', () => {
         expect(getKindeAuthMocks().login).toHaveBeenCalled();
       });
       expect(getKindeAuthMocks().register).not.toHaveBeenCalled();
+    });
+
+    it('does not show Facebook login button', async () => {
+      renderWithApp(<LoginScreen />);
+      expect(await findText(enCopy('auth.welcomeUnifiedTitle'))).toBeTruthy();
+      expect(screen.queryByTestId('loginFacebookButton')).toBeNull();
     });
   });
 

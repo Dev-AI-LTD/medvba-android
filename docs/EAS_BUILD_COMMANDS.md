@@ -1,5 +1,11 @@
 # EAS Build – comenzi și ce trebuie completat
 
+**Prioritate iOS (App Store):** checklist complet în [`PRE_LAUNCH_CHECKLIST_APP_STORE.md`](PRE_LAUNCH_CHECKLIST_APP_STORE.md). Metadata: [`app-store-metadata-en.md`](app-store-metadata-en.md).
+
+Rulează **tot** din folderul `medvba-android` (unde sunt `eas.json` și `package.json`).
+
+---
+
 ## 1. Pregătire (o singură dată)
 
 ### Instalare EAS CLI
@@ -85,7 +91,30 @@ La **build**, EAS pune aceste variabile în `process.env`, iar `app.config.ts` l
 
 ## 4. Comenzi de build
 
-Rulezi din **root-ul proiectului** (unde e `eas.json` și `app.config.ts`).
+Rulezi din **root-ul proiectului** `medvba-android` (unde e `eas.json` și `app.config.ts`).
+
+### Build iOS (App Store / TestFlight) — prioritar
+
+**Production (submit review):**
+```bash
+cd medvba-android
+eas build --platform ios --profile production
+```
+
+**Internal (TestFlight beta, același channel internal):**
+```bash
+eas build --platform ios --profile internal
+```
+
+Prima dată: terminal **interactiv** pentru Apple Developer credentials (certificat, provisioning). După build:
+
+```bash
+eas submit --platform ios --profile production --latest
+```
+
+Verifică înainte: `eas env:list --environment production` — obligatoriu `EXPO_PUBLIC_REVENUECAT_API_KEY_IOS`, `EXPO_PUBLIC_PAYWALL_ENABLED=true`, Kinde + `EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID`.
+
+---
 
 ### Build Android (AAB pentru Google Play)
 
@@ -102,12 +131,6 @@ eas build --platform android --profile production
 La întrebări:
 - **Generate a new Android Keystore?** – prima dată alegi **Yes**; EAS îl stochează. La build-uri următoare **No**.
 - Dacă ceri credentials (keystore / service account), urmează pașii din terminal.
-
-### Build iOS (dacă ai cont Apple Developer)
-
-```bash
-eas build --platform ios --profile production
-```
 
 ### Build ambele platforme
 
@@ -168,20 +191,23 @@ eas submit --platform android --id BUILD_ID --profile production
 
 ---
 
-## 7. Comenzi rapide (copy-paste)
+## 7. Comenzi rapide — iOS (copy-paste)
 
 ```bash
-# 1. Login
+cd medvba-android
 eas login
-
-# 2. Build Android production (AAB pentru Play Store)
-eas build --platform android --profile production
-
-# 3. După ce build-ul e gata: submit la Google Play
-eas submit --platform android --profile production --latest
-
-# 4. (Opțional) Lista build-uri
+eas env:list --environment production
+eas build --platform ios --profile production
+eas submit --platform ios --profile production --latest
 eas build:list
 ```
 
-După ce completezi variabilele în `.env` (sau în EAS Secrets) și rulezi aceste comenzi, ai tot ce trebuie pentru EAS Build și pentru publicare pe Google Play.
+## 8. Comenzi rapide — Android (după iOS)
+
+```bash
+cd medvba-android
+eas build --platform android --profile production
+eas submit --platform android --profile production --latest
+```
+
+După ce completezi variabilele în EAS env **production** (vezi [`ENV_AND_EAS_SECRETS.md`](ENV_AND_EAS_SECRETS.md)), poți lansa build iOS, apoi Android.

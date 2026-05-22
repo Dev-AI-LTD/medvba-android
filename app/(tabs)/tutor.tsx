@@ -489,6 +489,12 @@ export default function TutorScreen() {
                 </TouchableOpacity>
               </View>
             </View>
+            <Text
+              style={[styles.disclaimer, { color: colors.textMuted }]}
+              accessibilityRole="text"
+            >
+              {t('tutor.disclaimerShort')}
+            </Text>
           </View>
       </KeyboardAvoidingView>
     </Screen>
@@ -623,6 +629,13 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     paddingHorizontal: screenPaddingX,
     paddingBottom: Platform.OS === 'ios' ? 8 : 6,
     paddingTop: 10,
+  },
+  disclaimer: {
+    fontSize: 11,
+    lineHeight: 15,
+    textAlign: 'center',
+    marginTop: space.space2,
+    paddingHorizontal: space.space1,
   },
   inputWrapper: {
     flexDirection: 'column',

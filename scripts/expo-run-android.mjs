@@ -142,7 +142,22 @@ if (process.platform === 'win32') {
   }
 }
 
+/** USB dev build: device opens 127.0.0.1 (adb reverse), not LAN IP (often ECONNREFUSED). */
+function adbReverseMetroPorts() {
+  const list = spawnSync('adb', ['devices'], { encoding: 'utf8', shell: false });
+  if (list.status !== 0 || !/device\s*$/m.test(list.stdout.replace('List of devices attached', ''))) {
+    return;
+  }
+  for (const port of [8081, 8082, 8083]) {
+    spawnSync('adb', ['reverse', `tcp:${port}`, `tcp:${port}`], { stdio: 'ignore', shell: false });
+  }
+  console.info('[expo-run-android] adb reverse tcp:8081-8083 (use bundle URL http://127.0.0.1:<port>)');
+}
+
+adbReverseMetroPorts();
+
 const env = { ...process.env };
+env.REACT_NATIVE_PACKAGER_HOSTNAME = env.REACT_NATIVE_PACKAGER_HOSTNAME || '127.0.0.1';
 if (process.platform === 'win32' && gradleUserHome) {
   applyShortGradlePaths(env);
   console.info(

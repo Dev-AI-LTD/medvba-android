@@ -39,6 +39,8 @@ bun install
 
 Copy environment variables from `.env.example` into `.env` / `.env.local` and fill values for Supabase, API base URL, auth (Kinde), RevenueCat, etc. The app reads public keys via `EXPO_PUBLIC_*` as wired in `app.config.ts`.
 
+**Kinde (iOS + Android, Expo):** one native Kinde application — not a separate iOS app. See [docs/KINDE_IOS_EXPO_SETUP.md](docs/KINDE_IOS_EXPO_SETUP.md). Verify: `npm run check:kinde-ios`.
+
 ---
 
 ## Run locally (Expo)
@@ -86,6 +88,7 @@ Internal checklist for Play / EAS lives in [`.cursor/rules/eas-android-release.m
 | `supabase/` | SQL migrations and Supabase notes |
 | `eas.json` | EAS Build profiles |
 | `app.config.ts` | Expo app id, version, plugins, `extra` env passthrough |
+| `docs/presentation-video-teachers/` | Kit video promo profesori (script, shot list, Hunyuan, montaj) |
 
 ---
 

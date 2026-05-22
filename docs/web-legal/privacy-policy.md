@@ -1,6 +1,6 @@
 # MEDVBA — Privacy Policy
 
-**Last updated:** January 12, 2026
+**Last updated:** May 21, 2026
 
 **Company:** Dev AI LTD  
 **Address:** Bogdan Voivoda, № 1, Ruse 7002, Ruse Region, Ruse Municipality, Bulgaria  
@@ -18,15 +18,20 @@ This Privacy Policy describes how Dev AI LTD ("we", "us", or "our") collects, us
 
 **Study Session Data:** Duration of study sessions, topics studied, and performance metrics.
 
-**Device Information:** Device type, operating system, and app version for troubleshooting and optimization.
+**Messages (Chat):** When you use direct messaging, we store messages you send to other users and related metadata needed to deliver the feature.
 
-**Video / study room data:** If you join video-based study rooms, your device may share audio, video, or meeting-related metadata with the meeting provider you open (for example Zoom), subject to that provider’s terms and privacy policy.
+**AI Tutor:** Questions you submit to the AI tutor and the responses generated for you.
+
+**Device Information:** Device type, operating system, and app version for troubleshooting and optimization.
 
 ## Third-Party Services
 
 We use the following third-party services that may collect data:
 
-- **Supabase:** Database hosting and authentication
+- **Kinde:** Authentication and identity management
+- **Supabase:** Database hosting and data storage
+- **RevenueCat:** Subscription and in-app purchase management (when you use Premium)
+- **Sentry:** Error tracking and crash reporting (when enabled in our production builds)
 
 Each service has its own privacy policy. We encourage you to review them.
 
@@ -34,10 +39,10 @@ Each service has its own privacy policy. We encourage you to review them.
 
 - Provide and improve the App's functionality
 - Track your learning progress and provide statistics
-- Enable social features like study rooms and leaderboards
-- Send important notifications about your account
-- Analyze usage patterns to improve user experience
-- Respond to your support requests
+- Enable social features such as chat with study partners and leaderboards
+- Send important notifications about your account (e.g. study reminders, if you enable them)
+- Operate the AI tutor and subscription features
+- Respond to your support requests and review user reports
 
 ## Your Rights (GDPR)
 
@@ -45,7 +50,7 @@ If you are located in the European Economic Area (EEA), you have the following r
 
 - **Access:** Request a copy of your personal data
 - **Rectification:** Request correction of inaccurate data
-- **Erasure:** Request deletion of your personal data
+- **Erasure:** Request deletion of your personal data (including in-app **Delete Account**)
 - **Portability:** Request transfer of your data
 - **Restriction:** Request limitation of processing
 - **Objection:** Object to certain processing activities

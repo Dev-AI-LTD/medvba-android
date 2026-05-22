@@ -35,6 +35,7 @@ import {
 } from '@/providers/LanguageProvider';
 import { screenPaddingX, touchTargetMin } from '@/theme/iosDesign';
 import { BLOCKED_USERS_STORAGE_KEY } from '@/lib/blocked-users-storage';
+import { USER_REPORTS_STORAGE_KEY } from '@/lib/user-reports-storage';
 
 const STORAGE_KEYS_TO_CLEAR = [
   'quiz_daily_progress',
@@ -43,7 +44,7 @@ const STORAGE_KEYS_TO_CLEAR = [
   'quiz_streak_data',
   'quiz_weekly_history',
   BLOCKED_USERS_STORAGE_KEY,
-  '@medvba_user_reports',
+  USER_REPORTS_STORAGE_KEY,
   APP_LANGUAGE_STORAGE_KEY,
   LEGACY_APP_LANGUAGE_STORAGE_KEY,
 ];

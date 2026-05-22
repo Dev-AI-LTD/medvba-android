@@ -24,6 +24,8 @@ import { useAuth } from '@/providers/AuthProvider';
 import { useDirectChatThread, useOnlineFriends } from '@/lib/supabase-hooks';
 import { setChatLastReadAt } from '@/lib/messenger-read-state';
 import { addBlockedUserEntry } from '@/lib/blocked-users-storage';
+import type { UserReportReason } from '@/lib/user-reports-storage';
+import { submitUserReport } from '@/lib/submit-user-report';
 import {
   SPACING,
   iconLg,
@@ -111,12 +113,58 @@ export default function ChatThreadScreen() {
     );
   }, [t, peerName, peerId, peerAvatar, router]);
 
+  const submitReport = useCallback(
+    async (reason: UserReportReason) => {
+      if (!user?.id || !peerId) return;
+      try {
+        await submitUserReport({
+          reporterId: user.id,
+          reportedUserId: peerId,
+          reportedUserName: peerName,
+          reason,
+          chatId: chatId || undefined,
+        });
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert(t('social.reportSubmitted'), t('social.reportSubmittedMessage'), [
+          { text: t('common.ok') },
+        ]);
+      } catch {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        Alert.alert(t('deleteAccount.alertErrorTitle'), t('social.reportSubmitFailed'));
+      }
+    },
+    [user?.id, peerId, peerName, chatId, t],
+  );
+
+  const handleReport = useCallback(() => {
+    Alert.alert(t('social.reportReasonsTitle'), t('social.reportingUser').replace('{name}', peerName), [
+      { text: t('social.cancel'), style: 'cancel' },
+      {
+        text: t('social.reportReasons.harassment'),
+        onPress: () => void submitReport('harassment'),
+      },
+      {
+        text: t('social.reportReasons.inappropriate'),
+        onPress: () => void submitReport('inappropriate'),
+      },
+      {
+        text: t('social.reportReasons.spam'),
+        onPress: () => void submitReport('spam'),
+      },
+      {
+        text: t('social.reportReasons.other'),
+        onPress: () => void submitReport('other'),
+      },
+    ]);
+  }, [peerName, t, submitReport]);
+
   const handleMenu = useCallback(() => {
     Alert.alert(peerName, undefined, [
       { text: t('social.cancel'), style: 'cancel' },
+      { text: t('social.reportUser'), onPress: handleReport },
       { text: t('social.blockUser'), style: 'destructive', onPress: handleBlock },
     ]);
-  }, [peerName, t, handleBlock]);
+  }, [peerName, t, handleReport, handleBlock]);
 
   return (
     <Screen edges={['top', 'bottom']} padded={false}>
