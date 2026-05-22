@@ -84,14 +84,8 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         origin: 'https://medvba.app/',
       },
     ],
-    [
-      'expo-font',
-      {
-        fonts: [
-          './node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.ttf',
-        ],
-      },
-    ],
+    // Do not embed MaterialCommunityIcons.ttf via expo-font — autolinking already copies it
+    // from @expo/vector-icons / react-native-vector-icons (duplicate breaks iOS archive).
     'expo-web-browser',
     'expo-asset',
     [
@@ -155,7 +149,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       supportsTablet: false,
       bundleIdentifier: 'com.devaieood.medvba',
       icon: './assets/images/icon.png',
-      buildNumber: '49',
+      buildNumber: '50',
       // Required for @invertase/react-native-apple-authentication (EAS / prebuild).
       entitlements: {
         'com.apple.developer.applesignin': ['Default'],
