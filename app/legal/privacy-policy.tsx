@@ -14,8 +14,8 @@ import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { screenPaddingX, sectionGap, space, typeScale } from '@/theme/iosDesign';
 
-const LAST_UPDATED_EN = 'January 12, 2026';
-const LAST_UPDATED_RO = '12 ianuarie 2026';
+const LAST_UPDATED_EN = 'May 21, 2026';
+const LAST_UPDATED_RO = '21 mai 2026';
 const COMPANY_NAME = 'Dev AI LTD';
 const COMPANY_ADDRESS = 'Bogdan Voivoda, № 1, Ruse 7002, Ruse Region, Ruse Municipality, Bulgaria';
 const CONTACT_EMAIL = 'contact@devaieood.com';
@@ -99,6 +99,9 @@ export default function PrivacyPolicyScreen() {
               <Text style={styles.bold}>{t('privacy.messagingData')}</Text> {t('privacy.messagingDataDesc')}
             </Text>
             <Text style={styles.paragraph}>
+              <Text style={styles.bold}>{t('privacy.aiTutorData')}</Text> {t('privacy.aiTutorDataDesc')}
+            </Text>
+            <Text style={styles.paragraph}>
               <Text style={styles.bold}>{t('privacy.deviceInfo')}</Text> {t('privacy.deviceInfoDesc')}
             </Text>
           </Section>
@@ -119,6 +122,9 @@ export default function PrivacyPolicyScreen() {
               </Text>
               <Text style={styles.bulletItem}>
                 • <Text style={styles.bold}>{t('privacy.revenueCat')}</Text> {t('privacy.revenueCatDesc')}
+              </Text>
+              <Text style={styles.bulletItem}>
+                • <Text style={styles.bold}>{t('privacy.openai')}</Text> {t('privacy.openaiDesc')}
               </Text>
               {sentryEnabled ? (
                 <Text style={styles.bulletItem}>
@@ -142,6 +148,7 @@ export default function PrivacyPolicyScreen() {
               <Text style={styles.bulletItem}>• {t('privacy.useInfo4')}</Text>
               <Text style={styles.bulletItem}>• {t('privacy.useInfo5')}</Text>
               <Text style={styles.bulletItem}>• {t('privacy.useInfo6')}</Text>
+              <Text style={styles.bulletItem}>• {t('privacy.useInfo7')}</Text>
             </View>
           </Section>
 

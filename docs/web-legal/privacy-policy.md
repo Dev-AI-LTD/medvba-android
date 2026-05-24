@@ -31,6 +31,7 @@ We use the following third-party services that may collect data:
 - **Kinde:** Authentication and identity management
 - **Supabase:** Database hosting and data storage
 - **RevenueCat:** Subscription and in-app purchase management (when you use Premium)
+- **OpenAI:** AI model provider used to generate tutor responses from your questions (processed on our backend; not used for advertising)
 - **Sentry:** Error tracking and crash reporting (when enabled in our production builds)
 
 Each service has its own privacy policy. We encourage you to review them.

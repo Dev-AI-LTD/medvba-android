@@ -671,21 +671,40 @@ export default function QuizSessionScreen() {
     }
   }, [fadeAnim, clearSessionState, addStudyTime, router]);
 
-  const handleClose = useCallback(async () => {
-    const elapsedSeconds = Math.floor((Date.now() - sessionStartTimeRef.current) / 1000);
-    if (elapsedSeconds > 5) {
-      await addStudyTime(elapsedSeconds);
-      log.info('[QuizSession] Session closed. Time spent:', elapsedSeconds, 'seconds');
-    }
-    
-    await AsyncStorage.setItem('quiz_just_exited', Date.now().toString());
-    log.info('[QuizSession] Closing quiz, session state preserved for resume');
+  const navigateAwayFromQuiz = useCallback(() => {
     if (categoryRef.current === 'med-admission-barrons' && chapterId) {
-      router.back();
-    } else {
-      router.replace('/(tabs)');
+      if (router.canGoBack()) {
+        router.back();
+        return;
+      }
     }
-  }, [addStudyTime, router, chapterId]);
+    if (typeof router.dismiss === 'function' && router.canDismiss()) {
+      router.dismiss();
+      return;
+    }
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/(tabs)/quiz' as never);
+  }, [router, chapterId]);
+
+  const handleClose = useCallback(() => {
+    const elapsedSeconds = Math.floor((Date.now() - sessionStartTimeRef.current) / 1000);
+    void (async () => {
+      try {
+        if (!quizComplete && elapsedSeconds > 5) {
+          await addStudyTime(elapsedSeconds);
+          log.info('[QuizSession] Session closed. Time spent:', elapsedSeconds, 'seconds');
+        }
+        await AsyncStorage.setItem('quiz_just_exited', Date.now().toString());
+        log.info('[QuizSession] Closing quiz, session state preserved for resume');
+      } catch (error) {
+        log.warn('[QuizSession] close cleanup failed:', error);
+      }
+    })();
+    navigateAwayFromQuiz();
+  }, [addStudyTime, navigateAwayFromQuiz, quizComplete]);
 
   const handleCopyExplanation = useCallback(async () => {
     if (!currentQuestion?.explanation) return;
@@ -773,9 +792,19 @@ export default function QuizSessionScreen() {
           style={StyleSheet.absoluteFill}
         />
         <View style={[styles.safeArea, { paddingTop: topPadding, paddingBottom: bottomPadding }]}>
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={handleClose}
+              accessibilityRole="button"
+              accessibilityLabel={t('session.back')}
+            >
+              <X color={colors.text} size={iconXl} />
+            </TouchableOpacity>
+          </View>
           <View style={styles.resultContainer}>
             <GlassCard style={styles.resultCard} variant="accent">
-              <View style={styles.resultIconContainer}>
+              <View style={styles.resultIconContainer} pointerEvents="none">
                 {percentage >= 70 ? (
                   <CheckCircle color={colors.success} size={64} />
                 ) : (
@@ -800,8 +829,15 @@ export default function QuizSessionScreen() {
                 </View>
               </View>
               
-              <TouchableOpacity style={styles.finishButton} onPress={handleClose}>
+              <TouchableOpacity
+                style={styles.finishButton}
+                onPress={handleClose}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel={t('session.backToQuiz')}
+              >
                 <LinearGradient
+                  pointerEvents="none"
                   colors={[colors.primary, colors.primaryDark]}
                   style={styles.finishButtonGradient}
                 >

@@ -1,5 +1,13 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, StyleSheet, Platform, ActivityIndicator, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Platform,
+  ActivityIndicator,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
 import { Stack, router } from 'expo-router';
@@ -26,8 +34,9 @@ const IS_EXPO_GO = Constants.executionEnvironment === 'storeClient';
  */
 export default function PaywallScreen() {
   const { colors } = useThemeSafe();
-  const { isPaywallEnabled } = useSubscription();
+  const { isPaywallEnabled, restorePurchases } = useSubscription();
   const { t } = useLanguage();
+  const [isRestoring, setIsRestoring] = useState(false);
   const [status, setStatus] = useState<
     'loading' | 'fallback' | 'store_not_ready' | 'error' | 'cancelled' | 'purchased' | 'restored'
   >('loading');
@@ -96,9 +105,32 @@ export default function PaywallScreen() {
     };
   }, [isPaywallEnabled]);
 
+  const handleRestorePurchases = async () => {
+    if (!IS_NATIVE || IS_EXPO_GO || isRestoring) return;
+    setIsRestoring(true);
+    try {
+      const restored = await restorePurchases();
+      if (restored) {
+        Alert.alert(
+          t('paywall.restoreSuccessTitle'),
+          t('paywall.restoreSuccessMessage'),
+          [{ text: t('paywall.ok'), onPress: () => router.back() }],
+        );
+      } else {
+        Alert.alert(t('paywall.infoTitle'), t('paywall.noPurchasesFound'));
+      }
+    } catch {
+      Alert.alert(t('paywall.errorTitle'), t('paywall.errorRestore'));
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+
   if (!isPaywallEnabled) {
     return null;
   }
+
+  const showRestoreOnFallback = IS_NATIVE && !IS_EXPO_GO;
 
   if (status === 'fallback' || status === 'store_not_ready' || status === 'error') {
     return (
@@ -132,6 +164,27 @@ export default function PaywallScreen() {
               </Text>
             ))}
           </View>
+          {showRestoreOnFallback ? (
+            <TouchableOpacity
+              style={[
+                styles.restoreButton,
+                { borderColor: colors.primary },
+                isRestoring && styles.restoreButtonDisabled,
+              ]}
+              onPress={handleRestorePurchases}
+              disabled={isRestoring}
+              accessibilityRole="button"
+              accessibilityLabel={t('paywall.restoreButton')}
+            >
+              {isRestoring ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <Text style={[styles.restoreButtonText, { color: colors.primary }]}>
+                  {t('paywall.restoreButton')}
+                </Text>
+              )}
+            </TouchableOpacity>
+          ) : null}
           <TouchableOpacity
             style={[styles.goBackButton, { backgroundColor: colors.primary }]}
             onPress={() => router.back()}
@@ -206,8 +259,27 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: 'left',
   },
-  goBackButton: {
+  restoreButton: {
     marginTop: 28,
+    paddingHorizontal: space.space7,
+    minHeight: buttonHeight,
+    paddingVertical: space.space3,
+    borderRadius: radiusMd,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'stretch',
+    maxWidth: 420,
+  },
+  restoreButtonDisabled: {
+    opacity: 0.6,
+  },
+  restoreButtonText: {
+    ...typeScale.body,
+    fontWeight: '600' as const,
+  },
+  goBackButton: {
+    marginTop: 12,
     paddingHorizontal: space.space7,
     minHeight: buttonHeight,
     paddingVertical: space.space3,
