@@ -35,6 +35,9 @@ yarn-error.*
 .DS_Store
 *.pem
 
+# App Store Connect API key for eas submit (local only)
+secrets/
+
 # local env files and secrets (never commit)
 .env
 .env*.local

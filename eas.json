@@ -61,7 +61,11 @@
     "production": {
       "android": { "track": "production" },
       "ios": {
-        "bundleIdentifier": "com.devaieood.medvba"
+        "bundleIdentifier": "com.devaieood.medvba",
+        "ascApiKeyPath": "./secrets/asc-api-key.p8",
+        "ascApiKeyId": "K64F283DJK",
+        "ascApiKeyIssuerId": "29f29a6b-929c-4bc7-98b3-7e6d224f9627",
+        "ascAppId": "6771373486"
       }
     }
   }

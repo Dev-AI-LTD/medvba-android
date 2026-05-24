@@ -44,6 +44,7 @@
     "diagnose:kinde-password": "node scripts/diagnose-kinde-password-grant.mjs",
     "check:kinde-ios": "node scripts/check-kinde-ios-env.mjs",
     "check:kinde-auth": "node scripts/check-kinde-auth.mjs",
+    "check:revenuecat-ios": "node scripts/check-revenuecat-ios-env.mjs",
     "review-notes:mode": "node scripts/print-review-notes-mode.mjs",
     "audit:head-neck-i18n": "tsx scripts/audit-head-neck-i18n.ts",
     "audit:locales-en-ro": "tsx scripts/audit-locale-en-ro.ts",

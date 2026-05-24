@@ -1014,6 +1014,8 @@ export const en: Record<string, string> = {
   'paywall.loading': 'Loading options...',
   'paywall.choosePlan': 'Choose Your Plan',
   'paywall.errorMessage': 'Subscriptions are temporarily unavailable. Please try again later.',
+  'paywall.storeNotReadyMessage':
+    'Subscriptions are still being set up in App Store Connect. The app works on the free plan; try again in 24–48 hours after Apple finishes processing.',
   'paywall.yearly': 'Yearly',
   'paywall.monthly': 'Monthly',
   'paywall.recommended': 'Recommended',

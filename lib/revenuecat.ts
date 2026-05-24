@@ -9,6 +9,36 @@ import { ENTITLEMENT_ID } from '@/constants/subscription';
 
 const IS_NATIVE = Platform.OS === 'ios' || Platform.OS === 'android';
 
+function isRevenueCatConfigurationError(error: unknown): boolean {
+  const message = String((error as { message?: string })?.message ?? error ?? '');
+  const code = (error as { code?: number | string })?.code;
+  const readable = String(
+    (error as { userInfo?: { readable_error_code?: string } })?.userInfo?.readable_error_code ?? '',
+  );
+  return (
+    code === 23 ||
+    code === '23' ||
+    readable === 'CONFIGURATION_ERROR' ||
+    message.includes('CONFIGURATION_ERROR') ||
+    message.includes('problem with your configuration') ||
+    message.includes('could not be fetched from the App Store') ||
+    message.includes('could be fetched from the Play Store')
+  );
+}
+
+/** StoreKit / Play must return product details — RC API alone is not enough. */
+async function offeringHasStoreProducts(): Promise<boolean> {
+  try {
+    const offerings = await Purchases.getOfferings();
+    const current = offerings.current;
+    const packages = current?.availablePackages ?? [];
+    return packages.length > 0 && packages.every((pkg) => Boolean(pkg.product?.identifier));
+  } catch (error) {
+    if (isRevenueCatConfigurationError(error)) return false;
+    throw error;
+  }
+}
+
 /**
  * Present the RevenueCat Paywall modal.
  * Only works on native (iOS/Android). On web, returns NOT_PRESENTED.
@@ -18,8 +48,19 @@ export async function presentPaywall(): Promise<PAYWALL_RESULT> {
     return PAYWALL_RESULT.NOT_PRESENTED;
   }
   try {
-    return await RevenueCatUI.presentPaywall({displayCloseButton: true});
+    const ready = await offeringHasStoreProducts();
+    if (!ready) {
+      console.warn(
+        '[RevenueCat] Store products not loaded (ASC metadata / sandbox). Skipping paywall UI.',
+      );
+      return PAYWALL_RESULT.NOT_PRESENTED;
+    }
+    return await RevenueCatUI.presentPaywall({ displayCloseButton: true });
   } catch (error) {
+    if (isRevenueCatConfigurationError(error)) {
+      console.warn('[RevenueCat] presentPaywall configuration error:', error);
+      return PAYWALL_RESULT.NOT_PRESENTED;
+    }
     console.error('[RevenueCat] presentPaywall error:', error);
     return PAYWALL_RESULT.ERROR;
   }
@@ -34,11 +75,18 @@ export async function presentPaywallIfNeeded(): Promise<PAYWALL_RESULT> {
     return PAYWALL_RESULT.NOT_PRESENTED;
   }
   try {
+    const ready = await offeringHasStoreProducts();
+    if (!ready) {
+      return PAYWALL_RESULT.NOT_PRESENTED;
+    }
     return await RevenueCatUI.presentPaywallIfNeeded({
       requiredEntitlementIdentifier: ENTITLEMENT_ID,
       displayCloseButton: true,
     });
   } catch (error) {
+    if (isRevenueCatConfigurationError(error)) {
+      return PAYWALL_RESULT.NOT_PRESENTED;
+    }
     console.error('[RevenueCat] presentPaywallIfNeeded error:', error);
     return PAYWALL_RESULT.ERROR;
   }

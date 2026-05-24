@@ -29,7 +29,7 @@ export default function PaywallScreen() {
   const { isPaywallEnabled } = useSubscription();
   const { t } = useLanguage();
   const [status, setStatus] = useState<
-    'loading' | 'fallback' | 'error' | 'cancelled' | 'purchased' | 'restored'
+    'loading' | 'fallback' | 'store_not_ready' | 'error' | 'cancelled' | 'purchased' | 'restored'
   >('loading');
 
   // Memoize to prevent update loop - new object ref each render was causing Stack to re-update
@@ -77,8 +77,11 @@ export default function PaywallScreen() {
           return;
         }
 
-        // ERROR / NOT_PRESENTED should show a message instead of silently closing.
-        setStatus(result === PAYWALL_RESULT.NOT_PRESENTED ? 'fallback' : 'error');
+        if (result === PAYWALL_RESULT.NOT_PRESENTED) {
+          setStatus('store_not_ready');
+          return;
+        }
+        setStatus('error');
       } catch (error) {
         console.error('[Paywall] Error:', error);
         if (mounted) {
@@ -97,7 +100,7 @@ export default function PaywallScreen() {
     return null;
   }
 
-  if (status === 'fallback' || status === 'error') {
+  if (status === 'fallback' || status === 'store_not_ready' || status === 'error') {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Stack.Screen options={headerOptions} />
@@ -105,9 +108,11 @@ export default function PaywallScreen() {
           <Text style={[styles.webMessage, { color: colors.text }]}>
             {status === 'error'
               ? t('paywall.errorMessage')
-              : IS_EXPO_GO
-                ? t('paywall.expoGoMessage')
-                : t('paywall.webMessage')}
+              : status === 'store_not_ready'
+                ? t('paywall.storeNotReadyMessage')
+                : IS_EXPO_GO
+                  ? t('paywall.expoGoMessage')
+                  : t('paywall.webMessage')}
           </Text>
           <Text style={[styles.webSubtext, { color: colors.textSecondary }]}>
             {t('paywall.webSubtext')}

@@ -1014,6 +1014,8 @@ export const ro: Record<string, string> = {
   'paywall.loading': 'Se încarcă opțiunile...',
   'paywall.choosePlan': 'Alege Planul Tău',
   'paywall.errorMessage': 'Abonamentele nu sunt temporar disponibile. Te rugăm să încerci din nou mai târziu.',
+  'paywall.storeNotReadyMessage':
+    'Abonamentele sunt încă în configurare în App Store Connect. Aplicația funcționează pe planul gratuit; încearcă din nou în 24–48 ore după ce Apple termină procesarea.',
   'paywall.yearly': 'Anual',
   'paywall.monthly': 'Lunar',
   'paywall.recommended': 'Recomandat',

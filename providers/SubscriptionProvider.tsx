@@ -88,8 +88,25 @@ function isRevenueCatConfigurationError(error: unknown): boolean {
   );
 }
 
+/** RevenueCat closes TestFlight/App Store builds that call configure() with a test_ API key. */
+function isRevenueCatTestApiKeyInRelease(apiKey: string): boolean {
+  return !__DEV__ && apiKey.trim().toLowerCase().startsWith('test_');
+}
+
+function isRevenueCatWrongPlatformApiKeyInRelease(apiKey: string): boolean {
+  if (__DEV__) return false;
+  const k = apiKey.trim().toLowerCase();
+  if (Platform.OS === 'ios') return k.startsWith('goog_') || k.startsWith('amzn_');
+  if (Platform.OS === 'android') return k.startsWith('appl_');
+  return false;
+}
+
 export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
   const { paywallEnabled: PAYWALL_ENABLED, apiKey: REVENUECAT_API_KEY, isNative: IS_NATIVE } = useMemo(getPaywallConfig, []);
+  const revenueCatUsable =
+    Boolean(REVENUECAT_API_KEY) &&
+    !isRevenueCatTestApiKeyInRelease(REVENUECAT_API_KEY) &&
+    !isRevenueCatWrongPlatformApiKeyInRelease(REVENUECAT_API_KEY);
   const { user } = useAuth();
   const updateSubscriptionMutation = useUpdateSubscription();
   const updateSubscriptionMutateAsyncRef = useRef(updateSubscriptionMutation.mutateAsync);
@@ -393,6 +410,17 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       return;
     }
 
+    if (!revenueCatUsable) {
+      if (!didLogRevenueCatConfigErrorRef.current) {
+        didLogRevenueCatConfigErrorRef.current = true;
+        log.warn(
+          '[Subscription] RevenueCat API key invalid for this platform/release — skipping Purchases.configure. iOS TestFlight needs appl_… (not test_ or goog_) in EAS production; run npm run check:revenuecat-ios.',
+        );
+      }
+      setState((prev) => ({ ...prev, isLoading: false }));
+      return;
+    }
+
     if (!IS_NATIVE) {
       setState((prev) => ({ ...prev, isLoading: false }));
       return;
@@ -484,11 +512,11 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
         premiumSyncDebounceRef.current = null;
       }
     };
-  }, [PAYWALL_ENABLED, REVENUECAT_API_KEY, IS_NATIVE, user?.id]);
+  }, [PAYWALL_ENABLED, REVENUECAT_API_KEY, revenueCatUsable, IS_NATIVE, user?.id]);
 
   const purchasePackage = useCallback(
     async (packageId: string): Promise<boolean> => {
-      if (!PAYWALL_ENABLED || !REVENUECAT_API_KEY) {
+      if (!PAYWALL_ENABLED || !revenueCatUsable) {
         log.debug('[Subscription] Purchases disabled (paywall or API key missing).');
         return false;
       }
@@ -526,11 +554,11 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
         return false;
       }
     },
-    [PAYWALL_ENABLED, REVENUECAT_API_KEY, syncPremiumToSupabase]
+    [PAYWALL_ENABLED, revenueCatUsable, syncPremiumToSupabase]
   );
 
   const restorePurchases = useCallback(async (): Promise<boolean> => {
-    if (!PAYWALL_ENABLED || !REVENUECAT_API_KEY) {
+    if (!PAYWALL_ENABLED || !revenueCatUsable) {
       log.debug('[Subscription] Restore disabled (paywall or API key missing).');
       return false;
     }
@@ -544,7 +572,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       log.error('[Subscription] Restore error:', error);
       return false;
     }
-  }, [PAYWALL_ENABLED, REVENUECAT_API_KEY]);
+  }, [PAYWALL_ENABLED, revenueCatUsable]);
 
   const effectivePremium = PAYWALL_ENABLED ? state.isPremium : true;
 

@@ -34,7 +34,7 @@ eas env:list --environment production
 | `EXPO_PUBLIC_KINDE_GOOGLE_CONNECTION_ID` | Da |
 | `EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID` | Da |
 | `EXPO_PUBLIC_KINDE_EMAIL_CONNECTION_ID` | Recomandat (email în browser) |
-| `EXPO_PUBLIC_REVENUECAT_API_KEY_IOS` | Da (`appl_…` din RevenueCat) |
+| `EXPO_PUBLIC_REVENUECAT_API_KEY_IOS` | Da — **obligatoriu `appl_…` (production), NU `test_…`** |
 | `EXPO_PUBLIC_PAYWALL_ENABLED` | `true` |
 
 Copiază valorile din `.env` local (nu comite `.env`):
@@ -42,6 +42,7 @@ Copiază valorile din `.env` local (nu comite `.env`):
 ```powershell
 npm run check:kinde-ios
 npm run check:kinde-auth
+npm run check:revenuecat-ios
 ```
 
 Adaugă lipsuri în Expo (sau CLI):
@@ -144,12 +145,37 @@ Copiază blocul **Primary** din [`app-store-metadata-en.md`](app-store-metadata-
 
 ---
 
+## RevenueCat: „Wrong API Key” (TestFlight)
+
+Dacă vezi modalul **Wrong API Key** și app-ul se închide, build-ul folosește cheie **test** (`test_…`) în loc de **production** (`appl_…`).
+
+1. [RevenueCat](https://app.revenuecat.com) → Project → **API keys** → app iOS → copiază **Public API key** (`appl_…`, nu Test Store).
+2. Actualizează EAS production (înlocuiește `test_eTw…`):
+
+```powershell
+cd C:\Users\octav\Desktop\MEDVBA3\medvba-android
+eas env:update production --variable-name EXPO_PUBLIC_REVENUECAT_API_KEY_IOS --value "appl_PASTE_YOUR_KEY_HERE" --non-interactive
+eas env:list --environment production
+```
+
+3. Incrementează `ios.buildNumber` în `app.config.ts`, apoi **rebuild obligatoriu** (cheia e încorporată la build):
+
+```powershell
+eas build --platform ios --profile production
+eas submit --platform ios --profile production --latest
+```
+
+**Workaround temporar** (fără IAP, doar login/quiz): `EXPO_PUBLIC_PAYWALL_ENABLED=false` în EAS production + rebuild.
+
+---
+
 ## Probleme frecvente
 
 | Problemă | Soluție |
 |----------|---------|
+| **Wrong API Key** / app se închide la launch | `EXPO_PUBLIC_REVENUECAT_API_KEY_IOS` = `appl_…` în EAS production, rebuild |
 | Login nu merge în TestFlight | Lipsesc `EXPO_PUBLIC_KINDE_*` în EAS production — rebuild |
-| Paywall gol | `EXPO_PUBLIC_REVENUECAT_API_KEY_IOS` + produse Ready în ASC |
+| Paywall gol | `appl_` key + produse Ready în App Store Connect + offerings în RevenueCat |
 | Build credentials failed | `eas credentials` → iOS → reset și regenerează |
 | Submit „No suitable build” | `eas build:list` → `eas submit --id BUILD_ID` |
 
@@ -161,6 +187,7 @@ Copiază blocul **Primary** din [`app-store-metadata-en.md`](app-store-metadata-
 cd C:\Users\octav\Desktop\MEDVBA3\medvba-android
 eas env:list --environment production
 npm run check:kinde-ios
+npm run check:revenuecat-ios
 eas build --platform ios --profile production
 eas submit --platform ios --profile production --latest
 ```
