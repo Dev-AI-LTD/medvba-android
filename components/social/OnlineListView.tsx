@@ -3,7 +3,7 @@ import { View, FlatList, StyleSheet, ListRenderItem } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { spacing } from '@/constants/design';
+import { listRowMinHeight, screenPaddingX, space, touchTargetMin } from '@/theme/iosDesign';
 import Button from '../Button';
 import AvatarImage from '../AvatarImage';
 import OnlineIndicator from '../OnlineIndicator';
@@ -87,7 +87,7 @@ export function OnlineListView({ onOpenChat }: OnlineListViewProps) {
         keyExtractor={(item) => item.userId}
         renderItem={renderUser}
         showsVerticalScrollIndicator={false}
-        ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
+        ItemSeparatorComponent={() => <View style={{ height: space.space3 }} />}
         contentContainerStyle={[styles.listContent, MOCK_ONLINE_USERS.length === 0 && styles.emptyListContent]}
         ListEmptyComponent={renderEmptyState}
       />
@@ -97,9 +97,9 @@ export function OnlineListView({ onOpenChat }: OnlineListViewProps) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  title: { marginBottom: spacing.md },
+  title: { marginBottom: space.space3 },
   listContent: {
-    paddingBottom: spacing.lg,
+    paddingBottom: space.space4,
   },
   emptyListContent: {
     flex: 1,
@@ -107,10 +107,10 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     alignItems: 'center',
-    padding: spacing.xl,
+    padding: space.space5,
   },
   emptyTitle: {
-    marginBottom: spacing.sm,
+    marginBottom: space.space2,
   },
   emptySubtitle: {
     opacity: 0.7,
@@ -119,7 +119,9 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.md,
+    paddingVertical: space.space3,
+    paddingHorizontal: screenPaddingX,
+    minHeight: Math.max(listRowMinHeight, touchTargetMin),
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   left: {
@@ -128,10 +130,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   texts: {
-    marginLeft: spacing.md,
+    marginLeft: space.space3,
     flex: 1,
   },
-  statusText: { opacity: 0.7, marginTop: 2 },
+  statusText: { opacity: 0.7, marginTop: space.space1 },
   onlineDot: {
     position: 'absolute',
     bottom: 0,

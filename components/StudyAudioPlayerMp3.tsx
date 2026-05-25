@@ -5,7 +5,7 @@ import { useFocusEffect } from 'expo-router';
 import { Pause, Play, Square } from 'lucide-react-native';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { iconMd, space, typeScale } from '@/theme/iosDesign';
+import { iconMd, space, touchTargetMin, typeScale } from '@/theme/iosDesign';
 import { getCachedStudyAudioUri } from '@/lib/study-audio-cache';
 import { log } from '@/lib/log';
 
@@ -16,16 +16,16 @@ const styles = StyleSheet.create({
     gap: space.space3,
   },
   roundBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: touchTargetMin,
+    height: touchTargetMin,
+    borderRadius: touchTargetMin / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stopBtn: { borderWidth: 1 },
   copy: { flex: 1 },
   title: { ...typeScale.body, fontWeight: '600' },
-  hint: { fontSize: 12, marginTop: 2 },
+  hint: { ...typeScale.caption, marginTop: space.space1 },
 });
 
 export type StudyAudioPlayerMp3Props = {

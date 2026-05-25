@@ -257,6 +257,8 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         'false',
       EXPO_PUBLIC_SUPPORT_EMAIL:
         envFromFile.EXPO_PUBLIC_SUPPORT_EMAIL || process.env.EXPO_PUBLIC_SUPPORT_EMAIL,
+      EXPO_PUBLIC_SENTRY_DSN:
+        envFromFile.EXPO_PUBLIC_SENTRY_DSN || process.env.EXPO_PUBLIC_SENTRY_DSN,
     },
     owner: 'devaieood79',
   };

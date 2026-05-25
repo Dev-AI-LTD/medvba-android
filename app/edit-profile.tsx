@@ -20,6 +20,8 @@ import { ArrowLeft, Camera, Save, User, MapPin, School, BookOpen, Eye, EyeOff, X
 import { useTheme } from '@/providers/ThemeProvider';
 import {
   buttonHeight,
+  cardPadding,
+  fieldGap,
   iconLg,
   iconMd,
   iconSm,
@@ -28,6 +30,7 @@ import {
   radiusLg,
   radiusMd,
   screenPaddingX,
+  sectionGap,
   space,
   touchTargetMin,
   typeScale,
@@ -478,7 +481,7 @@ const createStyles = (colors: any) =>
       borderBottomColor: colors.glassBorder,
     },
     headerTitle: {
-      fontSize: 20,
+      ...typeScale.title3,
       fontWeight: '700' as const,
       color: colors.text,
     },
@@ -511,9 +514,9 @@ const createStyles = (colors: any) =>
       alignItems: 'center',
     },
     loadingText: {
-      fontSize: 15,
+      ...typeScale.subhead,
       color: colors.textSecondary,
-      marginTop: 16,
+      marginTop: cardPadding,
     },
     scrollContent: {
       paddingHorizontal: screenPaddingX,
@@ -522,12 +525,12 @@ const createStyles = (colors: any) =>
     },
     photoSection: {
       alignItems: 'center',
-      paddingVertical: 24,
-      marginBottom: 16,
+      paddingVertical: sectionGap,
+      marginBottom: cardPadding,
     },
     avatarContainer: {
       position: 'relative',
-      marginBottom: 16,
+      marginBottom: cardPadding,
     },
     avatar: {
       width: 100,
@@ -560,18 +563,18 @@ const createStyles = (colors: any) =>
       borderColor: colors.primary,
     },
     changePhotoText: {
-      fontSize: 14,
+      ...typeScale.subhead,
       fontWeight: '600' as const,
       color: colors.primary,
     },
     formSection: {
-      marginBottom: 16,
+      marginBottom: cardPadding,
     },
     sectionTitle: {
-      fontSize: 18,
+      ...typeScale.headline,
       fontWeight: '700' as const,
       color: colors.text,
-      marginBottom: 20,
+      marginBottom: space.space5,
     },
     inputGroup: {
       marginBottom: 20,
@@ -583,7 +586,7 @@ const createStyles = (colors: any) =>
       marginBottom: 10,
     },
     labelText: {
-      fontSize: 14,
+      ...typeScale.subhead,
       fontWeight: '600' as const,
       color: colors.textSecondary,
     },
@@ -592,7 +595,7 @@ const createStyles = (colors: any) =>
       borderRadius: radiusMd,
       paddingHorizontal: screenPaddingX,
       paddingVertical: space.space3,
-      fontSize: 15,
+      ...typeScale.subhead,
       color: colors.text,
       borderWidth: 1,
       borderColor: colors.glassBorder,
@@ -606,7 +609,8 @@ const createStyles = (colors: any) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingVertical: 12,
+      paddingVertical: space.space3,
+      minHeight: touchTargetMin,
     },
     toggleLabel: {
       flex: 1,
@@ -618,13 +622,13 @@ const createStyles = (colors: any) =>
       flex: 1,
     },
     toggleTitle: {
-      fontSize: 15,
+      ...typeScale.subhead,
       fontWeight: '600' as const,
       color: colors.text,
       marginBottom: 4,
     },
     toggleDescription: {
-      fontSize: 13,
+      ...typeScale.footnote,
       color: colors.textMuted,
     },
     toggle: {

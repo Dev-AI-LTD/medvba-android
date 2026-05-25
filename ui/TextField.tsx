@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { TextInput as PaperTextInput } from 'react-native-paper';
+import { inputHeight } from '@/theme/iosDesign';
 
 export type UITextFieldProps = {
   value?: string;
@@ -49,7 +50,8 @@ export function UITextField({
       numberOfLines={numberOfLines}
       autoCorrect={autocorrection}
       disabled={disabled}
-      style={style as StyleProp<TextStyle>}
+      style={[{ minHeight: inputHeight }, style] as StyleProp<TextStyle>}
+      contentStyle={{ minHeight: inputHeight }}
       right={right}
       testID={testID}
     />

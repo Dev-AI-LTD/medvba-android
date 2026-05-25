@@ -17,6 +17,7 @@ import { useSubscription } from '@/providers/SubscriptionProvider';
 import { useStudyChapterList } from '@/lib/study-hooks';
 import { STUDY_MODULE_IDS } from '@/constants/study';
 import {
+  cardPadding,
   iconLg,
   iconMd,
   iconSm,
@@ -129,14 +130,14 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    gap: 14,
+    padding: cardPadding,
+    gap: space.space3,
   },
   cardMuted: { opacity: 0.75 },
   info: { flex: 1 },
   name: { ...typeScale.body, fontWeight: '600' },
-  meta: { fontSize: 13, marginTop: 2 },
-  badges: { marginTop: 4 },
-  badgeLabel: { fontSize: 12, fontWeight: '600' },
+  meta: { ...typeScale.footnote, marginTop: 2 },
+  badges: { marginTop: space.space1 },
+  badgeLabel: { ...typeScale.caption, fontWeight: '600' },
   premiumRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
 });

@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     ...typeScale.largeTitle,
   },
   title: {
-    ...typeScale.title2,
+    ...typeScale.title1,
   },
   subtitle: {
     ...typeScale.subhead,

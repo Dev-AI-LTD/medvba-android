@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     borderRadius: space.space3,
     marginLeft: 'auto',
     gap: space.space1,
-    minHeight: touchTargetMin - 12,
+    minHeight: touchTargetMin,
   },
   upgradeButtonText: {
     ...typeScale.footnote,

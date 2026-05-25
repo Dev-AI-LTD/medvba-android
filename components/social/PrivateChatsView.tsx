@@ -3,7 +3,7 @@ import { View, FlatList, StyleSheet, TouchableOpacity, ListRenderItem } from 're
 import { Text, Badge } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { spacing } from '@/constants/design';
+import { listRowMinHeight, screenPaddingX, space, touchTargetMin } from '@/theme/iosDesign';
 import AvatarImage from '../AvatarImage';
 import OnlineIndicator from '../OnlineIndicator';
 import { useTheme } from '@/providers/ThemeProvider';
@@ -98,7 +98,7 @@ export function PrivateChatsView({ onOpenChat }: PrivateChatsViewProps) {
         keyExtractor={(item) => item.id}
         renderItem={renderConversation}
         showsVerticalScrollIndicator={false}
-        ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
+        ItemSeparatorComponent={() => <View style={{ height: space.space3 }} />}
         contentContainerStyle={[styles.listContent, MOCK_CONVERSATIONS.length === 0 && styles.emptyListContent]}
         ListEmptyComponent={renderEmptyState}
       />
@@ -108,9 +108,9 @@ export function PrivateChatsView({ onOpenChat }: PrivateChatsViewProps) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  title: { marginBottom: spacing.md },
+  title: { marginBottom: space.space3 },
   listContent: {
-    paddingBottom: spacing.lg,
+    paddingBottom: space.space4,
   },
   emptyListContent: {
     flex: 1,
@@ -118,10 +118,10 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     alignItems: 'center',
-    padding: spacing.xl,
+    padding: space.space5,
   },
   emptyTitle: {
-    marginBottom: spacing.sm,
+    marginBottom: space.space2,
   },
   emptySubtitle: {
     opacity: 0.7,
@@ -130,7 +130,9 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.md,
+    paddingVertical: space.space3,
+    paddingHorizontal: screenPaddingX,
+    minHeight: Math.max(listRowMinHeight, touchTargetMin),
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   avatarContainer: {
@@ -138,22 +140,22 @@ const styles = StyleSheet.create({
   },
   center: {
     flex: 1,
-    marginHorizontal: spacing.md,
+    marginHorizontal: space.space3,
   },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.xs,
+    marginBottom: space.space1,
   },
   lastMessage: { opacity: 0.8 },
   right: {
     alignItems: 'flex-end',
   },
-  time: { opacity: 0.6, marginBottom: spacing.xs },
+  time: { opacity: 0.6, marginBottom: space.space1 },
   badge: {
-    marginLeft: spacing.sm,
-    minWidth: 20,
-    height: 20,
+    marginLeft: space.space2,
+    minWidth: touchTargetMin - 24,
+    minHeight: touchTargetMin - 24,
     alignItems: 'center',
     justifyContent: 'center',
   },

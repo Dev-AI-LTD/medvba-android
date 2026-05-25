@@ -2,7 +2,14 @@ import React, { useEffect, useRef } from 'react';
 import { Text, StyleSheet, Animated, View } from 'react-native';
 import { Flame } from 'lucide-react-native';
 import { useTheme } from '@/providers/ThemeProvider';
-import { spacing, typography, borderRadius } from '@/constants/design';
+import {
+  iconXs,
+  iconSm,
+  iconLg,
+  radiusPill,
+  space,
+  typeScale,
+} from '@/theme/iosDesign';
 
 interface StreakBadgeProps {
   streak: number;
@@ -69,11 +76,11 @@ export default function StreakBadge({ streak, size = 'medium' }: StreakBadgeProp
   const getSize = () => {
     switch (size) {
       case 'small':
-        return { icon: 16, fontSize: typography.small.fontSize, padding: spacing.sm };
+        return { icon: iconXs, fontSize: typeScale.subhead.fontSize, padding: space.space2 };
       case 'large':
-        return { icon: 28, fontSize: typography.h4.fontSize, padding: spacing.lg };
+        return { icon: iconLg, fontSize: typeScale.title3.fontSize, padding: space.space4 };
       default:
-        return { icon: 20, fontSize: typography.bodySemibold.fontSize, padding: spacing.md };
+        return { icon: iconSm, fontSize: typeScale.body.fontSize, padding: space.space3 };
     }
   };
 
@@ -99,7 +106,7 @@ export default function StreakBadge({ streak, size = 'medium' }: StreakBadgeProp
           styles.glowContainer,
           {
             opacity: glowOpacity,
-            borderRadius: borderRadius.full,
+            borderRadius: radiusPill,
           },
         ]}
       />
@@ -109,7 +116,7 @@ export default function StreakBadge({ streak, size = 'medium' }: StreakBadgeProp
           { 
             paddingHorizontal: sizeConfig.padding * 1.5, 
             paddingVertical: sizeConfig.padding * 0.6,
-            borderRadius: borderRadius.full,
+            borderRadius: radiusPill,
           },
         ]}
       >
@@ -120,7 +127,7 @@ export default function StreakBadge({ streak, size = 'medium' }: StreakBadgeProp
             { 
               fontSize: sizeConfig.fontSize, 
               color: colors.streakOrange,
-              fontWeight: typography.bodySemibold.fontWeight,
+              fontWeight: typeScale.headline.fontWeight,
             }
           ]}
         >
@@ -136,7 +143,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 149, 0, 0.2)',
-    gap: spacing.xs,
+    gap: space.space1,
   },
   text: {
     fontWeight: '700' as const,

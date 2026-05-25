@@ -18,6 +18,7 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { FREE_FEATURE_KEYS, getFreeFeatureLines } from '@/constants/subscription';
 import {
   buttonHeight,
+  fieldGap,
   radiusMd,
   sectionGap,
   space,
@@ -224,19 +225,17 @@ const styles = StyleSheet.create({
     padding: sectionGap,
   },
   loadingText: {
-    marginTop: 16,
-    fontSize: 15,
+    marginTop: fieldGap,
+    ...typeScale.subhead,
   },
   webMessage: {
-    fontSize: 17,
+    ...typeScale.body,
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 12,
+    marginBottom: space.space3,
   },
   webSubtext: {
-    fontSize: 14,
+    ...typeScale.subhead,
     textAlign: 'center',
-    lineHeight: 20,
   },
   freeTierList: {
     alignSelf: 'stretch',
@@ -254,9 +253,8 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   freeTierBullet: {
-    fontSize: 14,
-    lineHeight: 22,
-    marginBottom: 10,
+    ...typeScale.subhead,
+    marginBottom: space.space2,
     textAlign: 'left',
   },
   restoreButton: {

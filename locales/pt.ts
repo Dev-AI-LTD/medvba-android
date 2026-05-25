@@ -83,6 +83,8 @@ export const pt: Record<string, string> = {
     'O login por e-mail está temporariamente indisponível. Use Google ou Apple acima. Tente novamente mais tarde.',
   'auth.kindeSocialConnectionNotEnabled':
     'Este método não está ativado no Kinde para o app MEDVBA. No Kinde: Applications → app nativa → Authentication → ative Apple. Connection ID em EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID e reinicie o Metro.',
+  'auth.productionEmailSignInHint':
+    'Use Iniciar sessão com Apple ou Google. Para email, toque em «Iniciar sessão com email» quando disponível ou contacte support@medvba.app.',
   'auth.invalidCredentials': 'E-mail ou senha incorretos. Por favor tente novamente.',
   'auth.emailNotConfirmed':
     'Confirme o seu e-mail antes de iniciar sessão. Abra a ligação que enviámos ao registar-se e tente novamente.',
@@ -657,6 +659,8 @@ export const pt: Record<string, string> = {
   'deleteAccount.warningTitle': 'Esta ação é permanente',
   'deleteAccount.warningBody':
     'Eliminar a sua conta MEDVBA remove permanentemente o seu perfil, histórico de quizzes, salas de estudo que aloja e todos os dados associados. Não pode ser anulada.',
+  'deleteAccount.subscriptionNote':
+    'Eliminar a conta não cancela uma subscrição ativa da App Store. Cancele em Definições iOS → Subscrições ou use Gerir subscrição na app antes de eliminar a conta.',
   'deleteAccount.sectionWhatDeleted': 'O que será eliminado',
   'deleteAccount.itemProfile': 'Perfil e avatar',
   'deleteAccount.itemQuizStats': 'Estatísticas de quiz, progresso e sequências',
@@ -688,9 +692,9 @@ export const pt: Record<string, string> = {
   'notifications.studyTime': 'Horário de estudo',
   'notifications.studyTimePlaceholder': 'Escolha o horário em que deseja ser lembrado.',
   'notifications.chatNotifications': 'Notificações de chat de estudo',
-  'notifications.chatNotificationsDesc': 'Receba alertas quando alguém lhe enviar uma mensagem ou convidá-lo para estudar no chat.',
+  'notifications.chatNotificationsDesc': 'Em breve — alertas push de chat não estão disponíveis nesta versão.',
   'notifications.medvbaUpdates': 'Atualizações do MEDVBA',
-  'notifications.medvbaUpdatesDesc': 'Informe-me sobre novas lições, funcionalidades e anúncios importantes.',
+  'notifications.medvbaUpdatesDesc': 'Em breve — anúncios e atualizações do produto ainda não são enviados como notificações push.',
   'notifications.soundEnabled': 'Som de notificação',
   'notifications.soundEnabledDesc': 'Ativar ou desativar os sons de notificação.',
   'notifications.doNotDisturb': 'Não incomodar',

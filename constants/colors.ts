@@ -70,4 +70,6 @@ export const lightColors = {
   categoryMicrobiology: '#98D8C8',
 };
 
+export type AppColors = typeof darkColors;
+
 export default darkColors;

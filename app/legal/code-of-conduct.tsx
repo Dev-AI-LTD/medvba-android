@@ -11,7 +11,16 @@ import { Heart, Users, AlertOctagon, Flag, ShieldCheck, MessageCircle } from 'lu
 import { Stack } from 'expo-router';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { screenPaddingX, sectionGap, space, typeScale } from '@/theme/iosDesign';
+import {
+  cardPadding,
+  radiusLg,
+  radiusMd,
+  radiusSm,
+  screenPaddingX,
+  sectionGap,
+  space,
+  typeScale,
+} from '@/theme/iosDesign';
 
 const LAST_UPDATED = 'January 12, 2026';
 const CONTACT_EMAIL = 'contact@devaieood.com';
@@ -267,7 +276,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: sectionGap,
   },
   iconContainer: {
     width: 64,
@@ -276,23 +285,22 @@ const createStyles = (colors: any) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
-    marginBottom: 12,
+    marginBottom: space.space3,
   },
   lastUpdated: {
-    fontSize: 13,
+    ...typeScale.footnote,
     color: colors.textSecondary,
   },
   intro: {
-    fontSize: 15,
+    ...typeScale.subhead,
     color: colors.textSecondary,
-    lineHeight: 24,
-    marginBottom: 20,
+    marginBottom: space.space5,
     textAlign: 'center',
   },
   highlightBox: {
-    borderRadius: 16,
+    borderRadius: radiusLg,
     padding: screenPaddingX,
-    marginBottom: 24,
+    marginBottom: sectionGap,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.glassBorder,
@@ -304,15 +312,15 @@ const createStyles = (colors: any) => StyleSheet.create({
     marginBottom: 8,
   },
   highlightText: {
-    fontSize: 14,
+    ...typeScale.subhead,
     color: colors.accent,
     textAlign: 'center',
     letterSpacing: 1,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: sectionGap,
     backgroundColor: colors.cardBg,
-    borderRadius: 16,
+    borderRadius: radiusLg,
     borderWidth: 1,
     borderColor: colors.glassBorder,
     overflow: 'hidden',
@@ -320,8 +328,8 @@ const createStyles = (colors: any) => StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    padding: 16,
+    gap: space.space3,
+    padding: cardPadding,
     borderBottomWidth: 1,
     borderBottomColor: colors.glassBorder,
     backgroundColor: 'rgba(255,255,255,0.03)',
@@ -331,19 +339,18 @@ const createStyles = (colors: any) => StyleSheet.create({
     color: colors.text,
   },
   sectionContent: {
-    padding: 16,
+    padding: cardPadding,
   },
   subheading: {
-    fontSize: 14,
+    ...typeScale.subhead,
     fontWeight: '600' as const,
     color: colors.text,
-    marginBottom: 12,
+    marginBottom: space.space3,
   },
   paragraph: {
-    fontSize: 14,
+    ...typeScale.subhead,
     color: colors.textSecondary,
-    lineHeight: 22,
-    marginBottom: 12,
+    marginBottom: space.space3,
   },
   bold: {
     fontWeight: '700' as const,
@@ -353,70 +360,67 @@ const createStyles = (colors: any) => StyleSheet.create({
     gap: 6,
   },
   bulletItem: {
-    fontSize: 14,
+    ...typeScale.subhead,
     color: colors.textSecondary,
-    lineHeight: 22,
   },
   bulletItemRed: {
-    fontSize: 14,
+    ...typeScale.subhead,
     color: colors.error,
-    lineHeight: 22,
   },
   warningBox: {
     backgroundColor: 'rgba(255, 71, 87, 0.1)',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 12,
+    borderRadius: radiusMd,
+    padding: cardPadding,
+    marginTop: space.space3,
     borderWidth: 1,
     borderColor: 'rgba(255, 71, 87, 0.3)',
   },
   warningItem: {
-    fontSize: 14,
+    ...typeScale.subhead,
     color: colors.textSecondary,
-    lineHeight: 26,
   },
   consequenceItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 16,
-    gap: 12,
+    marginBottom: cardPadding,
+    gap: space.space3,
   },
   consequenceBadge: {
     paddingHorizontal: space.space3,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: radiusSm,
   },
   consequenceLevel: {
-    fontSize: 12,
+    ...typeScale.caption,
     fontWeight: '700' as const,
   },
   consequenceContent: {
     flex: 1,
   },
   consequenceTitle: {
-    fontSize: 14,
+    ...typeScale.subhead,
     fontWeight: '600' as const,
     color: colors.text,
     marginBottom: 2,
   },
   consequenceDesc: {
-    fontSize: 13,
+    ...typeScale.footnote,
     color: colors.textSecondary,
   },
   note: {
-    fontSize: 12,
+    ...typeScale.caption,
     color: colors.textMuted,
     fontStyle: 'italic',
-    marginTop: 8,
+    marginTop: space.space2,
   },
   reportSteps: {
-    marginTop: 12,
-    gap: 16,
+    marginTop: space.space3,
+    gap: cardPadding,
   },
   reportStep: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 12,
+    gap: space.space3,
   },
   stepNumber: {
     width: 28,
@@ -427,20 +431,19 @@ const createStyles = (colors: any) => StyleSheet.create({
     alignItems: 'center',
   },
   stepNumberText: {
-    fontSize: 14,
+    ...typeScale.subhead,
     fontWeight: '700' as const,
     color: colors.text,
   },
   stepText: {
     flex: 1,
-    fontSize: 14,
+    ...typeScale.subhead,
     color: colors.textSecondary,
-    lineHeight: 20,
   },
   commitmentBox: {
-    borderRadius: 16,
+    borderRadius: radiusLg,
     padding: screenPaddingX,
-    marginBottom: 24,
+    marginBottom: sectionGap,
     borderWidth: 1,
     borderColor: colors.glassBorder,
     overflow: 'hidden',
@@ -448,19 +451,17 @@ const createStyles = (colors: any) => StyleSheet.create({
   commitmentTitle: {
     ...typeScale.headline,
     color: colors.text,
-    marginBottom: 12,
+    marginBottom: space.space3,
     textAlign: 'center',
   },
   commitmentText: {
-    fontSize: 14,
+    ...typeScale.subhead,
     color: colors.textSecondary,
-    lineHeight: 22,
     textAlign: 'center',
   },
   footer: {
-    fontSize: 13,
+    ...typeScale.footnote,
     color: colors.textMuted,
-    lineHeight: 20,
     textAlign: 'center',
     fontStyle: 'italic',
   },

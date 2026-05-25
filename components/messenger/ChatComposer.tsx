@@ -4,12 +4,13 @@ import { Send } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/providers/ThemeProvider';
 import {
-  SPACING,
-  buttonHeight,
+  space,
+  touchTargetMin,
   iconMd,
   inputMinHeight,
   radiusMd,
   screenPaddingX,
+  typeScale,
 } from '@/theme/iosDesign';
 
 type Props = {
@@ -80,10 +81,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     paddingHorizontal: screenPaddingX,
-    paddingTop: SPACING.x1,
-    paddingBottom: Platform.OS === 'ios' ? SPACING.x2 : SPACING.x1,
+    paddingTop: space.space2,
+    paddingBottom: Platform.OS === 'ios' ? space.space4 : space.space2,
     borderTopWidth: StyleSheet.hairlineWidth,
-    gap: SPACING.x1,
+    gap: space.space2,
   },
   input: {
     flex: 1,
@@ -91,16 +92,16 @@ const styles = StyleSheet.create({
     minHeight: inputMinHeight,
     borderRadius: radiusMd + 10,
     borderWidth: 1,
-    paddingHorizontal: SPACING.x2,
-    paddingVertical: 10,
-    fontSize: 16,
+    paddingHorizontal: space.space4,
+    paddingVertical: space.space2 + 2,
+    ...typeScale.body,
   },
   sendBtn: {
-    width: buttonHeight,
-    height: buttonHeight,
-    borderRadius: buttonHeight / 2,
+    width: touchTargetMin,
+    height: touchTargetMin,
+    borderRadius: touchTargetMin / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 2,
+    marginBottom: space.space1,
   },
 });

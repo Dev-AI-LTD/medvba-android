@@ -23,11 +23,16 @@ import { categories } from '@/mocks/questions';
 import { useQuizProgress } from '@/providers/QuizProgressProvider';
 import { FREE_QUIZ_ANSWER_LIMIT } from '@/constants/subscription';
 import {
-  SPACING,
+  cardPadding,
+  fieldGap,
   iconLg,
   iconMd,
   iconXl,
+  radiusLg,
+  radiusMd,
   screenPaddingX,
+  sectionGap,
+  space,
   touchTargetMin,
   typeScale,
 } from '@/theme/iosDesign';
@@ -120,7 +125,7 @@ export default function HomeScreen() {
             {hasReachedFreeQuizLimit && (
               <TouchableOpacity
                 activeOpacity={1}
-                style={[StyleSheet.absoluteFill, { backgroundColor: colors.background + 'E6', borderRadius: 16, zIndex: 5 }]}
+                style={[StyleSheet.absoluteFill, { backgroundColor: colors.background + 'E6', borderRadius: radiusLg, zIndex: 5 }]}
                 onPress={handleContinueLearning}
               >
               <View style={styles.limitOverlay}>
@@ -364,17 +369,17 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   scrollContent: {
-    paddingBottom: SPACING.x3,
+    paddingBottom: sectionGap,
   },
   upgradeBanner: {
-    marginBottom: SPACING.x3,
-    borderRadius: 16,
+    marginBottom: sectionGap,
+    borderRadius: radiusLg,
     overflow: 'hidden',
   },
   upgradeBannerGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: cardPadding,
     paddingHorizontal: screenPaddingX,
   },
   upgradeBannerIcon: {
@@ -390,49 +395,49 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   upgradeBannerTitle: {
-    fontSize: 17,
+    ...typeScale.body,
     fontWeight: '700' as const,
     color: '#FFF',
     marginBottom: 2,
   },
   upgradeBannerSubtitle: {
-    fontSize: 13,
+    ...typeScale.footnote,
     color: 'rgba(255,255,255,0.85)',
   },
   premiumBadgeContainer: {
     position: 'absolute',
-    top: 12,
-    right: 12,
+    top: space.space3,
+    right: space.space3,
     zIndex: 10,
   },
   limitOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: sectionGap,
   },
   limitTitle: {
-    fontSize: 18,
+    ...typeScale.headline,
     fontWeight: '700' as const,
-    marginTop: 12,
+    marginTop: space.space3,
     textAlign: 'center',
   },
   limitText: {
-    fontSize: 14,
+    ...typeScale.subhead,
     marginTop: 6,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: cardPadding,
   },
   limitUpgradeButton: {
-    marginTop: SPACING.x2,
+    marginTop: space.space2,
   },
   heroCard: {
-    marginBottom: SPACING.x3,
+    marginBottom: sectionGap,
     minHeight: 140,
-    borderRadius: 16,
+    borderRadius: radiusLg,
   },
   heroCardContent: {
-    paddingVertical: SPACING.x2,
+    paddingVertical: fieldGap,
   },
   heroContent: {
     flexDirection: 'row',
@@ -441,20 +446,20 @@ const styles = StyleSheet.create({
   },
   heroLeft: {
     flex: 1,
-    marginRight: SPACING.x2,
+    marginRight: fieldGap,
     justifyContent: 'center',
   },
   heroTitle: {
-    fontSize: 20,
+    ...typeScale.title3,
     fontWeight: '700' as const,
-    marginBottom: SPACING.x1,
+    marginBottom: space.space2,
     textShadowColor: 'rgba(0, 0, 0, 0.12)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 1,
   },
   heroSubtitle: {
-    fontSize: 14,
-    marginBottom: SPACING.x2,
+    ...typeScale.subhead,
+    marginBottom: fieldGap,
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 1,
@@ -465,8 +470,8 @@ const styles = StyleSheet.create({
   },
   statsRow: {
     flexDirection: 'row',
-    gap: SPACING.x2,
-    marginBottom: SPACING.x3,
+    gap: fieldGap,
+    marginBottom: sectionGap,
     alignItems: 'stretch',
   },
   statCardWrapper: {
@@ -478,47 +483,47 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     height: 100,
-    borderRadius: 16,
+    borderRadius: radiusLg,
     overflow: 'hidden',
   },
   statCardContent: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: SPACING.x2,
-    paddingHorizontal: SPACING.x1,
+    paddingVertical: fieldGap,
+    paddingHorizontal: space.space2,
   },
   statValue: {
-    fontSize: 20,
+    ...typeScale.title3,
     fontWeight: '700' as const,
     marginTop: 6,
   },
   statLabel: {
-    fontSize: 12,
+    ...typeScale.caption,
     marginTop: 2,
     textAlign: 'center',
   },
   section: {
-    marginBottom: SPACING.x3,
+    marginBottom: sectionGap,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.x2,
+    marginBottom: fieldGap,
   },
   progressCard: {
-    borderRadius: 16,
+    borderRadius: radiusLg,
   },
   sectionTitle: {
-    fontSize: 18,
+    ...typeScale.headline,
     fontWeight: '700' as const,
   },
   sectionSubtitle: {
-    fontSize: 14,
+    ...typeScale.subhead,
     fontWeight: '600' as const,
   },
   seeAll: {
-    fontSize: 14,
+    ...typeScale.subhead,
     fontWeight: '600' as const,
   },
   progressBar: {
@@ -531,10 +536,10 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   progressStats: {
-    marginTop: SPACING.x2,
+    marginTop: fieldGap,
   },
   progressText: {
-    fontSize: 14,
+    ...typeScale.subhead,
   },
   progressHighlight: {
     fontWeight: '600' as const,
@@ -542,29 +547,29 @@ const styles = StyleSheet.create({
   categoryCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SPACING.x2,
+    marginBottom: fieldGap,
     height: 80,
-    borderRadius: 16,
+    borderRadius: radiusLg,
     width: '100%',
-    paddingHorizontal: SPACING.x2,
+    paddingHorizontal: fieldGap,
   },
   categoryIcon: {
     width: touchTargetMin,
     height: touchTargetMin,
-    borderRadius: 14,
+    borderRadius: radiusMd,
     justifyContent: 'center',
     alignItems: 'center',
   },
   categoryInfo: {
     flex: 1,
-    marginLeft: SPACING.x2,
+    marginLeft: fieldGap,
     justifyContent: 'center',
     minWidth: 0,
   },
   categoryNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.x1,
+    gap: space.space2,
     flexWrap: 'wrap',
     minWidth: 0,
   },
@@ -584,11 +589,11 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   premiumTagText: {
-    fontSize: 10,
+    ...typeScale.caption2,
     fontWeight: '700' as const,
   },
   categoryProgress: {
-    fontSize: 13,
+    ...typeScale.footnote,
     marginTop: 2,
     flexShrink: 1,
   },

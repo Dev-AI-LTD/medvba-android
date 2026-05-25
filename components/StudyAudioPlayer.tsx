@@ -4,7 +4,7 @@ import { useFocusEffect } from 'expo-router';
 import { Pause, Play, Square } from 'lucide-react-native';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { iconMd, space, typeScale } from '@/theme/iosDesign';
+import { hitSlop, iconMd, space, touchTargetMin, typeScale } from '@/theme/iosDesign';
 import GlassCard from '@/components/GlassCard';
 import { hasStudyStreamAudioNative } from '@/lib/study-audio-native';
 import {
@@ -182,7 +182,7 @@ export function StudyAudioPlayer({
                 stopTts();
                 setMode('mp3');
               }}
-              hitSlop={{ top: 8, bottom: 8 }}
+              hitSlop={hitSlop.default}
             >
               <Text style={[styles.retryLink, { color: colors.primary }]}>
                 {t('study.audioRetryMp3')}
@@ -203,15 +203,15 @@ const styles = StyleSheet.create({
     gap: space.space3,
   },
   roundBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: touchTargetMin,
+    height: touchTargetMin,
+    borderRadius: touchTargetMin / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stopBtn: { borderWidth: 1 },
   copy: { flex: 1 },
   title: { ...typeScale.body, fontWeight: '600' },
-  hint: { fontSize: 12, marginTop: 2 },
-  retryLink: { fontSize: 12, marginTop: 6, fontWeight: '600' },
+  hint: { ...typeScale.caption, marginTop: space.space1 },
+  retryLink: { ...typeScale.caption, marginTop: space.space2 - 2, fontWeight: '600' },
 });

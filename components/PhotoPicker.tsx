@@ -1,10 +1,12 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, Image, Alert, ActivityIndicator, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import { Upload } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Colors from '@/constants/colors';
+import { useTheme } from '@/providers/ThemeProvider';
+import type { AppColors } from '@/constants/colors';
+import { iconSm, radiusMd, touchTargetMin } from '@/theme/iosDesign';
 
 interface PhotoPickerProps {
   currentPhotoUrl?: string;
@@ -21,6 +23,8 @@ export default function PhotoPicker({
   size = 120,
   showRemoveButton = true,
 }: PhotoPickerProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [isLoading, setIsLoading] = useState(false);
   const pickInProgress = useRef(false);
   const lastSelectedUri = useRef<string | null>(null);
@@ -137,74 +141,80 @@ export default function PhotoPicker({
         onPress={handlePhotoOptions}
         activeOpacity={0.8}
         disabled={isLoading}
+        accessibilityRole="button"
+        accessibilityLabel="Change profile photo"
       >
         {currentPhotoUrl ? (
           <Image source={{ uri: currentPhotoUrl }} style={styles.photo} />
         ) : (
           <View style={styles.placeholder}>
-            <Upload color={Colors.textSecondary} size={size / 3} />
+            <Upload color={colors.textSecondary} size={size / 3} />
           </View>
         )}
         
         {isLoading && (
           <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color={Colors.primary} />
+            <ActivityIndicator size="large" color={colors.primary} />
           </View>
         )}
 
         <View style={styles.editButton}>
           <LinearGradient
-            colors={[Colors.primary, Colors.secondary]}
+            colors={[colors.primary, colors.secondary]}
             style={StyleSheet.absoluteFill}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           />
-          <Upload color={Colors.text} size={16} />
+          <Upload color={colors.text} size={iconSm} />
         </View>
       </TouchableOpacity>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  photoContainer: {
-    borderWidth: 3,
-    borderColor: Colors.primary,
-    overflow: 'hidden',
-    backgroundColor: Colors.cardBg,
-  },
-  photo: {
-    width: '100%',
-    height: '100%',
-  },
-  placeholder: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.cardBgLight,
-  },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  editButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: Colors.background,
-    overflow: 'hidden',
-  },
-});
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    container: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    photoContainer: {
+      borderWidth: 3,
+      borderColor: colors.primary,
+      overflow: 'hidden',
+      backgroundColor: colors.cardBg,
+      minWidth: touchTargetMin,
+      minHeight: touchTargetMin,
+    },
+    photo: {
+      width: '100%',
+      height: '100%',
+    },
+    placeholder: {
+      width: '100%',
+      height: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.cardBgLight,
+    },
+    loadingOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    editButton: {
+      position: 'absolute',
+      bottom: 0,
+      right: 0,
+      width: touchTargetMin,
+      height: touchTargetMin,
+      borderRadius: touchTargetMin / 2,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 3,
+      borderColor: colors.background,
+      overflow: 'hidden',
+    },
+  });
+}

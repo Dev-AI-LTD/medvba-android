@@ -17,12 +17,14 @@ import { useTheme } from '@/providers/ThemeProvider';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import { STUDY_PILOT_MODULE_ID } from '@/constants/study';
 import {
+  cardPadding,
   iconLg,
   iconMd,
   iconSm,
   screenPaddingX,
   sectionGap,
   space,
+  typeScale,
 } from '@/theme/iosDesign';
 import { useQuizFontsContext } from '@/providers/QuizFontsProvider';
 import { createQuizTypography } from '@/theme/quizTypography';
@@ -145,16 +147,15 @@ const createChapterListStyles = (quizTypo: ReturnType<typeof createQuizTypograph
   chapterCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    gap: 14,
+    padding: cardPadding,
+    gap: space.space3,
   },
   chapterInfo: {
     flex: 1,
   },
   chapterName: {
     ...quizTypo.question,
-    fontSize: 17,
-    lineHeight: 22,
+    ...typeScale.body,
     textAlign: 'left',
   },
   chapterCount: {

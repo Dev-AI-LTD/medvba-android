@@ -200,12 +200,12 @@ const styles = StyleSheet.create({
     marginBottom: sectionGap,
   },
   sectionTitle: {
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '600' as const,
     textTransform: 'uppercase' as const,
     letterSpacing: 1,
-    marginBottom: 12,
-    marginLeft: 4,
+    marginBottom: space.space3,
+    marginLeft: space.space1,
   },
   sectionCard: {
     borderRadius: radiusLg,
@@ -247,7 +247,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   themeDescription: {
-    fontSize: 13,
-    lineHeight: 18,
+    ...typeScale.footnote,
   },
 });

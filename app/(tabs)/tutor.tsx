@@ -33,15 +33,22 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { TRPCClientError } from '@trpc/client';
 import { trpc } from '@/lib/trpc';
 import {
+  cardPadding,
+  fieldGap,
   iconMd,
   iconSm,
-  inputMinHeight,
+  inputHeight,
+  radiusLg,
+  radiusPill,
+  radiusMd,
   screenPaddingX,
+  sectionGap,
   space,
   touchTargetMin,
   typeScale,
 } from '@/theme/iosDesign';
 import { OfflineFeatureNotice } from '@/components/OfflineFeatureNotice';
+import type { AppColors } from '@/constants/colors';
 
 function getMutationErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof TRPCClientError) {
@@ -484,6 +491,8 @@ export default function TutorScreen() {
                   style={[styles.sendButton, (!inputText.trim() || isTyping) && styles.sendButtonDisabled]}
                   onPress={handleSend}
                   disabled={!inputText.trim() || isTyping}
+                  accessibilityRole="button"
+                  accessibilityLabel="Send message"
                 >
                   <Send color={inputText.trim() && !isTyping ? colors.text : colors.textMuted} size={iconMd} />
                 </TouchableOpacity>
@@ -501,7 +510,7 @@ export default function TutorScreen() {
   );
 }
 
-const createStyles = (colors: typeof import('@/constants/colors').darkColors) => StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   screenContent: {
     flex: 1,
   },
@@ -513,61 +522,62 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
   },
   messagesContent: {
     padding: screenPaddingX,
-    paddingBottom: 10,
+    paddingBottom: space.space2 + 2,
   },
   suggestions: {
-    marginBottom: 20,
+    marginBottom: fieldGap + space.space1,
   },
   suggestionsTitle: {
-    fontSize: 14,
+    ...typeScale.subhead,
     color: colors.textSecondary,
-    marginBottom: 12,
+    marginBottom: space.space3,
   },
   suggestionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
-    gap: 12,
+    marginBottom: space.space2 + 2,
+    gap: space.space3,
+    minHeight: touchTargetMin,
   },
   suggestionContent: {
     flex: 1,
   },
   suggestionText: {
-    fontSize: 14,
+    ...typeScale.subhead,
     color: colors.text,
     fontWeight: '500' as const,
   },
   suggestionCategory: {
-    fontSize: 12,
+    ...typeScale.caption,
     color: colors.textMuted,
     marginTop: 2,
   },
   messageRow: {
     flexDirection: 'row',
-    marginBottom: 16,
+    marginBottom: cardPadding,
     alignItems: 'flex-end',
   },
   messageRowUser: {
     justifyContent: 'flex-end',
   },
   avatarContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: touchTargetMin - space.space3,
+    height: touchTargetMin - space.space3,
+    borderRadius: (touchTargetMin - space.space3) / 2,
     backgroundColor: colors.cardBgLight,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 8,
+    marginRight: space.space2,
   },
   userAvatar: {
     backgroundColor: colors.primary,
     marginRight: 0,
-    marginLeft: 8,
+    marginLeft: space.space2,
   },
   messageBubble: {
     maxWidth: '75%',
-    borderRadius: 18,
-    padding: 14,
+    borderRadius: radiusLg + 2,
+    padding: cardPadding - 2,
   },
   assistantBubble: {
     backgroundColor: colors.cardBgLight,
@@ -578,9 +588,8 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     borderBottomRightRadius: 4,
   },
   messageText: {
-    fontSize: 15,
+    ...typeScale.subhead,
     color: colors.text,
-    lineHeight: 22,
   },
   userMessageText: {
     color: colors.text,
@@ -592,28 +601,29 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
   retryButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginLeft: touchTargetMin + 4,
-    marginTop: 4,
-    marginBottom: 4,
+    gap: space.space2 - 2,
+    marginLeft: touchTargetMin + space.space1,
+    marginTop: space.space1,
+    marginBottom: space.space1,
+    minHeight: touchTargetMin,
     alignSelf: 'flex-start',
   },
   retryButtonText: {
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '600' as const,
   },
   typingBubble: {
-    paddingVertical: 16,
+    paddingVertical: fieldGap,
     paddingHorizontal: screenPaddingX,
   },
   typingIndicator: {
     flexDirection: 'row',
-    gap: 4,
+    gap: space.space1,
   },
   typingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: space.space2,
+    height: space.space2,
+    borderRadius: space.space1,
     backgroundColor: colors.textMuted,
   },
   typingDot1: {
@@ -627,40 +637,39 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
   },
   inputContainer: {
     paddingHorizontal: screenPaddingX,
-    paddingBottom: Platform.OS === 'ios' ? 8 : 6,
-    paddingTop: 10,
+    paddingBottom: Platform.OS === 'ios' ? space.space2 : space.space2 - 2,
+    paddingTop: space.space2 + 2,
   },
   disclaimer: {
-    fontSize: 11,
-    lineHeight: 15,
+    ...typeScale.caption2,
     textAlign: 'center',
     marginTop: space.space2,
     paddingHorizontal: space.space1,
   },
   inputWrapper: {
     flexDirection: 'column',
-    paddingVertical: 8,
+    paddingVertical: space.space2,
     paddingHorizontal: space.space3,
-    borderRadius: 24,
+    borderRadius: radiusPill,
     borderWidth: 1,
   },
   input: {
     width: '100%',
-    minHeight: inputMinHeight,
+    minHeight: inputHeight,
     ...typeScale.body,
     color: colors.text,
-    maxHeight: 120,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
+    maxHeight: touchTargetMin + space.space8,
+    paddingVertical: space.space2,
+    paddingHorizontal: space.space1,
   },
   inputFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 4,
+    marginTop: space.space1,
   },
   charCount: {
-    fontSize: 12,
+    ...typeScale.caption,
     color: colors.textMuted,
     flex: 1,
   },
@@ -679,9 +688,9 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     backgroundColor: 'rgba(255, 184, 0, 0.1)',
     borderColor: 'rgba(255, 184, 0, 0.3)',
     borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
+    borderRadius: radiusMd,
+    padding: space.space3,
+    marginBottom: cardPadding,
   },
   freeLimitContent: {
     flexDirection: 'row',
@@ -689,7 +698,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     justifyContent: 'space-between',
   },
   freeLimitText: {
-    fontSize: 14,
+    ...typeScale.subhead,
     color: colors.warning,
     fontWeight: '500' as const,
     flex: 1,

@@ -11,7 +11,15 @@ import { FileText, UserCheck, AlertTriangle, Scale, ShieldX, Ban } from 'lucide-
 import { Stack } from 'expo-router';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { screenPaddingX, sectionGap, space, typeScale } from '@/theme/iosDesign';
+import {
+  cardPadding,
+  radiusLg,
+  radiusMd,
+  screenPaddingX,
+  sectionGap,
+  space,
+  typeScale,
+} from '@/theme/iosDesign';
 
 const LAST_UPDATED_EN = 'January 12, 2026';
 const LAST_UPDATED_RO = '12 ianuarie 2026';
@@ -273,7 +281,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   section: {
     marginBottom: sectionGap,
     backgroundColor: colors.cardBg,
-    borderRadius: 16,
+    borderRadius: radiusLg,
     borderWidth: 1,
     borderColor: colors.glassBorder,
     overflow: 'hidden',
@@ -281,8 +289,8 @@ const createStyles = (colors: any) => StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    padding: 16,
+    gap: space.space3,
+    padding: cardPadding,
     borderBottomWidth: 1,
     borderBottomColor: colors.glassBorder,
     backgroundColor: 'rgba(255,255,255,0.03)',
@@ -298,7 +306,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     ...typeScale.subhead,
     color: colors.textSecondary,
     lineHeight: 22,
-    marginBottom: 12,
+    marginBottom: space.space3,
   },
   bold: {
     fontWeight: '600' as const,
@@ -308,48 +316,45 @@ const createStyles = (colors: any) => StyleSheet.create({
     marginTop: 8,
   },
   bulletItem: {
-    fontSize: 14,
+    ...typeScale.subhead,
     color: colors.textSecondary,
-    lineHeight: 24,
-    marginBottom: 4,
+    marginBottom: space.space1,
   },
   contactSection: {
     alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 24,
+    marginTop: space.space2,
+    marginBottom: sectionGap,
   },
   contactTitle: {
-    fontSize: 18,
+    ...typeScale.headline,
     fontWeight: '600' as const,
     color: colors.text,
-    marginBottom: 8,
+    marginBottom: space.space2,
   },
   contactText: {
-    fontSize: 14,
+    ...typeScale.subhead,
     color: colors.textSecondary,
-    marginBottom: 12,
+    marginBottom: space.space3,
   },
   contactBox: {
     backgroundColor: 'rgba(0, 245, 212, 0.1)',
-    padding: 16,
-    borderRadius: 12,
+    padding: cardPadding,
+    borderRadius: radiusMd,
     alignItems: 'center',
     width: '100%',
   },
   contactInfo: {
-    fontSize: 14,
+    ...typeScale.subhead,
     color: colors.textSecondary,
-    lineHeight: 22,
   },
   contactEmail: {
-    fontSize: 14,
+    ...typeScale.subhead,
     color: colors.accent,
-    marginTop: 4,
+    marginTop: space.space1,
   },
   footer: {
-    fontSize: 13,
+    ...typeScale.footnote,
     color: colors.textMuted,
-    lineHeight: 20,
     textAlign: 'center',
     fontStyle: 'italic',
   },

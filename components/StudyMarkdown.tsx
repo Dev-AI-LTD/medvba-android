@@ -7,7 +7,7 @@ import {
   classifyStudySectionHeading,
   type StudySummarySectionKind,
 } from '@/lib/study-summary-sections';
-import { space, typeScale } from '@/theme/iosDesign';
+import { radiusMd, space, typeScale } from '@/theme/iosDesign';
 
 type Block =
   | { type: 'h2'; text: string; kind: StudySummarySectionKind }
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     gap: space.space3,
   },
   section: {
-    borderRadius: 12,
+    borderRadius: radiusMd,
     borderWidth: StyleSheet.hairlineWidth,
     padding: space.space4,
     gap: space.space3,
@@ -191,10 +191,10 @@ const styles = StyleSheet.create({
     gap: space.space3,
   },
   bulletDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginTop: 8,
+    width: space.space2 - 2,
+    height: space.space2 - 2,
+    borderRadius: (space.space2 - 2) / 2,
+    marginTop: space.space2,
   },
   liText: {
     flex: 1,

@@ -35,7 +35,7 @@ export function HomeWelcomeHeader() {
   return (
     <View style={styles.header}>
       <View style={styles.headerLeft}>
-        <Image source={require('../../assets/images/icon.png')} style={styles.appIcon} />
+        <Image source={require('../../assets/images/icon-auth.png')} style={styles.appIcon} />
         <View style={styles.headerTextWrap}>
           <View style={styles.greetingRow}>
             <Text style={[styles.greeting, { color: colors.textSecondary }]} numberOfLines={1}>
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.space2,
     paddingVertical: space.space1,
     borderRadius: space.space2,
-    minHeight: touchTargetMin - 28,
+    minHeight: touchTargetMin,
   },
   privacyBadgeText: {
     ...typeScale.footnote,

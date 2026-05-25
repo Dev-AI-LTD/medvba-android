@@ -5,8 +5,6 @@ import AvatarImage from '@/components/AvatarImage';
 import OnlineIndicator from '@/components/OnlineIndicator';
 import { useTheme } from '@/providers/ThemeProvider';
 import {
-  SPACING,
-  buttonHeight,
   radiusMd,
   screenPaddingX,
   space,
@@ -99,7 +97,7 @@ export function ActiveMembersRow({
 
 const styles = StyleSheet.create({
   wrap: {
-    paddingBottom: SPACING.x2,
+    paddingBottom: space.space4,
   },
   title: {
     paddingHorizontal: screenPaddingX,
@@ -108,26 +106,26 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
   },
   loader: {
-    paddingVertical: SPACING.x3,
+    paddingVertical: space.space6,
   },
   emptyBox: {
     marginHorizontal: screenPaddingX,
-    padding: SPACING.x2,
+    padding: space.space4,
     borderRadius: radiusMd,
     borderWidth: 1,
-    gap: SPACING.x2,
+    gap: space.space4,
     alignItems: 'center',
   },
   findBtn: {
-    paddingHorizontal: SPACING.x3,
-    paddingVertical: SPACING.x1 + 2,
-    borderRadius: 20,
-    minHeight: buttonHeight,
+    paddingHorizontal: space.space6,
+    paddingVertical: space.space2,
+    borderRadius: radiusMd + 8,
+    minHeight: touchTargetMin,
     justifyContent: 'center',
   },
   scroll: {
     paddingHorizontal: screenPaddingX,
-    gap: SPACING.x2,
+    gap: space.space4,
   },
   item: {
     alignItems: 'center',
@@ -139,11 +137,11 @@ const styles = StyleSheet.create({
   },
   dot: {
     position: 'absolute',
-    bottom: 2,
-    right: 2,
+    bottom: space.space1 / 2,
+    right: space.space1 / 2,
   },
   name: {
-    marginTop: 6,
+    marginTop: space.space2 - 2,
     maxWidth: 72,
     textAlign: 'center',
   },

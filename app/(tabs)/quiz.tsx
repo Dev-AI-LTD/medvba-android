@@ -35,11 +35,17 @@ import { log } from '@/lib/log';
 import { STUDY_PILOT_MODULE_ID } from '@/constants/study';
 import { getEffectivePublishedSummaryCount } from '@/lib/study-preview';
 import {
+  cardPadding,
+  fieldGap,
   iconSm,
   iconXl,
+  radiusLg,
+  radiusMd,
+  radiusSm,
   screenPaddingX,
   sectionGap,
   space,
+  touchTargetMin,
   typeScale,
 } from '@/theme/iosDesign';
 import { useQuizFontsContext } from '@/providers/QuizFontsProvider';
@@ -415,20 +421,20 @@ const createQuizTabStyles = (quizTypo: ReturnType<typeof createQuizTypography>) 
     marginBottom: sectionGap,
   },
   sectionTitle: {
-    fontSize: 18,
+    ...typeScale.headline,
     fontWeight: '700' as const,
     marginBottom: 4,
   },
   sectionSubtitle: {
-    fontSize: 13,
-    marginBottom: 16,
+    ...typeScale.footnote,
+    marginBottom: cardPadding,
   },
   modesGrid: {
-    gap: 16,
-    marginTop: 16,
+    gap: fieldGap,
+    marginTop: cardPadding,
   },
   modeCard: {
-    borderRadius: 16,
+    borderRadius: radiusLg,
     overflow: 'hidden',
   },
   modeGradient: {
@@ -449,7 +455,7 @@ const createQuizTabStyles = (quizTypo: ReturnType<typeof createQuizTypography>) 
     marginTop: 0,
   },
   examGradient: {
-    paddingVertical: 24,
+    paddingVertical: sectionGap,
   },
   examContent: {
     flex: 1,
@@ -458,7 +464,7 @@ const createQuizTabStyles = (quizTypo: ReturnType<typeof createQuizTypography>) 
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    rowGap: 12,
+    rowGap: space.space3,
   },
   categoryCardWrap: {
     width: '48%',
@@ -467,15 +473,15 @@ const createQuizTabStyles = (quizTypo: ReturnType<typeof createQuizTypography>) 
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginBottom: 12,
+    marginBottom: space.space3,
   },
   admissionPairCardWrap: {
     width: '48%',
   },
   studySummaryCount: {
     ...quizTypo.cardMeta,
-    fontSize: 11,
-    marginTop: 8,
+    ...typeScale.caption2,
+    marginTop: space.space2,
   },
   categoryCard: {
     width: '100%',
@@ -492,10 +498,10 @@ const createQuizTabStyles = (quizTypo: ReturnType<typeof createQuizTypography>) 
   categoryIconContainer: {
     width: 56,
     height: 56,
-    borderRadius: 16,
+    borderRadius: radiusLg,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: space.space3,
   },
   categoryName: {
     ...quizTypo.cardTitle,
@@ -516,7 +522,7 @@ const createQuizTabStyles = (quizTypo: ReturnType<typeof createQuizTypography>) 
     borderRadius: 2,
   },
   categoryProgressText: {
-    fontSize: 11,
+    ...typeScale.caption2,
     marginTop: 6,
   },
   statsCard: {
@@ -524,14 +530,14 @@ const createQuizTabStyles = (quizTypo: ReturnType<typeof createQuizTypography>) 
   },
   statsHeader: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: cardPadding,
   },
   statsTitle: {
-    fontSize: 32,
+    ...typeScale.largeTitle,
     fontWeight: '700' as const,
   },
   statsSubtitle: {
-    fontSize: 14,
+    ...typeScale.subhead,
   },
   statsRow: {
     flexDirection: 'row',
@@ -542,11 +548,11 @@ const createQuizTabStyles = (quizTypo: ReturnType<typeof createQuizTypography>) 
     alignItems: 'center',
   },
   statItemValue: {
-    fontSize: 24,
+    ...typeScale.title2,
     fontWeight: '700' as const,
   },
   statItemLabel: {
-    fontSize: 12,
+    ...typeScale.caption,
     marginTop: 2,
   },
   statDivider: {
@@ -554,7 +560,7 @@ const createQuizTabStyles = (quizTypo: ReturnType<typeof createQuizTypography>) 
     height: 40,
   },
   freeLimitBanner: {
-    marginBottom: 16,
+    marginBottom: cardPadding,
     backgroundColor: 'rgba(255, 184, 0, 0.1)',
     borderColor: 'rgba(255, 184, 0, 0.3)',
     borderWidth: 1,
@@ -565,7 +571,7 @@ const createQuizTabStyles = (quizTypo: ReturnType<typeof createQuizTypography>) 
     justifyContent: 'space-between',
   },
   freeLimitText: {
-    fontSize: 14,
+    ...typeScale.subhead,
     fontWeight: '500' as const,
     flex: 1,
   },
@@ -575,11 +581,14 @@ const createQuizTabStyles = (quizTypo: ReturnType<typeof createQuizTypography>) 
     backgroundColor: 'rgba(255, 184, 0, 0.2)',
     paddingHorizontal: space.space3,
     paddingVertical: 6,
-    borderRadius: 12,
+    borderRadius: radiusMd,
     gap: 4,
+    minHeight: touchTargetMin,
+    minWidth: touchTargetMin,
+    justifyContent: 'center',
   },
   upgradeMiniText: {
-    fontSize: 12,
+    ...typeScale.caption,
     fontWeight: '600' as const,
   },
   premiumBadge: {

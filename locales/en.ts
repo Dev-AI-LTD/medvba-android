@@ -85,6 +85,8 @@ export const en: Record<string, string> = {
     'Email and password in the app is not supported by our identity provider (use Sign in with Google or Apple). For email, Kinde requires sign-in in the browser (PKCE), not a password typed only in this screen.',
   'auth.kindeSocialConnectionNotEnabled':
     'This sign-in method is not enabled in Kinde for the MEDVBA app. In Kinde: Applications → your native app → Authentication → turn ON Apple (or Google). Use the Connection ID from Settings → Authentication → Apple in EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID, then restart Metro.',
+  'auth.productionEmailSignInHint':
+    'Use Sign in with Apple or Google. For email sign-in, tap “Sign in with email” when available, or contact support@medvba.app.',
   'auth.invalidCredentials': 'Invalid email or password. Please try again.',
   'auth.emailNotConfirmed':
     'Confirm your email address before signing in. Open the link we sent you when you registered, then try again.',
@@ -759,6 +761,8 @@ export const en: Record<string, string> = {
   'deleteAccount.warningTitle': 'This action is permanent',
   'deleteAccount.warningBody':
     'Deleting your MEDVBA account will permanently remove your profile, quiz history, study rooms you host, and all associated data. This action cannot be undone.',
+  'deleteAccount.subscriptionNote':
+    'Deleting your account does not cancel an active App Store subscription. Cancel in iOS Settings → Subscriptions, or use Manage Subscription in the app before deleting your account.',
   'deleteAccount.sectionWhatDeleted': 'What will be deleted',
   'deleteAccount.itemProfile': 'Profile and avatar',
   'deleteAccount.itemQuizStats': 'Quiz stats, progress, and streaks',
@@ -782,9 +786,9 @@ export const en: Record<string, string> = {
   'notifications.studyTime': 'Study time',
   'notifications.studyTimePlaceholder': 'Choose the time when you want to be reminded.',
   'notifications.chatNotifications': 'Study chat notifications',
-  'notifications.chatNotificationsDesc': 'Get alerts when someone messages you or invites you to study in chat.',
+  'notifications.chatNotificationsDesc': 'Coming soon — push alerts for chat are not available in this version.',
   'notifications.medvbaUpdates': 'MEDVBA updates',
-  'notifications.medvbaUpdatesDesc': 'Let me know about new lessons, features and important announcements.',
+  'notifications.medvbaUpdatesDesc': 'Coming soon — announcements and product updates are not sent as push notifications yet.',
   'notifications.soundEnabled': 'Notification sound',
   'notifications.soundEnabledDesc': 'Turn notification sounds on or off.',
   'notifications.doNotDisturb': 'Do not disturb',

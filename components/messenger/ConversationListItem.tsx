@@ -6,7 +6,7 @@ import OnlineIndicator from '@/components/OnlineIndicator';
 import { useTheme } from '@/providers/ThemeProvider';
 import { formatChatListTime } from '@/lib/messenger-format';
 import type { DirectChatSummary } from '@/lib/supabase-hooks';
-import { SPACING, listRowMinHeight, screenPaddingX, space } from '@/theme/iosDesign';
+import { listRowMinHeight, screenPaddingX, space, touchTargetMin } from '@/theme/iosDesign';
 
 type Props = {
   conversation: DirectChatSummary;
@@ -80,9 +80,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: screenPaddingX,
     paddingVertical: space.space2,
-    minHeight: listRowMinHeight + space.space2,
+    minHeight: Math.max(listRowMinHeight, touchTargetMin),
     borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: SPACING.x2,
+    gap: space.space4,
   },
   avatarWrap: {
     position: 'relative',
@@ -99,13 +99,13 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.x1,
+    gap: space.space2,
   },
   bottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 2,
-    gap: SPACING.x1,
+    marginTop: space.space1,
+    gap: space.space2,
   },
   preview: {
     flex: 1,

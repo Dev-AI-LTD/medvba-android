@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
 import { Button as PaperButton } from 'react-native-paper';
+import { buttonHeight, touchTargetMin } from '@/theme/iosDesign';
 
 type Variant = 'default' | 'bordered' | 'borderless' | 'outlined' | 'elevated' | 'borderedProminent' | 'plain';
 
@@ -42,7 +43,8 @@ export function UIButton({
       icon={icon}
       buttonColor={buttonColor}
       textColor={textColor}
-      style={style}
+      style={[{ minHeight: Math.max(buttonHeight, touchTargetMin) }, style]}
+      contentStyle={{ minHeight: buttonHeight }}
       testID={testID}
     >
       {children}

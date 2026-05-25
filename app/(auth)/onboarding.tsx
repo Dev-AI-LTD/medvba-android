@@ -16,19 +16,24 @@ import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Brain, Users, Trophy, ChevronRight } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import colors from '@/constants/colors';
 import {
   buttonHeight,
+  cardPadding,
   iconMd,
   radiusLg,
   screenPaddingX,
+  sectionGap,
+  space,
+  touchTargetMin,
   typeScale,
 } from '@/theme/iosDesign';
 import { useAuth } from '@/providers/AuthProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { useTheme } from '@/providers/ThemeProvider';
+import type { AppColors } from '@/constants/colors';
 
-/** Local asset path — Metro resolves `require` reliably; `@/` alias can fail for some native bundles. */
-const APP_ICON_SOURCE = require('../../assets/images/icon.png');
+/** In-app auth logo (legacy); store / launcher use `assets/images/icon.png` via app.config. */
+const APP_ICON_SOURCE = require('../../assets/images/icon-auth.png');
 
 const LOGO_SIZE = 120;
 
@@ -70,42 +75,146 @@ interface SlideData {
   gradient: string[];
 }
 
-const slidesData: SlideData[] = [
-  {
-    id: '1',
-    titleKey: 'onboarding.slide1.title',
-    subtitleKey: 'onboarding.slide1.subtitle',
-    descriptionKey: 'onboarding.slide1.description',
-    icon: null,
-    gradient: [colors.primary, colors.primaryDark],
-  },
-  {
-    id: '2',
-    titleKey: 'onboarding.slide2.title',
-    subtitleKey: 'onboarding.slide2.subtitle',
-    descriptionKey: 'onboarding.slide2.description',
-    icon: <Brain size={80} color={colors.accent} strokeWidth={1.5} />,
-    gradient: [colors.accent, colors.success],
-  },
-  {
-    id: '3',
-    titleKey: 'onboarding.slide3.title',
-    subtitleKey: 'onboarding.slide3.subtitle',
-    descriptionKey: 'onboarding.slide3.description',
-    icon: <Users size={80} color={colors.accentPink} strokeWidth={1.5} />,
-    gradient: [colors.accentPink, colors.error],
-  },
-  {
-    id: '4',
-    titleKey: 'onboarding.slide4.title',
-    subtitleKey: 'onboarding.slide4.subtitle',
-    descriptionKey: 'onboarding.slide4.description',
-    icon: <Trophy size={80} color={colors.streakOrange} strokeWidth={1.5} />,
-    gradient: [colors.streakOrange, colors.streakYellow],
-  },
-];
+function buildSlideData(colors: AppColors): SlideData[] {
+  return [
+    {
+      id: '1',
+      titleKey: 'onboarding.slide1.title',
+      subtitleKey: 'onboarding.slide1.subtitle',
+      descriptionKey: 'onboarding.slide1.description',
+      icon: null,
+      gradient: [colors.primary, colors.primaryDark],
+    },
+    {
+      id: '2',
+      titleKey: 'onboarding.slide2.title',
+      subtitleKey: 'onboarding.slide2.subtitle',
+      descriptionKey: 'onboarding.slide2.description',
+      icon: <Brain size={80} color={colors.accent} strokeWidth={1.5} />,
+      gradient: [colors.accent, colors.success],
+    },
+    {
+      id: '3',
+      titleKey: 'onboarding.slide3.title',
+      subtitleKey: 'onboarding.slide3.subtitle',
+      descriptionKey: 'onboarding.slide3.description',
+      icon: <Users size={80} color={colors.accentPink} strokeWidth={1.5} />,
+      gradient: [colors.accentPink, colors.error],
+    },
+    {
+      id: '4',
+      titleKey: 'onboarding.slide4.title',
+      subtitleKey: 'onboarding.slide4.subtitle',
+      descriptionKey: 'onboarding.slide4.description',
+      icon: <Trophy size={80} color={colors.streakOrange} strokeWidth={1.5} />,
+      gradient: [colors.streakOrange, colors.streakYellow],
+    },
+  ];
+}
+
+const createStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    safeArea: {
+      flex: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      paddingHorizontal: screenPaddingX,
+      paddingTop: space.space2,
+    },
+    skipButton: {
+      minHeight: touchTargetMin,
+      minWidth: touchTargetMin,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: space.space2,
+    },
+    skipText: {
+      color: colors.textSecondary,
+      ...typeScale.body,
+      fontWeight: '500',
+    },
+    slide: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: space.space8,
+    },
+    iconContainer: {
+      marginBottom: space.space8,
+    },
+    iconGradient: {
+      width: touchTargetMin + space.space8 * 2,
+      height: touchTargetMin + space.space8 * 2,
+      borderRadius: (touchTargetMin + space.space8 * 2) / 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: colors.glassBorder,
+      overflow: 'hidden',
+    },
+    textContainer: {
+      alignItems: 'center',
+    },
+    title: {
+      ...typeScale.title1,
+      fontWeight: '300',
+      color: colors.text,
+      textAlign: 'center',
+      marginBottom: space.space1,
+    },
+    subtitle: {
+      ...typeScale.largeTitle,
+      fontWeight: '700',
+      textAlign: 'center',
+      marginBottom: space.space5,
+    },
+    description: {
+      ...typeScale.body,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      paddingHorizontal: space.space2,
+    },
+    pagination: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: sectionGap,
+    },
+    dot: {
+      width: space.space2,
+      height: space.space2,
+      borderRadius: space.space1,
+      marginHorizontal: space.space2 - 2,
+    },
+    footer: {
+      paddingHorizontal: space.space8,
+      paddingBottom: space.space5,
+    },
+    nextButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: buttonHeight,
+      paddingVertical: cardPadding,
+      borderRadius: radiusLg,
+      gap: space.space2,
+    },
+    nextButtonText: {
+      color: '#fff',
+      ...typeScale.headline,
+      fontWeight: '600',
+    },
+  });
 
 export default function OnboardingScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { width: windowWidth } = useWindowDimensions();
   const slideWidth = Math.max(1, windowWidth);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -114,9 +223,11 @@ export default function OnboardingScreen() {
   const { completeOnboarding, isAuthenticated } = useAuth();
   const { t } = useLanguage();
 
+  const slideData = useMemo(() => buildSlideData(colors), [colors]);
+
   const slides: OnboardingSlide[] = useMemo(
     () =>
-      slidesData.map((slide) => ({
+      slideData.map((slide) => ({
         id: slide.id,
         title: t(slide.titleKey),
         subtitle: t(slide.subtitleKey),
@@ -124,7 +235,7 @@ export default function OnboardingScreen() {
         icon: slide.id === '1' ? <OnboardingAppLogo /> : slide.icon,
         gradient: slide.gradient,
       })),
-    [t],
+    [slideData, t],
   );
 
   const handleGetStarted = useCallback(async () => {
@@ -142,10 +253,7 @@ export default function OnboardingScreen() {
 
     if (currentIndex < slides.length - 1) {
       const nextIndex = currentIndex + 1;
-      // Update UI immediately; rely on scroll position for the actual slide.
       setCurrentIndex(nextIndex);
-      // `scrollToIndex` can fail on some targets if layout isn't measurable yet.
-      // `scrollToOffset` works reliably with paging + fixed-width items.
       flatListRef.current?.scrollToOffset({
         offset: nextIndex * slideWidth,
         animated: true,
@@ -168,7 +276,7 @@ export default function OnboardingScreen() {
       if (viewableItems.length > 0 && viewableItems[0].index !== null) {
         setCurrentIndex(viewableItems[0].index);
       }
-    }
+    },
   ).current;
 
   const viewabilityConfig = useRef({
@@ -194,7 +302,6 @@ export default function OnboardingScreen() {
       extrapolate: 'clamp',
     });
 
-    /** Welcome slide uses a local bitmap; Android often fails to composite it under native-driven opacity. */
     const isWelcomeSlide = item.id === '1';
 
     const iconGradient = (
@@ -298,7 +405,7 @@ export default function OnboardingScreen() {
           })}
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-            { useNativeDriver: Platform.OS !== 'web' }
+            { useNativeDriver: Platform.OS !== 'web' },
           )}
           scrollEventThrottle={16}
           onViewableItemsChanged={onViewableItemsChanged}
@@ -323,98 +430,3 @@ export default function OnboardingScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: screenPaddingX,
-    paddingTop: 10,
-  },
-  skipButton: {
-    padding: 10,
-  },
-  skipText: {
-    color: colors.textSecondary,
-    ...typeScale.body,
-    fontWeight: '500',
-  },
-  slide: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 40,
-  },
-  iconContainer: {
-    marginBottom: 40,
-  },
-  iconGradient: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
-    overflow: 'hidden',
-  },
-  textContainer: {
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '300',
-    color: colors.text,
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 32,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  description: {
-    ...typeScale.body,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    paddingHorizontal: 10,
-  },
-  pagination: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 30,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 6,
-  },
-  footer: {
-    paddingHorizontal: 40,
-    paddingBottom: 20,
-  },
-  nextButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: buttonHeight,
-    paddingVertical: 16,
-    borderRadius: radiusLg,
-    gap: 8,
-  },
-  nextButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-});

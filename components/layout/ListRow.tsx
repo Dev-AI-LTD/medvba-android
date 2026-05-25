@@ -7,8 +7,10 @@ import {
   listRowMinHeight,
   screenPaddingX,
   space,
-  iconLg,
+  touchTargetMin,
+  iconMd,
   typeScale,
+  hitSlop,
 } from '@/theme/iosDesign';
 
 type Props = {
@@ -47,7 +49,7 @@ export function ListRow({
       </View>
       {right ? <View style={styles.right}>{right}</View> : null}
       {showChevron ? (
-        <ChevronRight color={colors.textMuted} size={iconLg} style={styles.chevron} />
+        <ChevronRight color={colors.textMuted} size={iconMd} style={styles.chevron} />
       ) : null}
     </>
   );
@@ -56,7 +58,8 @@ export function ListRow({
     return (
       <TouchableOpacity
         onPress={onPress}
-        style={[styles.row, style]}
+        style={[styles.row, styles.rowPressable, style]}
+        hitSlop={hitSlop.default}
         accessibilityRole="button"
         activeOpacity={0.7}
       >
@@ -77,8 +80,12 @@ const styles = StyleSheet.create({
     paddingVertical: space.space2,
     gap: space.space2,
   },
+  rowPressable: {
+    minHeight: touchTargetMin,
+  },
   left: {
-    width: iconLg + space.space2,
+    width: iconMd + space.space2,
+    minHeight: touchTargetMin,
     alignItems: 'center',
     justifyContent: 'center',
   },

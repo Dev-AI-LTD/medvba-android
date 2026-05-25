@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, SafeAreaView, Modal, TextInput } from 'react-native';
 import { Text, IconButton } from 'react-native-paper';
 import { router } from 'expo-router';
-import { spacing } from '@/constants/design';
+import { inputMinHeight, radiusLg, radiusMd, screenPaddingX, space, touchTargetMin, typeScale } from '@/theme/iosDesign';
 import Button from '../Button';
 import AvatarImage from '../AvatarImage';
 import OnlineIndicator from '../OnlineIndicator';
@@ -156,13 +156,14 @@ export function SocialScreen({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    padding: spacing.lg,
+    padding: screenPaddingX,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.lg,
-    paddingHorizontal: spacing.sm,
+    marginBottom: space.space4,
+    paddingHorizontal: space.space2,
+    minHeight: touchTargetMin,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -182,45 +183,46 @@ const styles = StyleSheet.create({
   tabsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: spacing.lg,
-    gap: spacing.sm,
+    marginBottom: space.space4,
+    gap: space.space2,
   },
   tabButton: {
     flex: 1,
+    minHeight: touchTargetMin,
   },
   contentCard: {
     flex: 1,
-    borderRadius: spacing.xxl,
-    padding: spacing.lg,
+    borderRadius: radiusLg + 8,
+    padding: screenPaddingX,
   },
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: spacing.xl,
+    padding: space.space5,
   },
   modalContent: {
     width: '100%',
     maxWidth: 400,
-    borderRadius: spacing.xl,
-    padding: spacing.lg,
+    borderRadius: radiusLg + 4,
+    padding: screenPaddingX,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: space.space3,
   },
   searchInput: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: spacing.md,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    fontSize: 16,
-    minHeight: 48,
+    borderRadius: radiusMd,
+    paddingHorizontal: space.space4,
+    paddingVertical: space.space3,
+    ...typeScale.body,
+    minHeight: inputMinHeight,
   },
   searchHint: {
-    marginTop: spacing.md,
+    marginTop: space.space3,
     alignItems: 'center',
   },
 });

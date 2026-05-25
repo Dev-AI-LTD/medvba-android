@@ -22,6 +22,7 @@ import { useLeaderboard } from '@/lib/supabase-hooks';
 import { useAuth } from '@/providers/AuthProvider';
 import { safeAvatarUri } from '@/lib/safe-image-uri';
 import {
+  iconSm,
   radiusLg,
   radiusMd,
   screenPaddingX,
@@ -157,7 +158,7 @@ export default function LeaderboardScreen() {
                 <View style={styles.leaderboardInfo}>
                   <Text style={styles.leaderboardName}>{user.name}</Text>
                   <View style={styles.leaderboardStats}>
-                    <Zap color={colors.warning} size={12} />
+                    <Zap color={colors.warning} size={iconSm} />
                     <Text style={styles.leaderboardPoints}>{user.points.toLocaleString()} {t('profile.pts')}</Text>
                   </View>
                 </View>
@@ -185,12 +186,13 @@ const styles = StyleSheet.create({
   periodButton: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: radiusSm,
     alignItems: 'center',
+    minHeight: touchTargetMin,
   },
   periodButtonActive: {},
   periodButtonText: {
-    fontSize: 12,
+    ...typeScale.caption,
     fontWeight: '600' as const,
   },
   periodButtonTextActive: {},
@@ -239,18 +241,18 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   podiumBadgeText: {
-    fontSize: 14,
+    ...typeScale.subhead,
     fontWeight: '700' as const,
     color: '#fff',
   },
   podiumName: {
-    fontSize: 14,
+    ...typeScale.subhead,
     fontWeight: '600' as const,
     marginBottom: 2,
   },
   podiumPoints: {
-    fontSize: 12,
-    marginBottom: 8,
+    ...typeScale.caption,
+    marginBottom: space.space2,
   },
   podiumBar: {
     width: 60,
@@ -273,7 +275,7 @@ const styles = StyleSheet.create({
   },
   leaderboardRank: {
     width: 36,
-    fontSize: 14,
+    ...typeScale.subhead,
     fontWeight: '600' as const,
   },
   rankChange: {
@@ -288,7 +290,7 @@ const styles = StyleSheet.create({
   },
   leaderboardInfo: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: space.space3,
   },
   leaderboardName: {
     ...typeScale.body,
@@ -301,7 +303,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   leaderboardPoints: {
-    fontSize: 13,
+    ...typeScale.footnote,
   },
   leaderboardStreak: {
     flexDirection: 'row',
@@ -309,10 +311,10 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   streakNumber: {
-    fontSize: 18,
+    ...typeScale.headline,
     fontWeight: '700' as const,
   },
   streakEmoji: {
-    fontSize: 14,
+    ...typeScale.subhead,
   },
 });

@@ -77,6 +77,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.space2,
     paddingVertical: space.space1,
     borderRadius: space.space3,
+    minHeight: touchTargetMin,
   },
   privacyBadgeText: {
     ...typeScale.footnote,

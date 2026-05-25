@@ -11,12 +11,16 @@ import {
   cardPadding,
   touchTargetMin,
   buttonHeight,
+  inputHeight,
   inputMinHeight,
   listRowMinHeight,
+  iconXs,
   iconSm,
   iconMd,
   iconLg,
   iconXl,
+  itemGap,
+  tokens,
   radiusSm,
   radiusMd,
   radiusLg,
@@ -39,16 +43,19 @@ export const spacing = {
 
 export const typography = {
   h1: typeScale.largeTitle,
-  h2: typeScale.title,
+  h2: typeScale.title1,
   h3: typeScale.title2,
-  h4: typeScale.headline,
+  h4: typeScale.title3,
+  headline: typeScale.headline,
   body: typeScale.body,
   bodyMedium: typeScale.bodyMedium,
   bodySemibold: typeScale.headline,
   small: typeScale.subhead,
   smallMedium: typeScale.subheadMedium,
+  footnote: typeScale.footnote,
   caption: typeScale.caption,
   captionMedium: typeScale.captionMedium,
+  caption2: typeScale.caption2,
 } as const;
 
 export const borderRadius = {
@@ -69,12 +76,16 @@ export {
   cardPadding,
   touchTargetMin,
   buttonHeight,
+  inputHeight,
   inputMinHeight,
   listRowMinHeight,
+  iconXs,
   iconSm,
   iconMd,
   iconLg,
   iconXl,
+  itemGap,
+  tokens,
 };
 
 export const elevation = {

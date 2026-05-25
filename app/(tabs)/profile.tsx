@@ -42,10 +42,15 @@ import { safeAvatarUri } from '@/lib/safe-image-uri';
 import { useLeaderboard, useZoomRequests } from '@/lib/supabase-hooks';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import {
+  cardPadding,
+  fieldGap,
   iconLg,
   iconMd,
   iconSm,
   iconXl,
+  radiusLg,
+  radiusMd,
+  radiusSm,
   screenPaddingX,
   sectionGap,
   space,
@@ -768,7 +773,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
   profileHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: fieldGap,
   },
   avatarContainer: {
     position: 'relative',
@@ -798,24 +803,24 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     overflow: 'hidden',
   },
   rankText: {
-    fontSize: 12,
+    ...typeScale.caption,
     fontWeight: '700' as const,
     color: colors.text,
   },
   profileInfo: {
     flex: 1,
-    marginLeft: 16,
+    marginLeft: fieldGap,
   },
   profileName: {
-    fontSize: 22,
+    ...typeScale.title2,
     fontWeight: '700' as const,
     color: colors.text,
-    marginBottom: 8,
+    marginBottom: space.space2,
   },
   profileStats: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: space.space3,
   },
   streakBadgeSmall: {
     flexDirection: 'row',
@@ -827,7 +832,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     gap: 4,
   },
   streakTextSmall: {
-    fontSize: 14,
+    ...typeScale.subhead,
     fontWeight: '700' as const,
     color: colors.streakOrange,
   },
@@ -841,7 +846,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     gap: 4,
   },
   pointsText: {
-    fontSize: 14,
+    ...typeScale.subhead,
     fontWeight: '600' as const,
     color: colors.warning,
   },
@@ -906,13 +911,13 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     flex: 1,
   },
   upgradeBannerTitle: {
-    fontSize: 18,
+    ...typeScale.headline,
     fontWeight: '700' as const,
     color: '#FFF',
     marginBottom: 2,
   },
   upgradeBannerSubtitle: {
-    fontSize: 13,
+    ...typeScale.footnote,
     color: 'rgba(255,255,255,0.85)',
   },
   upgradeBannerCta: {
@@ -953,12 +958,12 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     marginBottom: 10,
   },
   statValue: {
-    fontSize: 26,
+    ...typeScale.title1,
     fontWeight: '700' as const,
     color: colors.text,
   },
   statLabel: {
-    fontSize: 13,
+    ...typeScale.footnote,
     color: colors.textSecondary,
     marginTop: 4,
   },
@@ -973,7 +978,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     paddingHorizontal: screenPaddingX,
   },
   sectionTitleInline: {
-    fontSize: 18,
+    ...typeScale.headline,
     fontWeight: '700' as const,
     color: colors.text,
     flex: 1,
@@ -985,16 +990,19 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     borderRadius: 12,
   },
   achievementCounterText: {
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '600' as const,
     color: colors.primary,
   },
   seeAllButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    minHeight: touchTargetMin,
+    minWidth: touchTargetMin,
+    justifyContent: 'center',
   },
   seeAllText: {
-    fontSize: 14,
+    ...typeScale.subhead,
     color: colors.primary,
     fontWeight: '600' as const,
   },
@@ -1028,7 +1036,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     marginBottom: 10,
   },
   achievementName: {
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '600' as const,
     color: colors.text,
     textAlign: 'center',
@@ -1051,7 +1059,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     borderRadius: 3,
   },
   achievementProgressText: {
-    fontSize: 10,
+    ...typeScale.caption2,
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 6,
@@ -1075,7 +1083,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
   },
   periodButtonActive: {},
   periodButtonText: {
-    fontSize: 12,
+    ...typeScale.caption,
     fontWeight: '600' as const,
     color: colors.textSecondary,
   },
@@ -1088,7 +1096,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.glassBorder,
-    padding: 16,
+    padding: cardPadding,
     overflow: 'hidden',
   },
   podium: {
@@ -1133,20 +1141,20 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     borderColor: colors.background,
   },
   podiumBadgeText: {
-    fontSize: 12,
+    ...typeScale.caption,
     fontWeight: '700' as const,
     color: colors.background,
   },
   podiumName: {
-    fontSize: 12,
+    ...typeScale.caption,
     fontWeight: '600' as const,
     color: colors.text,
     marginBottom: 2,
   },
   podiumPoints: {
-    fontSize: 11,
+    ...typeScale.caption2,
     color: colors.textSecondary,
-    marginBottom: 8,
+    marginBottom: space.space2,
   },
   podiumBar: {
     width: 50,
@@ -1165,13 +1173,13 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
   },
   leaderboardItemHighlight: {
     backgroundColor: 'rgba(0, 180, 216, 0.1)',
-    marginHorizontal: -16,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    marginHorizontal: -cardPadding,
+    paddingHorizontal: cardPadding,
+    borderRadius: radiusMd,
   },
   leaderboardRank: {
     width: 32,
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '600' as const,
     color: colors.textSecondary,
   },
@@ -1187,10 +1195,10 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
   },
   leaderboardInfo: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: space.space3,
   },
   leaderboardName: {
-    fontSize: 15,
+    ...typeScale.subhead,
     fontWeight: '600' as const,
     color: colors.text,
   },
@@ -1201,7 +1209,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     marginTop: 2,
   },
   leaderboardPoints: {
-    fontSize: 13,
+    ...typeScale.footnote,
     color: colors.textSecondary,
   },
   leaderboardStreak: {
@@ -1210,12 +1218,12 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     gap: 2,
   },
   streakNumber: {
-    fontSize: 16,
+    ...typeScale.subhead,
     fontWeight: '700' as const,
     color: colors.streakOrange,
   },
   streakEmoji: {
-    fontSize: 14,
+    ...typeScale.subhead,
   },
   weeklyCard: {
     marginHorizontal: screenPaddingX,
@@ -1241,23 +1249,22 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     marginBottom: 4,
   },
   weeklySubtitle: {
-    fontSize: 13,
+    ...typeScale.footnote,
     color: colors.textSecondary,
-    lineHeight: 18,
-    marginBottom: 12,
+    marginBottom: space.space3,
   },
   weeklyStats: {
     flexDirection: 'row',
-    gap: 24,
+    gap: sectionGap,
   },
   weeklyStat: {},
   weeklyStatValue: {
-    fontSize: 18,
+    ...typeScale.headline,
     fontWeight: '700' as const,
     color: colors.accent,
   },
   weeklyStatLabel: {
-    fontSize: 11,
+    ...typeScale.caption2,
     color: colors.textSecondary,
     marginTop: 2,
   },
@@ -1294,16 +1301,16 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     minHeight: 4,
   },
   chartLabel: {
-    fontSize: 11,
+    ...typeScale.caption2,
     color: colors.textSecondary,
-    marginTop: 8,
+    marginTop: space.space2,
   },
   chartLabelToday: {
     color: colors.accent,
     fontWeight: '600' as const,
   },
   chartValue: {
-    fontSize: 10,
+    ...typeScale.caption2,
     color: colors.textMuted,
     marginTop: 2,
   },
@@ -1312,17 +1319,17 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     gap: space.space3,
   },
   zoomRequestCard: {
-    borderRadius: 16,
+    borderRadius: radiusLg,
     borderWidth: 1,
     borderColor: colors.glassBorder,
-    padding: 16,
+    padding: cardPadding,
     overflow: 'hidden',
   },
   zoomRequestHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: space.space3,
   },
   zoomRequestTopic: {
     ...typeScale.body,
@@ -1340,12 +1347,12 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     gap: 4,
   },
   zoomRequestStatusText: {
-    fontSize: 12,
+    ...typeScale.caption,
     fontWeight: '600' as const,
   },
   zoomRequestDetails: {
     flexDirection: 'row',
-    gap: 16,
+    gap: fieldGap,
   },
   zoomRequestDetail: {
     flexDirection: 'row',
@@ -1353,7 +1360,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     gap: 6,
   },
   zoomRequestDetailText: {
-    fontSize: 13,
+    ...typeScale.footnote,
     color: colors.textSecondary,
   },
 });

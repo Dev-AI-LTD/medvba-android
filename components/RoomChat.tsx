@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,11 +13,23 @@ import {
 } from 'react-native';
 import { Send, Loader2 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import Colors from '@/constants/colors';
+import { useTheme } from '@/providers/ThemeProvider';
+import type { AppColors } from '@/constants/colors';
 import { useRoomMessages, useSendMessage, RoomMessage } from '@/lib/supabase-hooks';
 import { useAuth } from '@/providers/AuthProvider';
 import { safeAvatarUri } from '@/lib/safe-image-uri';
-import { screenPaddingX, touchTargetMin } from '@/theme/iosDesign';
+import {
+  screenPaddingX,
+  touchTargetMin,
+  space,
+  radiusMd,
+  radiusLg,
+  typeScale,
+  iconSm,
+  inputHeight,
+  radiusPill,
+  hitSlop,
+} from '@/theme/iosDesign';
 
 interface RoomChatProps {
   roomId: string;
@@ -40,6 +52,8 @@ const formatTime = (dateString: string): string => {
 };
 
 export default function RoomChat({ roomId, roomName }: RoomChatProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { user, profile } = useAuth();
   const { messages, isLoading } = useRoomMessages(roomId);
   const sendMessageMutation = useSendMessage();
@@ -122,7 +136,7 @@ export default function RoomChat({ roomId, roomName }: RoomChatProps) {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Loading chat...</Text>
       </View>
     );
@@ -162,7 +176,7 @@ export default function RoomChat({ roomId, roomName }: RoomChatProps) {
           value={messageText}
           onChangeText={setMessageText}
           placeholder="Type a message..."
-          placeholderTextColor={Colors.textMuted}
+          placeholderTextColor={colors.textMuted}
           multiline
           maxLength={500}
         />
@@ -173,11 +187,14 @@ export default function RoomChat({ roomId, roomName }: RoomChatProps) {
           ]}
           onPress={handleSendMessage}
           disabled={!messageText.trim() || sendMessageMutation.isPending}
+          hitSlop={hitSlop.default}
+          accessibilityRole="button"
+          accessibilityLabel="Send message"
         >
           {sendMessageMutation.isPending ? (
-            <Loader2 color={Colors.text} size={20} />
+            <Loader2 color={colors.text} size={iconSm} />
           ) : (
-            <Send color={Colors.text} size={20} />
+            <Send color={colors.text} size={iconSm} />
           )}
         </TouchableOpacity>
       </View>
@@ -185,149 +202,149 @@ export default function RoomChat({ roomId, roomName }: RoomChatProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.background,
-  },
-  loadingText: {
-    fontSize: 15,
-    color: Colors.textSecondary,
-    marginTop: 12,
-  },
-  header: {
-    paddingHorizontal: screenPaddingX,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.cardBgLight,
-    backgroundColor: Colors.cardBg,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700' as const,
-    color: Colors.text,
-  },
-  headerSubtitle: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    marginTop: 2,
-  },
-  messagesList: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-  },
-  emptyText: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-    color: Colors.textSecondary,
-    marginBottom: 4,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: Colors.textMuted,
-  },
-  messageContainer: {
-    flexDirection: 'row',
-    marginBottom: 12,
-    alignItems: 'flex-end',
-  },
-  ownMessageContainer: {
-    justifyContent: 'flex-end',
-  },
-  otherMessageContainer: {
-    justifyContent: 'flex-start',
-  },
-  messageAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    marginRight: 8,
-  },
-  messageAvatarPlaceholder: {
-    width: 32,
-    marginRight: 8,
-  },
-  messageContent: {
-    maxWidth: '75%',
-  },
-  messageSender: {
-    fontSize: 12,
-    fontWeight: '600' as const,
-    color: Colors.textSecondary,
-    marginBottom: 4,
-    marginLeft: 12,
-  },
-  messageBubble: {
-    paddingHorizontal: screenPaddingX,
-    paddingVertical: 10,
-    borderRadius: 18,
-  },
-  ownMessageBubble: {
-    backgroundColor: Colors.primary,
-    borderBottomRightRadius: 4,
-    alignSelf: 'flex-end',
-  },
-  otherMessageBubble: {
-    backgroundColor: Colors.cardBgLight,
-    borderBottomLeftRadius: 4,
-  },
-  messageText: {
-    fontSize: 15,
-    lineHeight: 20,
-  },
-  ownMessageText: {
-    color: Colors.text,
-  },
-  otherMessageText: {
-    color: Colors.text,
-  },
-  messageTime: {
-    fontSize: 11,
-    color: Colors.textMuted,
-    marginTop: 4,
-    marginLeft: 12,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: Colors.cardBgLight,
-    backgroundColor: Colors.cardBg,
-  },
-  input: {
-    flex: 1,
-    backgroundColor: Colors.cardBgLight,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    fontSize: 15,
-    color: Colors.text,
-    maxHeight: 100,
-    marginRight: 8,
-  },
-  sendButton: {
-    width: touchTargetMin,
-    height: touchTargetMin,
-    borderRadius: touchTargetMin / 2,
-    backgroundColor: Colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sendButtonDisabled: {
-    backgroundColor: Colors.cardBgLight,
-    opacity: 0.5,
-  },
-});
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.background,
+    },
+    loadingText: {
+      ...typeScale.subhead,
+      color: colors.textSecondary,
+      marginTop: space.space3,
+    },
+    header: {
+      paddingHorizontal: screenPaddingX,
+      paddingVertical: space.space4,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.cardBgLight,
+      backgroundColor: colors.cardBg,
+    },
+    headerTitle: {
+      ...typeScale.headline,
+      color: colors.text,
+    },
+    headerSubtitle: {
+      ...typeScale.footnote,
+      color: colors.textSecondary,
+      marginTop: space.space1,
+    },
+    messagesList: {
+      paddingHorizontal: screenPaddingX,
+      paddingVertical: space.space3,
+    },
+    emptyContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: space.space9,
+    },
+    emptyText: {
+      ...typeScale.body,
+      fontWeight: '600',
+      color: colors.textSecondary,
+      marginBottom: space.space1,
+    },
+    emptySubtext: {
+      ...typeScale.subhead,
+      color: colors.textMuted,
+    },
+    messageContainer: {
+      flexDirection: 'row',
+      marginBottom: space.space3,
+      alignItems: 'flex-end',
+    },
+    ownMessageContainer: {
+      justifyContent: 'flex-end',
+    },
+    otherMessageContainer: {
+      justifyContent: 'flex-start',
+    },
+    messageAvatar: {
+      width: touchTargetMin - 12,
+      height: touchTargetMin - 12,
+      borderRadius: (touchTargetMin - 12) / 2,
+      marginRight: space.space2,
+    },
+    messageAvatarPlaceholder: {
+      width: touchTargetMin - 12,
+      marginRight: space.space2,
+    },
+    messageContent: {
+      maxWidth: '75%',
+    },
+    messageSender: {
+      ...typeScale.captionMedium,
+      color: colors.textSecondary,
+      marginBottom: space.space1,
+      marginLeft: space.space3,
+    },
+    messageBubble: {
+      paddingHorizontal: screenPaddingX,
+      paddingVertical: space.space2 + 2,
+      borderRadius: radiusLg + 2,
+    },
+    ownMessageBubble: {
+      backgroundColor: colors.primary,
+      borderBottomRightRadius: space.space1,
+      alignSelf: 'flex-end',
+    },
+    otherMessageBubble: {
+      backgroundColor: colors.cardBgLight,
+      borderBottomLeftRadius: space.space1,
+    },
+    messageText: {
+      ...typeScale.subhead,
+    },
+    ownMessageText: {
+      color: colors.text,
+    },
+    otherMessageText: {
+      color: colors.text,
+    },
+    messageTime: {
+      ...typeScale.caption2,
+      color: colors.textMuted,
+      marginTop: space.space1,
+      marginLeft: space.space3,
+    },
+    inputContainer: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      paddingHorizontal: screenPaddingX,
+      paddingVertical: space.space3,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.cardBgLight,
+      backgroundColor: colors.cardBg,
+      gap: space.space2,
+    },
+    input: {
+      flex: 1,
+      backgroundColor: colors.cardBgLight,
+      borderRadius: radiusPill,
+      paddingHorizontal: space.space4,
+      paddingVertical: space.space2 + 2,
+      ...typeScale.subhead,
+      color: colors.text,
+      minHeight: inputHeight,
+      maxHeight: 100,
+    },
+    sendButton: {
+      width: touchTargetMin,
+      height: touchTargetMin,
+      borderRadius: touchTargetMin / 2,
+      backgroundColor: colors.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    sendButtonDisabled: {
+      backgroundColor: colors.cardBgLight,
+      opacity: 0.5,
+    },
+  });
+}

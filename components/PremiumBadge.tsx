@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Crown } from 'lucide-react-native';
 import { useTheme } from '@/providers/ThemeProvider';
+import { iconXs, iconSm, radiusMd, space, typeScale } from '@/theme/iosDesign';
 
 interface PremiumBadgeProps {
   size?: 'small' | 'medium' | 'large';
@@ -13,9 +14,9 @@ export default function PremiumBadge({ size = 'medium', style }: PremiumBadgePro
   const { colors } = useTheme();
 
   const dimensions = {
-    small: { height: 20, padding: 4, fontSize: 10, iconSize: 10 },
-    medium: { height: 24, padding: 6, fontSize: 12, iconSize: 12 },
-    large: { height: 32, padding: 8, fontSize: 14, iconSize: 14 },
+    small: { height: space.space5, padding: space.space1, fontSize: typeScale.caption2.fontSize, iconSize: iconXs - 6 },
+    medium: { height: space.space6, padding: space.space2 - 2, fontSize: typeScale.caption.fontSize, iconSize: iconXs },
+    large: { height: space.space7, padding: space.space2, fontSize: typeScale.footnote.fontSize, iconSize: iconSm - 6 },
   };
 
   const dim = dimensions[size];
@@ -40,7 +41,7 @@ export default function PremiumBadge({ size = 'medium', style }: PremiumBadgePro
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 12,
+    borderRadius: radiusMd,
     overflow: 'hidden',
     alignSelf: 'flex-start',
   },
@@ -52,7 +53,7 @@ const styles = StyleSheet.create({
   content: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: space.space1,
   },
   text: {
     color: '#FFF',

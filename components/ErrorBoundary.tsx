@@ -1,8 +1,20 @@
-import React, { Component, ReactNode } from 'react';
+import React, { Component, ReactNode, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { AlertTriangle, RefreshCw } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { useTheme } from '@/providers/ThemeProvider';
+import type { AppColors } from '@/constants/colors';
 import { logError } from '@/lib/monitoring';
+import {
+  buttonHeight,
+  iconLg,
+  iconSm,
+  radiusMd,
+  screenPaddingX,
+  sectionGap,
+  space,
+  touchTargetMin,
+  typeScale,
+} from '@/theme/iosDesign';
 
 interface Props {
   children: ReactNode;
@@ -13,6 +25,50 @@ interface State {
   hasError: boolean;
   error: Error | null;
   errorInfo: React.ErrorInfo | null;
+}
+
+function ErrorFallback({
+  error,
+  errorInfo,
+  onReset,
+}: {
+  error: Error | null;
+  errorInfo: React.ErrorInfo | null;
+  onReset: () => void;
+}) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.content}>
+        <AlertTriangle color={colors.error} size={iconLg + space.space5} />
+        <Text style={styles.title}>Something went wrong</Text>
+        <Text style={styles.message}>
+          We encountered an unexpected error. Please try again.
+        </Text>
+
+        {__DEV__ && error && (
+          <ScrollView style={styles.errorDetails}>
+            <Text style={styles.errorText}>{error.toString()}</Text>
+            {errorInfo && (
+              <Text style={styles.stackText}>{errorInfo.componentStack}</Text>
+            )}
+          </ScrollView>
+        )}
+
+        <TouchableOpacity
+          style={styles.button}
+          onPress={onReset}
+          accessibilityRole="button"
+          accessibilityLabel="Try again"
+        >
+          <RefreshCw color={colors.text} size={iconSm} />
+          <Text style={styles.buttonText}>Try Again</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -79,36 +135,11 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <View style={styles.container}>
-          <View style={styles.content}>
-            <AlertTriangle color={Colors.error} size={64} />
-            <Text style={styles.title}>Something went wrong</Text>
-            <Text style={styles.message}>
-              We encountered an unexpected error. Please try again.
-            </Text>
-            
-            {__DEV__ && this.state.error && (
-              <ScrollView style={styles.errorDetails}>
-                <Text style={styles.errorText}>
-                  {this.state.error.toString()}
-                </Text>
-                {this.state.errorInfo && (
-                  <Text style={styles.stackText}>
-                    {this.state.errorInfo.componentStack}
-                  </Text>
-                )}
-              </ScrollView>
-            )}
-
-            <TouchableOpacity
-              style={styles.button}
-              onPress={this.handleReset}
-            >
-              <RefreshCw color={Colors.text} size={20} />
-              <Text style={styles.buttonText}>Try Again</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        <ErrorFallback
+          error={this.state.error}
+          errorInfo={this.state.errorInfo}
+          onReset={this.handleReset}
+        />
       );
     }
 
@@ -116,64 +147,66 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  content: {
-    alignItems: 'center',
-    maxWidth: 400,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700' as const,
-    color: Colors.text,
-    marginTop: 20,
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  message: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 30,
-    lineHeight: 24,
-  },
-  errorDetails: {
-    width: '100%',
-    maxHeight: 200,
-    backgroundColor: Colors.cardBg,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-  },
-  errorText: {
-    fontSize: 12,
-    color: Colors.error,
-    fontFamily: 'monospace',
-    marginBottom: 10,
-  },
-  stackText: {
-    fontSize: 10,
-    color: Colors.textMuted,
-    fontFamily: 'monospace',
-  },
-  button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primary,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 12,
-    gap: 8,
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-    color: Colors.text,
-  },
-});
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: screenPaddingX,
+    },
+    content: {
+      alignItems: 'center',
+      maxWidth: 400,
+    },
+    title: {
+      ...typeScale.title2,
+      color: colors.text,
+      marginTop: sectionGap,
+      marginBottom: space.space2,
+      textAlign: 'center',
+    },
+    message: {
+      ...typeScale.body,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginBottom: sectionGap,
+    },
+    errorDetails: {
+      width: '100%',
+      maxHeight: 200,
+      backgroundColor: colors.cardBg,
+      borderRadius: radiusMd,
+      padding: space.space4,
+      marginBottom: sectionGap - space.space4,
+    },
+    errorText: {
+      ...typeScale.caption,
+      color: colors.error,
+      fontFamily: 'monospace',
+      marginBottom: space.space2 + 2,
+    },
+    stackText: {
+      ...typeScale.caption2,
+      color: colors.textMuted,
+      fontFamily: 'monospace',
+    },
+    button: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.primary,
+      paddingHorizontal: space.space6,
+      paddingVertical: space.space3,
+      borderRadius: radiusMd,
+      gap: space.space2,
+      minHeight: buttonHeight,
+      minWidth: touchTargetMin * 2,
+    },
+    buttonText: {
+      ...typeScale.body,
+      fontWeight: '600',
+      color: colors.text,
+    },
+  });
+}

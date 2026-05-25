@@ -17,6 +17,9 @@
 -keep class com.facebook.react.modules.statusbar.** { *; }
 -keep class com.swmansion.rnscreens.** { *; }
 -keepattributes SourceFile,LineNumberTable
+-keep class com.facebook.react.modules.statusbar.** { *; }
+-keep class com.swmansion.rnscreens.** { *; }
+-keepattributes SourceFile,LineNumberTable
 # @generated end expo-build-properties
 
 # RevenueCat (release / R8)

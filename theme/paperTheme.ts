@@ -12,7 +12,7 @@ export { SPACING, TOUCH_TARGET_MIN };
 const iosFonts = configureFonts({
   config: {
     displayLarge: { ...typeScale.largeTitle, fontFamily },
-    displayMedium: { ...typeScale.title, fontFamily },
+    displayMedium: { ...typeScale.title1, fontFamily },
     displaySmall: { ...typeScale.title2, fontFamily },
     headlineLarge: { ...typeScale.title2, fontFamily },
     headlineMedium: { ...typeScale.headline, fontFamily },

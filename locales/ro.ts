@@ -85,6 +85,8 @@ export const ro: Record<string, string> = {
     'Email și parola direct în app nu sunt suportate de Kinde. Folosește Google sau Apple. Pentru email, Kinde cere autentificare în browser (PKCE), nu doar câmpurile de aici.',
   'auth.kindeSocialConnectionNotEnabled':
     'Metoda de autentificare nu e activată în Kinde pentru app-ul MEDVBA. În Kinde: Applications → app native → Authentication → pornește Apple (sau Google). Connection ID din Settings → Authentication → Apple → EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID, apoi repornește Metro.',
+  'auth.productionEmailSignInHint':
+    'Folosește Autentificare cu Apple sau Google. Pentru email, apasă „Autentificare cu email” când este disponibil sau contactează support@medvba.app.',
   'auth.invalidCredentials': 'Email sau parolă greșită. Te rog încearcă din nou.',
   'auth.emailNotConfirmed':
     'Confirmă adresa de email înainte de autentificare. Deschide linkul din mesajul primit la înregistrare, apoi încearcă din nou.',
@@ -759,6 +761,8 @@ export const ro: Record<string, string> = {
   'deleteAccount.warningTitle': 'Acțiune ireversibilă',
   'deleteAccount.warningBody':
     'Ștergerea contului MEDVBA elimină definitiv profilul, istoricul la quiz, sălile de studiu pe care le găzduiești și toate datele asociate. Nu se poate anula.',
+  'deleteAccount.subscriptionNote':
+    'Ștergerea contului nu anulează un abonament activ din App Store. Anulează din Setări iOS → Abonamente sau folosește Gestionare abonament în aplicație înainte de ștergere.',
   'deleteAccount.sectionWhatDeleted': 'Ce se șterge',
   'deleteAccount.itemProfile': 'Profil și avatar',
   'deleteAccount.itemQuizStats': 'Statistici quiz, progres și streak-uri',
@@ -782,9 +786,9 @@ export const ro: Record<string, string> = {
   'notifications.studyTime': 'Ora de studiu',
   'notifications.studyTimePlaceholder': 'Alege ora la care vrei să fii anunțat.',
   'notifications.chatNotifications': 'Notificări din chat',
-  'notifications.chatNotificationsDesc': 'Primește alerte când cineva îți scrie sau te invită la studiu în chat.',
+  'notifications.chatNotificationsDesc': 'În curând — alertele push pentru chat nu sunt disponibile în această versiune.',
   'notifications.medvbaUpdates': 'Noutăți de la MEDVBA',
-  'notifications.medvbaUpdatesDesc': 'Vreau să aflu când apar noutăți, lecții sau anunțuri importante.',
+  'notifications.medvbaUpdatesDesc': 'În curând — anunțurile și actualizările produsului nu sunt trimise încă ca notificări push.',
   'notifications.soundEnabled': 'Sunet notificări',
   'notifications.soundEnabledDesc': 'Pornește sau oprește sunetul pentru notificări.',
   'notifications.doNotDisturb': 'Nu deranja',

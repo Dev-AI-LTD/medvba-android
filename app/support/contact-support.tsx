@@ -22,7 +22,17 @@ import { useAuth } from '@/providers/AuthProvider';
 import GlassCard from '@/components/GlassCard';
 import Button from '@/components/Button';
 import { getSupportEmail, openSupportMail } from '@/lib/support-mail';
-import { inputMinHeight, screenPaddingX, space } from '@/theme/iosDesign';
+import {
+  cardPadding,
+  fieldGap,
+  inputMinHeight,
+  radiusMd,
+  radiusPill,
+  screenPaddingX,
+  space,
+  touchTargetMin,
+  typeScale,
+} from '@/theme/iosDesign';
 
 type CategoryOption = 'bug' | 'billing' | 'account' | 'other';
 
@@ -249,37 +259,38 @@ const createStyles = (colors: {
       flex: 1,
     },
     content: {
-      padding: 20,
-      gap: 16,
+      padding: space.space5,
+      gap: fieldGap,
     },
     formCard: {
-      padding: 16,
-      gap: 12,
+      padding: cardPadding,
+      gap: space.space3,
     },
     label: {
-      fontSize: 13,
+      ...typeScale.footnote,
       fontWeight: '600' as const,
       color: colors.textSecondary,
     },
     input: {
-      borderRadius: 12,
+      borderRadius: radiusMd,
       borderWidth: 1,
       borderColor: colors.glassBorder,
       backgroundColor: colors.cardBg,
       paddingHorizontal: screenPaddingX,
-      paddingVertical: 10,
+      paddingVertical: space.space2,
       color: colors.text,
-      fontSize: 14,
+      ...typeScale.subhead,
+      minHeight: inputMinHeight,
     },
     textArea: {
-      borderRadius: 12,
+      borderRadius: radiusMd,
       borderWidth: 1,
       borderColor: colors.glassBorder,
       backgroundColor: colors.cardBg,
       paddingHorizontal: screenPaddingX,
-      paddingVertical: 12,
+      paddingVertical: space.space3,
       color: colors.text,
-      fontSize: 14,
+      ...typeScale.subhead,
       minHeight: 120,
     },
     inputError: {
@@ -287,7 +298,7 @@ const createStyles = (colors: {
     },
     errorText: {
       color: colors.error,
-      fontSize: 12,
+      ...typeScale.caption,
     },
     categoryRow: {
       flexDirection: 'row',
@@ -295,15 +306,17 @@ const createStyles = (colors: {
       gap: 8,
     },
     categoryChip: {
-      borderRadius: 999,
+      borderRadius: radiusPill,
       borderWidth: 1,
       borderColor: colors.glassBorder,
       paddingHorizontal: screenPaddingX,
       paddingVertical: 6,
       backgroundColor: colors.cardBgLight,
+      minHeight: touchTargetMin,
+      justifyContent: 'center',
     },
     categoryText: {
-      fontSize: 12,
+      ...typeScale.caption,
       color: colors.textSecondary,
       fontWeight: '600' as const,
     },
@@ -315,31 +328,30 @@ const createStyles = (colors: {
       paddingVertical: 4,
     },
     toggleTitle: {
-      fontSize: 14,
+      ...typeScale.subhead,
       fontWeight: '600' as const,
       color: colors.text,
     },
     toggleSubtitle: {
-      fontSize: 12,
+      ...typeScale.caption,
       color: colors.textSecondary,
       marginTop: 2,
     },
     fallbackCard: {
-      padding: 16,
-      gap: 10,
+      padding: cardPadding,
+      gap: space.space2,
     },
     fallbackTitle: {
-      fontSize: 15,
+      ...typeScale.subhead,
       fontWeight: '700' as const,
       color: colors.text,
     },
     fallbackText: {
-      fontSize: 13,
+      ...typeScale.footnote,
       color: colors.textSecondary,
-      lineHeight: 18,
     },
     emailText: {
-      fontSize: 14,
+      ...typeScale.subhead,
       fontWeight: '700' as const,
       color: colors.primary,
     },
@@ -348,11 +360,11 @@ const createStyles = (colors: {
       gap: 6,
     },
     noteText: {
-      fontSize: 12,
+      ...typeScale.caption,
       color: colors.textSecondary,
     },
     noteWarning: {
-      fontSize: 12,
+      ...typeScale.caption,
       color: colors.warning,
     },
   });

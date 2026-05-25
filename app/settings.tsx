@@ -56,13 +56,15 @@ import { useLanguage, Language } from '@/providers/LanguageProvider';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import { presentCustomerCenter } from '@/lib/revenuecat';
 import {
-  SPACING,
+  cardPadding,
+  fieldGap,
   iconLg,
   iconMd,
   iconSm,
   inputMinHeight,
   radiusLg,
   radiusMd,
+  radiusSm,
   screenPaddingX,
   sectionGap,
   space,
@@ -271,10 +273,10 @@ export default function SettingsScreen() {
 
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: SPACING.x4 }]}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: space.space7 }]}
         >
-          <View style={[styles.section, { marginBottom: SPACING.x3 }]}>
-            <View style={[styles.sectionHeader, { marginBottom: SPACING.x2 }]}>
+          <View style={[styles.section, { marginBottom: sectionGap }]}>
+            <View style={[styles.sectionHeader, { marginBottom: fieldGap }]}>
               <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('settings.myProfile')}</Text>
               <Button
                 mode="outlined"
@@ -752,7 +754,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   title: {
-    fontSize: 24,
+    ...typeScale.title2,
     fontWeight: '700' as const,
   },
   closeButton: {
@@ -772,11 +774,11 @@ const styles = StyleSheet.create({
     marginBottom: sectionGap,
   },
   sectionTitle: {
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '600' as const,
     textTransform: 'uppercase' as const,
     letterSpacing: 1,
-    marginBottom: 12,
+    marginBottom: space.space3,
     marginLeft: 4,
   },
   sectionCard: {
@@ -809,7 +811,7 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   settingsItemSubtitle: {
-    fontSize: 13,
+    ...typeScale.footnote,
     marginTop: 2,
   },
   footer: {
@@ -823,7 +825,7 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   footerSubtext: {
-    fontSize: 13,
+    ...typeScale.footnote,
     marginTop: 4,
   },
   blockedUsersHeader: {
@@ -861,14 +863,14 @@ const styles = StyleSheet.create({
   },
   blockedUserInfo: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: space.space3,
   },
   blockedUserName: {
-    fontSize: 15,
+    ...typeScale.subhead,
     fontWeight: '600' as const,
   },
   blockedUserDate: {
-    fontSize: 12,
+    ...typeScale.caption,
     marginTop: 2,
   },
   unblockButton: {
@@ -881,7 +883,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   unblockButtonText: {
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '600' as const,
   },
   deleteAccountItem: {
@@ -902,7 +904,7 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   deleteAccountSubtitle: {
-    fontSize: 13,
+    ...typeScale.footnote,
     marginTop: 2,
   },
   signOutItem: {
@@ -923,7 +925,7 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   signOutSubtitle: {
-    fontSize: 13,
+    ...typeScale.footnote,
     marginTop: 2,
   },
   languageSection: {
@@ -933,7 +935,7 @@ const styles = StyleSheet.create({
   languageSectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: cardPadding,
   },
   languageSelector: {
     flexDirection: 'row',
@@ -948,11 +950,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 8,
+    paddingVertical: space.space3,
+    paddingHorizontal: space.space2,
+    borderRadius: radiusSm,
     gap: 6,
     overflow: 'hidden',
+    minHeight: touchTargetMin,
   },
   languageButtonActive: {
     shadowOffset: { width: 0, height: 4 },
@@ -961,10 +964,10 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   languageFlag: {
-    fontSize: 18,
+    ...typeScale.headline,
   },
   languageLabel: {
-    fontSize: 14,
+    ...typeScale.subhead,
     fontWeight: '600' as const,
   },
   languageLabelActive: {
@@ -974,7 +977,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: space.space3,
     marginLeft: 4,
   },
   saveProfileButton: {
@@ -990,7 +993,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   saveProfileButtonText: {
-    fontSize: 14,
+    ...typeScale.subhead,
     fontWeight: '600' as const,
   },
   profilePhotoSection: {
@@ -1010,14 +1013,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   inputLabelText: {
-    fontSize: 14,
+    ...typeScale.subhead,
     fontWeight: '600' as const,
   },
   profileTextInput: {
-    borderRadius: 10,
+    borderRadius: radiusMd,
     paddingHorizontal: screenPaddingX,
     paddingVertical: space.space3,
-    fontSize: 15,
+    ...typeScale.subhead,
     borderWidth: 1,
     minHeight: inputMinHeight,
   },
@@ -1026,7 +1029,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   charCount: {
-    fontSize: 12,
+    ...typeScale.caption,
     textAlign: 'right',
     marginTop: 6,
   },
@@ -1046,7 +1049,7 @@ const styles = StyleSheet.create({
   yearButtonActive: {
   },
   yearButtonText: {
-    fontSize: 15,
+    ...typeScale.subhead,
     fontWeight: '600' as const,
   },
   yearButtonTextActive: {

@@ -12,7 +12,15 @@ import { Shield, Database, Users, Lock, Mail, Globe } from 'lucide-react-native'
 import { Stack } from 'expo-router';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { screenPaddingX, sectionGap, space, typeScale } from '@/theme/iosDesign';
+import {
+  cardPadding,
+  radiusLg,
+  radiusMd,
+  screenPaddingX,
+  sectionGap,
+  space,
+  typeScale,
+} from '@/theme/iosDesign';
 
 const LAST_UPDATED_EN = 'May 21, 2026';
 const LAST_UPDATED_RO = '21 mai 2026';
@@ -257,7 +265,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: sectionGap,
   },
   iconContainer: {
     width: 64,
@@ -266,23 +274,22 @@ const createStyles = (colors: any) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
-    marginBottom: 12,
+    marginBottom: space.space3,
   },
   lastUpdated: {
-    fontSize: 13,
+    ...typeScale.footnote,
     color: colors.textSecondary,
   },
   intro: {
-    fontSize: 15,
+    ...typeScale.subhead,
     color: colors.textSecondary,
-    lineHeight: 24,
-    marginBottom: 24,
+    marginBottom: sectionGap,
     textAlign: 'center',
   },
   section: {
-    marginBottom: 24,
+    marginBottom: sectionGap,
     backgroundColor: colors.cardBg,
-    borderRadius: 16,
+    borderRadius: radiusLg,
     borderWidth: 1,
     borderColor: colors.glassBorder,
     overflow: 'hidden',
@@ -290,8 +297,8 @@ const createStyles = (colors: any) => StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    padding: 16,
+    gap: space.space3,
+    padding: cardPadding,
     borderBottomWidth: 1,
     borderBottomColor: colors.glassBorder,
     backgroundColor: 'rgba(255,255,255,0.03)',
@@ -301,13 +308,12 @@ const createStyles = (colors: any) => StyleSheet.create({
     color: colors.text,
   },
   sectionContent: {
-    padding: 16,
+    padding: cardPadding,
   },
   paragraph: {
-    fontSize: 14,
+    ...typeScale.subhead,
     color: colors.textSecondary,
-    lineHeight: 22,
-    marginBottom: 12,
+    marginBottom: space.space3,
   },
   bold: {
     fontWeight: '600' as const,
@@ -317,33 +323,30 @@ const createStyles = (colors: any) => StyleSheet.create({
     marginTop: 8,
   },
   bulletItem: {
-    fontSize: 14,
+    ...typeScale.subhead,
     color: colors.textSecondary,
-    lineHeight: 24,
-    marginBottom: 4,
+    marginBottom: space.space1,
   },
   contactBox: {
     backgroundColor: 'rgba(0, 180, 216, 0.1)',
-    padding: 16,
-    borderRadius: 12,
-    marginTop: 12,
+    padding: cardPadding,
+    borderRadius: radiusMd,
+    marginTop: space.space3,
   },
   contactText: {
-    fontSize: 14,
+    ...typeScale.subhead,
     color: colors.textSecondary,
-    lineHeight: 22,
   },
   contactEmail: {
-    fontSize: 14,
+    ...typeScale.subhead,
     color: colors.primary,
-    marginTop: 4,
+    marginTop: space.space1,
   },
   footer: {
-    fontSize: 13,
+    ...typeScale.footnote,
     color: colors.textMuted,
-    lineHeight: 20,
     textAlign: 'center',
-    marginTop: 16,
+    marginTop: cardPadding,
     fontStyle: 'italic',
   },
 });

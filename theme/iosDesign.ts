@@ -1,22 +1,15 @@
 import { Platform } from 'react-native';
 
 /**
- * Apple HIG–aligned design tokens (4/8pt grid, 44pt touch targets, iOS type scale).
- * Single source of truth — import from here or via @/constants/design re-exports.
+ * iOS-first design system (Apple HIG).
+ * Single source of truth for spacing, typography, radii, sizes, and touch targets.
  *
- * | Token            | Value |
- * |------------------|-------|
- * | screenPaddingX   | 16    |
- * | fieldGap         | 16    |
- * | sectionGap       | 24    |
- * | cardPadding      | 16    |
- * | touchTargetMin   | 44    |
- * | buttonHeight     | 50    |
- * | body             | 17/22 |
- * | subhead          | 15/20 |
- * | caption          | 13/18 |
+ * Layout: screen padding 16 · item gap 16 · section gap 24 · card padding 16
+ * Controls: button/input height 50 · min touch 44×44
+ * Icons: 16 / 20 / 24 / 28
  */
 
+/** 4pt grid */
 export const space = {
   space1: 4,
   space2: 8,
@@ -29,34 +22,41 @@ export const space = {
   space9: 48,
 } as const;
 
+/** Screen & list layout */
 export const screenPaddingX = space.space4;
 export const screenPaddingXWide = space.space5;
 export const fieldGap = space.space4;
+export const itemGap = fieldGap;
 export const sectionGap = space.space6;
 export const cardPadding = space.space4;
 
+/** Interactive minimums (Apple HIG) */
 export const touchTargetMin = 44;
 export const buttonHeight = 50;
-export const inputMinHeight = 44;
-export const listRowMinHeight = 44;
+export const inputHeight = 50;
+export const inputMinHeight = inputHeight;
+export const listRowMinHeight = touchTargetMin;
 
-export const iconSm = 18;
-export const iconMd = 20;
-export const iconLg = 22;
-export const iconXl = 24;
+/** Icon sizes */
+export const iconXs = 16;
+export const iconSm = 20;
+export const iconMd = 24;
+export const iconLg = 28;
+/** @deprecated Use iconSm–iconLg; kept for gradual migration */
+export const iconXl = iconLg;
 
 export const radiusSm = 8;
 export const radiusMd = 12;
 export const radiusLg = 16;
 export const radiusPill = 999;
 
-/** iOS uses San Francisco via system font; Android uses platform sans-serif. */
 export const fontFamily = Platform.select({
   ios: 'System',
   android: 'sans-serif',
   default: 'System',
 }) as string;
 
+/** Apple Dynamic Type–aligned scale */
 export const typeScale = {
   largeTitle: {
     fontSize: 34,
@@ -64,6 +64,13 @@ export const typeScale = {
     fontWeight: '700' as const,
     letterSpacing: 0.37,
   },
+  title1: {
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: '600' as const,
+    letterSpacing: 0.36,
+  },
+  /** @deprecated Prefer title1 */
   title: {
     fontSize: 28,
     lineHeight: 34,
@@ -75,6 +82,12 @@ export const typeScale = {
     lineHeight: 28,
     fontWeight: '600' as const,
     letterSpacing: 0.35,
+  },
+  title3: {
+    fontSize: 20,
+    lineHeight: 25,
+    fontWeight: '600' as const,
+    letterSpacing: 0.38,
   },
   headline: {
     fontSize: 17,
@@ -106,27 +119,33 @@ export const typeScale = {
     fontWeight: '500' as const,
     letterSpacing: -0.24,
   },
-  caption: {
+  footnote: {
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '400' as const,
     letterSpacing: -0.08,
   },
-  captionMedium: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '500' as const,
-    letterSpacing: -0.08,
-  },
-  footnote: {
+  caption: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '400' as const,
     letterSpacing: 0,
   },
+  captionMedium: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500' as const,
+    letterSpacing: 0,
+  },
+  caption2: {
+    fontSize: 11,
+    lineHeight: 13,
+    fontWeight: '400' as const,
+    letterSpacing: 0.06,
+  },
 } as const;
 
-/** Legacy SPACING aliases (8pt multiples) for gradual migration. */
+/** Legacy 8pt spacing aliases */
 export const SPACING = {
   x1: space.space2,
   x2: space.space4,
@@ -139,3 +158,38 @@ export const SPACING = {
 } as const;
 
 export const TOUCH_TARGET_MIN = touchTargetMin;
+
+export const hitSlop = {
+  default: { top: 8, right: 8, bottom: 8, left: 8 },
+  large: { top: 12, right: 12, bottom: 12, left: 12 },
+} as const;
+
+/** Aggregated tokens for imports */
+export const tokens = {
+  space,
+  layout: {
+    screenPaddingX,
+    screenPaddingXWide,
+    fieldGap,
+    itemGap,
+    sectionGap,
+    cardPadding,
+  },
+  size: {
+    touchTargetMin,
+    buttonHeight,
+    inputHeight,
+    listRowMinHeight,
+    icon: { xs: iconXs, sm: iconSm, md: iconMd, lg: iconLg },
+  },
+  radius: {
+    sm: radiusSm,
+    md: radiusMd,
+    lg: radiusLg,
+    pill: radiusPill,
+  },
+  type: typeScale,
+  fontFamily,
+} as const;
+
+export type TypeScaleKey = keyof typeof typeScale;

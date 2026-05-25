@@ -243,7 +243,7 @@ export default function NotificationsScreen() {
                 />
               )}
 
-              <View style={[styles.settingItem, styles.settingItemBorder]}>
+              <View style={[styles.settingItem, styles.settingItemBorder, styles.settingItemMuted]}>
                 <View style={styles.settingInfo}>
                   <Text style={styles.settingTitle}>
                     {t('notifications.chatNotifications')}
@@ -253,14 +253,16 @@ export default function NotificationsScreen() {
                   </Text>
                 </View>
                 <Switch
-                  value={settings.chatNotifications}
-                  onValueChange={(value) => void updateSetting('chatNotifications', value)}
+                  value={false}
+                  disabled
                   trackColor={{ false: colors.cardBgLight, true: colors.primary }}
-                  thumbColor={colors.text}
+                  thumbColor={colors.textMuted}
+                  accessibilityState={{ disabled: true }}
+                  accessibilityLabel={t('notifications.chatNotifications')}
                 />
               </View>
 
-              <View style={[styles.settingItem, styles.settingItemBorder]}>
+              <View style={[styles.settingItem, styles.settingItemBorder, styles.settingItemMuted]}>
                 <View style={styles.settingInfo}>
                   <Text style={styles.settingTitle}>
                     {t('notifications.medvbaUpdates')}
@@ -270,10 +272,12 @@ export default function NotificationsScreen() {
                   </Text>
                 </View>
                 <Switch
-                  value={settings.medvbaUpdates}
-                  onValueChange={(value) => void updateSetting('medvbaUpdates', value)}
+                  value={false}
+                  disabled
                   trackColor={{ false: colors.cardBgLight, true: colors.primary }}
-                  thumbColor={colors.text}
+                  thumbColor={colors.textMuted}
+                  accessibilityState={{ disabled: true }}
+                  accessibilityLabel={t('notifications.medvbaUpdates')}
                 />
               </View>
 
@@ -419,6 +423,9 @@ const createStyles = (colors: {
     settingItemBorder: {
       borderTopWidth: 1,
       borderTopColor: colors.glassBorder,
+    },
+    settingItemMuted: {
+      opacity: 0.65,
     },
     settingInfo: {
       flex: 1,

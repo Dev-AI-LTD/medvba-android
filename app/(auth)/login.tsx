@@ -31,7 +31,8 @@ import { log } from '@/lib/log';
 import { isLikelyAuthConnectivityFailure } from '@/lib/auth-connectivity-errors';
 import { useBlockingAuthOffline } from '@/lib/use-network-auth-offline';
 const MIN_PASSWORD_LENGTH = 8;
-const LOGIN_LOGO_SOURCE = require('../../assets/images/icon.png');
+/** In-app auth logo (legacy); store / launcher use `assets/images/icon.png` via app.config. */
+const LOGIN_LOGO_SOURCE = require('../../assets/images/icon-auth.png');
 
 function mapAuthScreenError(message: string, t: (key: string) => string): string {
   const m = message.trim().toLowerCase();
@@ -81,6 +82,10 @@ function LoginScreen() {
     isEmailHostedAuthEnabled,
   } = useAuth();
   const { t } = useLanguage();
+  /** App Store / TestFlight: hide in-app password (ROPC); reviewers use Apple, Google, or hosted email. */
+  const hideInAppPasswordAuth = !__DEV__;
+  const showInAppPasswordAuth =
+    canUseNativeAuth && !isEmailHostedAuthEnabled && !hideInAppPasswordAuth;
 
   const emailParam = useMemo(() => {
     const raw = params.email;
@@ -471,12 +476,24 @@ function LoginScreen() {
                   </>
                 ) : null}
 
-                {Platform.OS !== 'web' && canUseNativeAuth && !isEmailHostedAuthEnabled ? (
+                {showInAppPasswordAuth ? (
                   <Text
                     variant="labelMedium"
                     style={[styles.orEmailLabel, { color: theme.colors.onSurfaceVariant }]}
                   >
                     {t('auth.orContinueWithEmail')}
+                  </Text>
+                ) : null}
+
+                {Platform.OS !== 'web' &&
+                canUseNativeAuth &&
+                hideInAppPasswordAuth &&
+                !isEmailHostedAuthEnabled ? (
+                  <Text
+                    variant="bodySmall"
+                    style={[styles.productionEmailHint, { color: theme.colors.onSurfaceVariant }]}
+                  >
+                    {t('auth.productionEmailSignInHint')}
                   </Text>
                 ) : null}
 
@@ -488,7 +505,7 @@ function LoginScreen() {
                   </Text>
                 )}
 
-                {Platform.OS !== 'web' && canUseNativeAuth && !isEmailHostedAuthEnabled ? (
+                {showInAppPasswordAuth ? (
                   <>
                     {isSignUpMode ? (
                       <TextInput
@@ -694,6 +711,12 @@ const styles = StyleSheet.create({
   orEmailLabel: {
     textAlign: 'center',
     marginBottom: SPACING.x2,
+  },
+  productionEmailHint: {
+    textAlign: 'center',
+    marginTop: SPACING.x2,
+    marginBottom: SPACING.x2,
+    lineHeight: 20,
   },
   input: {
     marginBottom: SPACING.x2,

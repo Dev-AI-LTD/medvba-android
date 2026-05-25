@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -25,15 +25,28 @@ import {
   CheckCircle,
 } from 'lucide-react-native';
 import { TRPCClientError } from '@trpc/client';
-import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
+import { useTheme } from '@/providers/ThemeProvider';
 import { trpc } from '@/lib/trpc';
 import {
   useLanguage,
   APP_LANGUAGE_STORAGE_KEY,
   LEGACY_APP_LANGUAGE_STORAGE_KEY,
 } from '@/providers/LanguageProvider';
-import { screenPaddingX, touchTargetMin } from '@/theme/iosDesign';
+import {
+  buttonHeight,
+  cardPadding,
+  fieldGap,
+  iconSm,
+  iconMd,
+  radiusLg,
+  radiusMd,
+  screenPaddingX,
+  sectionGap,
+  space,
+  touchTargetMin,
+  typeScale,
+} from '@/theme/iosDesign';
 import { BLOCKED_USERS_STORAGE_KEY } from '@/lib/blocked-users-storage';
 import { USER_REPORTS_STORAGE_KEY } from '@/lib/user-reports-storage';
 
@@ -54,6 +67,8 @@ type DeletionStep = 'confirm' | 'deleting' | 'success';
 export default function DeleteAccountScreen() {
   const router = useRouter();
   const { t } = useLanguage();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { user, signOut, refreshMedvbaSession } = useAuth();
   const [confirmText, setConfirmText] = useState('');
   const [step, setStep] = useState<DeletionStep>('confirm');
@@ -176,14 +191,14 @@ export default function DeleteAccountScreen() {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={[Colors.background, '#0D1F35', Colors.backgroundLight]}
+          colors={[colors.background, colors.backgroundLight, colors.backgroundLight]}
           style={StyleSheet.absoluteFill}
           locations={[0, 0.5, 1]}
         />
         <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
           <View style={styles.successContainer}>
             <View style={styles.successIconWrapper}>
-              <CheckCircle color={Colors.success} size={64} />
+              <CheckCircle color={colors.success} size={iconMd * 3} />
             </View>
             <Text style={styles.successTitle}>{t('deleteAccount.successTitle')}</Text>
             <Text style={styles.successText}>{t('deleteAccount.successBody')}</Text>
@@ -200,13 +215,13 @@ export default function DeleteAccountScreen() {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={[Colors.background, '#0D1F35', Colors.backgroundLight]}
+          colors={[colors.background, colors.backgroundLight, colors.backgroundLight]}
           style={StyleSheet.absoluteFill}
           locations={[0, 0.5, 1]}
         />
         <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.error} />
+            <ActivityIndicator size="large" color={colors.error} />
             <Text style={styles.loadingText}>{t('deleteAccount.deletingTitle')}</Text>
             <Text style={styles.loadingSubtext}>{t('deleteAccount.deletingSubtext')}</Text>
           </View>
@@ -218,14 +233,14 @@ export default function DeleteAccountScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.background, '#0D1F35', Colors.backgroundLight]}
+        colors={[colors.background, colors.backgroundLight, colors.backgroundLight]}
         style={StyleSheet.absoluteFill}
         locations={[0, 0.5, 1]}
       />
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.closeButton} onPress={() => router.back()} activeOpacity={0.7}>
-            <X color={Colors.text} size={24} />
+            <X color={colors.text} size={iconMd} />
           </TouchableOpacity>
           <Text style={styles.title}>{t('deleteAccount.title')}</Text>
           <View style={styles.headerSpacer} />
@@ -238,10 +253,14 @@ export default function DeleteAccountScreen() {
               style={StyleSheet.absoluteFill}
             />
             <View style={styles.warningIconWrapper}>
-              <AlertTriangle color={Colors.error} size={32} />
+              <AlertTriangle color={colors.error} size={iconMd + space.space2} />
             </View>
             <Text style={styles.warningTitle}>{t('deleteAccount.warningTitle')}</Text>
             <Text style={styles.warningText}>{t('deleteAccount.warningBody')}</Text>
+          </View>
+
+          <View style={styles.subscriptionNoteCard}>
+            <Text style={styles.subscriptionNoteText}>{t('deleteAccount.subscriptionNote')}</Text>
           </View>
 
           <View style={styles.section}>
@@ -249,25 +268,25 @@ export default function DeleteAccountScreen() {
             <View style={styles.deletionList}>
               <View style={styles.deletionItem}>
                 <View style={styles.deletionIconWrapper}>
-                  <User color={Colors.textSecondary} size={20} />
+                  <User color={colors.textSecondary} size={iconSm} />
                 </View>
                 <Text style={styles.deletionItemText}>{t('deleteAccount.itemProfile')}</Text>
               </View>
               <View style={styles.deletionItem}>
                 <View style={styles.deletionIconWrapper}>
-                  <BarChart3 color={Colors.textSecondary} size={20} />
+                  <BarChart3 color={colors.textSecondary} size={iconSm} />
                 </View>
                 <Text style={styles.deletionItemText}>{t('deleteAccount.itemQuizStats')}</Text>
               </View>
               <View style={styles.deletionItem}>
                 <View style={styles.deletionIconWrapper}>
-                  <Users color={Colors.textSecondary} size={20} />
+                  <Users color={colors.textSecondary} size={iconSm} />
                 </View>
                 <Text style={styles.deletionItemText}>{t('deleteAccount.itemStudyRooms')}</Text>
               </View>
               <View style={[styles.deletionItem, styles.deletionItemLast]}>
                 <View style={styles.deletionIconWrapper}>
-                  <Flag color={Colors.textSecondary} size={20} />
+                  <Flag color={colors.textSecondary} size={iconSm} />
                 </View>
                 <Text style={styles.deletionItemText}>{t('deleteAccount.itemReports')}</Text>
               </View>
@@ -291,7 +310,7 @@ export default function DeleteAccountScreen() {
             <TextInput
               style={styles.confirmInput}
               placeholder={t('deleteAccount.confirmPlaceholder')}
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={confirmText}
               onChangeText={setConfirmText}
               autoCapitalize="characters"
@@ -305,7 +324,7 @@ export default function DeleteAccountScreen() {
             disabled={!isDeleteEnabled}
             activeOpacity={0.8}
           >
-            <Trash2 color="#FFFFFF" size={20} />
+            <Trash2 color="#FFFFFF" size={iconSm} />
             <Text style={styles.deleteButtonText}>{t('deleteAccount.deleteButton')}</Text>
           </TouchableOpacity>
 
@@ -316,227 +335,247 @@ export default function DeleteAccountScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: screenPaddingX,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.glassBorder,
-  },
-  closeButton: {
-    width: touchTargetMin,
-    height: touchTargetMin,
-    borderRadius: touchTargetMin / 2,
-    backgroundColor: Colors.cardBg,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.glassBorder,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '600' as const,
-    color: Colors.text,
-  },
-  headerSpacer: {
-    width: touchTargetMin,
-  },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  warningCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 71, 87, 0.3)',
-    padding: 20,
-    alignItems: 'center',
-    marginBottom: 24,
-    overflow: 'hidden',
-  },
-  warningIconWrapper: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(255, 71, 87, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  warningTitle: {
-    fontSize: 18,
-    fontWeight: '700' as const,
-    color: Colors.error,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  warningText: {
-    fontSize: 14,
-    lineHeight: 22,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '600' as const,
-    color: Colors.textSecondary,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 1,
-    marginBottom: 12,
-    marginLeft: 4,
-  },
-  deletionList: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.glassBorder,
-    overflow: 'hidden',
-  },
-  deletionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.glassBorder,
-  },
-  deletionIconWrapper: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  deletionItemText: {
-    flex: 1,
-    fontSize: 15,
-    color: Colors.text,
-  },
-  deletionItemLast: {
-    borderBottomWidth: 0,
-  },
-  retentionNote: {
-    fontSize: 12,
-    color: Colors.textMuted,
-    lineHeight: 18,
-    marginTop: 12,
-    marginHorizontal: 4,
-  },
-  retentionNoteLink: {
-    fontSize: 12,
-    color: Colors.textMuted,
-    textDecorationLine: 'underline' as const,
-  },
-  confirmInstructions: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginBottom: 12,
-    lineHeight: 22,
-  },
-  confirmInput: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.glassBorder,
-    padding: 16,
-    fontSize: 16,
-    color: Colors.text,
-    textAlign: 'center',
-    fontWeight: '600' as const,
-    letterSpacing: 2,
-  },
-  deleteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.error,
-    borderRadius: 14,
-    padding: 18,
-    gap: 10,
-    marginBottom: 16,
-  },
-  deleteButtonDisabled: {
-    backgroundColor: 'rgba(255, 71, 87, 0.3)',
-  },
-  deleteButtonText: {
-    fontSize: 17,
-    fontWeight: '700' as const,
-    color: '#FFFFFF',
-  },
-  footerNote: {
-    fontSize: 12,
-    color: Colors.textMuted,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  loadingText: {
-    fontSize: 18,
-    fontWeight: '600' as const,
-    color: Colors.text,
-    marginTop: 24,
-  },
-  loadingSubtext: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginTop: 8,
-  },
-  successContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  successIconWrapper: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(46, 213, 115, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  successTitle: {
-    fontSize: 24,
-    fontWeight: '700' as const,
-    color: Colors.text,
-    marginBottom: 12,
-  },
-  successText: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 32,
-  },
-  finishButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: 14,
-    paddingVertical: 16,
-    paddingHorizontal: 48,
-  },
-  finishButtonText: {
-    fontSize: 17,
-    fontWeight: '700' as const,
-    color: '#FFFFFF',
-  },
-});
+function createStyles(colors: {
+  background: string;
+  backgroundLight: string;
+  cardBg: string;
+  glassBorder: string;
+  text: string;
+  textSecondary: string;
+  textMuted: string;
+  error: string;
+  primary: string;
+  success: string;
+}) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    safeArea: {
+      flex: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: screenPaddingX,
+      paddingVertical: fieldGap,
+      minHeight: touchTargetMin,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.glassBorder,
+    },
+    closeButton: {
+      width: touchTargetMin,
+      height: touchTargetMin,
+      borderRadius: touchTargetMin / 2,
+      backgroundColor: colors.cardBg,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.glassBorder,
+    },
+    title: {
+      ...typeScale.title3,
+      color: colors.text,
+    },
+    headerSpacer: {
+      width: touchTargetMin,
+    },
+    scrollContent: {
+      padding: screenPaddingX,
+      paddingBottom: space.space8,
+    },
+    warningCard: {
+      borderRadius: radiusLg,
+      borderWidth: 1,
+      borderColor: 'rgba(255, 71, 87, 0.3)',
+      padding: cardPadding,
+      alignItems: 'center',
+      marginBottom: sectionGap,
+      overflow: 'hidden',
+    },
+    warningIconWrapper: {
+      width: touchTargetMin + space.space5,
+      height: touchTargetMin + space.space5,
+      borderRadius: (touchTargetMin + space.space5) / 2,
+      backgroundColor: 'rgba(255, 71, 87, 0.15)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: fieldGap,
+    },
+    warningTitle: {
+      ...typeScale.title3,
+      color: colors.error,
+      marginBottom: space.space3,
+      textAlign: 'center',
+    },
+    warningText: {
+      ...typeScale.subhead,
+      color: colors.textSecondary,
+      textAlign: 'center',
+    },
+    subscriptionNoteCard: {
+      backgroundColor: 'rgba(0, 180, 216, 0.08)',
+      borderRadius: radiusMd,
+      borderWidth: 1,
+      borderColor: colors.glassBorder,
+      padding: cardPadding,
+      marginBottom: fieldGap,
+    },
+    subscriptionNoteText: {
+      ...typeScale.footnote,
+      color: colors.textSecondary,
+    },
+    section: {
+      marginBottom: sectionGap,
+    },
+    sectionTitle: {
+      ...typeScale.captionMedium,
+      color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      marginBottom: space.space3,
+      marginLeft: space.space1,
+    },
+    deletionList: {
+      backgroundColor: 'rgba(255,255,255,0.04)',
+      borderRadius: radiusLg,
+      borderWidth: 1,
+      borderColor: colors.glassBorder,
+      overflow: 'hidden',
+    },
+    deletionItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      minHeight: touchTargetMin,
+      padding: cardPadding,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.glassBorder,
+    },
+    deletionIconWrapper: {
+      width: touchTargetMin - space.space2,
+      height: touchTargetMin - space.space2,
+      borderRadius: radiusMd,
+      backgroundColor: 'rgba(255,255,255,0.06)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: space.space3,
+    },
+    deletionItemText: {
+      flex: 1,
+      ...typeScale.subhead,
+      color: colors.text,
+    },
+    deletionItemLast: {
+      borderBottomWidth: 0,
+    },
+    retentionNote: {
+      ...typeScale.caption,
+      color: colors.textMuted,
+      marginTop: space.space3,
+      marginHorizontal: space.space1,
+    },
+    retentionNoteLink: {
+      ...typeScale.caption,
+      color: colors.textMuted,
+      textDecorationLine: 'underline',
+    },
+    confirmInstructions: {
+      ...typeScale.subhead,
+      color: colors.textSecondary,
+      marginBottom: space.space3,
+    },
+    confirmInput: {
+      backgroundColor: 'rgba(255,255,255,0.06)',
+      borderRadius: radiusMd,
+      borderWidth: 1,
+      borderColor: colors.glassBorder,
+      padding: cardPadding,
+      minHeight: buttonHeight,
+      ...typeScale.body,
+      color: colors.text,
+      textAlign: 'center',
+      fontWeight: '600',
+      letterSpacing: 2,
+    },
+    deleteButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.error,
+      borderRadius: radiusMd,
+      minHeight: buttonHeight,
+      paddingHorizontal: cardPadding,
+      gap: space.space2,
+      marginBottom: fieldGap,
+    },
+    deleteButtonDisabled: {
+      backgroundColor: 'rgba(255, 71, 87, 0.3)',
+    },
+    deleteButtonText: {
+      ...typeScale.headline,
+      color: '#FFFFFF',
+    },
+    footerNote: {
+      ...typeScale.caption,
+      color: colors.textMuted,
+      textAlign: 'center',
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: space.space8,
+    },
+    loadingText: {
+      ...typeScale.title3,
+      color: colors.text,
+      marginTop: sectionGap,
+    },
+    loadingSubtext: {
+      ...typeScale.subhead,
+      color: colors.textSecondary,
+      marginTop: space.space2,
+    },
+    successContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: space.space8,
+    },
+    successIconWrapper: {
+      width: touchTargetMin + space.space7,
+      height: touchTargetMin + space.space7,
+      borderRadius: (touchTargetMin + space.space7) / 2,
+      backgroundColor: 'rgba(46, 213, 115, 0.15)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: sectionGap,
+    },
+    successTitle: {
+      ...typeScale.title2,
+      color: colors.text,
+      marginBottom: space.space3,
+    },
+    successText: {
+      ...typeScale.body,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginBottom: space.space7,
+    },
+    finishButton: {
+      backgroundColor: colors.primary,
+      borderRadius: radiusMd,
+      minHeight: buttonHeight,
+      paddingVertical: fieldGap,
+      paddingHorizontal: space.space8,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    finishButtonText: {
+      ...typeScale.headline,
+      color: '#FFFFFF',
+    },
+  });
+}

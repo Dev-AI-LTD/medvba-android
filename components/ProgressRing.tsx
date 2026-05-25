@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Text, Animated } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useTheme } from '@/providers/ThemeProvider';
-import { spacing, typography } from '@/constants/design';
+import { space, typeScale } from '@/theme/iosDesign';
 
 interface ProgressRingProps {
   progress: number;
@@ -82,8 +82,7 @@ export default function ProgressRing({
               styles.percentage, 
               { 
                 color: colors.text,
-                fontSize: typography.bodySemibold.fontSize,
-                fontWeight: typography.bodySemibold.fontWeight,
+                ...typeScale.headline,
               }
             ]}
           >
@@ -95,8 +94,8 @@ export default function ProgressRing({
                 styles.label, 
                 { 
                   color: colors.textSecondary,
-                  fontSize: typography.caption.fontSize,
-                  marginTop: spacing.xs,
+                  ...typeScale.caption,
+                  marginTop: space.space1,
                 }
               ]}
             >

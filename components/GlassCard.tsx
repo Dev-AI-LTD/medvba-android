@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle, Platform } from 'react-native';
 import { useTheme } from '@/providers/ThemeProvider';
-import { cardPadding, borderRadius, elevation } from '@/constants/design';
+import { elevation } from '@/constants/design';
+import { cardPadding, radiusLg } from '@/theme/iosDesign';
 
 interface GlassCardProps {
   children: React.ReactNode;
@@ -67,7 +68,7 @@ function GlassCardComponent({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: borderRadius.lg,
+    borderRadius: radiusLg,
     borderWidth: 1,
     overflow: 'hidden',
   },

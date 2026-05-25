@@ -3,7 +3,7 @@ import { View, FlatList, StyleSheet, TextInput, ListRenderItem } from 'react-nat
 import { Text } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { spacing } from '@/constants/design';
+import { inputMinHeight, radiusLg, screenPaddingX, space, touchTargetMin } from '@/theme/iosDesign';
 import Button from '../Button';
 import AvatarImage from '../AvatarImage';
 import { useTheme } from '@/providers/ThemeProvider';
@@ -141,20 +141,20 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: spacing.md,
+    marginBottom: space.space3,
   },
   onlineCount: { opacity: 0.7 },
-  listContent: { paddingBottom: spacing.xl },
+  listContent: { paddingBottom: space.space5 },
   emptyListContent: {
     flex: 1,
     justifyContent: 'center',
   },
   emptyState: {
     alignItems: 'center',
-    padding: spacing.xl,
+    padding: space.space5,
   },
   emptyTitle: {
-    marginBottom: spacing.sm,
+    marginBottom: space.space2,
   },
   emptySubtitle: {
     opacity: 0.7,
@@ -162,41 +162,42 @@ const styles = StyleSheet.create({
   },
   messageRow: {
     flexDirection: 'row',
-    marginBottom: spacing.lg,
+    marginBottom: space.space4,
   },
   messageTextContainer: {
     flex: 1,
-    marginLeft: spacing.md,
+    marginLeft: space.space3,
   },
   messageHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.xs,
+    marginBottom: space.space1,
   },
   timeText: { opacity: 0.6 },
-  actionsRow: { marginTop: spacing.sm },
+  actionsRow: { marginTop: space.space2 },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    marginTop: spacing.md,
-    paddingTop: spacing.md,
+    marginTop: space.space3,
+    paddingTop: space.space3,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   inputFieldWrapper: {
     flex: 1,
-    marginRight: spacing.md,
+    marginRight: space.space3,
   },
   input: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: spacing.xl,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    minHeight: 44,
+    borderRadius: radiusLg + 4,
+    paddingHorizontal: screenPaddingX,
+    paddingVertical: space.space3,
+    minHeight: inputMinHeight,
     maxHeight: 100,
   },
   sendButton: {
     marginBottom: 0,
+    minHeight: touchTargetMin,
   },
 });
 
