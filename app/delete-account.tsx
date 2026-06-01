@@ -49,6 +49,7 @@ import {
 } from '@/theme/iosDesign';
 import { BLOCKED_USERS_STORAGE_KEY } from '@/lib/blocked-users-storage';
 import { USER_REPORTS_STORAGE_KEY } from '@/lib/user-reports-storage';
+import { log } from '@/lib/log';
 
 const STORAGE_KEYS_TO_CLEAR = [
   'quiz_daily_progress',
@@ -75,28 +76,20 @@ export default function DeleteAccountScreen() {
   const deleteAccountMutation = trpc.account.deleteSelf.useMutation();
 
   const clearLocalData = async () => {
-    if (__DEV__) {
-      console.log('[DeleteAccount] Clearing local data...');
-    }
+    log.debug('[DeleteAccount] Clearing local data...');
     try {
       await AsyncStorage.multiRemove(STORAGE_KEYS_TO_CLEAR);
-      if (__DEV__) {
-        console.log('[DeleteAccount] Local data cleared successfully');
-      }
+      log.debug('[DeleteAccount] Local data cleared successfully');
     } catch (error) {
-      console.error('[DeleteAccount] Error clearing local data:', error);
+      log.error('[DeleteAccount] Error clearing local data', error);
     }
   };
 
   const handleDeleteAccount = useCallback(async () => {
-    if (__DEV__) {
-      console.log('[DeleteAccount] handleDeleteAccount called');
-    }
+    log.debug('[DeleteAccount] handleDeleteAccount called');
 
     if (confirmText.toUpperCase() !== 'DELETE') {
-      if (__DEV__) {
-        console.log('[DeleteAccount] Confirmation text does not match DELETE');
-      }
+      log.debug('[DeleteAccount] Confirmation text does not match DELETE');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert(t('deleteAccount.alertConfirmTitle'), t('deleteAccount.alertConfirmMessage'), [
         { text: t('common.ok') },
@@ -107,11 +100,9 @@ export default function DeleteAccountScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     setStep('deleting');
 
-    if (__DEV__) {
-      console.log('[DeleteAccount] Initiating account deletion...');
-    }
+    log.debug('[DeleteAccount] Initiating account deletion...');
     if (!user?.id) {
-      console.error('[DeleteAccount] No user ID found');
+      log.error('[DeleteAccount] No user ID found');
       Alert.alert(t('deleteAccount.alertErrorTitle'), t('deleteAccount.alertMustBeLoggedIn'), [
         { text: t('common.ok') },
       ]);
@@ -120,26 +111,18 @@ export default function DeleteAccountScreen() {
     }
 
     try {
-      if (__DEV__) {
-        console.log('[DeleteAccount] Calling deleteAccountMutation...');
-      }
+      log.debug('[DeleteAccount] Calling deleteAccountMutation...');
 
       await refreshMedvbaSession();
 
       const result = await deleteAccountMutation.mutateAsync();
-      if (__DEV__) {
-        console.log('[DeleteAccount] Backend deletion result:', result);
-      }
+      log.debug('[DeleteAccount] Backend deletion result:', result);
 
       await clearLocalData();
-      if (__DEV__) {
-        console.log('[DeleteAccount] Local data cleared');
-      }
+      log.debug('[DeleteAccount] Local data cleared');
 
       await signOut();
-      if (__DEV__) {
-        console.log('[DeleteAccount] Session cleared via AuthProvider');
-      }
+      log.debug('[DeleteAccount] Session cleared via AuthProvider');
 
       try {
         const allKeys = await AsyncStorage.getAllKeys();
@@ -153,21 +136,17 @@ export default function DeleteAccountScreen() {
         );
         if (keysToRemove.length > 0) {
           await AsyncStorage.multiRemove(keysToRemove);
-          if (__DEV__) {
-            console.log('[DeleteAccount] Cleared additional keys:', keysToRemove);
-          }
+          log.debug('[DeleteAccount] Cleared additional keys:', keysToRemove);
         }
       } catch (e) {
-        console.error('[DeleteAccount] Error clearing additional keys:', e);
+        log.error('[DeleteAccount] Error clearing additional keys', e);
       }
 
       setStep('success');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      if (__DEV__) {
-        console.log('[DeleteAccount] Account deletion process completed');
-      }
+      log.debug('[DeleteAccount] Account deletion process completed');
     } catch (error: unknown) {
-      console.error('[DeleteAccount] Deletion failed:', error);
+      log.error('[DeleteAccount] Deletion failed', error);
       setStep('confirm');
       let message = t('deleteAccount.alertDeletionFailedGeneric');
       if (error instanceof TRPCClientError) {

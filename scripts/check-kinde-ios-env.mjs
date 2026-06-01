@@ -41,6 +41,7 @@ if (!existsSync(envPath)) {
     ['EXPO_PUBLIC_KINDE_CLIENT_ID', true],
     ['EXPO_PUBLIC_KINDE_GOOGLE_CONNECTION_ID', true],
     ['EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID', true],
+    ['EXPO_PUBLIC_KINDE_EMAIL_CONNECTION_ID', false],
     ['EXPO_PUBLIC_API_BASE_URL', false],
     ['EXPO_PUBLIC_RORK_API_BASE_URL', false],
     ['KINDE_CLIENT_SECRET', false],
@@ -87,6 +88,15 @@ if (!existsSync(envPath)) {
     console.log('\n⚠️  Dacă Kinde arată „Connection not enabled”:');
     console.log('   Applications → app native MEDVBA → Authentication → ON la Apple');
     console.log('   + Apple configurat în Settings → Environment → Authentication\n');
+  }
+
+  const emailConn = pick(env, 'EXPO_PUBLIC_KINDE_EMAIL_CONNECTION_ID');
+  if (!emailConn) {
+    console.warn('\n⚠️  App Store review: lipsește EXPO_PUBLIC_KINDE_EMAIL_CONNECTION_ID');
+    console.warn('   Reviewerii folosesc „Sign in with email” (browser Kinde), nu parola în app.');
+    console.warn('   Setează în EAS production + .env local, apoi rebuild TestFlight.\n');
+  } else {
+    console.log('✅ EXPO_PUBLIC_KINDE_EMAIL_CONNECTION_ID (hosted email pentru review)\n');
   }
 
   process.exitCode = failed ? 1 : 0;

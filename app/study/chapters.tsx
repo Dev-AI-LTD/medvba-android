@@ -42,8 +42,12 @@ export default function StudyChaptersScreen() {
   }
 
   const openChapter = (chapterId: string, locked: boolean, comingSoon: boolean) => {
-    if (comingSoon) return;
+    if (comingSoon) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      return;
+    }
     if (locked && isPaywallEnabled && !isPremium) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       router.push('/paywall');
       return;
     }
@@ -69,6 +73,7 @@ export default function StudyChaptersScreen() {
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {chapters.map((chapter) => (
           <TouchableOpacity

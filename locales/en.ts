@@ -64,6 +64,8 @@ export const en: Record<string, string> = {
     'Email sign-in is not configured. Set EXPO_PUBLIC_KINDE_EMAIL_CONNECTION_ID (Kinde → Authentication → Email + password).',
   'auth.createAccountWithEmail': 'Create account with email',
   'auth.signInWithEmail': 'Sign in with email',
+  'auth.hostedEmailPasswordHint':
+    'Password is entered on the secure Kinde page that opens next — not in this app screen.',
   'auth.dontHaveAccount': 'Don\'t have an account?',
   'auth.alreadyHaveAccount': 'Already have an account?',
   'auth.showPassword': 'Show password',
@@ -83,6 +85,8 @@ export const en: Record<string, string> = {
   'auth.loginFailed': 'Login failed. Please try again.',
   'auth.kindePasswordGrantUnavailable':
     'Email and password in the app is not supported by our identity provider (use Sign in with Google or Apple). For email, Kinde requires sign-in in the browser (PKCE), not a password typed only in this screen.',
+  'auth.sessionExchangeFailed':
+    'Sign-in could not be completed. Check your connection and try again in a moment.',
   'auth.kindeSocialConnectionNotEnabled':
     'This sign-in method is not enabled in Kinde for the MEDVBA app. In Kinde: Applications → your native app → Authentication → turn ON Apple (or Google). Use the Connection ID from Settings → Authentication → Apple in EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID, then restart Metro.',
   'auth.productionEmailSignInHint':
@@ -562,7 +566,6 @@ export const en: Record<string, string> = {
   'social.missingInfo': 'Missing Info',
   'social.selectReasonMessage': 'Please select a reason for your report.',
   'social.errorTitle': 'Error',
-  'social.zoomStartError': 'Failed to start Zoom session. Please try again.',
   'social.scheduleError': 'Failed to schedule session. Please try again.',
   'social.createRoomError': 'Failed to create study room. Please try again.',
   'social.roomNameRequiredAlert': 'Please enter a room name.',
@@ -576,7 +579,6 @@ export const en: Record<string, string> = {
   'social.fillAllFields': 'Please fill in all required fields.',
   'social.min': 'min',
   'social.joined': 'joined',
-  'social.openZoom': 'Open Zoom',
   'social.endButton': 'End',
   'social.startSession': 'Start Session',
   'social.notYet': 'Not yet',
@@ -592,12 +594,7 @@ export const en: Record<string, string> = {
   'social.pathology': 'Pathology',
   'social.pharmacology': 'Pharmacology',
   'social.general': 'General',
-  'social.endZoomSessionTitle': 'End Session',
-  'social.endZoomSessionMessage': 'Are you sure you want to end this Zoom session?',
   'social.findPartners': 'Find Partners',
-  'social.meetingUrlOptional': 'Meeting URL (Optional)',
-  'social.meetingUrlPlaceholder': 'https://zoom.us/j/... or Google Meet link',
-  'social.meetingUrlHint': 'Add a Zoom, Google Meet, or Teams link',
   'social.achievementUnlocked': 'Achievement Unlocked',
 
   // Achievement Titles
@@ -649,6 +646,13 @@ export const en: Record<string, string> = {
   'settings.preferences': 'Preferences',
   'settings.language': 'Language',
   'settings.languageSubtitle': 'The app opens in English. Pick another language anytime below.',
+  'settings.biometricLogin': 'Biometric login',
+  'settings.biometricLoginSubtitle': 'Use {type} to unlock MEDVBA faster after sign-in',
+  'settings.biometricLoginPrompt': 'Confirm to enable biometric login',
+  'settings.biometricLoginFailed': 'Biometric authentication failed. Try again or use your password to sign in.',
+  'biometric.unlockTitle': 'Unlock with {type}',
+  'biometric.unlockSubtitle': 'Confirm your identity to continue using MEDVBA.',
+  'biometric.tryAgain': 'Try again',
   'settings.notifications': 'Notifications',
   'settings.notificationsSubtitle': 'Manage push notifications',
   'settings.appearance': 'Appearance',
@@ -813,14 +817,6 @@ export const en: Record<string, string> = {
   'appearance.themeLightDesc': 'Always use a light theme.',
   'appearance.themeDark': 'Dark mode',
   'appearance.themeDarkDesc': 'Always use a dark theme that\'s easier on your eyes at night.',
-
-  // Permissions
-  'permissions.zoom.title': 'Join Study Room',
-  'permissions.zoom.message': 'When you join a study room via Zoom, you may be asked to grant camera and microphone permissions. These permissions allow you to participate in video discussions with other students.\n\nYou can:\n• Join with video and audio\n• Join with audio only\n• Join as a viewer only\n\nZoom will request these permissions when you open the meeting.',
-  'permissions.zoom.understand': 'I Understand',
-  'permissions.zoom.cancel': 'Cancel',
-  'permissions.zoom.hostTitle': 'Start Study Room',
-  'permissions.zoom.hostMessage': 'As the host, you\'ll need to grant camera and microphone permissions when Zoom opens. This allows you to communicate with students who join your study room.\n\nZoom will request these permissions automatically when the meeting starts.',
 
   // Privacy Policy
   'privacy.lastUpdated': 'Last Updated: {date}',

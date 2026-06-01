@@ -8,6 +8,11 @@ import { supabase } from './supabase';
 import type { UserAccount } from '@/types/user';
 import { getMergedExpoExtra } from '@/lib/expo-public-extra';
 import { log } from '@/lib/log';
+import {
+  isMedvbaJwtExpiredPostgrestError,
+  MedvbaJwtExpiredError,
+  runWithMedvbaSession,
+} from '@/lib/ensure-medvba-session';
 
 /** Verbose Supabase diagnostics — development only (reduces production log leakage). */
 const nativeConsole = globalThis.console;
@@ -26,14 +31,25 @@ function devError(...args: unknown[]): void {
   log.error(msg, args.length > 1 ? { detail: args.slice(1) } : undefined);
 }
 
+function logSupabaseQueryError(
+  context: string,
+  error: { message?: string; code?: string; details?: unknown } | null,
+): void {
+  if (!error) return;
+  const payload = JSON.stringify({
+    message: error.message,
+    code: error.code,
+    details: error.details ?? null,
+  });
+  if (isMedvbaJwtExpiredPostgrestError(error)) {
+    devLog(`[Supabase] ${context} (session refresh needed):`, payload);
+    return;
+  }
+  devError(`[Supabase] ${context}:`, payload);
+}
+
 /** Avoid spamming Metro when subscription sync runs in a tight loop. */
 let lastSubscriptionMutationLogKey: string | null = null;
-
-/** Profile “Zoom session requests” poll (`zoom_requests`). Off by default — no Supabase round-trip or console noise. */
-function fetchProfileZoomRequestsEnabled(): boolean {
-  const v = String(getMergedExpoExtra().EXPO_PUBLIC_FETCH_ZOOM_REQUESTS ?? '').trim().toLowerCase();
-  return v === 'true' || v === '1' || v === 'yes';
-}
 
 /** Maps file extensions to MIME types for profile photo uploads. Module-level to avoid per-call allocation. */
 const EXT_MIME_MAP: Record<string, string> = {
@@ -510,81 +526,6 @@ export function useSendMessage() {
 
       devLog('[Supabase] Message sent:', data.id);
       return data;
-    },
-  });
-}
-
-export interface ZoomRequest {
-  id: string;
-  userId: string;
-  studyTopic: string;
-  preferredDate: string;
-  status: 'pending' | 'approved' | 'rejected';
-  createdAt: string;
-}
-
-export function useZoomRequests(userId: string | undefined) {
-  return useQuery({
-    queryKey: ['zoomRequests', userId],
-    queryFn: async () => {
-      if (!userId) return [];
-
-      const { data, error } = await supabase
-        .from('zoom_requests')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        devError('[Supabase] Error fetching zoom requests:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
-        throw error;
-      }
-
-      return (data || []).map((req: any) => ({
-        id: req.id.toString(),
-        userId: req.user_id,
-        studyTopic: req.study_topic,
-        preferredDate: req.preferred_date,
-        status: req.status as 'pending' | 'approved' | 'rejected',
-        createdAt: req.created_at,
-      })) as ZoomRequest[];
-    },
-    enabled: !!userId && fetchProfileZoomRequestsEnabled(),
-  });
-}
-
-export function useCreateZoomRequest() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (input: {
-      userId: string;
-      studyTopic: string;
-      preferredDate: string;
-    }) => {
-      devLog('[Supabase] Creating zoom request:', input.studyTopic);
-
-      const { data, error } = await supabase
-        .from('zoom_requests')
-        .insert({
-          user_id: input.userId,
-          study_topic: input.studyTopic,
-          preferred_date: input.preferredDate,
-          status: 'pending',
-        })
-        .select()
-        .single();
-
-      if (error) {
-        devError('[Supabase] Error creating zoom request:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
-        throw error;
-      }
-
-      devLog('[Supabase] Zoom request created:', data.id);
-      return data;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['zoomRequests', variables.userId] });
     },
   });
 }
@@ -1398,6 +1339,8 @@ export function useDirectChats(userId: string | undefined) {
     queryFn: async (): Promise<DirectChatSummary[]> => {
       if (!userId) return [];
 
+      try {
+      return await runWithMedvbaSession(async () => {
       devLog('[Supabase] Fetching direct chats for user:', userId);
 
       const { data, error } = await supabase
@@ -1415,7 +1358,10 @@ export function useDirectChats(userId: string | undefined) {
         .eq('user_id', userId);
 
       if (error) {
-        devError('[Supabase] Error fetching direct chats:', JSON.stringify({ message: error.message, code: error.code, details: error.details }));
+        if (isMedvbaJwtExpiredPostgrestError(error)) {
+          throw new MedvbaJwtExpiredError();
+        }
+        logSupabaseQueryError('Error fetching direct chats', error);
         return [];
       }
 
@@ -1519,6 +1465,10 @@ export function useDirectChats(userId: string | undefined) {
 
       devLog('[Supabase] Fetched', summaries.length, 'chat summaries');
       return summaries;
+      });
+      } catch {
+        return [];
+      }
     },
     enabled: !!userId,
     staleTime: 30000,
@@ -2266,7 +2216,9 @@ export function useOnlineFriends(userId?: string) {
     queryKey: ['onlineFriends', userId],
     queryFn: async () => {
       if (!userId) return [];
-      
+
+      try {
+      return await runWithMedvbaSession(async () => {
       devLog('[Supabase] Fetching online friends for:', userId);
       
       const fiveMinutesAgo = new Date();
@@ -2288,7 +2240,10 @@ export function useOnlineFriends(userId?: string) {
           devLog('[Supabase] Online friends query cancelled (component unmounted)');
           return [];
         }
-        devError('[Supabase] Error fetching online friends:', JSON.stringify({ message: presenceError.message, code: presenceError.code, details: presenceError.details }));
+        if (isMedvbaJwtExpiredPostgrestError(presenceError)) {
+          throw new MedvbaJwtExpiredError();
+        }
+        logSupabaseQueryError('Error fetching online friends', presenceError);
         return [];
       }
 
@@ -2313,7 +2268,7 @@ export function useOnlineFriends(userId?: string) {
           devLog('[Supabase] Online friends user data query cancelled');
           return [];
         }
-        devError('[Supabase] Error fetching user data for online friends:', JSON.stringify({ message: usersError.message, code: usersError.code, details: usersError.details }));
+        logSupabaseQueryError('Error fetching user data for online friends', usersError);
         return [];
       }
 
@@ -2329,6 +2284,10 @@ export function useOnlineFriends(userId?: string) {
           lastSeen: presenceMap.get(user.id),
           isOnline: true,
         }));
+      });
+      } catch {
+        return [];
+      }
     },
     enabled: !!userId,
     staleTime: 30000,

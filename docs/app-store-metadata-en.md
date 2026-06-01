@@ -60,17 +60,36 @@ Support: https://medvba.app/support
 
 ## Review Notes (paste in App Review Information → Notes)
 
-**Which block to use:** run `npm run review-notes:mode` from `medvba-android` (runs `diagnose:kinde-password`). Exit 0 → **Alternate** + fill Username/Password; exit 1 → **Primary** (Apple/Google only).
+**Which block to use:** `npm run review-notes:mode` → exit 1 is **expected** (Kinde does not support in-app password grant). Use **Primary** below and fill **Username / Password** in App Store Connect.
+
+### App Store Connect — Sign-in credentials (required fields)
+
+Create or verify this user in **Kinde** (Users → Verified, **Email + password** connection — not email code). Password must match what you paste in ASC.
+
+| Field | Value |
+|-------|--------|
+| **Username** | `contact@devaieood.com` |
+| **Password** | *(your review password — same as `VERIFY_AUTH_PASSWORD` in local `.env`; do not commit)* |
+
+Example local setup: copy [`.env.example`](../.env.example) → `.env` with `VERIFY_AUTH_EMAIL=contact@devaieood.com` and `VERIFY_AUTH_PASSWORD=…` (min. 8 characters; do not commit).
+
+---
 
 ### Primary (recommended for review)
 
+Paste into **Notes**. Use the **same email and password** as in the Username / Password fields above.
+
 ```
+DEMO ACCOUNT (email + password — use on the Kinde page, not in-app):
+Email: contact@devaieood.com
+Password: (same as the Password field you entered in App Review Information above)
+
 HOW TO SIGN IN (required for review):
 1. Sign in with Apple (iOS) or Sign in with Google, OR
-2. Tap "Sign in with email" → secure browser opens → enter review email and password on the Kinde page
-   (Email + password connection — no verification code). Optional: pre-fill email in the field above the button.
+2. Tap "Sign in with email" → secure browser opens → enter the demo email and password on the Kinde page
+   (Email + password connection — no verification code). You may pre-fill the email in the app field above the button.
 
-Do not use any in-app-only password field (removed); password is entered on the Kinde browser page only.
+Do not use any in-app-only password field (removed in release builds); password is entered on the Kinde browser page only.
 
 After sign-in:
 1. Complete onboarding if shown.
@@ -80,6 +99,11 @@ After sign-in:
 5. Social: Chat tab → direct messages (text only, no live video).
 6. Premium: optional; Restore purchases on the paywall screen.
 
+PREMIUM / FULL ACCESS:
+Sign in with the test account email and password above (tap "Sign in with email" → enter credentials on the Kinde page).
+This account has Premium enabled for review: unlimited quizzes, AI tutor, all study chapters, and anatomy modules.
+Sign in with Apple or Google using a personal account will NOT include Premium — use the test account for full feature testing.
+
 Sign in with Apple is on iOS because Google sign-in is also offered (App Store guideline 4.8).
 
 No live Zoom or video calls. Social is messenger-style chat only.
@@ -87,26 +111,9 @@ No live Zoom or video calls. Social is messenger-style chat only.
 Contact: support@medvba.app
 ```
 
-Leave **Username** / **Password** empty in App Review Information when using the notes above.
+### Alternate (deprecated — in-app ROPC not supported by Kinde)
 
-### Alternate (when `npm run diagnose:kinde-password` exits 0)
-
-In-app login uses **email + password only** (no email OTP code). Set these in App Review Information **Username** / **Password** fields.
-
-```
-Demo account (email + password, no OTP):
-Email: contact@devaieood.com
-Password: (your VERIFY_AUTH_PASSWORD from local .env — do not commit)
-
-How to test:
-1. Login screen → enter email and password → Sign In (in-app, no verification code).
-2. Or Sign in with Apple (iOS) or Sign in with Google.
-3. Quiz, Study, Tutor, Chat, Premium — same as Primary notes.
-
-Contact: support@medvba.app
-```
-
-Replace email if your `VERIFY_AUTH_EMAIL` differs. Use `npm run create:review-user` after Kinde password grant works.
+Do **not** use unless `npm run diagnose:kinde-password` exits 0 (unlikely). Kinde does not support `grant_type=password`; see `docs/KINDE_ROPC_NOT_SUPPORTED.md`.
 
 ---
 

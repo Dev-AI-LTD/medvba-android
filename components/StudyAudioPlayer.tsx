@@ -8,6 +8,7 @@ import { hitSlop, iconMd, space, touchTargetMin, typeScale } from '@/theme/iosDe
 import GlassCard from '@/components/GlassCard';
 import { hasStudyStreamAudioNative } from '@/lib/study-audio-native';
 import {
+  prepareAudioModeForPlayback,
   startStudySpeech,
   stopStudySpeech,
   type StudySpeechSession,
@@ -95,6 +96,7 @@ export function StudyAudioPlayer({
     }
     stopTts();
     setTtsLoading(true);
+    void prepareAudioModeForPlayback();
     speechRef.current = startStudySpeech(fallbackText, locale, (playing) => {
       setTtsPlaying(playing);
       setTtsLoading(false);

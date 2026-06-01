@@ -98,7 +98,12 @@ export default function StudyChapterReaderScreen() {
     router.push('/paywall');
   };
 
-  if (isLoading) {
+  const hasDisplayableContent =
+    Boolean(content && 'locked' in content && content.locked) ||
+    Boolean(content && 'summaryMarkdown' in content && content.summaryMarkdown) ||
+    Boolean(content && 'notFound' in content && content.notFound);
+
+  if (isLoading && !hasDisplayableContent) {
     return (
       <Screen withGradient edges={['top', 'bottom']}>
         <View style={styles.centered}>

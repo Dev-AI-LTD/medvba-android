@@ -4,6 +4,7 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { getMedvbaAccessToken } from '@/lib/medvba-access-token';
 import { getMergedExpoExtra } from '@/lib/expo-public-extra';
+import { ensureMedvbaSessionBeforeQuery } from '@/lib/ensure-medvba-session';
 
 const extraConfig = getMergedExpoExtra();
 
@@ -68,13 +69,23 @@ const storage = {
   },
 };
 
-const authFetch: typeof fetch = (input, init) => {
-  const headers = new Headers(init?.headers ?? undefined);
-  const t = getMedvbaAccessToken();
-  if (t) {
-    headers.set('Authorization', `Bearer ${t}`);
+const authFetch: typeof fetch = async (input, init) => {
+  const perform = async () => {
+    const headers = new Headers(init?.headers ?? undefined);
+    const t = getMedvbaAccessToken();
+    if (t) {
+      headers.set('Authorization', `Bearer ${t}`);
+    }
+    return fetch(input, { ...init, headers });
+  };
+
+  await ensureMedvbaSessionBeforeQuery();
+  let response = await perform();
+  if (response.status === 401) {
+    await ensureMedvbaSessionBeforeQuery();
+    response = await perform();
   }
-  return fetch(input, { ...init, headers });
+  return response;
 };
 
 export const supabase = createClient(effectiveUrl, effectiveKey, {

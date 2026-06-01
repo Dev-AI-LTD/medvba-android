@@ -2,7 +2,7 @@
 
 Prioritate **Apple** înainte de Google Play. Rulează comenzile din **`medvba-android`** (nu din folderul părinte `MEDVBA3`).
 
-**Legături:** [Kinde Expo/iOS setup](KINDE_IOS_EXPO_SETUP.md) · [EAS Build (iOS)](EAS_BUILD_COMMANDS.md) · [EAS Secrets](ENV_AND_EAS_SECRETS.md) · [Keywords](app-store-keywords.md) · [Metadata EN](app-store-metadata-en.md)
+**Legături:** [Auth (Kinde, sursă canonică)](AUTH_ARCHITECTURE.md) · [Audit Apple (priorități)](APPLE_APP_STORE_AUDIT.md) · [Kinde Expo/iOS setup](KINDE_IOS_EXPO_SETUP.md) · [EAS Build (iOS)](EAS_BUILD_COMMANDS.md) · [EAS Secrets](ENV_AND_EAS_SECRETS.md) · [Keywords](app-store-keywords.md) · [Metadata EN](app-store-metadata-en.md)
 
 ---
 
@@ -34,7 +34,7 @@ Prioritate **Apple** înainte de Google Play. Rulează comenzile din **`medvba-a
 | **Kinde Expo (nu Android-only)** | ⚠️ | [KINDE_IOS_EXPO_SETUP.md](KINDE_IOS_EXPO_SETUP.md) — `npm run check:kinde-ios` |
 | **Kinde Apple** | ⚠️ | `EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID` + conexiune Apple în Kinde |
 | **Kinde email+parolă** | ⚠️ | `npm run check:kinde-auth` + [KINDE_EMAIL_PASSWORD.md](KINDE_EMAIL_PASSWORD.md); blocat dacă `diagnose:kinde-password` = 502 |
-| **Zoom requests în profil** | ✅ | `EXPO_PUBLIC_FETCH_ZOOM_REQUESTS` implicit `false` — secțiunea Zoom nu se încarcă |
+| **Zoom requests în profil** | ✅ | Funcția și UI-ul au fost eliminate din app |
 
 ```powershell
 cd C:\Users\octav\Desktop\MEDVBA3\medvba-android

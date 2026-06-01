@@ -191,6 +191,15 @@ async function sessionFromKindeAccessToken(kindeAccessToken: string) {
   const profileRes = await fetchKindeUserProfile(kindeAccessToken);
   if (!profileRes.ok) {
     const t = await profileRes.text().catch(() => "");
+    const upstreamStatus = profileRes.status;
+    if (upstreamStatus >= 500) {
+      return {
+        ok: false as const,
+        status: 502,
+        message: "Sign-in could not be completed. Identity provider is temporarily unavailable — try again shortly.",
+        detail: `Kinde user_profile HTTP ${upstreamStatus}. ${t.slice(0, 160)}`,
+      };
+    }
     return {
       ok: false as const,
       status: 401,
@@ -705,7 +714,7 @@ export function registerAuthSessionRoutes(app: Hono) {
       if (bearer) {
         const out = await sessionFromKindeAccessToken(bearer);
         if (!out.ok) {
-          return c.json({ error: out.message, detail: out.detail }, out.status as 401);
+          return c.json({ error: out.message, detail: out.detail }, out.status);
         }
         return c.json(out.body);
       }

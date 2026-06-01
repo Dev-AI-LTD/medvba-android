@@ -83,6 +83,15 @@ export function getLocalPreviewChapterCount(
   return listLocalPreviewChapterIds(moduleId, locale).length;
 }
 
+/** True when summary text is bundled in the app (works offline, no API wait). */
+export function chapterHasBundledStudyContent(
+  moduleId: string,
+  chapterId: string,
+  locale: 'ro' | 'en' = 'ro',
+): boolean {
+  return getLocalPreviewChapter(moduleId, chapterId, locale) != null;
+}
+
 export function getEffectivePublishedSummaryCount(
   moduleId: string,
   apiPublishedCount: number,

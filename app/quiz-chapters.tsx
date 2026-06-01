@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { BookOpen, ChevronRight } from 'lucide-react-native';
+import { BookOpen, ChevronRight, Headphones, Zap } from 'lucide-react-native';
 import { Screen, ScreenHeader } from '@/components/layout';
 import * as Haptics from 'expo-haptics';
 import GlassCard from '@/components/GlassCard';
@@ -16,6 +16,8 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import { STUDY_PILOT_MODULE_ID } from '@/constants/study';
+import { chapterHasBundledStudyContent } from '@/lib/study-preview';
+import { resolveStudyContentLocale } from '@/lib/study-content-locale';
 import {
   cardPadding,
   iconLg,
@@ -24,6 +26,7 @@ import {
   screenPaddingX,
   sectionGap,
   space,
+  touchTargetMin,
   typeScale,
 } from '@/theme/iosDesign';
 import { useQuizFontsContext } from '@/providers/QuizFontsProvider';
@@ -32,9 +35,10 @@ import { createQuizTypography } from '@/theme/quizTypography';
 export default function QuizChaptersScreen() {
   const router = useRouter();
   const { category } = useLocalSearchParams<{ category: string }>();
-  const { t, getChapterTitle, getModuleName } = useLanguage();
+  const { t, getChapterTitle, getModuleName, currentLanguage } = useLanguage();
   const { colors } = useTheme();
   const { isPremium, isPaywallEnabled, canStartQuiz, incrementQuizCount } = useSubscription();
+  const locale = resolveStudyContentLocale(currentLanguage);
 
   const chapters = category ? getChaptersForModule(category) : [];
   const moduleName = category ? getModuleName(category) : '';
@@ -59,7 +63,7 @@ export default function QuizChaptersScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push({
       pathname: '/quiz-session',
-      params: { category: category || 'med-admission-barrons', mode: 'quick', chapterId },
+      params: { category: category || STUDY_PILOT_MODULE_ID, mode: 'quick', chapterId },
     });
   };
 
@@ -67,7 +71,11 @@ export default function QuizChaptersScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push({
       pathname: '/study/chapter/[chapterId]',
-      params: { chapterId, moduleId: category || STUDY_PILOT_MODULE_ID, fromQuiz: '1' },
+      params: {
+        chapterId,
+        moduleId: category || STUDY_PILOT_MODULE_ID,
+        fromQuiz: '1',
+      },
     });
   };
 
@@ -87,18 +95,37 @@ export default function QuizChaptersScreen() {
         title={moduleName}
         subtitle={t('quiz.chaptersSubtitle')}
       />
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {chapters.map((chapter) => (
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {chapters.map((chapter) => {
+          const hasBundledSummary =
+            studyEnabled &&
+            chapterHasBundledStudyContent(
+              category || STUDY_PILOT_MODULE_ID,
+              chapter.id,
+              locale,
+            );
+
+          return (
             <View key={chapter.id} style={styles.chapterRowWrap}>
-              <TouchableOpacity
-                onPress={() => startQuiz(chapter.id)}
-                activeOpacity={0.8}
-              >
-                <GlassCard style={styles.chapterCard}>
+              <GlassCard style={styles.chapterCard} noPadding>
+                <TouchableOpacity
+                  onPress={() =>
+                    hasBundledSummary ? openSummary(chapter.id) : startQuiz(chapter.id)
+                  }
+                  activeOpacity={0.8}
+                  style={styles.chapterMainPress}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    hasBundledSummary
+                      ? `${t('quiz.readChapterSummary')}: ${getChapterTitle(chapter.id)}`
+                      : getChapterTitle(chapter.id)
+                  }
+                >
                   <BookOpen color={colors.primary} size={iconLg} />
                   <View style={styles.chapterInfo}>
                     <Text style={[styles.chapterName, { color: colors.text }]} numberOfLines={2}>
@@ -109,69 +136,110 @@ export default function QuizChaptersScreen() {
                     </Text>
                   </View>
                   <ChevronRight color={colors.textMuted} size={iconMd} />
-                </GlassCard>
-              </TouchableOpacity>
-              {studyEnabled && (
-                <TouchableOpacity
-                  style={styles.summaryBtn}
-                  onPress={() => openSummary(chapter.id)}
-                  activeOpacity={0.8}
-                >
-                  <BookOpen color={colors.primary} size={iconSm} />
-                  <Text style={[styles.summaryBtnText, { color: colors.primary }]}>
-                    {t('quiz.readChapterSummary')}
-                  </Text>
                 </TouchableOpacity>
-              )}
+
+                {hasBundledSummary ? (
+                  <View style={styles.actionRow}>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, styles.actionBtnPrimary]}
+                      onPress={() => openSummary(chapter.id)}
+                      activeOpacity={0.8}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('quiz.readChapterSummary')}
+                    >
+                      <Headphones color={colors.text} size={iconSm} />
+                      <Text style={[styles.actionBtnText, { color: colors.text }]}>
+                        {t('quiz.readChapterSummary')}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, styles.actionBtnSecondary, { borderColor: colors.glassBorder }]}
+                      onPress={() => void startQuiz(chapter.id)}
+                      activeOpacity={0.8}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('quiz.quickQuiz')}
+                    >
+                      <Zap color={colors.primary} size={iconSm} />
+                      <Text style={[styles.actionBtnTextSecondary, { color: colors.primary }]}>
+                        {t('quiz.quickQuiz')}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : null}
+              </GlassCard>
             </View>
-          ))}
-        </ScrollView>
+          );
+        })}
+      </ScrollView>
     </Screen>
   );
 }
 
 const createChapterListStyles = (quizTypo: ReturnType<typeof createQuizTypography>) =>
   StyleSheet.create({
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: screenPaddingX,
-    paddingBottom: sectionGap,
-    gap: space.space3,
-  },
-  chapterRowWrap: {
-    marginBottom: 4,
-    gap: space.space2,
-  },
-  chapterCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: cardPadding,
-    gap: space.space3,
-  },
-  chapterInfo: {
-    flex: 1,
-  },
-  chapterName: {
-    ...quizTypo.question,
-    ...typeScale.body,
-    textAlign: 'left',
-  },
-  chapterCount: {
-    ...quizTypo.cardMeta,
-    textAlign: 'left',
-    marginTop: 2,
-  },
-  summaryBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.space2,
-    paddingHorizontal: space.space4,
-    paddingBottom: space.space2,
-  },
-  summaryBtnText: {
-    ...quizTypo.badge,
-    textAlign: 'left',
-  },
-});
+    scroll: {
+      flex: 1,
+    },
+    scrollContent: {
+      paddingHorizontal: screenPaddingX,
+      paddingBottom: sectionGap,
+      gap: space.space3,
+    },
+    chapterRowWrap: {
+      marginBottom: 4,
+    },
+    chapterCard: {
+      overflow: 'hidden',
+    },
+    chapterMainPress: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: cardPadding,
+      gap: space.space3,
+      minHeight: touchTargetMin,
+    },
+    chapterInfo: {
+      flex: 1,
+    },
+    chapterName: {
+      ...quizTypo.question,
+      ...typeScale.body,
+      textAlign: 'left',
+    },
+    chapterCount: {
+      ...quizTypo.cardMeta,
+      textAlign: 'left',
+      marginTop: 2,
+    },
+    actionRow: {
+      flexDirection: 'row',
+      gap: space.space2,
+      paddingHorizontal: cardPadding,
+      paddingBottom: cardPadding,
+    },
+    actionBtn: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space.space2,
+      minHeight: touchTargetMin,
+      borderRadius: 12,
+      paddingHorizontal: space.space3,
+    },
+    actionBtnPrimary: {
+      backgroundColor: 'rgba(0, 180, 216, 0.35)',
+    },
+    actionBtnSecondary: {
+      backgroundColor: 'rgba(255, 255, 255, 0.06)',
+      borderWidth: 1,
+    },
+    actionBtnText: {
+      ...typeScale.subhead,
+      fontWeight: '600',
+    },
+    actionBtnTextSecondary: {
+      ...typeScale.subhead,
+      fontWeight: '600',
+    },
+  });

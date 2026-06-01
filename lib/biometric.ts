@@ -59,7 +59,11 @@ export async function authenticateWithBiometric(
         return { success: true };
       }
 
-      if (result.error === 'user_cancel') {
+      if (
+        result.error === 'user_cancel' ||
+        result.error === 'system_cancel' ||
+        result.error === 'app_cancel'
+      ) {
         return { success: false, error: 'Authentication cancelled' };
       }
 
@@ -67,8 +71,15 @@ export async function authenticateWithBiometric(
         return { success: false, error: 'user_fallback' };
       }
 
-      if (result.error === 'lockout') {
+      if (result.error === 'lockout' || result.error === 'locked_out') {
         return { success: false, error: 'Too many attempts. Please try again later.' };
+      }
+
+      if (result.error === 'not_enrolled' || result.error === 'passcode_not_set') {
+        return {
+          success: false,
+          error: 'Biometric login is not set up on this device. Enable Face ID in iOS Settings.',
+        };
       }
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);

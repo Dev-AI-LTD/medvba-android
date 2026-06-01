@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -12,10 +12,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { resolvePostAuthHref } from '@/lib/auth-return-url';
 import { resolvePostAuthOnboardingDone } from '@/lib/onboarding-storage';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Appbar, Text, Card, TextInput, Button, useTheme } from 'react-native-paper';
+import { Appbar, Text, Card, useTheme } from 'react-native-paper';
 import { UIButton } from '@/ui';
 import { useAuth, AUTH_SIGN_IN_CANCELLED } from '@/providers/AuthProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -30,8 +30,7 @@ import { isApiBaseUrlConfigured } from '@/lib/api-base-url';
 import { log } from '@/lib/log';
 import { isLikelyAuthConnectivityFailure } from '@/lib/auth-connectivity-errors';
 import { useBlockingAuthOffline } from '@/lib/use-network-auth-offline';
-const MIN_PASSWORD_LENGTH = 8;
-/** In-app auth logo (legacy); store / launcher use `assets/images/icon.png` via app.config. */
+
 const LOGIN_LOGO_SOURCE = require('../../assets/images/icon-auth.png');
 
 function mapAuthScreenError(message: string, t: (key: string) => string): string {
@@ -46,11 +45,12 @@ function mapAuthScreenError(message: string, t: (key: string) => string): string
   if (/invalid.*(email|password|credential)|invalid_grant|401|wrong password/.test(m)) {
     return t('auth.invalidCredentials');
   }
-  if (/at least 8|password must be at least 8/.test(m)) {
-    return t('auth.passwordTooShort');
-  }
-  if (/502|bad gateway|oauth2\/token|kinde returned a server error|5xx at the token url/i.test(m)) {
-    return t('auth.kindePasswordGrantUnavailable');
+  if (
+    /session exchange|exchange failed|could not complete sign-in|profile_id|oauth2\/token|502|bad gateway|503|504|5xx|temporarily unavailable|identity provider/i.test(
+      m,
+    )
+  ) {
+    return t('auth.sessionExchangeFailed');
   }
   if (/connection.*not enabled|connection is not enabled/i.test(m)) {
     return t('auth.kindeSocialConnectionNotEnabled');
@@ -60,21 +60,12 @@ function mapAuthScreenError(message: string, t: (key: string) => string): string
 
 function LoginScreen() {
   const theme = useTheme();
-  const params = useLocalSearchParams<{ email?: string | string[] }>();
   const [isLoading, setIsLoading] = useState(false);
-  const [isSignUpMode, setIsSignUpMode] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [fieldError, setFieldError] = useState<string | undefined>();
   const isWeb = Platform.OS === 'web';
   const authConfigured = isSupabaseConfigured && isApiBaseUrlConfigured();
   const canUseNativeAuth = !isWeb && authConfigured;
   const blockingOffline = useBlockingAuthOffline();
   const {
-    signIn,
-    signUp,
     signInWithGoogle,
     signInWithApple,
     signInWithEmailHosted,
@@ -82,17 +73,6 @@ function LoginScreen() {
     isEmailHostedAuthEnabled,
   } = useAuth();
   const { t } = useLanguage();
-  /** App Store / TestFlight: hide in-app password (ROPC); reviewers use Apple, Google, or hosted email. */
-  const hideInAppPasswordAuth = !__DEV__;
-  const showInAppPasswordAuth =
-    canUseNativeAuth && !isEmailHostedAuthEnabled && !hideInAppPasswordAuth;
-
-  const emailParam = useMemo(() => {
-    const raw = params.email;
-    const fromParam =
-      typeof raw === 'string' ? raw : Array.isArray(raw) && raw.length > 0 ? String(raw[0]) : '';
-    return fromParam.trim().toLowerCase();
-  }, [params.email]);
 
   const replaceAfterAuth = useCallback(async () => {
     const onboarded = await resolvePostAuthOnboardingDone();
@@ -100,196 +80,13 @@ function LoginScreen() {
     router.replace(href);
   }, []);
 
-  const validateEmailPassword = useCallback(() => {
-    const e = (emailParam || email).trim().toLowerCase();
-    if (!e) {
-      setFieldError(t('auth.emailRequired'));
-      return null;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) {
-      setFieldError(t('auth.emailInvalid'));
-      return null;
-    }
-    if (!password) {
-      setFieldError(t('auth.passwordRequired'));
-      return null;
-    }
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      setFieldError(t('auth.passwordTooShort'));
-      return null;
-    }
-    if (isSignUpMode) {
-      const n = name.trim();
-      if (!n) {
-        setFieldError(t('auth.nameRequired'));
-        return null;
-      }
-      if (n.length < 2) {
-        setFieldError(t('auth.nameTooShort'));
-        return null;
-      }
-    }
-    setFieldError(undefined);
-    return { email: e, password, name: name.trim() };
-  }, [email, emailParam, isSignUpMode, name, password, t]);
-
-  const handleEmailAuth = useCallback(async () => {
-    if (isWeb) return;
-    if (blockingOffline) {
-      Alert.alert(t('offline.needsInternetTitle'), t('offline.needsInternetMessage'));
-      return;
-    }
-    if (!isApiBaseUrlConfigured()) {
-      Alert.alert(t('auth.loginFailed'), t('auth.backendNotConfigured'));
-      return;
-    }
-    if (!isSupabaseConfigured) {
-      Alert.alert(t('auth.loginFailed'), t('auth.supabaseNotConfigured'));
-      return;
-    }
-
-    const validated = validateEmailPassword();
-    if (!validated) {
-      if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      if (isSignUpMode) {
-        const { error } = await signUp(validated.email, validated.password, validated.name);
-        if (error) {
-          if (Platform.OS !== 'web') {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          }
-          const detail = mapAuthScreenError(error.message ?? '', t);
-          Alert.alert(t('auth.signUpFailed'), detail);
-          return;
-        }
-      } else {
-        const { error } = await signIn(validated.email, validated.password);
-        if (error) {
-          if (Platform.OS !== 'web') {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          }
-          const detail = mapAuthScreenError(error.message ?? '', t);
-          Alert.alert(t('auth.loginFailed'), detail);
-          return;
-        }
-      }
-      if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-      await replaceAfterAuth();
-    } catch (error) {
-      log.error('[Login] Email auth error:', error);
-      const connectivity = isLikelyAuthConnectivityFailure(error);
-      Alert.alert(
-        connectivity ? t('offline.needsInternetTitle') : t('common.error'),
-        connectivity ? t('offline.needsInternetMessage') : t('auth.unexpectedError'),
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [
-    blockingOffline,
-    isSignUpMode,
-    replaceAfterAuth,
-    signIn,
-    signUp,
-    t,
-    validateEmailPassword,
-    isWeb,
-  ]);
-
-  const handleForgotPassword = useCallback(() => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    router.push('/(auth)/forgot-password');
-  }, []);
-
-  const handleEmailHostedAuth = useCallback(async () => {
-    if (isWeb) return;
-    if (blockingOffline) {
-      Alert.alert(t('offline.needsInternetTitle'), t('offline.needsInternetMessage'));
-      return;
-    }
-    if (!isApiBaseUrlConfigured()) {
-      Alert.alert(t('auth.loginFailed'), t('auth.backendNotConfigured'));
-      return;
-    }
-    if (!isSupabaseConfigured) {
-      Alert.alert(t('auth.loginFailed'), t('auth.supabaseNotConfigured'));
-      return;
-    }
-    if (!isEmailHostedAuthEnabled) {
-      Alert.alert(t('auth.loginFailed'), t('auth.emailHostedNotConfigured'));
-      return;
-    }
-
-    const e = (emailParam || email).trim().toLowerCase();
-    if (e && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) {
-      setFieldError(t('auth.emailInvalid'));
-      if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const result = isSignUpMode
-        ? await signUpWithEmailHosted(e || undefined)
-        : await signInWithEmailHosted(e || undefined);
-
-      if (result.error) {
-        if (result.error.message === AUTH_SIGN_IN_CANCELLED) {
-          return;
-        }
-        if (Platform.OS !== 'web') {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        }
-        const detail = mapAuthScreenError(result.error.message?.trim() ?? '', t);
-        const connectivity = isLikelyAuthConnectivityFailure(detail);
-        Alert.alert(
-          connectivity ? t('offline.needsInternetTitle') : t('auth.loginFailed'),
-          connectivity ? t('offline.needsInternetMessage') : detail || t('auth.unexpectedError'),
-        );
-      } else {
-        if (Platform.OS !== 'web') {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
-        await replaceAfterAuth();
-      }
-    } catch (error) {
-      log.error('[Login] Email hosted auth error:', error);
-      const connectivity = isLikelyAuthConnectivityFailure(error);
-      Alert.alert(
-        connectivity ? t('offline.needsInternetTitle') : t('common.error'),
-        connectivity ? t('offline.needsInternetMessage') : t('auth.unexpectedError'),
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [
-    blockingOffline,
-    email,
-    emailParam,
-    isEmailHostedAuthEnabled,
-    isSignUpMode,
-    isWeb,
-    replaceAfterAuth,
-    signInWithEmailHosted,
-    signUpWithEmailHosted,
-    t,
-  ]);
-
-  const handleSocialLogin = useCallback(
-    async (provider: 'google' | 'apple') => {
+  const runKindeAuth = useCallback(
+    async (action: () => Promise<{ error: { message?: string } | null }>) => {
       if (isWeb) return;
+      if (blockingOffline) {
+        Alert.alert(t('offline.needsInternetTitle'), t('offline.needsInternetMessage'));
+        return;
+      }
       if (!isApiBaseUrlConfigured()) {
         Alert.alert(t('auth.loginFailed'), t('auth.backendNotConfigured'));
         return;
@@ -300,11 +97,8 @@ function LoginScreen() {
       }
 
       setIsLoading(true);
-
       try {
-        const result =
-          provider === 'google' ? await signInWithGoogle() : await signInWithApple();
-
+        const result = await action();
         if (result.error) {
           if (result.error.message === AUTH_SIGN_IN_CANCELLED) {
             return;
@@ -325,7 +119,7 @@ function LoginScreen() {
           await replaceAfterAuth();
         }
       } catch (error) {
-        log.error('[Login] Social login error:', error);
+        log.error('[Login] Kinde auth error:', error);
         const connectivity = isLikelyAuthConnectivityFailure(error);
         Alert.alert(
           connectivity ? t('offline.needsInternetTitle') : t('common.error'),
@@ -335,12 +129,39 @@ function LoginScreen() {
         setIsLoading(false);
       }
     },
-    [replaceAfterAuth, signInWithGoogle, signInWithApple, t, isWeb],
+    [blockingOffline, isWeb, replaceAfterAuth, t],
   );
 
-  const toggleSignUpMode = useCallback(() => {
-    setIsSignUpMode((v) => !v);
-    setFieldError(undefined);
+  const handleSocialLogin = useCallback(
+    (provider: 'google' | 'apple') => {
+      void runKindeAuth(() =>
+        provider === 'google' ? signInWithGoogle() : signInWithApple(),
+      );
+    },
+    [runKindeAuth, signInWithGoogle, signInWithApple],
+  );
+
+  const handleEmailSignIn = useCallback(() => {
+    if (!isEmailHostedAuthEnabled) {
+      Alert.alert(t('auth.loginFailed'), t('auth.emailHostedNotConfigured'));
+      return;
+    }
+    void runKindeAuth(() => signInWithEmailHosted());
+  }, [isEmailHostedAuthEnabled, runKindeAuth, signInWithEmailHosted, t]);
+
+  const handleEmailSignUp = useCallback(() => {
+    if (!isEmailHostedAuthEnabled) {
+      Alert.alert(t('auth.loginFailed'), t('auth.emailHostedNotConfigured'));
+      return;
+    }
+    void runKindeAuth(() => signUpWithEmailHosted());
+  }, [isEmailHostedAuthEnabled, runKindeAuth, signUpWithEmailHosted, t]);
+
+  const handleForgotPassword = useCallback(() => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    router.push('/(auth)/forgot-password');
   }, []);
 
   return (
@@ -400,101 +221,39 @@ function LoginScreen() {
                     >
                       <Text style={[styles.socialButtonText, { color: theme.colors.onSurface }]}>G</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                      testID="loginAppleButton"
-                      style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
-                      onPress={() => handleSocialLogin('apple')}
-                      disabled={isLoading || !canUseNativeAuth || blockingOffline}
-                      accessibilityRole="button"
-                      accessibilityLabel={t('auth.signInWithApple')}
-                    >
-                      <MaterialCommunityIcons
-                        name="apple"
-                        size={26}
-                        color={theme.colors.onSurface}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                ) : null}
-
-                {Platform.OS !== 'web' && canUseNativeAuth && isEmailHostedAuthEnabled ? (
-                  <>
-                    <Text
-                      variant="labelMedium"
-                      style={[styles.orEmailLabel, { color: theme.colors.onSurfaceVariant }]}
-                    >
-                      {t('auth.orContinueWithEmail')}
-                    </Text>
-                    <TextInput
-                      testID="loginEmailHintInput"
-                      label={t('auth.email')}
-                      value={emailParam ? emailParam : email}
-                      onChangeText={(text) => {
-                        setEmail(text);
-                        if (fieldError) setFieldError(undefined);
-                      }}
-                      placeholder={t('auth.emailPlaceholder')}
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      autoComplete="email"
-                      editable={!emailParam}
-                      disabled={isLoading || !!emailParam}
-                      error={!!fieldError}
-                      mode="outlined"
-                      style={styles.input}
-                      left={<TextInput.Icon icon="email-outline" />}
-                    />
-                    {fieldError ? (
-                      <Text variant="bodySmall" style={[styles.errorText, { color: theme.colors.error }]}>
-                        {fieldError}
-                      </Text>
-                    ) : null}
-                    <UIButton
-                      testID="loginEmailHostedButton"
-                      variant="outlined"
-                      icon="email-outline"
-                      onPress={handleEmailHostedAuth}
-                      disabled={isLoading || blockingOffline}
-                      style={{ marginTop: SPACING.x2 }}
-                    >
-                      {isSignUpMode ? t('auth.createAccountWithEmail') : t('auth.signInWithEmail')}
-                    </UIButton>
-                    <View style={styles.modeToggleRow}>
-                      <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                        {isSignUpMode ? t('auth.alreadyHaveAccount') : t('auth.dontHaveAccount')}
-                      </Text>
-                      <Button
-                        mode="text"
-                        compact
-                        onPress={toggleSignUpMode}
-                        disabled={isLoading}
-                        testID="loginToggleSignUpHosted"
+                    {Platform.OS === 'ios' ? (
+                      <TouchableOpacity
+                        testID="loginAppleButton"
+                        style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
+                        onPress={() => handleSocialLogin('apple')}
+                        disabled={isLoading || !canUseNativeAuth || blockingOffline}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('auth.signInWithApple')}
                       >
-                        {isSignUpMode ? t('auth.signIn') : t('auth.signUp')}
-                      </Button>
-                    </View>
-                  </>
-                ) : null}
-
-                {showInAppPasswordAuth ? (
-                  <Text
-                    variant="labelMedium"
-                    style={[styles.orEmailLabel, { color: theme.colors.onSurfaceVariant }]}
-                  >
-                    {t('auth.orContinueWithEmail')}
-                  </Text>
-                ) : null}
-
-                {Platform.OS !== 'web' &&
-                canUseNativeAuth &&
-                hideInAppPasswordAuth &&
-                !isEmailHostedAuthEnabled ? (
-                  <Text
-                    variant="bodySmall"
-                    style={[styles.productionEmailHint, { color: theme.colors.onSurfaceVariant }]}
-                  >
-                    {t('auth.productionEmailSignInHint')}
-                  </Text>
+                        <MaterialCommunityIcons
+                          name="apple"
+                          size={26}
+                          color={theme.colors.onSurface}
+                        />
+                      </TouchableOpacity>
+                    ) : null}
+                    {isEmailHostedAuthEnabled ? (
+                      <TouchableOpacity
+                        testID="loginEmailHostedButton"
+                        style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
+                        onPress={handleEmailSignIn}
+                        disabled={isLoading || !canUseNativeAuth || blockingOffline}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('auth.signInWithEmail')}
+                      >
+                        <MaterialCommunityIcons
+                          name="email-outline"
+                          size={24}
+                          color={theme.colors.onSurface}
+                        />
+                      </TouchableOpacity>
+                    ) : null}
+                  </View>
                 ) : null}
 
                 {!isWeb && !authConfigured && (
@@ -505,114 +264,23 @@ function LoginScreen() {
                   </Text>
                 )}
 
-                {showInAppPasswordAuth ? (
-                  <>
-                    {isSignUpMode ? (
-                      <TextInput
-                        testID="loginNameInput"
-                        label={t('auth.fullName')}
-                        value={name}
-                        onChangeText={(text) => {
-                          setName(text);
-                          if (fieldError) setFieldError(undefined);
-                        }}
-                        placeholder={t('auth.namePlaceholder')}
-                        autoCapitalize="words"
-                        autoComplete="name"
-                        disabled={isLoading}
-                        error={!!fieldError}
-                        mode="outlined"
-                        style={styles.input}
-                        left={<TextInput.Icon icon="account-outline" />}
-                      />
-                    ) : null}
-
-                    <TextInput
-                      testID="loginEmailInput"
-                      label={t('auth.email')}
-                      value={emailParam ? emailParam : email}
-                      onChangeText={(text) => {
-                        setEmail(text);
-                        if (fieldError) setFieldError(undefined);
-                      }}
-                      placeholder={t('auth.emailPlaceholder')}
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      autoComplete="email"
-                      editable={!emailParam}
-                      disabled={isLoading || !!emailParam}
-                      error={!!fieldError}
-                      mode="outlined"
-                      style={styles.input}
-                      left={<TextInput.Icon icon="email-outline" />}
-                    />
-
-                    <TextInput
-                      testID="loginPasswordInput"
-                      label={t('auth.password')}
-                      value={password}
-                      onChangeText={(text) => {
-                        setPassword(text);
-                        if (fieldError) setFieldError(undefined);
-                      }}
-                      placeholder={
-                        isSignUpMode ? t('auth.createPasswordPlaceholder') : t('auth.passwordPlaceholder')
-                      }
-                      secureTextEntry={!showPassword}
-                      autoCapitalize="none"
-                      autoComplete={isSignUpMode ? 'password-new' : 'password'}
-                      disabled={isLoading}
-                      error={!!fieldError}
-                      mode="outlined"
-                      style={[styles.input, { marginBottom: fieldError ? 0 : SPACING.x2 }]}
-                      left={<TextInput.Icon icon="lock-outline" />}
-                      right={
-                        <TextInput.Icon
-                          icon={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                          onPress={() => setShowPassword((v) => !v)}
-                          accessibilityLabel={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
-                        />
-                      }
-                    />
-                    {fieldError ? (
-                      <Text variant="bodySmall" style={[styles.errorText, { color: theme.colors.error }]}>
-                        {fieldError}
-                      </Text>
-                    ) : null}
-
-                    <Button
-                      testID="loginEmailSubmit"
-                      mode="contained"
-                      onPress={handleEmailAuth}
-                      loading={isLoading}
+                {Platform.OS !== 'web' && isEmailHostedAuthEnabled ? (
+                  <View style={styles.modeToggleRow}>
+                    <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                      {t('auth.dontHaveAccount')}
+                    </Text>
+                    <UIButton
+                      variant="borderless"
+                      onPress={handleEmailSignUp}
                       disabled={isLoading || !canUseNativeAuth || blockingOffline}
-                      style={{ marginTop: SPACING.x3 }}
+                      testID="loginCreateAccountHosted"
                     >
-                      {isLoading
-                        ? t('auth.loading')
-                        : isSignUpMode
-                          ? t('auth.signUp')
-                          : t('auth.signIn')}
-                    </Button>
-
-                    <View style={styles.modeToggleRow}>
-                      <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                        {isSignUpMode ? t('auth.alreadyHaveAccount') : t('auth.dontHaveAccount')}
-                      </Text>
-                      <Button
-                        mode="text"
-                        compact
-                        onPress={toggleSignUpMode}
-                        disabled={isLoading}
-                        testID="loginToggleSignUp"
-                      >
-                        {isSignUpMode ? t('auth.signIn') : t('auth.signUp')}
-                      </Button>
-                    </View>
-                  </>
+                      {t('auth.signUp')}
+                    </UIButton>
+                  </View>
                 ) : null}
 
-                <View style={{ alignSelf: 'center', marginTop: SPACING.x2 }}>
+                <View style={{ alignSelf: 'center', marginTop: SPACING.x3 }}>
                   <UIButton
                     variant="borderless"
                     onPress={handleForgotPassword}
@@ -695,7 +363,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: SPACING.x3,
-    marginBottom: SPACING.x3,
+    marginBottom: SPACING.x2,
   },
   socialButton: {
     width: touchTargetMin,
@@ -708,28 +376,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
   },
-  orEmailLabel: {
-    textAlign: 'center',
-    marginBottom: SPACING.x2,
-  },
-  productionEmailHint: {
-    textAlign: 'center',
-    marginTop: SPACING.x2,
-    marginBottom: SPACING.x2,
-    lineHeight: 20,
-  },
-  input: {
-    marginBottom: SPACING.x2,
-  },
-  errorText: {
-    marginBottom: SPACING.x2,
-  },
   modeToggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     flexWrap: 'wrap',
-    marginTop: SPACING.x2,
+    marginTop: SPACING.x3,
     gap: SPACING.x1,
   },
   notConfiguredText: {

@@ -64,6 +64,8 @@ export const ro: Record<string, string> = {
     'Autentificarea cu email nu e configurată. Setează EXPO_PUBLIC_KINDE_EMAIL_CONNECTION_ID în Kinde → Authentication → Email + password.',
   'auth.createAccountWithEmail': 'Creează cont cu email',
   'auth.signInWithEmail': 'Autentificare cu email',
+  'auth.hostedEmailPasswordHint':
+    'Parola se introduce pe pagina Kinde din browser — nu există câmp parolă în app pe TestFlight.',
   'auth.dontHaveAccount': 'Nu ai cont?',
   'auth.alreadyHaveAccount': 'Ai deja cont?',
   'auth.showPassword': 'Arată parola',
@@ -82,7 +84,9 @@ export const ro: Record<string, string> = {
   'auth.passwordsDontMatch': 'Parolele nu se potrivesc',
   'auth.loginFailed': 'Autentificare eșuată. Te rog încearcă din nou.',
   'auth.kindePasswordGrantUnavailable':
-    'Email și parola direct în app nu sunt suportate de Kinde. Folosește Google sau Apple. Pentru email, Kinde cere autentificare în browser (PKCE), nu doar câmpurile de aici.',
+    'Parola nu se introduce în app. Apasă „Autentificare cu email”, apoi introdu parola pe pagina Kinde din browser. Sau folosește Apple / Google.',
+  'auth.sessionExchangeFailed':
+    'Autentificarea nu s-a putut finaliza. Verifică conexiunea și încearcă din nou peste câteva momente.',
   'auth.kindeSocialConnectionNotEnabled':
     'Metoda de autentificare nu e activată în Kinde pentru app-ul MEDVBA. În Kinde: Applications → app native → Authentication → pornește Apple (sau Google). Connection ID din Settings → Authentication → Apple → EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID, apoi repornește Metro.',
   'auth.productionEmailSignInHint':
@@ -562,7 +566,6 @@ export const ro: Record<string, string> = {
   'social.missingInfo': 'Informații lipsă',
   'social.selectReasonMessage': 'Te rog selectează un motiv pentru raportul tău.',
   'social.errorTitle': 'Eroare',
-  'social.zoomStartError': 'Pornirea sesiunii Zoom a eșuat. Te rog încearcă din nou.',
   'social.scheduleError': 'Programarea sesiunii a eșuat. Te rog încearcă din nou.',
   'social.createRoomError': 'Crearea sălii de studiu a eșuat. Te rog încearcă din nou.',
   'social.roomNameRequiredAlert': 'Te rog introdu un nume pentru sală.',
@@ -576,7 +579,6 @@ export const ro: Record<string, string> = {
   'social.fillAllFields': 'Te rog completează toate câmpurile obligatorii.',
   'social.min': 'min',
   'social.joined': 's-au alăturat',
-  'social.openZoom': 'Deschide Zoom',
   'social.endButton': 'Încheie',
   'social.startSession': 'Pornește sesiunea',
   'social.notYet': 'Încă nu',
@@ -592,12 +594,7 @@ export const ro: Record<string, string> = {
   'social.pathology': 'Patologie',
   'social.pharmacology': 'Farmacologie',
   'social.general': 'General',
-  'social.endZoomSessionTitle': 'Încheie sesiunea',
-  'social.endZoomSessionMessage': 'Ești sigur că vrei să închei această sesiune Zoom?',
   'social.findPartners': 'Găsește parteneri',
-  'social.meetingUrlOptional': 'URL întâlnire (Opțional)',
-  'social.meetingUrlPlaceholder': 'https://zoom.us/j/... sau link Google Meet',
-  'social.meetingUrlHint': 'Adaugă un link Zoom, Google Meet sau Teams',
   'social.achievementUnlocked': 'Realizare Deblocată',
 
   // Achievement Titles
@@ -649,6 +646,13 @@ export const ro: Record<string, string> = {
   'settings.preferences': 'Preferințe',
   'settings.language': 'Limbă',
   'settings.languageSubtitle': 'Aplicația pornește în engleză. Alege alta mai jos oricând.',
+  'settings.biometricLogin': 'Autentificare biometrică',
+  'settings.biometricLoginSubtitle': 'Folosește {type} pentru a debloca MEDVBA mai rapid după autentificare',
+  'settings.biometricLoginPrompt': 'Confirmă pentru a activa autentificarea biometrică',
+  'settings.biometricLoginFailed': 'Autentificarea biometrică a eșuat. Încearcă din nou sau folosește parola.',
+  'biometric.unlockTitle': 'Deblochează cu {type}',
+  'biometric.unlockSubtitle': 'Confirmă identitatea pentru a continua în MEDVBA.',
+  'biometric.tryAgain': 'Încearcă din nou',
   'settings.notifications': 'Notificări',
   'settings.notificationsSubtitle': 'Gestionează notificările push',
   'settings.appearance': 'Aspect',
@@ -813,14 +817,6 @@ export const ro: Record<string, string> = {
   'appearance.themeLightDesc': 'Folosește mereu o temă luminoasă.',
   'appearance.themeDark': 'Mod întunecat',
   'appearance.themeDarkDesc': 'Folosește mereu o temă întunecată, prietenoasă cu ochii noaptea.',
-
-  // Permissions
-  'permissions.zoom.title': 'Alătură-te camerei de studiu',
-  'permissions.zoom.message': 'Când te alături unei camere de studiu prin Zoom, ți se poate cere să acorzi permisiuni pentru cameră și microfon. Aceste permisiuni îți permit să participi la discuții video cu alți studenți.\n\nPoți:\n• Să te alături cu video și audio\n• Să te alături doar cu audio\n• Să te alături doar ca spectator\n\nZoom va solicita aceste permisiuni când deschizi întâlnirea.',
-  'permissions.zoom.understand': 'Am înțeles',
-  'permissions.zoom.cancel': 'Anulează',
-  'permissions.zoom.hostTitle': 'Începe camera de studiu',
-  'permissions.zoom.hostMessage': 'Ca gazdă, va trebui să acorzi permisiuni pentru cameră și microfon când Zoom se deschide. Acest lucru îți permite să comunici cu studenții care se alătură camerei tale de studiu.\n\nZoom va solicita automat aceste permisiuni când întâlnirea începe.',
 
   // Privacy Policy
   'privacy.lastUpdated': 'Actualizat la: {date}',

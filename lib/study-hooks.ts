@@ -44,16 +44,20 @@ export function useStudyChapterList(moduleId: string, locale: 'ro' | 'en' = 'ro'
       const api = apiById.get(ch.id);
       const hasLocalPreview = previewIds.has(ch.id);
       const hasPremiumBundle = premiumBundleIds.has(ch.id);
-      const hasSummary = Boolean(api?.hasSummary) || hasLocalPreview || hasPremiumBundle;
       const isFreePreview = isStudyFreePreviewChapter(ch.id, moduleId);
+      const hasSummary =
+        Boolean(api?.hasSummary) || hasLocalPreview || hasPremiumBundle || isFreePreview;
       const canAccessThis = canAccessChapterSummary(ch.id, isPremium, moduleId);
+      const localPreview = hasLocalPreview
+        ? getLocalPreviewChapter(moduleId, ch.id, locale)
+        : null;
 
       return {
         chapterId: ch.id,
-        title: api?.title ?? getChapterTitle(ch.id),
+        title: api?.title ?? localPreview?.title ?? getChapterTitle(ch.id),
         questionCount: ch.questions.length,
         hasSummary,
-        hasAudio: Boolean(api?.hasAudio),
+        hasAudio: Boolean(api?.hasAudio) || Boolean(localPreview?.audioUrl),
         isFreePreview,
         isLocked: hasSummary && !canAccessThis,
         comingSoon: !hasSummary,

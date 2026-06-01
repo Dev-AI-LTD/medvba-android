@@ -66,59 +66,44 @@ describe('User flows (integration-style)', () => {
   });
 
   describe('Login', () => {
-    it('shows email/password form and welcome copy', async () => {
+    it('shows Kinde sign-in buttons and welcome copy', async () => {
       renderWithApp(<LoginScreen />);
 
       expect(await findText(enCopy('auth.welcomeUnifiedTitle'))).toBeTruthy();
-      expect(screen.getByTestId('loginEmailInput')).toBeTruthy();
-      expect(screen.getByTestId('loginPasswordInput')).toBeTruthy();
-      expect(screen.getByTestId('loginEmailSubmit')).toBeTruthy();
-      expect(screen.getByText(enCopy('auth.signIn'))).toBeTruthy();
+      expect(screen.getByTestId('loginGoogleButton')).toBeTruthy();
+      expect(screen.getByTestId('loginEmailHostedButton')).toBeTruthy();
     });
 
-    it('navigates to tabs after successful email sign-in when onboarding is complete', async () => {
+    it('navigates to tabs after successful Google sign-in when onboarding is complete', async () => {
       renderWithApp(<LoginScreen />);
 
       expect(await findText(enCopy('auth.welcomeUnifiedTitle'))).toBeTruthy();
 
-      fireEvent.changeText(screen.getByTestId('loginEmailInput'), 'user@example.com');
-      fireEvent.changeText(screen.getByTestId('loginPasswordInput'), 'password1234');
-
       await act(async () => {
-        fireEvent.press(screen.getByTestId('loginEmailSubmit'));
+        fireEvent.press(screen.getByTestId('loginGoogleButton'));
       });
 
       await waitFor(() => {
         expect(router.replace).toHaveBeenCalledWith('/(tabs)');
       });
-      expect(getKindeAuthMocks().login).not.toHaveBeenCalled();
+      expect(getKindeAuthMocks().login).toHaveBeenCalled();
       expect(global.fetch).toHaveBeenCalled();
       const urls = (global.fetch as jest.Mock).mock.calls.map((c) => String(c[0]));
       expect(urls.some((u) => u.includes('/api/auth/session'))).toBe(true);
     });
 
-    it('registers via API when in sign-up mode', async () => {
+    it('uses kinde.register for create account (hosted email)', async () => {
       renderWithApp(<LoginScreen />);
 
       expect(await findText(enCopy('auth.welcomeUnifiedTitle'))).toBeTruthy();
 
       await act(async () => {
-        fireEvent.press(screen.getByTestId('loginToggleSignUp'));
-      });
-
-      fireEvent.changeText(screen.getByTestId('loginNameInput'), 'Test User');
-      fireEvent.changeText(screen.getByTestId('loginEmailInput'), 'new@example.com');
-      fireEvent.changeText(screen.getByTestId('loginPasswordInput'), 'password1234');
-
-      await act(async () => {
-        fireEvent.press(screen.getByTestId('loginEmailSubmit'));
+        fireEvent.press(screen.getByTestId('loginCreateAccountHosted'));
       });
 
       await waitFor(() => {
-        expect(router.replace).toHaveBeenCalledWith('/(tabs)');
+        expect(getKindeAuthMocks().register).toHaveBeenCalled();
       });
-      const urls = (global.fetch as jest.Mock).mock.calls.map((c) => String(c[0]));
-      expect(urls.some((u) => u.includes('/api/auth/register'))).toBe(true);
     });
 
     it('navigates to forgot password', async () => {
@@ -145,11 +130,8 @@ describe('User flows (integration-style)', () => {
       renderWithApp(<LoginScreen />);
       expect(await findText(enCopy('auth.welcomeUnifiedTitle'))).toBeTruthy();
 
-      fireEvent.changeText(screen.getByTestId('loginEmailInput'), 'user@example.com');
-      fireEvent.changeText(screen.getByTestId('loginPasswordInput'), 'password1234');
-
       await act(async () => {
-        fireEvent.press(screen.getByTestId('loginEmailSubmit'));
+        fireEvent.press(screen.getByTestId('loginGoogleButton'));
       });
 
       await waitFor(() => {

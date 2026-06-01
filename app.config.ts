@@ -100,6 +100,13 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     'expo-notifications',
     'expo-audio',
     [
+      'expo-local-authentication',
+      {
+        faceIDPermission:
+          'MEDVBA uses Face ID to unlock the app quickly when you enable biometric login in Settings.',
+      },
+    ],
+    [
       'expo-build-properties',
       {
         android: {
@@ -149,7 +156,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       supportsTablet: false,
       bundleIdentifier: 'com.devaieood.medvba',
       icon: './assets/images/icon.png',
-      buildNumber: '53',
+      buildNumber: '58',
       // Required for @invertase/react-native-apple-authentication (EAS / prebuild).
       entitlements: {
         'com.apple.developer.applesignin': ['Default'],
@@ -238,6 +245,17 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       EXPO_PUBLIC_KINDE_EMAIL_CONNECTION_ID:
         envFromFile.EXPO_PUBLIC_KINDE_EMAIL_CONNECTION_ID ||
         process.env.EXPO_PUBLIC_KINDE_EMAIL_CONNECTION_ID,
+      EXPO_PUBLIC_KINDE_LOGIN_HINT_EMAIL:
+        envFromFile.EXPO_PUBLIC_KINDE_LOGIN_HINT_EMAIL ||
+        process.env.EXPO_PUBLIC_KINDE_LOGIN_HINT_EMAIL,
+      EXPO_PUBLIC_APP_REVIEW_PREMIUM_EMAILS:
+        envFromFile.EXPO_PUBLIC_APP_REVIEW_PREMIUM_EMAILS ||
+        process.env.EXPO_PUBLIC_APP_REVIEW_PREMIUM_EMAILS,
+      // true only for App Review / TestFlight builds; false in public App Store (premium via Supabase grant).
+      EXPO_PUBLIC_ENABLE_REVIEW_PREMIUM:
+        envFromFile.EXPO_PUBLIC_ENABLE_REVIEW_PREMIUM ??
+        process.env.EXPO_PUBLIC_ENABLE_REVIEW_PREMIUM ??
+        'false',
       EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID:
         envFromFile.EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID ||
         process.env.EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID,
@@ -250,10 +268,6 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       EXPO_PUBLIC_FACEBOOK_LOGIN_ENABLED:
         envFromFile.EXPO_PUBLIC_FACEBOOK_LOGIN_ENABLED ??
         process.env.EXPO_PUBLIC_FACEBOOK_LOGIN_ENABLED ??
-        'false',
-      EXPO_PUBLIC_FETCH_ZOOM_REQUESTS:
-        envFromFile.EXPO_PUBLIC_FETCH_ZOOM_REQUESTS ??
-        process.env.EXPO_PUBLIC_FETCH_ZOOM_REQUESTS ??
         'false',
       EXPO_PUBLIC_SUPPORT_EMAIL:
         envFromFile.EXPO_PUBLIC_SUPPORT_EMAIL || process.env.EXPO_PUBLIC_SUPPORT_EMAIL,

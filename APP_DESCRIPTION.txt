@@ -27,15 +27,19 @@ PRIMARY PURPOSE
 MAIN USER FLOWS
 ---------------
 1. Onboarding — Short intro slides (welcome, AI tutor, study together, progress).
-2. Authentication — Email/password sign up and sign in via Supabase Auth;
-   forgot password; optional onboarding after login.
+2. Authentication — Sign in with Apple (iOS), Google, or email via Kinde
+   (hosted browser on release builds; optional dev-only email+password fields).
+   Backend mints a MEDVBA session JWT; Supabase stores profile and app data.
+   Forgot password and account deletion go through backend + Kinde. Onboarding
+   after first login when applicable.
 3. Home — Greeting, daily question progress, quick start into anatomy/quiz,
    upgrade prompts when daily limits or premium-only modules apply.
 4. Quiz — Choose anatomy regions / chapters; modes such as quick quiz,
    practice session, and exam-style simulation; timed sessions where applicable.
 5. AI Tutor — Tab for conversational / Q&A style help (integrated with app
    services as configured).
-6. Social — Community / social features (e.g. study rooms, peers — per UI).
+6. Social — Chat with study partners, find partners, report/block (messenger-style;
+   not live video calls).
 7. Profile — User profile, settings, appearance (light/dark), edit profile,
    legal pages (terms, privacy, code of conduct), support (help center, contact),
    account deletion, paywall / subscriptions when enabled.
@@ -55,11 +59,12 @@ TECH STACK (HIGH LEVEL)
 • UI: React Native Paper, custom UI components, Lucide icons, safe area handling,
   light/dark themes.
 • Backend / data:
-  - Supabase (PostgreSQL + Auth) for users and app data.
-  - tRPC + Hono Node server in-repo for API routes (e.g. account, integrations).
+  - Kinde for identity (Apple, Google, hosted email); see docs/AUTH_ARCHITECTURE.md.
+  - Supabase (PostgreSQL + PostgREST + RLS) for profiles, progress, chat, etc.
+  - tRPC + Hono Node server in-repo (session mint, account delete, subscriptions, tutor).
 • State & data fetching: TanStack React Query, Zustand where used.
 • Updates: EAS Update (Expo) with runtime version tied to app version.
-• Monitoring: Sentry (optional, via EXPO_PUBLIC_SENTRY_DSN).
+• Monitoring: Sentry optional (EXPO_PUBLIC_SENTRY_DSN). No PostHog in this repo.
 • Other: expo-secure-store / AsyncStorage for session persistence, expo-image,
   haptics, mail composer, image picker, etc.
 
@@ -74,7 +79,7 @@ BUILD & DEPLOYMENT
 ------------------
 • EAS Build for store binaries (Android App Bundle, iOS).
 • Environment variables for production should be set in Expo (EAS) for
-  EXPO_PUBLIC_* keys (Supabase URL/anon key, API base URL, RevenueCat, etc.).
+  EXPO_PUBLIC_* keys (Kinde, Supabase URL/anon key, API base URL, RevenueCat, etc.).
 • Local development typically uses a .env file (not committed to git).
 • Android: edge-to-edge UI, ProGuard/R8 minification for release, mapping file
   for Play Console deobfuscation (see project docs / eas.json).
@@ -94,6 +99,6 @@ It is not a legal document and does not replace Privacy Policy or Terms of
 Service. For exact behavior and data handling, refer to the source code and
 the in-app legal pages.
 
-Last updated: 2026-03-19 (project state at time of writing).
+Last updated: 2026-05-25 (auth: Kinde + MEDVBA JWT; data: Supabase).
 
 ================================================================================

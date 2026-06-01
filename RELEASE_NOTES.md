@@ -34,9 +34,9 @@ Your ultimate companion for medical exam preparation. Master anatomy, physiology
 - **Free Plan:** 1 AI question per day
 - **Premium:** Unlimited AI tutor access
 
-#### 👥 Live Study Rooms
-- **Virtual Study Sessions:** Join or host live study rooms with Zoom integration
-- **Real-Time Collaboration:** Study with fellow medical students worldwide
+#### 👥 Social & Chat
+- **Study Partners:** Connect with fellow medical students in the app
+- **Messaging:** Chat with classmates (messenger-style, in-app)
 - **Schedule Sessions:** Plan future study sessions with automatic reminders
 - **Room Management:** Create custom rooms with participant limits
 - **Community Features:** Block/report functionality for safe learning environment
@@ -84,8 +84,7 @@ Your ultimate companion for medical exam preparation. Master anatomy, physiology
 - 1 AI tutor question per day
 - Full access to all 30,000+ questions
 - Progress tracking and achievements
-- Join live study rooms
-- Host study rooms
+- Social tab and chat with study partners
 
 #### Premium Plan Includes:
 - ✅ Unlimited quizzes
@@ -110,8 +109,9 @@ Your ultimate companion for medical exam preparation. Master anatomy, physiology
   - Web browsers (Chrome, Safari, Firefox, Edge)
 
 - **Third-Party Integrations:**
-  - Zoom (for video study rooms)
-  - Supabase (secure authentication and data storage)
+  - Kinde (sign-in: Apple, Google, hosted email)
+  - Supabase (database and app data; access via MEDVBA JWT)
+  - RevenueCat (subscriptions)
 
 ---
 
@@ -122,11 +122,6 @@ When using MEDVBA, we may request the following permissions:
 - **Notifications (Optional):**
   - Purpose: Remind you about scheduled study sessions and daily streaks
   - You can enable/disable this in Settings
-
-- **Camera & Microphone (Via Zoom):**
-  - Purpose: When joining live study rooms, Zoom will request camera/microphone access for video calls
-  - These permissions are handled by the Zoom app, not directly by MEDVBA
-  - You can join study rooms audio-only if you prefer
 
 ---
 

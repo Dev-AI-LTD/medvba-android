@@ -28,10 +28,6 @@ import {
   ChevronUp,
   ChevronDown,
   Minus,
-  Video,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
 } from 'lucide-react-native';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -39,7 +35,7 @@ import ProgressRing from '@/components/ProgressRing';
 import { useQuizProgress } from '@/providers/QuizProgressProvider';
 import { useAuth } from '@/providers/AuthProvider';
 import { safeAvatarUri } from '@/lib/safe-image-uri';
-import { useLeaderboard, useZoomRequests } from '@/lib/supabase-hooks';
+import { useLeaderboard } from '@/lib/supabase-hooks';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import {
   cardPadding,
@@ -114,7 +110,6 @@ export default function ProfileScreen() {
     weeklyGoalProgress,
   } = useQuizProgress();
 
-  const { data: zoomRequests = [] } = useZoomRequests(user?.id);
   const { data: leaderboard = [] } = useLeaderboard(selectedPeriod);
 
 
@@ -619,63 +614,6 @@ export default function ProfileScreen() {
               ))}
             </View>
           </View>
-
-          {zoomRequests.length > 0 && (
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Video color={colors.accent} size={iconLg} />
-                <Text style={styles.sectionTitleInline}>Zoom Session Requests</Text>
-              </View>
-              <View style={styles.zoomRequestsContainer}>
-                {zoomRequests.map((request) => {
-                  const statusColors = {
-                    pending: { bg: 'rgba(255, 184, 0, 0.15)', color: colors.warning, icon: AlertCircle },
-                    approved: { bg: 'rgba(0, 196, 140, 0.15)', color: colors.success, icon: CheckCircle },
-                    rejected: { bg: 'rgba(255, 59, 48, 0.15)', color: colors.error, icon: XCircle },
-                  };
-                  const statusConfig = statusColors[request.status];
-                  const StatusIcon = statusConfig.icon;
-
-                  return (
-                    <View key={request.id} style={styles.zoomRequestCard}>
-                      <LinearGradient
-                        colors={['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.04)']}
-                        style={[StyleSheet.absoluteFill, { borderRadius: 16 }]}
-                      />
-                      <View style={styles.glassOverlay} />
-                      <View style={styles.zoomRequestHeader}>
-                        <Text style={styles.zoomRequestTopic} numberOfLines={1}>{request.studyTopic}</Text>
-                        <View style={[styles.zoomRequestStatus, { backgroundColor: statusConfig.bg }]}>
-                          <StatusIcon color={statusConfig.color} size={iconSm} />
-                          <Text style={[styles.zoomRequestStatusText, { color: statusConfig.color }]}>
-                            {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                          </Text>
-                        </View>
-                      </View>
-                      <View style={styles.zoomRequestDetails}>
-                        <View style={styles.zoomRequestDetail}>
-                          <Calendar color={colors.textSecondary} size={iconSm} />
-                          <Text style={styles.zoomRequestDetailText}>
-                            {new Date(request.preferredDate).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric'
-                            })}
-                          </Text>
-                        </View>
-                        <View style={styles.zoomRequestDetail}>
-                          <Clock color={colors.textSecondary} size={iconSm} />
-                          <Text style={styles.zoomRequestDetailText}>
-                            {new Date(request.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-            </View>
-          )}
 
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
@@ -1313,55 +1251,6 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     ...typeScale.caption2,
     color: colors.textMuted,
     marginTop: 2,
-  },
-  zoomRequestsContainer: {
-    paddingHorizontal: screenPaddingX,
-    gap: space.space3,
-  },
-  zoomRequestCard: {
-    borderRadius: radiusLg,
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
-    padding: cardPadding,
-    overflow: 'hidden',
-  },
-  zoomRequestHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: space.space3,
-  },
-  zoomRequestTopic: {
-    ...typeScale.body,
-    fontWeight: '600' as const,
-    color: colors.text,
-    flex: 1,
-    marginRight: 12,
-  },
-  zoomRequestStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-    gap: 4,
-  },
-  zoomRequestStatusText: {
-    ...typeScale.caption,
-    fontWeight: '600' as const,
-  },
-  zoomRequestDetails: {
-    flexDirection: 'row',
-    gap: fieldGap,
-  },
-  zoomRequestDetail: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  zoomRequestDetailText: {
-    ...typeScale.footnote,
-    color: colors.textSecondary,
   },
 });
 

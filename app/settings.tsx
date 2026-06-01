@@ -48,9 +48,12 @@ import {
   Crown,
   CreditCard,
   BookOpen,
+  ScanFace,
 } from 'lucide-react-native';
-import { useAuth } from '@/providers/AuthProvider';
+import { useAuth, getBiometricTypeName } from '@/providers/AuthProvider';
+import { authenticateWithBiometric } from '@/lib/biometric';
 import { safeAvatarUri } from '@/lib/safe-image-uri';
+import { log } from '@/lib/log';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage, Language } from '@/providers/LanguageProvider';
 import { useSubscription } from '@/providers/SubscriptionProvider';
@@ -110,11 +113,21 @@ const languages: { code: Language; label: string; flag: string }[] = [
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { user, signOut, refreshProfile, applyServerProfilePatch, resetOnboarding } = useAuth();
+  const {
+    user,
+    signOut,
+    refreshProfile,
+    applyServerProfilePatch,
+    resetOnboarding,
+    biometricCapabilities,
+    isBiometricEnabled,
+    enableBiometric,
+  } = useAuth();
   const queryClient = useQueryClient();
   const { currentLanguage, changeLanguage, t } = useLanguage();
   const { colors, preference: themePreference } = useTheme();
-  const { isPremium, isPaywallEnabled } = useSubscription();
+  const { isPremium, isPaywallEnabled, restorePurchases } = useSubscription();
+  const [isRestoringPurchases, setIsRestoringPurchases] = useState(false);
   const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
 
   const { data: profile } = useUserProfile(user?.id);
@@ -159,7 +172,7 @@ export default function SettingsScreen() {
     try {
       setBlockedUsers(await loadBlockedUsersFromStorage());
     } catch (error) {
-      console.error('Failed to load blocked users:', error);
+      log.error('[Settings] Failed to load blocked users:', error);
     }
   };
 
@@ -190,7 +203,7 @@ export default function SettingsScreen() {
         try {
           photoUrl = await uploadProfilePhoto(user.id, photoUri);
         } catch (error) {
-          console.error('Error uploading photo:', error);
+          log.error('[Settings] Error uploading photo:', error);
           Alert.alert(t('settings.uploadErrorTitle'), t('settings.uploadErrorMsg'));
           return;
         } finally {
@@ -225,7 +238,7 @@ export default function SettingsScreen() {
 
       Alert.alert(t('common.ok'), t('settings.profileUpdated'));
     } catch (error) {
-      console.error('Error updating profile:', error);
+      log.error('[Settings] Error updating profile:', error);
       Alert.alert(t('common.ok'), t('settings.profileUpdateError'));
     } finally {
       setIsSaving(false);
@@ -246,7 +259,7 @@ export default function SettingsScreen() {
               const updated = await removeBlockedUserById(user.id);
               setBlockedUsers(updated);
             } catch (e) {
-              console.error('Failed to unblock user:', e);
+              log.error('[Settings] Failed to unblock user:', e);
             }
           },
         },
@@ -472,6 +485,51 @@ export default function SettingsScreen() {
                 </View>
               </View>
               )}
+              {Platform.OS !== 'web' &&
+              biometricCapabilities?.hasHardware &&
+              biometricCapabilities.isEnrolled ? (
+                <View style={[styles.settingToggleRow, { borderBottomColor: colors.glassBorder }]}>
+                  <View style={styles.settingsItemIcon}>
+                    <ScanFace color={colors.primary} size={iconLg} />
+                  </View>
+                  <View style={styles.settingsItemContent}>
+                    <Text style={[styles.settingsItemTitle, { color: colors.text }]}>
+                      {t('settings.biometricLogin')}
+                    </Text>
+                    <Text style={[styles.settingsItemSubtitle, { color: colors.textSecondary }]}>
+                      {t('settings.biometricLoginSubtitle').replace(
+                        '{type}',
+                        getBiometricTypeName(biometricCapabilities.supportedTypes),
+                      )}
+                    </Text>
+                  </View>
+                  <Switch
+                    value={isBiometricEnabled}
+                    onValueChange={(value) => {
+                      void (async () => {
+                        if (Platform.OS !== 'web') {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        }
+                        if (value) {
+                          const result = await authenticateWithBiometric(
+                            t('settings.biometricLoginPrompt'),
+                          );
+                          if (!result.success) {
+                            if (result.error !== 'Authentication cancelled') {
+                              Alert.alert(t('common.error'), t('settings.biometricLoginFailed'));
+                            }
+                            return;
+                          }
+                        }
+                        await enableBiometric(value);
+                      })();
+                    }}
+                    trackColor={{ false: colors.cardBgLight, true: colors.success }}
+                    thumbColor={colors.text}
+                    accessibilityLabel={t('settings.biometricLogin')}
+                  />
+                </View>
+              ) : null}
               <SettingsItem
                 icon={<Bell color={colors.primary} size={iconLg} />}
                 title={t('settings.notifications')}
@@ -637,13 +695,40 @@ export default function SettingsScreen() {
                     showBorder={false}
                   />
                 ) : (
-                  <SettingsItem
-                    icon={<Crown color={colors.warning} size={iconLg} />}
-                    title={t('profile.upgradeToPremium')}
-                    subtitle={t('profile.upgradeBannerSubtitleAll')}
-                    onPress={() => router.push('/paywall')}
-                    showBorder={false}
-                  />
+                  <>
+                    <SettingsItem
+                      icon={<Crown color={colors.warning} size={iconLg} />}
+                      title={t('profile.upgradeToPremium')}
+                      subtitle={t('profile.upgradeBannerSubtitleAll')}
+                      onPress={() => router.push('/paywall')}
+                    />
+                    <SettingsItem
+                      icon={<CreditCard color={colors.accent} size={iconLg} />}
+                      title={t('paywall.restoreButton')}
+                      subtitle={t('settings.manageSubscriptionSubtitle')}
+                      onPress={async () => {
+                        if (isRestoringPurchases) return;
+                        setIsRestoringPurchases(true);
+                        try {
+                          const restored = await restorePurchases();
+                          if (restored) {
+                            Alert.alert(
+                              t('paywall.restoreSuccessTitle'),
+                              t('paywall.restoreSuccessMessage'),
+                              [{ text: t('paywall.ok') }],
+                            );
+                          } else {
+                            Alert.alert(t('paywall.infoTitle'), t('paywall.noPurchasesFound'));
+                          }
+                        } catch {
+                          Alert.alert(t('paywall.errorTitle'), t('paywall.errorRestore'));
+                        } finally {
+                          setIsRestoringPurchases(false);
+                        }
+                      }}
+                      showBorder={false}
+                    />
+                  </>
                 )}
               </View>
             </View>
@@ -792,6 +877,12 @@ const styles = StyleSheet.create({
     padding: screenPaddingX,
   },
   settingsItemBorder: {
+    borderBottomWidth: 1,
+  },
+  settingToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: screenPaddingX,
     borderBottomWidth: 1,
   },
   settingsItemIcon: {

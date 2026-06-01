@@ -2,6 +2,11 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getFreeAiStatus, incrementFreeAiUsage } from "../lib/free-ai-usage";
 import { userHasActivePremiumAccess } from "../lib/premium-access";
+import {
+  fetchRevenueCatSubscriber,
+  getRevenueCatSecretApiKey,
+  syncSubscriberPayloadToSupabase,
+} from "../lib/revenuecat-subscriber-sync";
 import { createTRPCRouter, protectedProcedure } from "./create-context";
 
 function getSupabaseAdmin() {
@@ -77,40 +82,72 @@ export const subscriptionRouter = createTRPCRouter({
       const supabaseAdmin = createClient(url, serviceRoleKey);
       const userId = ctx.userId;
 
-      const row: Record<string, unknown> = {
-        user_id: userId,
-        status: input.status,
-        updated_at: new Date().toISOString(),
+      const applyProfileFlags = async () => {
+        const isPremium = await userHasActivePremiumAccess(supabaseAdmin, userId);
+        const { error: profileErr } = await supabaseAdmin
+          .from("profiles")
+          .update({
+            is_premium: isPremium,
+            subscription_status: isPremium ? "premium" : "free",
+          })
+          .eq("id", userId);
+        if (profileErr) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: profileErr.message,
+          });
+        }
+        return isPremium;
       };
-      if (input.type !== undefined) row.type = input.type;
-      if (input.expiresAt !== undefined) row.expires_at = input.expiresAt;
-      if (input.status === "premium" || input.status === "trial") {
-        row.started_at = new Date().toISOString();
-      }
+
       if (input.status === "free") {
-        row.type = null;
-        if (input.expiresAt === undefined) row.expires_at = null;
+        const nowIso = new Date().toISOString();
+        const row: Record<string, unknown> = {
+          user_id: userId,
+          status: "free",
+          type: null,
+          updated_at: nowIso,
+        };
+        if (input.expiresAt === undefined) {
+          row.expires_at = null;
+        } else {
+          row.expires_at = input.expiresAt;
+        }
+
+        const { error } = await supabaseAdmin.from("subscriptions").upsert(row, {
+          onConflict: "user_id",
+        });
+        if (error) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error.message,
+          });
+        }
+
+        await applyProfileFlags();
+        return { ok: true };
       }
 
-      const { error } = await supabaseAdmin.from("subscriptions").upsert(row, {
-        onConflict: "user_id",
-      });
-      if (error) {
+      // Premium/trial: never trust client payload — verify with RevenueCat REST API.
+      if (!getRevenueCatSecretApiKey()) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error.message,
+          code: "PRECONDITION_FAILED",
+          message:
+            "Subscription sync is not configured on the server (REVENUECAT_SECRET_API_KEY). Premium status was not updated.",
         });
       }
 
-      await supabaseAdmin
-        .from("profiles")
-        .update({
-          is_premium: input.status === "premium" || input.status === "trial",
-          subscription_status: input.status,
-        })
-        .eq("id", userId);
+      const rcBody = await fetchRevenueCatSubscriber(userId);
+      const sync = await syncSubscriberPayloadToSupabase(supabaseAdmin, userId, rcBody);
+      if (!sync.ok) {
+        throw new TRPCError({
+          code: "BAD_GATEWAY",
+          message: sync.error ?? "Could not verify subscription with the store.",
+        });
+      }
 
-      return { ok: true };
+      const isPremium = await applyProfileFlags();
+      return { ok: true, isPremium };
     }),
 
   getSubscriptionStatus: protectedProcedure.query(async ({ ctx }) => {

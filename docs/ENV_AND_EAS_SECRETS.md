@@ -1,22 +1,36 @@
 # Variabile .env și EAS Secrets pentru Google Play
 
+**Autentificare:** Kinde (nu Supabase Auth în app). Vezi [AUTH_ARCHITECTURE.md](AUTH_ARCHITECTURE.md).
+
 ## 1. Toate variabilele necesare pentru Google Play
 
 | Variabilă | Obligatoriu | Unde o găsești | Exemplu |
 |-----------|-------------|-----------------|---------|
-| **EXPO_PUBLIC_SUPABASE_URL** | Da (pentru login/progres) | Supabase → Settings → API → Project URL | `https://abc123.supabase.co` |
+| **EXPO_PUBLIC_KINDE_ISSUER_URL** | Da (login) | Kinde → Settings → Domain | `https://YOUR_SUBDOMAIN.kinde.com` |
+| **EXPO_PUBLIC_KINDE_CLIENT_ID** | Da | Kinde → Applications → native (Expo) app | `…` |
+| **EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID** | Da pe iOS (Apple + Google) | Kinde → Authentication → Apple | `conn_…` |
+| **EXPO_PUBLIC_KINDE_GOOGLE_CONNECTION_ID** | Da | Kinde → Authentication → Google | `conn_…` |
+| **EXPO_PUBLIC_KINDE_EMAIL_CONNECTION_ID** | Da pentru review / email hosted | Kinde → Authentication → Email + password | `conn_…` |
+| **EXPO_PUBLIC_API_BASE_URL** | Da | Railway (Hono + tRPC + `/api/auth/session`) | `https://….up.railway.app` |
+| **EXPO_PUBLIC_SUPABASE_URL** | Da (date app) | Supabase → Settings → API → Project URL | `https://abc123.supabase.co` |
 | **EXPO_PUBLIC_SUPABASE_ANON_KEY** | Da | Supabase → Settings → API → anon public | `eyJhbGciOiJIUzI1NiIs...` |
 | **EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID** | Da (pentru abonamente) | RevenueCat → API Keys → aplicația **Android** (Google Play) → Public key | de obicei `goog_...` |
 | **EXPO_PUBLIC_REVENUECAT_API_KEY_IOS** | Doar dacă faci build iOS | RevenueCat → API Keys → aplicația **iOS** (App Store) → Public key | de obicei `appl_...` |
 | **EXPO_PUBLIC_PAYWALL_ENABLED** | Da | Tu decizi | `true` sau `false` |
 | EXPO_PUBLIC_RORK_API_BASE_URL | Nu | Alias istoric pentru același URL ca **EXPO_PUBLIC_API_BASE_URL** (tRPC); poți folosi unul singur | `https://api.example.com` |
 | EXPO_PUBLIC_SENTRY_DSN | Nu | Sentry → Project Settings → DSN | `https://xxx@sentry.io/xxx` |
+| EXPO_PUBLIC_APP_REVIEW_PREMIUM_EMAILS | Nu (implicit în cod) | Email demo cu Premium UI în app | `contact@devaieood.com` |
+| EXPO_PUBLIC_ENABLE_REVIEW_PREMIUM | Nu (default `false`) | `true` doar pentru TestFlight / App Review | `true` |
+| EXPO_PUBLIC_KINDE_LOGIN_HINT_EMAIL | Nu | Prefill email pe pagina Kinde la „Sign in with email” | `contact@devaieood.com` |
+| VERIFY_AUTH_EMAIL | Nu (doar scripturi locale) | Cont App Review în Kinde | `contact@devaieood.com` |
+| VERIFY_AUTH_PASSWORD | Nu (doar scripturi locale) | Parola contului de review (nu în git) | — |
+| SUPABASE_SERVICE_ROLE_KEY | Nu (doar scripturi locale) | Supabase → API → service_role — `npm run grant-review-premium` | — |
 
 ---
 
 ## 2. Ce scrii în `.env` (pe PC, pentru develop / build local)
 
-Creează în root-ul proiectului fișierul **`.env`** (nu se pune în git):
+Copiază **[`.env.example`](../.env.example)** → **`.env`** (nu se pune în git) și completează valorile reale. Exemplu minim:
 
 ```env
 EXPO_PUBLIC_SUPABASE_URL=https://TAU_PROIECT_ID.supabase.co

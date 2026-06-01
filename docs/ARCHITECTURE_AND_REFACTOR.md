@@ -1,5 +1,7 @@
 # Arhitectură și plan de refactorizare – MEDVBA (Expo SDK 54)
 
+> **Actualizat mai 2026:** Autentificarea este **Kinde → MEDVBA JWT → Supabase (date)**. Secțiunile **§1.4–1.5** și **§2.2 / §2.4** reflectă codul curent. Restul planului de refactor poate fi învechit — verifică înainte de schimbări mari. Sursă canonică auth: [AUTH_ARCHITECTURE.md](AUTH_ARCHITECTURE.md).
+
 ## 1. Arhitectură la nivel înalt
 
 ### 1.1 Navigare (Expo Router)
@@ -31,17 +33,21 @@
 
 ### 1.4 Data fetching
 
-- **Supabase:** client în `lib/supabase.ts` (createClient cu storage custom: SecureStore pe native, localStorage pe web; autoRefreshToken, persistSession).
-- **TanStack Query:** toate interacțiunile cu Supabase (study rooms, sessions, profile, progress, achievements, chats, activity feed, subscription, presence) sunt în `lib/supabase-hooks.ts` (~2000+ linii) – useQuery/useMutation cu queryKey-uri și invalidări la onSuccess.
-- **tRPC:** client în `lib/trpc.ts` (httpLink cu `headers()` care ia `supabase.auth.getSession()` și pasează Bearer token); backend Hono + `backend/trpc/` (create-context extrage token, protectedProcedure verifică existența token-ului; `account.deleteSelf` validează JWT cu Supabase Admin).
+- **Supabase:** client în `lib/supabase.ts` — PostgREST cu `persistSession: false`; request-urile folosesc `getMedvbaAccessToken()` + `ensureMedvbaSessionBeforeQuery()`. Storage adapter (SecureStore) există pentru compatibilitate, nu pentru Supabase Auth SDK login.
+- **TanStack Query:** interacțiuni Supabase în `lib/supabase-hooks.ts` — profile, progress, chat, subscription rows, etc.
+- **tRPC:** `lib/trpc.ts` trimite `Authorization: Bearer` cu **MEDVBA JWT** (`getMedvbaAccessToken()`). Backend: Hono + `backend/trpc/`; `protectedProcedure` pe `ctx.userId` din JWT; `account.deleteSelf` șterge profil + Kinde (M2M).
 
-**Fișiere cheie:** `lib/supabase.ts`, `lib/supabase-hooks.ts`, `lib/trpc.ts`, `backend/trpc/create-context.ts`, `backend/trpc/account.ts`.
+**Fișiere cheie:** `lib/supabase.ts`, `lib/medvba-session-storage.ts`, `lib/supabase-hooks.ts`, `lib/trpc.ts`, `providers/AuthProvider.tsx`, `backend/auth/session-routes.ts`.
 
-### 1.5 Autentificare
+### 1.5 Autentificare (Kinde — fără migrare la Supabase Auth)
 
-- **Flow:** Login/SignUp/ForgotPassword apelează `supabase.auth.signInWithPassword` / `signUp` / `resetPasswordForEmail`; la succes, `onAuthStateChange` actualizează session/user și `fetchProfile` populează profilul (sau creează profil dacă lipsește).
-- **Persistență:** Supabase Auth folosește storage-ul custom (SecureStore pe device), deci sesiunea persistă între restarts.
-- **Onboarding:** flag în AsyncStorage `@medvba_onboarding_complete`; dacă nu e completat, utilizatorul e redirecționat la `/(auth)/onboarding`.
+- **UI:** `app/(auth)/login.tsx` — Apple (iOS), Google, optional hosted email; în release `hideInAppPasswordAuth = !__DEV__` (fără ROPC în app).
+- **Provider:** `AuthProvider` + `@kinde/expo` — OAuth hosted, apoi `resolveMedvbaSessionFromKindeAccessToken` / `exchangeEmailPasswordSession` (dev/backend).
+- **Persistență:** MEDVBA JWT + Kinde refresh în **expo-secure-store** (`lib/medvba-session-storage.ts`).
+- **Profil:** `fetchProfile` / `ensureProfileExists` pe `profiles` (id = profile UUID din JWT, `kinde_sub` pe backend).
+- **Onboarding:** AsyncStorage — vezi `lib/onboarding-storage.ts` și redirect în `app/_layout.tsx`.
+
+Detalii: [AUTH_ARCHITECTURE.md](AUTH_ARCHITECTURE.md).
 
 ---
 
@@ -55,14 +61,14 @@
 
 **Fișiere:** `app/_layout.tsx` L88–129, L164–204.
 
-### 2.2 Supabase Auth în React Native
+### 2.2 Sesiune Kinde + MEDVBA JWT
 
-- **Puncte forte:** Storage custom (SecureStore pe native), autoRefreshToken, persistSession, timeout 15s pe getSession ca să nu rămână app-ul pe splash la blocare.
-- **Risc:** La `onAuthStateChange`, `fetchProfile` e apelat async; nu există retry sau backoff în caz de eroare de rețea.
-- **Risc:** Profile state în AuthProvider e separat de cache-ul TanStack Query pentru `userProfile`; invalidation după update profil (ex. din settings) se face prin `refreshProfile()` care apelează `fetchProfile` – deci două surse (context + query cache) care trebuie ținute în sync.
-- **AppState:** Presence este actualizat la `AppState` 'active' și la interval; e bine pentru „last seen”.
+- **Puncte forte:** Token-uri sensibile în SecureStore; bootstrap cu timeout; offline grace la sync eșuat.
+- **Risc:** Bootstrap `AuthProvider` complex (Kinde loading + cold restore + sync) — test cold start / logout manual.
+- **Risc:** Profile în context vs TanStack `userProfile` — păstrează `refreshProfile()` după editări.
+- **AppState:** presence / reconnect — `useOfflineReconnectEffect`.
 
-**Fișiere:** `lib/supabase.ts` L24–68, `providers/AuthProvider.tsx` L153–234, L335–386.
+**Fișiere:** `providers/AuthProvider.tsx`, `lib/ensure-medvba-session.ts`, `lib/medvba-session-storage.ts`.
 
 ### 2.3 TanStack Query
 
@@ -75,11 +81,11 @@
 
 ### 2.4 tRPC + Hono cu clientul mobil
 
-- **Flux:** Fiecare request tRPC trimite `Authorization: Bearer <access_token>` obținut din `supabase.auth.getSession()` în `lib/trpc.ts` L39–44.
-- **Risc:** Dacă token-ul a expirat și Supabase nu a făcut încă refresh, request-ul tRPC poate primi 401; clientul tRPC nu face retry cu token re-freshuit automat (trebuie refetch după refresh sau logică custom).
-- **Securitate backend:** `protectedProcedure` verifică doar prezența token-ului; `account.deleteSelf` validează JWT cu `supabaseAdmin.auth.getUser(ctx.token)` – corect.
+- **Flux:** `lib/trpc.ts` — `Authorization: Bearer` din `getMedvbaAccessToken()`; refresh prin `ensureMedvbaSessionBeforeQuery` la 401 pe Supabase fetch.
+- **Risc:** Token expirat → 401 până la refresh Kinde/MEDVBA; testează sesiune lungă și relaunch.
+- **Backend:** `protectedProcedure` + `account.deleteSelf` (service role, Kinde M2M delete).
 
-**Fișiere:** `lib/trpc.ts` L34–47, `backend/trpc/create-context.ts`, `backend/trpc/account.ts`.
+**Fișiere:** `lib/trpc.ts`, `backend/trpc/create-context.ts`, `backend/trpc/account.ts`.
 
 ---
 

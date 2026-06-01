@@ -51,6 +51,7 @@ jest.mock('expo-constants', () => ({
       apiBaseUrl: 'http://localhost:3000',
       EXPO_PUBLIC_KINDE_ISSUER_URL: 'https://test.kinde.com',
       EXPO_PUBLIC_KINDE_CLIENT_ID: 'test-client',
+      EXPO_PUBLIC_KINDE_EMAIL_CONNECTION_ID: 'conn_test_email',
       EXPO_PUBLIC_SHOW_FACEBOOK_LOGIN: 'false',
       EXPO_PUBLIC_FACEBOOK_LOGIN_ENABLED: 'false',
     } 

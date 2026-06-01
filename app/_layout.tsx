@@ -26,11 +26,13 @@ import { loadNotificationPreferences } from "@/lib/notification-preferences";
 import { en } from "@/locales/en";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { BootstrapLoadingOverlay } from "@/components/BootstrapLoadingOverlay";
+import { BiometricLockGate } from "@/components/BiometricLockGate";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { isPublicUnauthenticatedRoute } from "@/lib/auth-public-routes";
 import { resolvePostAuthHref, saveAuthReturnTo } from "@/lib/auth-return-url";
 import { PUBLIC_APP_NAME } from "@/lib/public-brand";
 import { fixHttpSchemeColonTypo } from "@/lib/fix-http-url-scheme-typo";
+import { sanitizeLogValue } from "@/lib/sanitize-log-value";
 
 let splashScreenAvailable = true;
 try {
@@ -79,29 +81,6 @@ const isRevenueCatAnonymousLogOutNoise = (args: unknown[]): boolean => {
   });
 };
 
-const sanitizeValue = (value: unknown): unknown => {
-  if (typeof value === "string") {
-    return value
-      .replace(
-        /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,
-        "[redacted-email]"
-      )
-      .replace(/(eyJ[a-zA-Z0-9_-]+?\.[a-zA-Z0-9_-]+?\.[a-zA-Z0-9_-]+?)/g, "[redacted-jwt]")
-      .replace(/(sb_publishable_[a-zA-Z0-9._-]+)/g, "[redacted-supabase-key]");
-  }
-  if (value && typeof value === 'object') {
-    try {
-      const serialized = JSON.stringify(value);
-      if (serialized) {
-        return sanitizeValue(serialized);
-      }
-    } catch {
-      return "[redacted-object]";
-    }
-  }
-  return value;
-};
-
 const originalConsoleError = console.error;
 const originalConsoleWarn = console.warn;
 const originalConsoleInfo = console.info;
@@ -113,23 +92,23 @@ console.error = (...args: unknown[]) => {
   if (__DEV__) {
     originalConsoleError(...args);
   } else {
-    originalConsoleError(...args.map(sanitizeValue));
+    originalConsoleError(...args.map(sanitizeLogValue));
   }
 };
 
 console.warn = (...args: unknown[]) => {
   if (isAbortSignalError(args)) return;
-  if (!__DEV__) originalConsoleWarn(...args.map(sanitizeValue));
+  if (!__DEV__) originalConsoleWarn(...args.map(sanitizeLogValue));
 };
 
 console.info = (...args: unknown[]) => {
   if (isAbortSignalError(args)) return;
-  if (!__DEV__) originalConsoleInfo(...args.map(sanitizeValue));
+  if (!__DEV__) originalConsoleInfo(...args.map(sanitizeLogValue));
 };
 
 console.debug = (...args: unknown[]) => {
   if (isAbortSignalError(args)) return;
-  if (!__DEV__) originalConsoleDebug(...args.map(sanitizeValue));
+  if (!__DEV__) originalConsoleDebug(...args.map(sanitizeLogValue));
 };
 
 if (!__DEV__) {
@@ -162,15 +141,17 @@ function useProtectedRoute(
   const router = useRouter();
   const [splashHidden, setSplashHidden] = React.useState(false);
 
-  useEffect(() => {
-    if (isLoading || isAuthBusy || languageBootstrap || !quizFontsLoaded) return;
+  const segs = segments as readonly string[];
+  const inAuthGroup = segs.length > 0 && segs[0] === '(auth)';
+  /** Kinde can stay "authenticated" without a MEDVBA JWT; do not freeze login/onboarding routes. */
+  const authBusyBlocksNavigation = isAuthBusy && !inAuthGroup;
 
-    const segs = segments as readonly string[];
+  useEffect(() => {
+    if (isLoading || authBusyBlocksNavigation || languageBootstrap || !quizFontsLoaded) return;
+
     if (segs.length === 0 || segs[0] === undefined) {
       return;
     }
-
-    const inAuthGroup = segs[0] === '(auth)';
     const isOnboarding = inAuthGroup && segs[1] === 'onboarding';
 
     if (!splashHidden && splashAvailable) {
@@ -213,7 +194,7 @@ function useProtectedRoute(
   }, [
     isAuthenticated,
     isLoading,
-    isAuthBusy,
+    authBusyBlocksNavigation,
     hasCompletedOnboarding,
     segments,
     router,
@@ -221,16 +202,17 @@ function useProtectedRoute(
     splashAvailable,
     languageBootstrap,
     quizFontsLoaded,
+    inAuthGroup,
   ]);
 
-  return isLoading || isAuthBusy || languageBootstrap || !quizFontsLoaded;
+  return isLoading || authBusyBlocksNavigation || languageBootstrap || !quizFontsLoaded;
 }
 
 function RootLayoutNav({ splashAvailable }: { splashAvailable: boolean }) {
   const { isLoading: isLanguageBootstrapping } = useLanguage();
   const { loaded: quizFontsLoaded } = useQuizFontsContext();
   /** Auth bootstrap overlay — Stack stays mounted so `Redirect` / `router.replace` to `(auth)` always has a navigator. */
-  const showAuthBootstrapOverlay = useProtectedRoute(
+  const authBootstrapBlocking = useProtectedRoute(
     splashAvailable,
     isLanguageBootstrapping,
     quizFontsLoaded,
@@ -238,6 +220,8 @@ function RootLayoutNav({ splashAvailable }: { splashAvailable: boolean }) {
   const segments = useSegments();
   const { colors, colorScheme } = useTheme();
   const inAuthGroup = segments[0] === "(auth)";
+  /** Keep login visible while Kinde/MEDVBA session sync runs (avoids full-screen spinner on auth routes). */
+  const showAuthBootstrapOverlay = authBootstrapBlocking && !inAuthGroup;
 
   React.useEffect(() => {
     if (Platform.OS === "web") return;
@@ -435,7 +419,9 @@ function AppProvidersTree() {
                     <SubscriptionProvider>
                       <QuizProgressProvider>
                         <GestureHandlerRootView style={{ flex: 1 }}>
-                          <RootLayoutNav splashAvailable={splashScreenAvailable} />
+                          <BiometricLockGate>
+                            <RootLayoutNav splashAvailable={splashScreenAvailable} />
+                          </BiometricLockGate>
                         </GestureHandlerRootView>
                       </QuizProgressProvider>
                     </SubscriptionProvider>

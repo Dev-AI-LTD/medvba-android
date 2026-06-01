@@ -64,6 +64,8 @@ export const es: Record<string, string> = {
     'El inicio de sesión por email no está configurado. Define EXPO_PUBLIC_KINDE_EMAIL_CONNECTION_ID en Kinde.',
   'auth.createAccountWithEmail': 'Crear cuenta con email',
   'auth.signInWithEmail': 'Iniciar sesión con email',
+  'auth.hostedEmailPasswordHint':
+    'La contraseña se introduce en la página segura de Kinde — no en esta pantalla de la app.',
   'auth.dontHaveAccount': '¿No tienes una cuenta?',
   'auth.alreadyHaveAccount': '¿Ya tienes una cuenta?',
   'auth.agreeToTerms': 'Al crear una cuenta, aceptas nuestros',
@@ -81,6 +83,8 @@ export const es: Record<string, string> = {
   'auth.loginFailed': 'Error al iniciar sesión. Por favor intenta de nuevo.',
   'auth.kindePasswordGrantUnavailable':
     'El inicio de sesión con correo no está disponible temporalmente. Usa Google o Apple arriba. Vuelve a intentarlo más tarde.',
+  'auth.sessionExchangeFailed':
+    'No se pudo completar el inicio de sesión. Comprueba la conexión e inténtalo de nuevo, o usa Apple o Google.',
   'auth.kindeSocialConnectionNotEnabled':
     'Este método no está habilitado en Kinde para la app MEDVBA. En Kinde: Applications → app nativa → Authentication → activa Apple. Connection ID en EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID y reinicia Metro.',
   'auth.productionEmailSignInHint':
@@ -468,7 +472,6 @@ export const es: Record<string, string> = {
   'social.missingInfo': 'Información faltante',
   'social.selectReasonMessage': 'Por favor selecciona un motivo para tu denuncia.',
   'social.errorTitle': 'Error',
-  'social.zoomStartError': 'Error al iniciar sesión de Zoom. Por favor intenta de nuevo.',
   'social.scheduleError': 'Error al programar sesión. Por favor intenta de nuevo.',
   'social.createRoomError': 'Error al crear sala de estudio. Por favor intenta de nuevo.',
   'social.roomNameRequiredAlert': 'Por favor ingresa un nombre para la sala.',
@@ -481,7 +484,6 @@ export const es: Record<string, string> = {
   'social.fillAllFields': 'Por favor completa todos los campos requeridos.',
   'social.min': 'min',
   'social.joined': 'unido',
-  'social.openZoom': 'Abrir Zoom',
   'social.endButton': 'Finalizar',
   'social.startSession': 'Iniciar sesión',
   'social.notYet': 'Aún no',
@@ -497,12 +499,7 @@ export const es: Record<string, string> = {
   'social.pathology': 'Patología',
   'social.pharmacology': 'Farmacología',
   'social.general': 'General',
-  'social.endZoomSessionTitle': 'Finalizar sesión',
-  'social.endZoomSessionMessage': '¿Estás seguro de que quieres finalizar esta sesión de Zoom?',
   'social.findPartners': 'Buscar Compañeros',
-  'social.meetingUrlOptional': 'URL de reunión (Opcional)',
-  'social.meetingUrlPlaceholder': 'https://zoom.us/j/... o enlace de Google Meet',
-  'social.meetingUrlHint': 'Añade un enlace de Zoom, Google Meet o Teams',
   'social.achievementUnlocked': 'Logro Desbloqueado',
 
   // Achievement Titles
@@ -548,6 +545,13 @@ export const es: Record<string, string> = {
   'settings.preferences': 'Preferencias',
   'settings.language': 'Idioma',
   'settings.languageSubtitle': 'La app abre en inglés. Cambia el idioma abajo cuando quieras.',
+  'settings.biometricLogin': 'Inicio de sesión biométrico',
+  'settings.biometricLoginSubtitle': 'Usa {type} para desbloquear MEDVBA más rápido tras iniciar sesión',
+  'settings.biometricLoginPrompt': 'Confirma para activar el inicio biométrico',
+  'settings.biometricLoginFailed': 'La autenticación biométrica falló. Inténtalo de nuevo o usa tu contraseña.',
+  'biometric.unlockTitle': 'Desbloquear con {type}',
+  'biometric.unlockSubtitle': 'Confirma tu identidad para seguir usando MEDVBA.',
+  'biometric.tryAgain': 'Intentar de nuevo',
   'settings.notifications': 'Notificaciones',
   'settings.notificationsSubtitle': 'Gestionar notificaciones push',
   'settings.appearance': 'Apariencia',
@@ -676,14 +680,6 @@ export const es: Record<string, string> = {
   'deleteAccount.deleteButton': 'Eliminar mi cuenta',
   'deleteAccount.footerNote':
     'Al continuar, reconoces que esta acción es irreversible y que todos tus datos se eliminarán de forma permanente de nuestros servidores.',
-
-  // Permissions
-  'permissions.zoom.title': 'Unirse a sala de estudio',
-  'permissions.zoom.message': 'Cuando te unes a una sala de estudio a través de Zoom, se te puede pedir que concedas permisos de cámara y micrófono. Estos permisos te permiten participar en discusiones de video con otros estudiantes.\n\nPuedes:\n• Unirte con video y audio\n• Unirte solo con audio\n• Unirte solo como espectador\n\nZoom solicitará estos permisos cuando abras la reunión.',
-  'permissions.zoom.understand': 'Entiendo',
-  'permissions.zoom.cancel': 'Cancelar',
-  'permissions.zoom.hostTitle': 'Iniciar sala de estudio',
-  'permissions.zoom.hostMessage': 'Como anfitrión, necesitarás conceder permisos de cámara y micrófono cuando se abra Zoom. Esto te permite comunicarte con los estudiantes que se unan a tu sala de estudio.\n\nZoom solicitará estos permisos automáticamente cuando comience la reunión.',
 
   // Notifications Settings
   'notifications.title': 'Notificaciones',

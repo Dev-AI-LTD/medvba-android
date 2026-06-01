@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import createContextHook from '@nkzw/create-context-hook';
 import Purchases from 'react-native-purchases';
 import type { CustomerInfo } from 'react-native-purchases';
 import { ENTITLEMENT_ID, FREE_AI_LIMIT, FREE_QUIZ_ANSWER_LIMIT } from '@/constants/subscription';
+import { isAppReviewPremiumEmail } from '@/lib/app-review-premium';
 import { useAuth } from '@/providers/AuthProvider';
 import { useUpdateSubscription } from '@/lib/supabase-hooks';
 import { log } from '@/lib/log';
@@ -108,6 +109,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     !isRevenueCatTestApiKeyInRelease(REVENUECAT_API_KEY) &&
     !isRevenueCatWrongPlatformApiKeyInRelease(REVENUECAT_API_KEY);
   const { user } = useAuth();
+  const isReviewPremiumAccount = isAppReviewPremiumEmail(user?.email);
   const updateSubscriptionMutation = useUpdateSubscription();
   const updateSubscriptionMutateAsyncRef = useRef(updateSubscriptionMutation.mutateAsync);
   updateSubscriptionMutateAsyncRef.current = updateSubscriptionMutation.mutateAsync;
@@ -123,6 +125,8 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     isLoading: true,
     offerings: null,
   });
+
+  const hasPremiumAccess = state.isPremium || isReviewPremiumAccount;
 
   const currentOfferingRef = useRef<any>(null);
   const didLogRevenueCatConfigErrorRef = useRef(false);
@@ -208,23 +212,23 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
 
   const canStartQuiz = useCallback((): boolean => {
     if (!PAYWALL_ENABLED) return true;
-    if (state.isPremium) return true;
+    if (hasPremiumAccess) return true;
     if (!user?.id) return false;
     return state.freeQuestionsAnsweredTotal < FREE_QUIZ_ANSWER_LIMIT;
-  }, [PAYWALL_ENABLED, state.isPremium, state.freeQuestionsAnsweredTotal, user?.id]);
+  }, [PAYWALL_ENABLED, hasPremiumAccess, state.freeQuestionsAnsweredTotal, user?.id]);
 
   const canAskAiQuestion = useCallback((): boolean => {
     if (!PAYWALL_ENABLED) return true;
-    if (state.isPremium) return true;
+    if (hasPremiumAccess) return true;
     return state.freeAiQuestionsToday < FREE_AI_LIMIT;
-  }, [PAYWALL_ENABLED, state.isPremium, state.freeAiQuestionsToday]);
+  }, [PAYWALL_ENABLED, hasPremiumAccess, state.freeAiQuestionsToday]);
 
   const incrementQuizCount = useCallback(async (): Promise<boolean> => {
     if (!PAYWALL_ENABLED) {
       log.debug('[Subscription] Paywall disabled - skipping quiz limit');
       return true;
     }
-    if (state.isPremium) {
+    if (hasPremiumAccess) {
       log.debug('[Subscription] Premium user - no quiz limit');
       return true;
     }
@@ -239,13 +243,13 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     }
 
     return true;
-  }, [PAYWALL_ENABLED, state.isPremium, state.freeQuestionsAnsweredTotal, user?.id]);
+  }, [PAYWALL_ENABLED, hasPremiumAccess, state.freeQuestionsAnsweredTotal, user?.id]);
 
   const incrementQuestionAnsweredCount = useCallback(async (): Promise<boolean> => {
     if (!PAYWALL_ENABLED) {
       return true;
     }
-    if (state.isPremium) {
+    if (hasPremiumAccess) {
       return true;
     }
 
@@ -265,7 +269,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       log.error('[Subscription] Error incrementing free quiz daily count:', error);
       return true;
     }
-  }, [PAYWALL_ENABLED, state.isPremium, state.freeQuestionsAnsweredTotal, user?.id, todayKey]);
+  }, [PAYWALL_ENABLED, hasPremiumAccess, state.freeQuestionsAnsweredTotal, user?.id, todayKey]);
 
   const validateAiQuestionMutation = trpc.subscription.validateAiQuestion.useMutation();
   const validateAiMutateAsyncRef = useRef(validateAiQuestionMutation.mutateAsync);
@@ -273,16 +277,16 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
 
   const getRemainingQuizzes = useCallback((): number => {
     if (!PAYWALL_ENABLED) return Infinity;
-    if (state.isPremium) return Infinity;
+    if (hasPremiumAccess) return Infinity;
     if (!user?.id) return 0;
     return Math.max(0, FREE_QUIZ_ANSWER_LIMIT - state.freeQuestionsAnsweredTotal);
-  }, [PAYWALL_ENABLED, state.isPremium, state.freeQuestionsAnsweredTotal, user?.id]);
+  }, [PAYWALL_ENABLED, hasPremiumAccess, state.freeQuestionsAnsweredTotal, user?.id]);
 
   const getRemainingAiQuestions = useCallback((): number => {
     if (!PAYWALL_ENABLED) return Infinity;
-    if (state.isPremium) return Infinity;
+    if (hasPremiumAccess) return Infinity;
     return Math.max(0, FREE_AI_LIMIT - state.freeAiQuestionsToday);
-  }, [PAYWALL_ENABLED, state.isPremium, state.freeAiQuestionsToday]);
+  }, [PAYWALL_ENABLED, hasPremiumAccess, state.freeAiQuestionsToday]);
 
   const syncAiQuestionCountFromServer = useCallback(async (): Promise<void> => {
     if (!PAYWALL_ENABLED || state.isPremium) return;
@@ -359,6 +363,9 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       if (!PAYWALL_ENABLED || !user?.id) return;
 
       const premium = isPremiumFromCustomerInfo(info);
+      if (!premium && isReviewPremiumAccount) {
+        return;
+      }
       const signature = premium
         ? `premium:${inferSubscriptionTypeFromCustomerInfo(info)}`
         : 'free';
@@ -381,7 +388,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
         }
       }, 800);
     },
-    [PAYWALL_ENABLED, user?.id],
+    [PAYWALL_ENABLED, user?.id, isReviewPremiumAccount],
   );
 
   const scheduleRevenueCatSupabaseSyncRef = useRef(scheduleRevenueCatSupabaseSync);
@@ -514,6 +521,27 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     };
   }, [PAYWALL_ENABLED, REVENUECAT_API_KEY, revenueCatUsable, IS_NATIVE, user?.id]);
 
+  /** Refresh entitlement when app returns to foreground (purchase outside app, family sharing, etc.). */
+  useEffect(() => {
+    if (!PAYWALL_ENABLED || !revenueCatUsable || !IS_NATIVE || !user?.id) return;
+
+    const sub = AppState.addEventListener('change', (nextState) => {
+      if (nextState !== 'active') return;
+      void (async () => {
+        try {
+          if (!revenueCatConfiguredRef.current) return;
+          const customerInfo = await Purchases.getCustomerInfo();
+          lastSyncedSignatureRef.current = null;
+          handleCustomerInfoRef.current(customerInfo);
+        } catch {
+          /* non-fatal */
+        }
+      })();
+    });
+
+    return () => sub.remove();
+  }, [PAYWALL_ENABLED, revenueCatUsable, IS_NATIVE, user?.id]);
+
   const purchasePackage = useCallback(
     async (packageId: string): Promise<boolean> => {
       if (!PAYWALL_ENABLED || !revenueCatUsable) {
@@ -574,7 +602,13 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     }
   }, [PAYWALL_ENABLED, revenueCatUsable]);
 
-  const effectivePremium = PAYWALL_ENABLED ? state.isPremium : true;
+  const effectivePremium = !PAYWALL_ENABLED || hasPremiumAccess;
+
+  useEffect(() => {
+    if (!isReviewPremiumAccount || !user?.id) return;
+    invalidateStudyQueries();
+    log.debug('[Subscription] App review premium account — study queries invalidated');
+  }, [isReviewPremiumAccount, user?.id, invalidateStudyQueries]);
 
   return useMemo(
     () => ({
@@ -600,6 +634,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     }),
     [
       effectivePremium,
+      isReviewPremiumAccount,
       PAYWALL_ENABLED,
       state.isLoading,
       state.freeQuizzesToday,

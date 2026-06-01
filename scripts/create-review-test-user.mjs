@@ -12,6 +12,7 @@ import http from 'http';
 import https from 'https';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { grantReviewPremiumInSupabase } from './lib/grant-review-premium-supabase.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, '..');
@@ -160,17 +161,40 @@ async function main() {
   if (reg.res.ok) {
     console.log('✅ Cont creat și sesiune OK (register).');
     console.log('   profile_id:', reg.json.profile_id ?? '(see response)');
+    await tryGrantPremium(reg.json.profile_id);
     console.log('\nApp Store Connect → App Review Information:');
     console.log(`   Username: ${email}`);
     console.log('   Password: (din VERIFY_AUTH_PASSWORD în .env)');
     return 0;
   }
 
+  const tryGrantPremium = async (profileId) => {
+    const supabaseUrl = pick('SUPABASE_URL') || pick('EXPO_PUBLIC_SUPABASE_URL');
+    const serviceRoleKey = pick('SUPABASE_SERVICE_ROLE_KEY');
+    if (!profileId || !supabaseUrl || !serviceRoleKey) {
+      if (!serviceRoleKey) {
+        console.log(
+          '\nℹ️  Premium Supabase: setează SUPABASE_SERVICE_ROLE_KEY în .env, apoi npm run grant-review-premium',
+        );
+      }
+      return;
+    }
+    try {
+      await grantReviewPremiumInSupabase({ supabaseUrl, serviceRoleKey, userId: profileId });
+      console.log('✅ Premium Supabase activat pentru contul de review.');
+    } catch (e) {
+      console.warn('⚠️  Premium Supabase:', e instanceof Error ? e.message : e);
+      console.warn('   Rulează: npm run grant-review-premium');
+    }
+  };
+
   if (reg.res.status === 409) {
     console.log('ℹ️  Email deja înregistrat — testez login (session)...');
     const login = await postJson(`${base}/api/auth/session`, { email, password });
     if (login.res.ok) {
       console.log('✅ Login email+parolă OK.');
+      console.log('   profile_id:', login.json.profile_id ?? '(see response)');
+      await tryGrantPremium(login.json.profile_id);
       console.log('\nApp Store Connect → App Review Information:');
       console.log(`   Username: ${email}`);
       console.log('   Password: (din VERIFY_AUTH_PASSWORD în .env)');

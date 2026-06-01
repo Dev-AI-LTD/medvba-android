@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import * as Speech from 'expo-speech';
+import { setAudioModeAsync } from 'expo-audio';
 import { log } from '@/lib/log';
 
 const MAX_CHUNK_CHARS = 3200;
@@ -45,9 +46,19 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** No native audio module required — TTS uses the system speech engine. */
+/** iOS: allow TTS in silent mode; MP3 player uses the same mode. */
 export async function prepareAudioModeForPlayback(): Promise<void> {
-  return;
+  if (Platform.OS !== 'ios' && Platform.OS !== 'android') return;
+  try {
+    await setAudioModeAsync({
+      playsInSilentMode: true,
+      interruptionMode: 'duckOthers',
+      allowsRecording: false,
+      shouldPlayInBackground: false,
+    });
+  } catch (e) {
+    log.warn('[StudySpeech] setAudioModeAsync failed:', e);
+  }
 }
 
 export type StudySpeechSession = {
@@ -134,6 +145,7 @@ export function startStudySpeech(
   };
 
   void (async () => {
+    await prepareAudioModeForPlayback();
     await delay(SPEAK_DELAY_MS);
     if (stopped) return;
     Speech.stop();

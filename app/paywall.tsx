@@ -14,6 +14,7 @@ import { Stack, router } from 'expo-router';
 import { useThemeSafe } from '@/providers/ThemeProvider';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import { presentPaywall, PAYWALL_RESULT } from '@/lib/revenuecat';
+import { log } from '@/lib/log';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { FREE_FEATURE_KEYS, getFreeFeatureLines } from '@/constants/subscription';
 import {
@@ -93,7 +94,7 @@ export default function PaywallScreen() {
         }
         setStatus('error');
       } catch (error) {
-        console.error('[Paywall] Error:', error);
+        log.error('[Paywall] presentPaywall failed', error);
         if (mounted) {
           setStatus('error');
         }

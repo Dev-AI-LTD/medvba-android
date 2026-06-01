@@ -1,6 +1,7 @@
+import { sanitizeLogArgs } from '@/lib/sanitize-log-value';
+
 const isDevelopment = __DEV__;
 
-// Lazy load Sentry only when needed to avoid circular dependencies
 let sentry: any = null;
 const getSentry = () => {
   if (!sentry) {
@@ -19,24 +20,24 @@ export const log = {
       console.log(`[INFO] ${message}`, ...args);
     }
   },
-  
+
   warn: (message: string, ...args: unknown[]) => {
     if (isDevelopment) {
       console.warn(`[WARN] ${message}`, ...args);
     }
   },
-  
+
   error: (message: string, ...args: unknown[]) => {
-    console.error(`[ERROR] ${message}`, ...args);
-    // In production, also send to Sentry if available
+    const safeArgs = sanitizeLogArgs(args);
+    console.error(`[ERROR] ${message}`, ...safeArgs);
     const sentryInstance = getSentry();
     if (sentryInstance && !isDevelopment) {
       sentryInstance.captureException(new Error(message), {
-        extra: { args },
+        extra: { args: safeArgs },
       });
     }
   },
-  
+
   debug: (message: string, ...args: unknown[]) => {
     if (isDevelopment) {
       console.log(`[DEBUG] ${message}`, ...args);

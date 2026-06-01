@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import { useEffect, useLayoutEffect, useState, useCallback, useRef, useMemo } from 'react';
 import type { Session, User, AuthError } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQueryClient } from '@tanstack/react-query';
@@ -39,6 +39,7 @@ import {
   buildKindeSignInHint,
   buildKindeSocialSignInHint,
 } from '@/lib/kinde-hosted-hints';
+import { getKindeLoginHintEmail } from '@/lib/app-review-premium';
 import { clearPersistedQueryCache } from '@/lib/query-client';
 import { shouldClearMedvbaSessionAfterSyncFailure } from '@/lib/auth-sync-failure';
 import { isLikelyAuthConnectivityFailure } from '@/lib/auth-connectivity-errors';
@@ -55,6 +56,10 @@ import {
   markUserOnboardingComplete,
   promoteGuestOnboardingToUser,
 } from '@/lib/onboarding-storage';
+import {
+  registerMedvbaSessionRefresher,
+  unregisterMedvbaSessionRefresher,
+} from '@/lib/ensure-medvba-session';
 
 export const AUTH_SIGN_IN_CANCELLED = 'SIGN_IN_CANCELLED';
 
@@ -236,7 +241,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   /** Last successful `fetchProfile` completion by `profile_id` (for deduping `syncFromKinde` background fetch). */
   const recentProfileFetchRef = useRef<{ profileId: string; at: number } | null>(null);
   /** Avoid overlapping Kinde→MEDVBA refresh runs (interval + AppState). */
-  const sessionRefreshInFlightRef = useRef(false);
+  const sessionRefreshInFlightRef = useRef<Promise<void> | null>(null);
   /** Hosted Kinde OAuth in progress (state so navigators re-render; ref alone would not). */
   const [hostedOAuthInFlight, setHostedOAuthInFlight] = useState(false);
   const [offlineSessionGrace, setOfflineSessionGrace] = useState(false);
@@ -265,6 +270,18 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     recentProfileFetchRef.current = null;
     setHostedOAuthInFlight(false);
   }, []);
+
+  /** Kinde can report authenticated without a MEDVBA JWT — causes infinite bootstrap overlay on cold start. */
+  const reconcileStaleKindeSession = useCallback(async () => {
+    if (getMedvbaAccessToken()) return;
+    if (!kinde.isAuthenticated) return;
+    log.info('[Auth] Clearing stale Kinde session (no MEDVBA JWT)');
+    try {
+      await kinde.logout({ revokeToken: false });
+    } catch {
+      /* ignore */
+    }
+  }, [kinde]);
 
   const ensureUserExists = useCallback(
     async (userId: string, email: string | undefined, name: string | undefined, mounted?: { current: boolean }) => {
@@ -440,48 +457,63 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   }, [applyMedvbaSession, clearMedvbaSession, fetchProfile]);
 
   const refreshMedvbaIfNeeded = useCallback(async () => {
-    if (sessionRefreshInFlightRef.current) return;
-    if (!shouldRefreshMedvbaAccessToken(MEDVBA_JWT_REFRESH_BUFFER_MS)) return;
+    if (sessionRefreshInFlightRef.current) {
+      await sessionRefreshInFlightRef.current;
+      return;
+    }
+    const expired = shouldRefreshMedvbaAccessToken(0);
+    const expiringSoon = shouldRefreshMedvbaAccessToken(MEDVBA_JWT_REFRESH_BUFFER_MS);
+    if (!expired && !expiringSoon) return;
 
     const k = kindeRef.current;
-    sessionRefreshInFlightRef.current = true;
-    try {
-      if (k.isAuthenticated) {
-        await syncFromKinde();
-      } else {
-        const rt = await loadMedvbaKindeRefreshToken();
-        if (!rt) return;
-        const ex = await exchangeKindeRefreshToken(rt);
-        if (!ex.ok) {
-          if (isConnectivityExchangeFailure(ex.error, ex.status, ex.kind) && medvbaJwtHasMinTtlSeconds(0)) {
-            log.warn('[Auth] MEDVBA refresh deferred (offline); keeping local session');
-            setOfflineSessionGrace(true);
+    const run = (async () => {
+      try {
+        if (k.isAuthenticated) {
+          await syncFromKinde();
+        } else {
+          const rt = await loadMedvbaKindeRefreshToken();
+          if (!rt) return;
+          const ex = await exchangeKindeRefreshToken(rt);
+          if (!ex.ok) {
+            if (isConnectivityExchangeFailure(ex.error, ex.status, ex.kind) && medvbaJwtHasMinTtlSeconds(0)) {
+              log.warn('[Auth] MEDVBA refresh deferred (offline); keeping local session');
+              setOfflineSessionGrace(true);
+              return;
+            }
+            log.warn('[Auth] MEDVBA refresh (Kinde refresh_token) failed:', ex.error);
+            await persistMedvbaKindeRefreshToken(null);
+            clearMedvbaSession();
             return;
           }
-          log.warn('[Auth] MEDVBA refresh (Kinde refresh_token) failed:', ex.error);
-          await persistMedvbaKindeRefreshToken(null);
-          clearMedvbaSession();
-          return;
+          let emailFromJwt: string | null = null;
+          try {
+            const c = decodeJwtClaims(ex.access_token);
+            if (typeof c.email === 'string' && c.email.length > 0) emailFromJwt = c.email;
+          } catch {
+            /* ignore */
+          }
+          await applyMedvbaSession(ex.access_token, ex.profile_id, emailFromJwt ?? undefined);
+          await persistMedvbaKindeRefreshToken(ex.refresh_token ?? rt);
         }
-        let emailFromJwt: string | null = null;
-        try {
-          const c = decodeJwtClaims(ex.access_token);
-          if (typeof c.email === 'string' && c.email.length > 0) emailFromJwt = c.email;
-        } catch {
-          /* ignore */
+        if (getMedvbaAccessToken()) {
+          await queryClient.invalidateQueries();
         }
-        await applyMedvbaSession(ex.access_token, ex.profile_id, emailFromJwt ?? undefined);
-        await persistMedvbaKindeRefreshToken(ex.refresh_token ?? rt);
+      } catch (err) {
+        log.warn('[Auth] MEDVBA session refresh failed:', err);
       }
-      if (getMedvbaAccessToken()) {
-        await queryClient.invalidateQueries();
-      }
-    } catch (err) {
-      log.warn('[Auth] MEDVBA session refresh failed:', err);
+    })();
+    sessionRefreshInFlightRef.current = run;
+    try {
+      await run;
     } finally {
-      sessionRefreshInFlightRef.current = false;
+      sessionRefreshInFlightRef.current = null;
     }
   }, [syncFromKinde, queryClient, applyMedvbaSession, clearMedvbaSession]);
+
+  useLayoutEffect(() => {
+    registerMedvbaSessionRefresher(() => refreshMedvbaIfNeeded());
+    return () => unregisterMedvbaSessionRefresher();
+  }, [refreshMedvbaIfNeeded]);
 
   useEffect(() => {
     if (!session) return undefined;
@@ -665,12 +697,15 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
                 } else if (shouldClearMedvbaSessionAfterSyncFailure()) {
                   clearMedvbaSession();
                 }
+                await reconcileStaleKindeSession();
               }
             } else if (!kinde.isLoading && !restoredMedvba && !getMedvbaAccessToken()) {
               // Do not clear an in-flight or just-applied MEDVBA session (e.g. email/password or
               // post-hosted-login) when SecureStore restore hasn't run yet but memory already has the JWT.
               clearMedvbaSession();
+              await reconcileStaleKindeSession();
             }
+            await reconcileStaleKindeSession();
             boot('inner_end');
           })(),
           45000,
@@ -683,10 +718,12 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
         } else {
           clearMedvbaSession();
         }
+        await reconcileStaleKindeSession();
       } finally {
         if (initSeq !== authInitSeqRef.current) {
           return;
         }
+        await reconcileStaleKindeSession();
         // Only the latest auth init may mark the app ready; stale inits can finish after auth SDK deps change.
         setIsLoading(false);
         (globalThis as Record<string, unknown>)[AUTH_READY_GLOBAL] = true;
@@ -704,6 +741,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     syncFromKinde,
     clearMedvbaSession,
     fetchProfile,
+    reconcileStaleKindeSession,
   ]);
 
   useEffect(() => {
@@ -764,11 +802,26 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
       const perf = authPerfStep(flowLabel);
       if (!res.success) {
         if (/cancel|dismiss|closed/i.test(res.errorMessage || '')) {
+          try {
+            await kinde.logout({ revokeToken: false });
+          } catch {
+            /* ignore */
+          }
           return { error: { message: AUTH_SIGN_IN_CANCELLED } as AuthError };
+        }
+        try {
+          await kinde.logout({ revokeToken: false });
+        } catch {
+          /* ignore */
         }
         return { error: { message: res.errorMessage || 'Authentication failed' } as AuthError };
       }
       if (!res.accessToken) {
+        try {
+          await kinde.logout({ revokeToken: false });
+        } catch {
+          /* ignore */
+        }
         return { error: { message: 'Authentication failed' } as AuthError };
       }
       const resolved = await resolveMedvbaSessionFromKindeAccessToken(res.accessToken, () =>
@@ -776,6 +829,11 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
       );
       perf('after_exchange_parallel_getUserProfile');
       if (!resolved.ok) {
+        try {
+          await kinde.logout({ revokeToken: false });
+        } catch {
+          /* Reset Kinde session so login screen is not stuck behind isAuthBusy overlay */
+        }
         return { error: { message: resolved.error } as AuthError };
       }
       await applyMedvbaSession(resolved.access_token, resolved.profile_id, resolved.email);
@@ -802,12 +860,13 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
         perf('after_kinde.login');
         return await completeHostedKindeAuth(res, 'signInWithKindeHosted');
       } catch (error) {
+        await reconcileStaleKindeSession();
         return { error: error as AuthError };
       } finally {
         setHostedOAuthInFlight(false);
       }
     },
-    [kinde, completeHostedKindeAuth],
+    [kinde, completeHostedKindeAuth, reconcileStaleKindeSession],
   );
 
   const signUpWithKindeHosted = useCallback(
@@ -820,12 +879,13 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
         perf('after_kinde.register');
         return await completeHostedKindeAuth(res, 'signUpWithKindeHosted');
       } catch (error) {
+        await reconcileStaleKindeSession();
         return { error: error as AuthError };
       } finally {
         setHostedOAuthInFlight(false);
       }
     },
-    [kinde, completeHostedKindeAuth],
+    [kinde, completeHostedKindeAuth, reconcileStaleKindeSession],
   );
 
   const facebookConnectionId = String(
@@ -861,17 +921,16 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
           error: { message: 'Email sign-in is not configured for this build.' } as AuthError,
         };
       }
-      const hint = buildKindeSignInHint({
-        emailConnectionId,
-        email: email?.trim(),
-      });
+      const loginHint =
+        email?.includes('@') ? email.trim().toLowerCase() : getKindeLoginHintEmail();
+      const hint = buildKindeSignInHint({ emailConnectionId, email: loginHint });
       return signInWithKindeHosted(hint);
     },
     [emailConnectionId, signInWithKindeHosted],
   );
 
   const signUpWithEmailHosted = useCallback(
-    async (email?: string) => {
+    async (_email?: string) => {
       if (Platform.OS === 'web') {
         return { error: { message: 'Email sign-up is not available on web' } as AuthError };
       }
@@ -880,10 +939,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
           error: { message: 'Email sign-up is not configured for this build.' } as AuthError,
         };
       }
-      const hint = buildKindeRegisterHint({
-        emailConnectionId,
-        email: email?.trim(),
-      });
+      const hint = buildKindeRegisterHint({ emailConnectionId });
       return signUpWithKindeHosted(hint);
     },
     [emailConnectionId, signUpWithKindeHosted],
@@ -915,13 +971,22 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     if (Platform.OS === 'web') {
       return { error: { message: 'Apple Sign-In is not available on web' } as AuthError };
     }
+    if (Platform.OS !== 'ios') {
+      return { error: { message: 'Apple Sign-In is only available on iOS' } as AuthError };
+    }
     if (!appleConnectionId) {
       log.warn(
         '[Auth] EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID is empty. Add the Connection ID from Kinde (Settings → Authentication → Apple).',
       );
+      return {
+        error: {
+          message:
+            'Sign in with Apple is not configured for this build. Set EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID in EAS production.',
+        } as AuthError,
+      };
     }
     return signInWithKindeHosted(
-      buildKindeSocialSignInHint(appleConnectionId || undefined),
+      buildKindeSocialSignInHint(appleConnectionId),
     );
   }, [appleConnectionId, signInWithKindeHosted]);
 

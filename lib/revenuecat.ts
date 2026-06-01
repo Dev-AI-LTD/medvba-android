@@ -6,6 +6,7 @@ import { Platform } from 'react-native';
 import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
 import Purchases from 'react-native-purchases';
 import { ENTITLEMENT_ID } from '@/constants/subscription';
+import { log } from '@/lib/log';
 
 const IS_NATIVE = Platform.OS === 'ios' || Platform.OS === 'android';
 
@@ -50,7 +51,7 @@ export async function presentPaywall(): Promise<PAYWALL_RESULT> {
   try {
     const ready = await offeringHasStoreProducts();
     if (!ready) {
-      console.warn(
+      log.warn(
         '[RevenueCat] Store products not loaded (ASC metadata / sandbox). Skipping paywall UI.',
       );
       return PAYWALL_RESULT.NOT_PRESENTED;
@@ -58,10 +59,10 @@ export async function presentPaywall(): Promise<PAYWALL_RESULT> {
     return await RevenueCatUI.presentPaywall({ displayCloseButton: true });
   } catch (error) {
     if (isRevenueCatConfigurationError(error)) {
-      console.warn('[RevenueCat] presentPaywall configuration error:', error);
+      log.warn('[RevenueCat] presentPaywall configuration error:', error);
       return PAYWALL_RESULT.NOT_PRESENTED;
     }
-    console.error('[RevenueCat] presentPaywall error:', error);
+    log.error('[RevenueCat] presentPaywall error:', error);
     return PAYWALL_RESULT.ERROR;
   }
 }
@@ -87,7 +88,7 @@ export async function presentPaywallIfNeeded(): Promise<PAYWALL_RESULT> {
     if (isRevenueCatConfigurationError(error)) {
       return PAYWALL_RESULT.NOT_PRESENTED;
     }
-    console.error('[RevenueCat] presentPaywallIfNeeded error:', error);
+    log.error('[RevenueCat] presentPaywallIfNeeded error:', error);
     return PAYWALL_RESULT.ERROR;
   }
 }
@@ -98,22 +99,22 @@ export async function presentPaywallIfNeeded(): Promise<PAYWALL_RESULT> {
  */
 export async function presentCustomerCenter(): Promise<void> {
   if (!IS_NATIVE) {
-    console.warn('[RevenueCat] Customer Center is not available on web');
+    log.warn('[RevenueCat] Customer Center is not available on web');
     return;
   }
   try {
     await RevenueCatUI.presentCustomerCenter({
       callbacks: {
         onRestoreCompleted: ({ customerInfo }) => {
-          console.log('[RevenueCat] Restore completed:', customerInfo.originalAppUserId);
+          log.debug('[RevenueCat] Restore completed:', customerInfo.originalAppUserId);
         },
         onRestoreFailed: ({ error }) => {
-          console.error('[RevenueCat] Restore failed:', error.message);
+          log.error('[RevenueCat] Restore failed:', error.message);
         },
       },
     });
   } catch (error) {
-    console.error('[RevenueCat] presentCustomerCenter error:', error);
+    log.error('[RevenueCat] presentCustomerCenter error:', error);
   }
 }
 
@@ -126,7 +127,7 @@ export async function checkEntitlement(): Promise<boolean> {
     const customerInfo = await Purchases.getCustomerInfo();
     return customerInfo.entitlements.active[ENTITLEMENT_ID] != null;
   } catch (error) {
-    console.error('[RevenueCat] checkEntitlement error:', error);
+    log.error('[RevenueCat] checkEntitlement error:', error);
     return false;
   }
 }

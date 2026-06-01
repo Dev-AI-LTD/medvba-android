@@ -9,7 +9,7 @@ const PERSISTED_QUERY_ROOTS = new Set([
   'weeklyProgress',
   'dailyProgress',
   'userAchievements',
-  'subscription',
+  // subscription: omit — premium comes from RevenueCat; stale cache caused wrong gating
 ]);
 
 const ONE_WEEK_MS = 1000 * 60 * 60 * 24 * 7;
