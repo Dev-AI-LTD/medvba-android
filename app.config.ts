@@ -156,7 +156,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       supportsTablet: false,
       bundleIdentifier: 'com.devaieood.medvba',
       icon: './assets/images/icon.png',
-      buildNumber: '58',
+      buildNumber: '61',
       // Required for @invertase/react-native-apple-authentication (EAS / prebuild).
       entitlements: {
         'com.apple.developer.applesignin': ['Default'],
@@ -166,6 +166,8 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
           'MEDVBA accesses your photo library so you can choose or update your profile picture.',
         NSFaceIDUsageDescription:
           'MEDVBA uses Face ID to unlock the app quickly when you enable biometric login in Settings.',
+        NSUserNotificationsUsageDescription:
+          'MEDVBA sends local study reminders at the time you choose in Settings. Push alerts for chat are not enabled in this version.',
         ITSAppUsesNonExemptEncryption: false,
       },
     },

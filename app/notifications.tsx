@@ -9,6 +9,7 @@ import {
   Platform,
   Alert,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -157,7 +158,16 @@ export default function NotificationsScreen() {
   if (!settings) {
     return (
       <Screen withGradient edges={['top', 'bottom']}>
-        <View />
+        <ScreenHeader
+          layout="stack-centered"
+          onBack={() => router.back()}
+          title={t('notifications.title')}
+          backVariant="pill"
+          bordered
+        />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
       </Screen>
     );
   }
@@ -478,5 +488,11 @@ const createStyles = (colors: {
       fontSize: 13,
       color: colors.primary,
       lineHeight: 18,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: screenPaddingX,
     },
   });

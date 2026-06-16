@@ -9,7 +9,7 @@ Positioning: **medical exam prep** — quiz, study+audio, AI tutor, **Chat** (no
 ## Promotional Text (max 170 characters)
 
 ```
-30,000+ anatomy quizzes, AI tutor, chapter summaries with audio, and detailed progress stats — built for medical exam prep.
+Thousands of anatomy quizzes, AI tutor, chapter summaries with audio, and detailed progress stats — built for medical exam prep.
 ```
 
 ---
@@ -22,7 +22,7 @@ Use as base; adjust length to ASC limits.
 MEDVBA helps you prepare for medical school admission and anatomy exams with thousands of multiple-choice questions, structured study chapters, and an AI tutor.
 
 QUIZ
-• 30,000+ questions across anatomy, physiology, pathology, and more
+• Thousands of questions across anatomy, physiology, pathology, and more
 • Chapter-based practice and timed sessions
 • Detailed accuracy and progress tracking
 

@@ -153,9 +153,19 @@ async function main() {
             const verified =
               u.is_email_verified ??
               u.email_verified ??
+              u.is_verified ??
+              u.verified ??
               emailId?.is_verified ??
               emailId?.verified ??
-              null;
+              (Array.isArray(identities) &&
+              identities.some(
+                (i) =>
+                  i.is_verified === true ||
+                  i.verified === true ||
+                  String(i.details?.email_verified ?? '').toLowerCase() === 'true',
+              )
+                ? true
+                : null);
             const signIns = u.sign_ins ?? u.total_sign_ins ?? null;
             if (verified === true) {
               console.log('✅ Kinde: email marcat verified (API)');

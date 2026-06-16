@@ -1037,7 +1037,8 @@ export const ro: Record<string, string> = {
   'paywall.upgradeButton': 'Upgrade la Premium',
   'paywall.restoreButton': 'Returnează Achizițiile',
   'paywall.continueFree': 'Continuă Gratuit',
-  'paywall.disclaimer': 'Prețurile sunt în RON. Abonamentul se reînnoiește automat. Poți anula oricând.',
+  'paywall.disclaimer':
+    'Abonamentul se reînnoiește automat. Poți anula oricând din setările contului App Store.',
   'paywall.errorTitle': 'Eroare',
   'paywall.errorLoadingOptions': 'Nu s-au putut încărca opțiunile de abonament',
   'paywall.successTitle': 'Succes!',
@@ -1057,12 +1058,12 @@ export const ro: Record<string, string> = {
 
   // Free tier (included with account)
   'subscription.freeFeature1': '{count} răspunsuri gratuite la quiz pe zi, din orice capitol alegi',
-  'subscription.freeFeature2': 'Acces la toate cele peste 30.000 de întrebări',
+  'subscription.freeFeature2': 'Acces la mii de întrebări de practică',
   'subscription.freeFeature3': 'Statistici de bază',
   'subscription.freeFeature4': 'Comunitate de învățare',
 
   // Premium Features
-  'premium.feature1': 'Toate cele 30.000+ întrebări de anatomie',
+  'premium.feature1': 'Mii de întrebări de anatomie',
   'premium.feature2': 'Quiz nelimitat (fără limita de 10 întrebări/zi)',
   'premium.feature3': 'Tutore AI personalizat',
   'premium.feature4': 'Statistici avansate și rapoarte detaliate',

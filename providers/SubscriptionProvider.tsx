@@ -138,6 +138,8 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
   const lastSyncedSignatureRef = useRef<string | null>(null);
   const premiumSyncDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastReportedPremiumRef = useRef<boolean | null>(null);
+  /** Supabase grant / server premium (e.g. App Review demo) when RevenueCat has no IAP yet. */
+  const serverGrantedPremiumRef = useRef(false);
 
   const todayKey = getTodayKey();
 
@@ -202,8 +204,15 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
   }, [loadSubscriptionUsage]);
 
   useEffect(() => {
+    serverGrantedPremiumRef.current = false;
     lastSyncedSignatureRef.current = null;
     lastReportedPremiumRef.current = null;
+    setState((prev) => ({
+      ...prev,
+      isPremium: false,
+      freeAiQuestionsToday: 0,
+      freeQuestionsAnsweredTotal: 0,
+    }));
     if (premiumSyncDebounceRef.current) {
       clearTimeout(premiumSyncDebounceRef.current);
       premiumSyncDebounceRef.current = null;
@@ -289,12 +298,18 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
   }, [PAYWALL_ENABLED, hasPremiumAccess, state.freeAiQuestionsToday]);
 
   const syncAiQuestionCountFromServer = useCallback(async (): Promise<void> => {
-    if (!PAYWALL_ENABLED || state.isPremium) return;
+    if (!PAYWALL_ENABLED) return;
 
     try {
       const result = await validateAiMutateAsyncRef.current({ increment: false });
       if (result.isPremium) {
-        setState((prev) => ({ ...prev, freeAiQuestionsToday: 0 }));
+        serverGrantedPremiumRef.current = true;
+        setState((prev) => ({
+          ...prev,
+          isPremium: true,
+          freeAiQuestionsToday: 0,
+        }));
+        invalidateStudyQueriesRef.current();
         return;
       }
       const remaining = result.remaining;
@@ -308,13 +323,13 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     } catch (error) {
       log.debug('[Subscription] Could not sync AI count from server');
     }
-  }, [PAYWALL_ENABLED, state.isPremium]);
+  }, [PAYWALL_ENABLED]);
 
-  /** Paywall on: AI usage is server rolling window — sync when user logs in or returns to free tier. */
+  /** Paywall on: sync server premium + AI usage when user logs in (includes App Review grants). */
   useEffect(() => {
-    if (!PAYWALL_ENABLED || !user?.id || state.isPremium) return;
+    if (!PAYWALL_ENABLED || !user?.id) return;
     void syncAiQuestionCountFromServer();
-  }, [PAYWALL_ENABLED, user?.id, state.isPremium, syncAiQuestionCountFromServer]);
+  }, [PAYWALL_ENABLED, user?.id, syncAiQuestionCountFromServer]);
 
   const invalidateStudyQueries = useCallback(() => {
     void trpcUtils.study.listChapters.invalidate();
@@ -363,7 +378,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       if (!PAYWALL_ENABLED || !user?.id) return;
 
       const premium = isPremiumFromCustomerInfo(info);
-      if (!premium && isReviewPremiumAccount) {
+      if (!premium && (isReviewPremiumAccount || serverGrantedPremiumRef.current)) {
         return;
       }
       const signature = premium
@@ -395,7 +410,8 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
   scheduleRevenueCatSupabaseSyncRef.current = scheduleRevenueCatSupabaseSync;
 
   const handleCustomerInfo = useCallback((info: CustomerInfo) => {
-    const premium = isPremiumFromCustomerInfo(info);
+    const rcPremium = isPremiumFromCustomerInfo(info);
+    const premium = rcPremium || serverGrantedPremiumRef.current || isReviewPremiumAccount;
     const prevPremium = lastReportedPremiumRef.current;
     lastReportedPremiumRef.current = premium;
 
@@ -406,7 +422,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     }
 
     scheduleRevenueCatSupabaseSyncRef.current(info);
-  }, []);
+  }, [isReviewPremiumAccount]);
 
   const handleCustomerInfoRef = useRef(handleCustomerInfo);
   handleCustomerInfoRef.current = handleCustomerInfo;

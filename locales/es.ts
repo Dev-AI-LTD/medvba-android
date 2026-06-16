@@ -921,7 +921,8 @@ export const es: Record<string, string> = {
   'paywall.upgradeButton': 'Actualizar a Premium',
   'paywall.restoreButton': 'Restaurar compras',
   'paywall.continueFree': 'Continuar con la versión gratuita',
-  'paywall.disclaimer': 'Los precios están en RON. La suscripción se renueva automáticamente. Puedes cancelar en cualquier momento.',
+  'paywall.disclaimer':
+    'La suscripción se renueva automáticamente. Puedes cancelarla en cualquier momento desde la configuración de tu cuenta de App Store.',
   'paywall.errorTitle': 'Error',
   'paywall.errorLoadingOptions': 'No se pudieron cargar las opciones de suscripción',
   'paywall.successTitle': '¡Éxito!',
@@ -941,12 +942,12 @@ export const es: Record<string, string> = {
 
   // Free tier (included with account)
   'subscription.freeFeature1': '{count} respuestas gratis al cuestionario por día, de cualquier capítulo que elijas',
-  'subscription.freeFeature2': 'Acceso a más de 30.000 preguntas',
+  'subscription.freeFeature2': 'Acceso a miles de preguntas de práctica',
   'subscription.freeFeature3': 'Estadísticas básicas',
   'subscription.freeFeature4': 'Comunidad de aprendizaje',
 
   // Premium Features
-  'premium.feature1': 'Todas las 30,000+ preguntas de anatomía',
+  'premium.feature1': 'Miles de preguntas de anatomía',
   'premium.feature2': 'Cuestionarios ilimitados (sin límite de 10 preguntas/día)',
   'premium.feature3': 'Tutor IA personalizado',
   'premium.feature4': 'Estadísticas avanzadas e informes detallados',

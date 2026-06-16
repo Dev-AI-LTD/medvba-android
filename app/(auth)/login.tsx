@@ -210,50 +210,72 @@ function LoginScreen() {
             <Card style={[styles.card, { backgroundColor: theme.colors.surface }]} mode="elevated">
               <Card.Content style={styles.cardContent}>
                 {Platform.OS !== 'web' ? (
-                  <View style={styles.socialButtonsRow}>
-                    <TouchableOpacity
-                      testID="loginGoogleButton"
-                      style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
-                      onPress={() => handleSocialLogin('google')}
-                      disabled={isLoading || !canUseNativeAuth || blockingOffline}
-                      accessibilityRole="button"
-                      accessibilityLabel={t('auth.signInWithGoogle')}
-                    >
-                      <Text style={[styles.socialButtonText, { color: theme.colors.onSurface }]}>G</Text>
-                    </TouchableOpacity>
-                    {Platform.OS === 'ios' ? (
-                      <TouchableOpacity
-                        testID="loginAppleButton"
-                        style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
-                        onPress={() => handleSocialLogin('apple')}
-                        disabled={isLoading || !canUseNativeAuth || blockingOffline}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('auth.signInWithApple')}
-                      >
-                        <MaterialCommunityIcons
-                          name="apple"
-                          size={26}
-                          color={theme.colors.onSurface}
-                        />
-                      </TouchableOpacity>
-                    ) : null}
+                  <>
+                    <View style={styles.socialButtonsRow}>
+                      <View style={styles.socialOption}>
+                        <TouchableOpacity
+                          testID="loginGoogleButton"
+                          style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
+                          onPress={() => handleSocialLogin('google')}
+                          disabled={isLoading || !canUseNativeAuth || blockingOffline}
+                          accessibilityRole="button"
+                          accessibilityLabel={t('auth.signInWithGoogle')}
+                        >
+                          <Text style={[styles.socialButtonText, { color: theme.colors.onSurface }]}>G</Text>
+                        </TouchableOpacity>
+                        <Text
+                          variant="labelSmall"
+                          style={[styles.socialOptionLabel, { color: theme.colors.onSurfaceVariant }]}
+                          numberOfLines={2}
+                        >
+                          {t('auth.signInWithGoogle')}
+                        </Text>
+                      </View>
+                      {Platform.OS === 'ios' ? (
+                        <View style={styles.socialOption}>
+                          <TouchableOpacity
+                            testID="loginAppleButton"
+                            style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
+                            onPress={() => handleSocialLogin('apple')}
+                            disabled={isLoading || !canUseNativeAuth || blockingOffline}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('auth.signInWithApple')}
+                          >
+                            <MaterialCommunityIcons
+                              name="apple"
+                              size={26}
+                              color={theme.colors.onSurface}
+                            />
+                          </TouchableOpacity>
+                          <Text
+                            variant="labelSmall"
+                            style={[styles.socialOptionLabel, { color: theme.colors.onSurfaceVariant }]}
+                            numberOfLines={2}
+                          >
+                            {t('auth.signInWithApple')}
+                          </Text>
+                        </View>
+                      ) : null}
+                    </View>
                     {isEmailHostedAuthEnabled ? (
-                      <TouchableOpacity
-                        testID="loginEmailHostedButton"
-                        style={[styles.socialButton, { backgroundColor: theme.colors.surfaceVariant }]}
+                      <UIButton
+                        variant="outlined"
                         onPress={handleEmailSignIn}
                         disabled={isLoading || !canUseNativeAuth || blockingOffline}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('auth.signInWithEmail')}
+                        testID="loginEmailHostedButton"
+                        style={styles.emailSignInButton}
                       >
-                        <MaterialCommunityIcons
-                          name="email-outline"
-                          size={24}
-                          color={theme.colors.onSurface}
-                        />
-                      </TouchableOpacity>
-                    ) : null}
-                  </View>
+                        {t('auth.signInWithEmail')}
+                      </UIButton>
+                    ) : (
+                      <Text
+                        variant="bodySmall"
+                        style={[styles.notConfiguredText, { color: theme.colors.error }]}
+                      >
+                        {t('auth.emailHostedNotConfigured')}
+                      </Text>
+                    )}
+                  </>
                 ) : null}
 
                 {!isWeb && !authConfigured && (
@@ -362,8 +384,20 @@ const styles = StyleSheet.create({
   socialButtonsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: SPACING.x3,
+    gap: SPACING.x4,
     marginBottom: SPACING.x2,
+  },
+  socialOption: {
+    alignItems: 'center',
+    maxWidth: 96,
+  },
+  socialOptionLabel: {
+    marginTop: SPACING.x1,
+    textAlign: 'center',
+  },
+  emailSignInButton: {
+    marginTop: SPACING.x2,
+    alignSelf: 'stretch',
   },
   socialButton: {
     width: touchTargetMin,

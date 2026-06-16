@@ -1037,7 +1037,8 @@ export const en: Record<string, string> = {
   'paywall.upgradeButton': 'Upgrade to Premium',
   'paywall.restoreButton': 'Restore Purchases',
   'paywall.continueFree': 'Continue with Free',
-  'paywall.disclaimer': 'Prices are in RON. Subscription renews automatically. You can cancel anytime.',
+  'paywall.disclaimer':
+    'Subscription renews automatically. Cancel anytime in your App Store account settings.',
   'paywall.errorTitle': 'Error',
   'paywall.errorLoadingOptions': 'Could not load subscription options',
   'paywall.successTitle': 'Success!',
@@ -1057,12 +1058,12 @@ export const en: Record<string, string> = {
 
   // Free tier (included with account)
   'subscription.freeFeature1': '{count} free quiz answers per day, from any chapter you choose',
-  'subscription.freeFeature2': 'Access to all 30,000+ questions',
+  'subscription.freeFeature2': 'Access to thousands of practice questions',
   'subscription.freeFeature3': 'Basic statistics',
   'subscription.freeFeature4': 'Learning community',
 
   // Premium Features
-  'premium.feature1': 'All 30,000+ anatomy questions',
+  'premium.feature1': 'Thousands of anatomy practice questions',
   'premium.feature2': 'Unlimited quizzes (no 10 questions/day limit)',
   'premium.feature3': 'Personalized AI Tutor',
   'premium.feature4': 'Advanced statistics and detailed reports',
