@@ -8,7 +8,7 @@ import { userHasActivePremiumAccess } from "../lib/premium-access";
 
 const messageSchema = z.object({
   role: z.enum(["user", "assistant"]),
-  content: z.string(),
+  content: z.string().trim().min(1).max(4000),
 });
 
 function isAiMissingConfigError(message: string): boolean {
@@ -38,7 +38,7 @@ export const tutorRouter = createTRPCRouter({
   chat: protectedProcedure
     .input(
       z.object({
-        messages: z.array(messageSchema),
+        messages: z.array(messageSchema).min(1).max(40),
         locale: z.enum(["en", "ro"]).default("en"),
       }),
     )

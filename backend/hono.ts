@@ -70,15 +70,19 @@ app.get("/", (c) => {
 
 // Health check endpoint for debugging
 app.get("/health", (c) => {
+  const verbose =
+    process.env.NODE_ENV !== "production" || process.env.HEALTHCHECK_VERBOSE === "true";
   const ai = process.env.AI_API_KEY?.trim();
   const openai = process.env.OPENAI_API_KEY?.trim();
   const expoAiLeak = !!process.env.EXPO_PUBLIC_AI_API_KEY?.trim();
-  return c.json({
+  const body: Record<string, unknown> = {
     status: "ok",
     timestamp: new Date().toISOString(),
     /** Live Supabase service-role probe (subscriptions SELECT limit 1). */
     liveSupabaseProbe: "/api/health",
-    env: {
+  };
+  if (verbose) {
+    body.env = {
       hasSupabaseUrl: !!process.env.SUPABASE_URL,
       hasServiceRoleKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
       hasAiApiKey: !!(ai || openai),
@@ -89,14 +93,17 @@ app.get("/health", (c) => {
       },
       /** True if EXPO_PUBLIC_AI_API_KEY is still in .env — remove it; use AI_API_KEY / OPENAI_API_KEY for backend only. */
       legacyExpoPublicAiKeyPresent: expoAiLeak,
-      aiProvider: process.env.AI_PROVIDER || process.env.EXPO_PUBLIC_AI_PROVIDER || '(not set, defaults to openai)',
+      aiProvider: process.env.AI_PROVIDER || process.env.EXPO_PUBLIC_AI_PROVIDER || "(not set, defaults to openai)",
       hasAiBaseUrl: !!(process.env.AI_BASE_URL || process.env.EXPO_PUBLIC_AI_BASE_URL),
-      aiModel: process.env.AI_MODEL || process.env.EXPO_PUBLIC_AI_MODEL || '(not set, defaults to gpt-4o-mini)',
+      aiModel: process.env.AI_MODEL || process.env.EXPO_PUBLIC_AI_MODEL || "(not set, defaults to gpt-4o-mini)",
       hasCorsOrigins: !!process.env.CORS_ALLOWED_ORIGINS,
       revenueCatWebhook: !!process.env.REVENUECAT_WEBHOOK_AUTHORIZATION?.trim(),
-      revenueCatRestSecret: !!(process.env.REVENUECAT_SECRET_API_KEY?.trim() || process.env.REVENUECAT_API_SECRET_KEY?.trim()),
-    }
-  });
+      revenueCatRestSecret: !!(
+        process.env.REVENUECAT_SECRET_API_KEY?.trim() || process.env.REVENUECAT_API_SECRET_KEY?.trim()
+      ),
+    };
+  }
+  return c.json(body);
 });
 
 /** Live probe: Supabase service role can read `subscriptions` (same path as premium checks). */
@@ -133,7 +140,8 @@ app.get("/api/health", async (c) => {
 
 // Error handler
 app.onError((err, c) => {
-  return c.json({ error: err.message }, 500);
+  const isProd = process.env.NODE_ENV === "production";
+  return c.json({ error: isProd ? "Internal Server Error" : err.message }, 500);
 });
 
 export default app;

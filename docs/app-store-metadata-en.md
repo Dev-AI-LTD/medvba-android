@@ -48,7 +48,7 @@ PREMIUM
 • Manage or restore purchases in the app
 
 LANGUAGES
-English, Romanian, Spanish, and Portuguese.
+English (launch UI). Romanian support is included in the codebase and enabled in rollout builds.
 
 EDUCATIONAL USE
 MEDVBA is for study and exam preparation. It does not replace medical school, clinical training, or professional advice.
@@ -60,36 +60,74 @@ Support: https://medvba.app/support
 
 ## Review Notes (paste in App Review Information → Notes)
 
-**Which block to use:** `npm run review-notes:mode` → exit 1 is **expected** (Kinde does not support in-app password grant). Use **Primary** below and fill **Username / Password** in App Store Connect.
+**Which block to use:** `npm run review-notes:mode` → exit 1 is **expected** (Kinde does not support in-app password grant). Use **Primary** below.
+
+### Rejection fix (2026-06-19, build 61) — three items
+
+| Guideline | Issue | Fix (where) |
+|-----------|--------|-------------|
+| **2.3.2** | IAP promotional images = app icon / duplicates | **App Store Connect only** — see [IAP promotional images](#iap-promotional-images-232) below |
+| **2.1(a)** | Sign in with Apple not working on iPad | **TestFlight on iPad** + verify Kinde Apple connection in EAS production; rebuild if needed |
+| **2.1** | Need demo account with **expired** subscription | **Second Kinde user** (no review premium) — see credentials below |
+
+---
 
 ### App Store Connect — Sign-in credentials (required fields)
 
-Create or verify this user in **Kinde** (Users → Verified, **Email + password** connection — not email code). Password must match what you paste in ASC.
+Apple asked for an account with an **expired subscription** to test purchase / restore. Use that account in the **Username / Password** fields. Keep the premium demo account in **Notes** for full-feature testing.
 
 | Field | Value |
 |-------|--------|
-| **Username** | `contact@devaieood.com` |
-| **Password** | *(your review password — same as `VERIFY_AUTH_PASSWORD` in local `.env`; do not commit)* |
+| **Username** | `review-expired@devaieood.com` |
+| **Password** | *(same pattern as review password — set in Kinde; do not commit)* |
+
+**Setup (once, before resubmit):**
+
+1. Kinde → create user `review-expired@devaieood.com` → **Verified**, **Email + password** connection.
+2. Do **not** add this email to `EXPO_PUBLIC_APP_REVIEW_PREMIUM_EMAILS`.
+3. Sign in once in TestFlight (hosted email) so a Supabase profile exists.
+4. Set subscription to expired/free: `npm run expire-review-subscription -- review-expired@devaieood.com` (or manually set `subscriptions.status = free` in Supabase).
+5. Premium demo (separate): `contact@devaieood.com` — keep `npm run grant-review-premium` for that user only.
 
 Example local setup: copy [`.env.example`](../.env.example) → `.env` with `VERIFY_AUTH_EMAIL=contact@devaieood.com` and `VERIFY_AUTH_PASSWORD=…` (min. 8 characters; do not commit).
 
 ---
 
+### IAP promotional images (2.3.2)
+
+In **App Store Connect → Monetization → Subscriptions** (each product: `medvba_pro_monthly`, `medvba_pro_yearly`):
+
+- **Option A (fastest):** Delete the promotional image on each subscription if you are not promoting IAP on the store today.
+- **Option B:** Upload a **unique** image per product (e.g. paywall screenshot showing monthly vs yearly). **Do not** use the app icon. **Do not** reuse the same image for both products.
+
+No app rebuild required for this item.
+
+---
+
 ### Primary (recommended for review)
 
-Paste into **Notes**. Use the **same email and password** as in the Username / Password fields above.
+Paste into **Notes**. **Username / Password** fields = expired-subscription account (`review-expired@devaieood.com`).
 
 ```
-DEMO ACCOUNT (email + password — use on the Kinde page, not in-app):
+SUBSCRIPTION / PURCHASE FLOW (expired account — matches Username / Password fields):
+Email: review-expired@devaieood.com
+Password: (same as Password field above)
+Sign in: tap "Sign in with email" → Kinde browser → enter credentials.
+This account has NO active Premium (expired / free tier). You should see the paywall when hitting limits or opening Premium.
+Test: Subscribe (Sandbox), Restore purchases, and Manage subscription from Settings.
+
+PREMIUM FEATURE TESTING (second account — in Notes only):
 Email: contact@devaieood.com
-Password: (same as the Password field you entered in App Review Information above)
+Password: (same review password used when this account was created in Kinde)
+Sign in via "Sign in with email" → Kinde browser.
+This account has Premium enabled for review (unlimited quiz, AI tutor, study chapters). Use it to test full app features.
 
-HOW TO SIGN IN (required for review):
+HOW TO SIGN IN (all accounts):
 1. Sign in with Apple (iOS) or Sign in with Google, OR
-2. Tap "Sign in with email" → secure browser opens → enter the demo email and password on the Kinde page
-   (Email + password connection — no verification code). You may pre-fill the email in the app field above the button.
+2. Tap "Sign in with email" → secure browser opens → enter email and password on the Kinde page
+   (Email + password connection — no verification code).
 
-Do not use any in-app-only password field (removed in release builds); password is entered on the Kinde browser page only.
+Do not use any in-app-only password field; password is entered on the Kinde browser page only.
 
 After sign-in:
 1. Complete onboarding if shown.
@@ -97,14 +135,9 @@ After sign-in:
 3. Study: Study tab → chapter summary and audio.
 4. AI Tutor: Tutor tab → ask a study question.
 5. Social: Chat tab → direct messages (text only, no live video).
-6. Premium: optional; Restore purchases on the paywall screen.
-
-PREMIUM / FULL ACCESS:
-Sign in with the test account email and password above (tap "Sign in with email" → enter credentials on the Kinde page).
-This account has Premium enabled for review: unlimited quizzes, AI tutor, all study chapters, and anatomy modules.
-Sign in with Apple or Google using a personal account will NOT include Premium — use the test account for full feature testing.
 
 Sign in with Apple is on iOS because Google sign-in is also offered (App Store guideline 4.8).
+Tested on iPad (iPhone compatibility mode) before resubmit.
 
 No live Zoom or video calls. Social is messenger-style chat only.
 

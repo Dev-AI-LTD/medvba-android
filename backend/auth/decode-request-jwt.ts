@@ -1,4 +1,5 @@
 import { jwtVerify } from "jose";
+import { getJwtSigningSecretOrThrow } from "./jwt-signing-secret";
 
 export type VerifiedMedvbaJwt = {
   userId: string;
@@ -6,12 +7,7 @@ export type VerifiedMedvbaJwt = {
 };
 
 export async function verifyMedvbaRequestJwt(token: string): Promise<VerifiedMedvbaJwt> {
-  const secret =
-    process.env.SUPABASE_JWT_SIGNING_SECRET?.trim() ||
-    process.env.KINDE_CLIENT_SECRET?.trim();
-  if (!secret) {
-    throw new Error("SUPABASE_JWT_SIGNING_SECRET or KINDE_CLIENT_SECRET is not set.");
-  }
+  const secret = getJwtSigningSecretOrThrow();
   const key = new TextEncoder().encode(secret);
   const { payload } = await jwtVerify(token, key, { algorithms: ["HS256"] });
   const userId = typeof payload.profile_id === "string" ? payload.profile_id : "";

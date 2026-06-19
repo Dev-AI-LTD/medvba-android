@@ -43,6 +43,7 @@
     "verify:auth-session-bearer": "node scripts/verify-auth-session-bearer.mjs",
     "create:review-user": "node scripts/create-review-test-user.mjs",
     "grant-review-premium": "node scripts/grant-review-premium.mjs",
+    "expire-review-subscription": "node scripts/expire-review-subscription.mjs",
     "verify:review-user": "node scripts/verify-review-user.mjs",
     "diagnose:kinde-password": "node scripts/diagnose-kinde-password-grant.mjs",
     "check:kinde-ios": "node scripts/check-kinde-ios-env.mjs",
@@ -77,6 +78,10 @@
     "build:aab": "node scripts/eas-build.mjs production",
     "release:android": "node scripts/eas-build.mjs production",
     "release:artifacts": "node scripts/eas-download-release-artifacts.mjs --latest",
+    "campaign:build-landing": "node scripts/build-campaign-nfc-landing.mjs",
+    "campaign:social-clips": "node scripts/generate-campaign-social-clips.mjs",
+    "campaign:nfc-uri": "node scripts/print-campaign-nfc-uri.mjs",
+    "campaign:prepare": "node scripts/build-campaign-nfc-landing.mjs && node scripts/generate-campaign-social-clips.mjs && node scripts/print-campaign-nfc-uri.mjs",
     "postinstall": "node scripts/postinstall-dedupe-kinde-expo.mjs",
     "prepare": "node scripts/postinstall-dedupe-kinde-expo.mjs"
   },

@@ -45,7 +45,7 @@ Checklist detaliat: [PRE_LAUNCH_CHECKLIST_APP_STORE.md](PRE_LAUNCH_CHECKLIST_APP
 | 3 | **IAP / subscriptions Ready** — ASC products not Missing Metadata; linked to version **1.0.30** | 3.1.1 | ⚠️ Manual | App Store Connect → Subscriptions → complete metadata, pricing, review screenshot; attach to app version. |
 | 4 | **RevenueCat** — `appl_` key in EAS; offerings OK | 3.1.1 | ✅ Local | `npm run check:revenuecat-ios` passed. Confirm same key in EAS production. |
 | 5 | **Privacy & Support URLs live** | 2.1 / metadata | ⚠️ Manual | ASC: `https://medvba.app/privacy`, `https://medvba.app/support`. Verify in browser (DNS/hosting). |
-| 6 | **Review Notes** + ASC Username/Password | 2.1 | ✅ Docs | `app-store-metadata-en.md` → `contact@devaieood.com` + parola cont Kinde (hosted email). |
+| 6 | **Review Notes** + ASC Username/Password | 2.1 | ✅ Docs | `app-store-metadata-en.md` → Username ASC `review-expired@devaieood.com`; cont premium separat în Notes (`contact@devaieood.com`). |
 | 7 | **RevenueCat paywall** — Terms + Privacy URLs in RC dashboard template | 3.1.1 | ⚠️ Manual | RevenueCat → Paywalls → legal links (not only in-app). |
 | 8 | **Sign in with Apple** on iOS (Google also offered) | 4.8 | ✅ Code | Apple button iOS-only; entitlement in `app.config.ts`. Optional: native `AppleAuthenticationButton` (HIG) later. |
 | 9 | **Face ID plist matches UI** — toggle in Settings | 5.1.1 | ✅ Code | `NSFaceIDUsageDescription` + **Settings → Biometric login** switch. |

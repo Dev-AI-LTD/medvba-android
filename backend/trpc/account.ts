@@ -47,20 +47,13 @@ export const accountRouter = createTRPCRouter({
     if (kindeSub) {
       const kdel = await deleteMedvbaKindeIdentityUser(kindeSub);
       if (!kdel.ok) {
-        if (kdel.code === "missing_m2m") {
-          throw new TRPCError({
-            code: "PRECONDITION_FAILED",
-            message:
-              "Account deletion is not fully configured: the server needs KINDE_M2M_CLIENT_ID and KINDE_M2M_CLIENT_SECRET so your identity can be removed from Kinde. Without that, your email stays registered there even after app data is removed.",
-            cause: kdel.detail,
-          });
-        }
-        throw new TRPCError({
-          code: "BAD_GATEWAY",
-          message:
-            "Could not remove your account from the identity provider (Kinde). In Kinde: Machine to machine app → APIs → Kinde Management API → ensure permission to delete users, then try again.",
-          cause: kdel.detail,
-        });
+        // Do not block in-app account deletion on external IdP failures.
+        // We still remove app data/profile so users can complete deletion.
+        console.warn(
+          "[account.deleteSelf] Kinde identity delete failed, continuing with app data deletion:",
+          kdel.code,
+          kdel.detail ?? "",
+        );
       }
     }
 

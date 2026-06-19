@@ -1,4 +1,5 @@
 import { SignJWT } from "jose";
+import { getJwtSigningSecretOrThrow } from "./jwt-signing-secret";
 
 /**
  * JWT accepted by Supabase PostgREST after JWT signing keys use the same HS256 secret
@@ -9,14 +10,7 @@ export async function mintSupabaseAccessJwt(input: {
   profileId: string;
   email?: string | null;
 }): Promise<string> {
-  const secret =
-    process.env.SUPABASE_JWT_SIGNING_SECRET?.trim() ||
-    process.env.KINDE_CLIENT_SECRET?.trim();
-  if (!secret) {
-    throw new Error(
-      "Missing SUPABASE_JWT_SIGNING_SECRET (or KINDE_CLIENT_SECRET) for JWT minting.",
-    );
-  }
+  const secret = getJwtSigningSecretOrThrow();
 
   const key = new TextEncoder().encode(secret);
   const claims: Record<string, unknown> = {

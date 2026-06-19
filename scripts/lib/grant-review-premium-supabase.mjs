@@ -115,3 +115,47 @@ export async function grantReviewPremiumInSupabase(opts) {
 
   return { userId, status: 'premium' };
 }
+
+/**
+ * Mark subscription as expired/free for App Review purchase-flow testing.
+ * @param {{ supabaseUrl: string; serviceRoleKey: string; userId: string }} opts
+ */
+export async function expireReviewSubscriptionInSupabase(opts) {
+  const { supabaseUrl, serviceRoleKey, userId } = opts;
+  const admin = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const nowIso = new Date().toISOString();
+  const expiredIso = new Date(Date.now() - 86400000).toISOString();
+
+  const { error: subError } = await admin.from('subscriptions').upsert(
+    {
+      user_id: userId,
+      status: 'free',
+      type: null,
+      expires_at: expiredIso,
+      updated_at: nowIso,
+    },
+    { onConflict: 'user_id' },
+  );
+
+  if (subError) {
+    throw new Error(`subscriptions upsert: ${subError.message}`);
+  }
+
+  const { error: profileError } = await admin
+    .from('profiles')
+    .update({
+      is_premium: false,
+      subscription_status: 'free',
+      updated_at: nowIso,
+    })
+    .eq('id', userId);
+
+  if (profileError) {
+    throw new Error(`profiles update: ${profileError.message}`);
+  }
+
+  return { userId, status: 'free', expiresAt: expiredIso };
+}

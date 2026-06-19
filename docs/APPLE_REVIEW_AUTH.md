@@ -2,11 +2,15 @@
 
 
 
-**Cont oficial de review:** `contact@devaieood.com` (verificat în Kinde, Email + password).
+**Conturi review recomandate:**
+- `review-expired@devaieood.com` = contul pentru **Username/Password** în App Store Connect (fără premium activ, pentru fluxul purchase/restore).
+- `contact@devaieood.com` = contul premium pentru testarea funcțiilor complete în Notes.
 
 
 
-Folosește **același email** în: App Store Connect (Username), Review Notes, `.env` / EAS, Kinde și `npm run grant-review-premium`.
+Nu folosi același email pentru toate câmpurile:
+- App Store Connect Username/Password: `review-expired@devaieood.com`
+- Notes + premium test: `contact@devaieood.com`
 
 
 
@@ -164,7 +168,7 @@ Opțional (dacă userul nu există în Kinde): `npm run create:review-user` — 
 
 |------|---------|
 
-| **Username** | `contact@devaieood.com` |
+| **Username** | `review-expired@devaieood.com` |
 
 | **Password** | aceeași parolă ca `VERIFY_AUTH_PASSWORD` în Kinde |
 

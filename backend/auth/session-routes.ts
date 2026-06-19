@@ -1,4 +1,4 @@
-import type { Hono } from "hono";
+import type { Context, Hono } from "hono";
 import bcrypt from "bcryptjs";
 import { mintSupabaseAccessJwt } from "./mint-supabase-jwt";
 import { fetchKindeUserProfile } from "./kinde-user-profile";
@@ -22,6 +22,74 @@ const TRANSIENT_KINDE_TOKEN_STATUSES = new Set([429, 502, 503, 504]);
 function sleepMs(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
+
+type AuthRateLimitEntry = {
+  count: number;
+  resetAt: number;
+};
+
+const authRateLimitStore = new Map<string, AuthRateLimitEntry>();
+const AUTH_RATE_LIMIT_WINDOW_MS = 60_000;
+
+function getClientIp(c: Context): string {
+  const forwarded = c.req.header("x-forwarded-for") || "";
+  const firstForwarded = forwarded.split(",")[0]?.trim();
+  if (firstForwarded) return firstForwarded;
+  const cf = c.req.header("cf-connecting-ip")?.trim();
+  if (cf) return cf;
+  return "unknown";
+}
+
+function enforceAuthRateLimit(
+  c: Context,
+  scope: string,
+  maxRequests: number,
+): Response | null {
+  const now = Date.now();
+  const key = `${scope}:${getClientIp(c)}`;
+  const existing = authRateLimitStore.get(key);
+
+  if (!existing || existing.resetAt <= now) {
+    authRateLimitStore.set(key, {
+      count: 1,
+      resetAt: now + AUTH_RATE_LIMIT_WINDOW_MS,
+    });
+    return null;
+  }
+
+  existing.count += 1;
+  if (existing.count > maxRequests) {
+    const retryAfterSeconds = Math.max(1, Math.ceil((existing.resetAt - now) / 1000));
+    return c.json(
+      {
+        error: "Too many authentication attempts. Please try again shortly.",
+        retry_after_seconds: retryAfterSeconds,
+      },
+      429,
+    );
+  }
+  return null;
+}
+
+function enforceScopedEmailRateLimit(
+  c: Context,
+  scope: string,
+  email: string,
+  maxRequests: number,
+): Response | null {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail || !normalizedEmail.includes("@")) return null;
+  return enforceAuthRateLimit(c, `${scope}:${normalizedEmail}`, maxRequests);
+}
+
+function cleanupAuthRateLimits(): void {
+  const now = Date.now();
+  for (const [key, entry] of authRateLimitStore.entries()) {
+    if (entry.resetAt <= now) authRateLimitStore.delete(key);
+  }
+}
+
+(setInterval(cleanupAuthRateLimits, AUTH_RATE_LIMIT_WINDOW_MS) as unknown as NodeJS.Timeout).unref();
 
 /** Kinde `/oauth2/token` sometimes returns transient gateway errors; retry with short backoff. */
 async function fetchKindeOAuth2Token(url: string, init: RequestInit, logLabel: string): Promise<Response> {
@@ -518,6 +586,9 @@ export async function deleteMedvbaKindeIdentityUser(kindeUserId: string): Promis
 export function registerAuthSessionRoutes(app: Hono) {
   app.post("/api/auth/register", async (c) => {
     try {
+      const registerLimit = enforceAuthRateLimit(c, "auth-register", 8);
+      if (registerLimit) return registerLimit;
+
       const body = (await c.req.json().catch(() => null)) as {
         email?: string;
         password?: string;
@@ -526,6 +597,9 @@ export function registerAuthSessionRoutes(app: Hono) {
       const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
       const password = typeof body?.password === "string" ? body.password : "";
       const name = typeof body?.name === "string" ? body.name.trim() : "";
+
+      const emailScopedLimit = enforceScopedEmailRateLimit(c, "auth-register-email", email, 6);
+      if (emailScopedLimit) return emailScopedLimit;
 
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return c.json({ error: "A valid email is required." }, 400);
@@ -631,8 +705,13 @@ export function registerAuthSessionRoutes(app: Hono) {
    */
   app.post("/api/auth/request-password-reset", async (c) => {
     try {
+      const resetLimit = enforceAuthRateLimit(c, "auth-request-password-reset", 10);
+      if (resetLimit) return resetLimit;
+
       const body = (await c.req.json().catch(() => null)) as { email?: string } | null;
       const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+      const emailScopedLimit = enforceScopedEmailRateLimit(c, "auth-request-password-reset-email", email, 6);
+      if (emailScopedLimit) return emailScopedLimit;
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return c.json({ error: "A valid email is required." }, 400);
       }
@@ -673,6 +752,9 @@ export function registerAuthSessionRoutes(app: Hono) {
 
   app.post("/api/auth/session/refresh", async (c) => {
     try {
+      const refreshLimit = enforceAuthRateLimit(c, "auth-refresh", 20);
+      if (refreshLimit) return refreshLimit;
+
       const body = (await c.req.json().catch(() => null)) as { refresh_token?: string } | null;
       const refreshToken = typeof body?.refresh_token === "string" ? body.refresh_token.trim() : "";
       if (!refreshToken) {
@@ -709,6 +791,9 @@ export function registerAuthSessionRoutes(app: Hono) {
 
   app.post("/api/auth/session", async (c) => {
     try {
+      const sessionLimit = enforceAuthRateLimit(c, "auth-session", 30);
+      if (sessionLimit) return sessionLimit;
+
       const authHeader = c.req.header("authorization");
       const bearer = authHeader?.replace(/^Bearer\s+/i, "").trim();
       if (bearer) {
@@ -730,6 +815,9 @@ export function registerAuthSessionRoutes(app: Hono) {
         if (!email || typeof password !== "string" || !password) {
           return c.json({ error: "email and password are required." }, 400);
         }
+
+        const emailLoginLimit = enforceScopedEmailRateLimit(c, "auth-session-email", email, 10);
+        if (emailLoginLimit) return emailLoginLimit;
 
         const kindeTokensRes = await kindePasswordToken(email, password);
         if (!kindeTokensRes.ok) {

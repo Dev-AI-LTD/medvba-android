@@ -2,14 +2,14 @@ import { View, StyleSheet, Platform } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { useBlockingAuthOffline } from '@/lib/use-network-auth-offline';
+import { useIsOffline } from '@/lib/use-network-auth-offline';
 import { radiusMd, screenPaddingX, space } from '@/theme/iosDesign';
 
 export function AuthOfflineBanner() {
   const theme = useTheme();
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
-  const offline = useBlockingAuthOffline();
+  const offline = useIsOffline();
 
   if (!offline) return null;
 
