@@ -34,7 +34,8 @@ function subscriptionVerifyTrpcMessage(
 }
 
 /**
- * Premium for server-side limits: `subscriptions` (webhook + service role) then `profiles` fallback.
+ * Premium for server-side limits must come only from `subscriptions`.
+ * `profiles.is_premium` is treated as display/cache data and is not trusted for authorization.
  */
 export async function userHasActivePremiumAccess(
   supabaseAdmin: SupabaseClient,
@@ -58,24 +59,5 @@ export async function userHasActivePremiumAccess(
   if (subscriptionRowIsPremium(sub)) {
     return true;
   }
-
-  const { data: profile, error: profileError } = await supabaseAdmin
-    .from("profiles")
-    .select("is_premium, subscription_status")
-    .eq("id", userId)
-    .maybeSingle();
-
-  if (profileError) {
-    console.error("[Premium] Error reading profiles:", profileError);
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: subscriptionVerifyTrpcMessage("profiles", profileError),
-      cause: profileError,
-    });
-  }
-
-  if (profile?.is_premium) return true;
-
-  const pss = String(profile?.subscription_status ?? "").toLowerCase();
-  return pss === "premium" || pss === "trial";
+  return false;
 }
