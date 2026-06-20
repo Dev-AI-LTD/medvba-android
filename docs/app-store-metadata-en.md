@@ -58,6 +58,33 @@ Support: https://medvba.app/support
 
 ---
 
+## Previews and Screenshots (iPhone 6.5" Display)
+
+Upload framed PNGs from [`docs/app-store-screenshots/ios-6.5/`](../docs/app-store-screenshots/ios-6.5/) in order — see [`README-upload-order.md`](../docs/app-store-screenshots/README-upload-order.md).
+
+**Regenerate after changing captures:**
+
+```bash
+npm run screenshots:ios-6.5
+```
+
+| # | File | Purpose |
+|---|------|---------|
+| 1 | `01-medvba.png` | Hero / value prop (install sheet slot 1) |
+| 2 | `02-premium-subscription.png` | **In-app paywall** — monthly/yearly + restore (install sheet slot 2) |
+| 3 | `03-practice-quizzes.png` | Core feature (install sheet slot 3) |
+| 4–8 | `04-…` through `08-…` | Dashboard, anatomy, AI Tutor, premium content, settings |
+
+Apple uses only the **first 3** screenshots on the app installation sheet — paywall must be **#2**.
+
+**App Previews (video):** optional (0 of 3 is fine). See [`README-app-previews.md`](../docs/app-store-screenshots/README-app-previews.md).
+
+**Fresh paywall capture:** [`CAPTURE-PAYWALL.md`](../docs/app-store-screenshots/CAPTURE-PAYWALL.md) — sign in with free review account on TestFlight, open paywall, screenshot, regenerate.
+
+**iPad:** reuse iPhone set or add iPad captures separately if required for your ASC version.
+
+---
+
 ## Review Notes (paste in App Review Information → Notes)
 
 **Which block to use:** `npm run review-notes:mode` → exit 1 is **expected** (Kinde does not support in-app password grant). Use **Primary** below.
@@ -78,16 +105,16 @@ Apple asked for an account with an **expired subscription** to test purchase / r
 
 | Field | Value |
 |-------|--------|
-| **Username** | `review-expired@devaieood.com` |
-| **Password** | *(same pattern as review password — set in Kinde; do not commit)* |
+| **Username** | `boctavian2014@gmail.com` |
+| **Password** | *(same as `VERIFY_AUTH_PASSWORD` in Kinde — do not commit)* |
 
 **Setup (once, before resubmit):**
 
-1. Kinde → create user `review-expired@devaieood.com` → **Verified**, **Email + password** connection.
+1. Kinde → user `boctavian2014@gmail.com` → **Verified**, **Email + password** connection.
 2. Do **not** add this email to `EXPO_PUBLIC_APP_REVIEW_PREMIUM_EMAILS`.
 3. Sign in once in TestFlight (hosted email) so a Supabase profile exists.
-4. Set subscription to expired/free: `npm run expire-review-subscription -- review-expired@devaieood.com` (or manually set `subscriptions.status = free` in Supabase).
-5. Premium demo (separate): `contact@devaieood.com` — keep `npm run grant-review-premium` for that user only.
+4. Set subscription to expired/free: `npm run expire-review-subscription -- boctavian2014@gmail.com`.
+5. Premium demo (separate): `contact@devaieood.com` — `npm run grant-review-premium` for that user only.
 
 Example local setup: copy [`.env.example`](../.env.example) → `.env` with `VERIFY_AUTH_EMAIL=contact@devaieood.com` and `VERIFY_AUTH_PASSWORD=…` (min. 8 characters; do not commit).
 
@@ -100,17 +127,19 @@ In **App Store Connect → Monetization → Subscriptions** (each product: `medv
 - **Option A (fastest):** Delete the promotional image on each subscription if you are not promoting IAP on the store today.
 - **Option B:** Upload a **unique** image per product (e.g. paywall screenshot showing monthly vs yearly). **Do not** use the app icon. **Do not** reuse the same image for both products.
 
+Repo assets and step-by-step: [`docs/app-store-screenshots/README-iap-promotional-images.md`](../docs/app-store-screenshots/README-iap-promotional-images.md).
+
 No app rebuild required for this item.
 
 ---
 
 ### Primary (recommended for review)
 
-Paste into **Notes**. **Username / Password** fields = expired-subscription account (`review-expired@devaieood.com`).
+Paste into **Notes**. **Username / Password** fields = expired-subscription account (`boctavian2014@gmail.com`).
 
 ```
 SUBSCRIPTION / PURCHASE FLOW (expired account — matches Username / Password fields):
-Email: review-expired@devaieood.com
+Email: boctavian2014@gmail.com
 Password: (same as Password field above)
 Sign in: tap "Sign in with email" → Kinde browser → enter credentials.
 This account has NO active Premium (expired / free tier). You should see the paywall when hitting limits or opening Premium.
@@ -128,6 +157,9 @@ HOW TO SIGN IN (all accounts):
    (Email + password connection — no verification code).
 
 Do not use any in-app-only password field; password is entered on the Kinde browser page only.
+
+SIGN OUT / SWITCH ACCOUNT:
+Settings → Sign out, then sign in again. If Kinde auto-fills the previous user, choose "Use another account" / "Not you?" on the hosted page.
 
 After sign-in:
 1. Complete onboarding if shown.
@@ -147,6 +179,20 @@ Contact: support@medvba.app
 ### Alternate (deprecated — in-app ROPC not supported by Kinde)
 
 Do **not** use unless `npm run diagnose:kinde-password` exits 0 (unlikely). Kinde does not support `grant_type=password`; see `docs/KINDE_ROPC_NOT_SUPPORTED.md`.
+
+---
+
+## Pre-submit checklist (metadata + visuals)
+
+Before **Submit for Review**:
+
+- [ ] **iPhone 6.5" screenshots:** upload `docs/app-store-screenshots/ios-6.5/01` … `08` in order; **#2 = paywall** (`02-premium-subscription.png`).
+- [ ] **IAP promotional images:** delete both OR upload unique images per product ([`README-iap-promotional-images.md`](../docs/app-store-screenshots/README-iap-promotional-images.md)).
+- [ ] **Sign-in fields:** Username `boctavian2014@gmail.com`, Password matches Kinde.
+- [ ] **Notes:** paste Primary block above; premium demo `contact@devaieood.com` only in Notes.
+- [ ] **Support URL:** `https://medvba.app/support` (align Marketing/Privacy URLs with live pages).
+- [ ] **Build:** TestFlight build linked (e.g. 63 / 1.0.30); subscriptions **Ready** and attached to version.
+- [ ] **RevenueCat:** paywall template has Terms + Privacy URLs.
 
 ---
 

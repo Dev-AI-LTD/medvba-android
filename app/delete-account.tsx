@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -50,6 +50,7 @@ import {
 import { BLOCKED_USERS_STORAGE_KEY } from '@/lib/blocked-users-storage';
 import { USER_REPORTS_STORAGE_KEY } from '@/lib/user-reports-storage';
 import { log } from '@/lib/log';
+import { withTimeout } from '@/lib/with-timeout';
 
 const STORAGE_KEYS_TO_CLEAR = [
   'quiz_daily_progress',
@@ -64,6 +65,10 @@ const STORAGE_KEYS_TO_CLEAR = [
 ];
 
 type DeletionStep = 'confirm' | 'deleting' | 'success';
+const DELETE_ACCOUNT_WATCHDOG_MS = 35_000;
+const DELETE_REFRESH_TIMEOUT_MS = 12_000;
+const DELETE_MUTATION_TIMEOUT_MS = 20_000;
+const DELETE_SIGNOUT_TIMEOUT_MS = 10_000;
 
 export default function DeleteAccountScreen() {
   const router = useRouter();
@@ -74,6 +79,7 @@ export default function DeleteAccountScreen() {
   const [confirmText, setConfirmText] = useState('');
   const [step, setStep] = useState<DeletionStep>('confirm');
   const deleteAccountMutation = trpc.account.deleteSelf.useMutation();
+  const deleteAttemptRef = useRef(0);
 
   const clearLocalData = async () => {
     log.debug('[DeleteAccount] Clearing local data...');
@@ -99,6 +105,7 @@ export default function DeleteAccountScreen() {
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     setStep('deleting');
+    const attemptId = ++deleteAttemptRef.current;
 
     log.debug('[DeleteAccount] Initiating account deletion...');
     if (!user?.id) {
@@ -113,15 +120,35 @@ export default function DeleteAccountScreen() {
     try {
       log.debug('[DeleteAccount] Calling deleteAccountMutation...');
 
-      await refreshMedvbaSession();
+      await withTimeout(
+        refreshMedvbaSession(),
+        DELETE_REFRESH_TIMEOUT_MS,
+        'Session refresh before account deletion',
+      ).catch((refreshErr: unknown) => {
+        // Continue deletion with current token even if a proactive refresh stalls/fails.
+        log.warn('[DeleteAccount] Session refresh failed/timed out, continuing delete:', refreshErr);
+      });
 
-      const result = await deleteAccountMutation.mutateAsync();
+      const result = await withTimeout(
+        deleteAccountMutation.mutateAsync(),
+        DELETE_MUTATION_TIMEOUT_MS,
+        'Delete account request',
+      );
+      if (deleteAttemptRef.current !== attemptId) {
+        log.warn('[DeleteAccount] Ignoring stale delete result after timeout watchdog');
+        return;
+      }
       log.debug('[DeleteAccount] Backend deletion result:', result);
 
       await clearLocalData();
       log.debug('[DeleteAccount] Local data cleared');
 
-      await signOut();
+      await withTimeout(signOut(), DELETE_SIGNOUT_TIMEOUT_MS, 'Sign out after account deletion').catch(
+        (signOutErr: unknown) => {
+          // Do not block success UI if sign-out call to IdP is slow.
+          log.warn('[DeleteAccount] Sign out failed/timed out after deletion:', signOutErr);
+        },
+      );
       log.debug('[DeleteAccount] Session cleared via AuthProvider');
 
       try {
@@ -142,11 +169,18 @@ export default function DeleteAccountScreen() {
         log.error('[DeleteAccount] Error clearing additional keys', e);
       }
 
+      if (deleteAttemptRef.current !== attemptId) {
+        log.warn('[DeleteAccount] Ignoring stale completion after timeout watchdog');
+        return;
+      }
       setStep('success');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       log.debug('[DeleteAccount] Account deletion process completed');
     } catch (error: unknown) {
       log.error('[DeleteAccount] Deletion failed', error);
+      if (deleteAttemptRef.current !== attemptId) {
+        return;
+      }
       setStep('confirm');
       let message = t('deleteAccount.alertDeletionFailedGeneric');
       if (error instanceof TRPCClientError) {
@@ -158,6 +192,21 @@ export default function DeleteAccountScreen() {
       Alert.alert(t('deleteAccount.alertDeletionFailed'), message, [{ text: t('common.ok') }]);
     }
   }, [confirmText, user?.id, deleteAccountMutation, signOut, refreshMedvbaSession, t]);
+
+  useEffect(() => {
+    if (step !== 'deleting') return;
+    const timerId = setTimeout(() => {
+      // Invalidate in-flight attempt so late async completions cannot flip UI back to success.
+      deleteAttemptRef.current += 1;
+      setStep('confirm');
+      Alert.alert(
+        t('deleteAccount.alertDeletionFailed'),
+        t('deleteAccount.alertDeletionFailedGeneric'),
+        [{ text: t('common.ok') }],
+      );
+    }, DELETE_ACCOUNT_WATCHDOG_MS);
+    return () => clearTimeout(timerId);
+  }, [step, t]);
 
   const handleFinish = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

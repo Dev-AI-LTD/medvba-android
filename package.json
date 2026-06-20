@@ -50,6 +50,7 @@
     "check:kinde-auth": "node scripts/check-kinde-auth.mjs",
     "check:revenuecat-ios": "node scripts/check-revenuecat-ios-env.mjs",
     "review-notes:mode": "node scripts/print-review-notes-mode.mjs",
+    "screenshots:ios-6.5": "python scripts/generate-app-store-screenshots.py",
     "audit:head-neck-i18n": "tsx scripts/audit-head-neck-i18n.ts",
     "audit:locales-en-ro": "tsx scripts/audit-locale-en-ro.ts",
     "audit:quiz-missing-ro": "bun scripts/audit-quiz-missing-ro.ts",

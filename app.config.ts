@@ -156,7 +156,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       supportsTablet: false,
       bundleIdentifier: 'com.devaieood.medvba',
       icon: './assets/images/icon.png',
-      buildNumber: '62',
+      buildNumber: '63',
       // Required for @invertase/react-native-apple-authentication (EAS / prebuild).
       entitlements: {
         'com.apple.developer.applesignin': ['Default'],
