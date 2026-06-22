@@ -1039,6 +1039,23 @@ export const en: Record<string, string> = {
   'paywall.continueFree': 'Continue with Free',
   'paywall.disclaimer':
     'Subscription renews automatically. Cancel anytime in your App Store account settings.',
+  'paywall.serviceTitle': 'MEDVBA Premium',
+  'paywall.serviceDescription':
+    'Auto-renewable subscription for premium study features (unlimited quizzes, full AI Tutor, advanced stats, and priority content).',
+  'paywall.monthlyTitle': 'MEDVBA Premium — Monthly',
+  'paywall.yearlyTitle': 'MEDVBA Premium — Yearly',
+  'paywall.monthlyPeriod': 'Length: 1 month. Content and services renew each month until you cancel.',
+  'paywall.yearlyPeriod': 'Length: 1 year. Content and services renew each year until you cancel.',
+  'paywall.includesLabel': 'Included each subscription period:',
+  'paywall.termsOfUse': 'Terms of Use (EULA)',
+  'paywall.privacyPolicyLink': 'Privacy Policy',
+  'paywall.legalSeparator': ' · ',
+  'paywall.appleEulaLink': 'Apple Standard EULA',
+  'paywall.autoRenewDetail':
+    'Payment is charged to your Apple ID at confirmation. Subscription automatically renews unless canceled at least 24 hours before the end of the current period. Manage or cancel in Settings → Apple ID → Subscriptions.',
+  'paywall.subscribeMonthly': 'Subscribe — Monthly',
+  'paywall.subscribeYearly': 'Subscribe — Yearly',
+  'paywall.priceUnavailable': 'Price shown at purchase',
   'paywall.errorTitle': 'Error',
   'paywall.errorLoadingOptions': 'Could not load subscription options',
   'paywall.successTitle': 'Success!',

@@ -34,6 +34,7 @@ type OfferingPackage = {
   identifier: string;
   product: {
     priceString: string;
+    title?: string;
   };
 };
 
@@ -483,7 +484,10 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
             const mapped: Offerings = {
               availablePackages: current.availablePackages.map((pkg: any) => ({
                 identifier: pkg.identifier,
-                product: { priceString: pkg.product?.priceString ?? '' },
+                product: {
+                  priceString: pkg.product?.priceString ?? '',
+                  title: pkg.product?.title ?? '',
+                },
               })),
             };
             setState((prev) => ({ ...prev, offerings: mapped }));

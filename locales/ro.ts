@@ -1039,6 +1039,23 @@ export const ro: Record<string, string> = {
   'paywall.continueFree': 'Continuă Gratuit',
   'paywall.disclaimer':
     'Abonamentul se reînnoiește automat. Poți anula oricând din setările contului App Store.',
+  'paywall.serviceTitle': 'MEDVBA Premium',
+  'paywall.serviceDescription':
+    'Abonament cu reînnoire automată pentru funcții premium (quiz nelimitat, AI Tutor complet, statistici avansate).',
+  'paywall.monthlyTitle': 'MEDVBA Premium — Lunar',
+  'paywall.yearlyTitle': 'MEDVBA Premium — Anual',
+  'paywall.monthlyPeriod': 'Durată: 1 lună. Se reînnoiește lunar până la anulare.',
+  'paywall.yearlyPeriod': 'Durată: 1 an. Se reînnoiește anual până la anulare.',
+  'paywall.includesLabel': 'Include în fiecare perioadă:',
+  'paywall.termsOfUse': 'Termeni de utilizare (EULA)',
+  'paywall.privacyPolicyLink': 'Politica de confidențialitate',
+  'paywall.legalSeparator': ' · ',
+  'paywall.appleEulaLink': 'EULA standard Apple',
+  'paywall.autoRenewDetail':
+    'Plata se face prin Apple ID la confirmare. Abonamentul se reînnoiește automat dacă nu îl anulezi cu cel puțin 24 h înainte. Gestionează din Setări → Apple ID → Abonamente.',
+  'paywall.subscribeMonthly': 'Abonare — Lunar',
+  'paywall.subscribeYearly': 'Abonare — Anual',
+  'paywall.priceUnavailable': 'Preț afișat la cumpărare',
   'paywall.errorTitle': 'Eroare',
   'paywall.errorLoadingOptions': 'Nu s-au putut încărca opțiunile de abonament',
   'paywall.successTitle': 'Succes!',
