@@ -27,9 +27,11 @@ jobs:
       - name: Lint (Expo ESLint — zero errors required)
         run: bun run lint
 
+      - name: Typecheck (blocking)
+        run: bunx tsc --noEmit
+
       - name: Unit / integration tests
         run: bun run test:ci
 
-      - name: Typecheck (report; non-blocking until remaining app/script debt is cleared)
-        run: bunx tsc --noEmit
-        continue-on-error: true
+      - name: Expo doctor (blocking)
+        run: bun run doctor
