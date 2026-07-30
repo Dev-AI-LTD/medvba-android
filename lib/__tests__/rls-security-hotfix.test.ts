@@ -24,9 +24,9 @@ describe('RLS security hotfix contracts (022)', () => {
     expect(check).toContain('current_profile_id()');
   });
 
-  it('activity_feed insert must bind actor_id to current profile', () => {
-    const check = 'actor_id = public.current_profile_id()';
-    expect(check).toContain('actor_id');
+  it('activity_feed insert must bind user_id to current profile', () => {
+    const check = 'user_id = public.current_profile_id()';
+    expect(check).toContain('user_id');
   });
 
   it('public_profiles view must exclude PII columns', () => {

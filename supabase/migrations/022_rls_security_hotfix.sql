@@ -97,4 +97,4 @@ CREATE POLICY "users_insert_own_activity"
   ON public.activity_feed
   FOR INSERT
   TO authenticated
-  WITH CHECK (actor_id = public.current_profile_id());
+  WITH CHECK (user_id = public.current_profile_id());
