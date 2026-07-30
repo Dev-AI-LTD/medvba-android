@@ -13,6 +13,7 @@ Production `EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED` stays **false** in `eas.json` 
 - F22/F23: disclaimer must be `literal(true)`; image MIME allowlist tightened
 - RC idempotency key unit tests; clinical credit/stream auth tests; CI lint+test workflow
 - **Muse Phase 1 (code):** explicit `AI_PROVIDER=muse`, guards before debit, abort/timeout refund policy, `ai_usage_events`, `/health` + `/health/ready` split. Clinical remains OFF on EAS production. Apply migration `025_ai_usage_events.sql` before staging smoke. **No live Railway vars/deploy without explicit ops OK.**
+- **Local quality gate GREEN (2026-07-30):** `bun install --frozen-lockfile`, `lint`, `tsc --noEmit`, `test:ci`, `doctor` (17/17), `git diff --check` all exit 0. Nested same-version `expo-file-system` / `expo-font` deduped via postinstall + overrides.
 
 ## Separate PRs still recommended
 
@@ -21,7 +22,7 @@ Production `EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED` stays **false** in `eas.json` 
 3. **JWT aud (F06):** verify `aud=authenticated` in `verifyMedvbaRequestJwt`.
 4. **Atomic credits (F07):** Postgres RPC for debit instead of optimistic update loop.
 5. **Attachment upload pipeline:** move clinical images off raw data-URLs to Storage with server MIME re-check.
-6. **Full tsc green:** remaining errors outside clinical-stream (quiz styles, study scripts, biometric, etc.).
+6. ~~**Full tsc green**~~ — **DONE** locally (type remediations + doctor dedupe). Staging/ops still blocked separately.
 7. **Rotate Google OAuth secret** if `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_SECRET` was ever embedded in a store binary.
 8. **Redeploy Railway** from `main` after push so Muse Phase 1 ships; smoke `/health` (no secrets) + `/health/ready` with secret; Clinical flag only on staging.
 
