@@ -24,14 +24,14 @@ import {
 import { allQuestions } from '@/lib/quizSessionQuestionPool';
 
 export default function BatchTranslateScreen() {
-  if (!__DEV__) {
-    return <Redirect href="/(tabs)" />;
-  }
-
   const [isTranslating, setIsTranslating] = useState(false);
   const [progress, setProgress] = useState<TranslationProgress | null>(null);
   const [result, setResult] = useState<TranslationResult | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  if (!__DEV__) {
+    return <Redirect href="/(tabs)" />;
+  }
 
   const pool = dedupeQuizPoolQuestions(allQuestions);
   const categories = Array.from(new Set(pool.map((q) => q.category)));
