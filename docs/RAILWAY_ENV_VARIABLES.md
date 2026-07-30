@@ -54,6 +54,9 @@ railway variables
 | **INTERNAL_HEALTH_SECRET** | Pentru `/health/ready` | Bearer secret. Public `GET /health` rămâne minimal (fără provider/key hints). |
 | **CORS_ALLOWED_ORIGINS** | Opțional | Origini extra permise (separate prin virgulă). |
 | **CLINICAL_COPILOT_ENABLED** | Pentru TestFlight Clinical | `true` pe staging/internal API. **Implicit false** — store UI nu apelează Clinical când Expo flag e off. |
+| **UPSTASH_REDIS_REST_URL** + **UPSTASH_REDIS_REST_TOKEN** | Rate limit distribuit (recomandat) | Sliding window partajat între replici Railway pentru Clinical/tutor AI. |
+| **REDIS_URL** | Alternativă la Upstash | `redis://…` — același store rate limit dacă Upstash lipsește. |
+| **RATE_LIMIT_MEMORY_FALLBACK** | Doar dev/staging temporar | `true` permite Map in-memory când Redis lipsește (nu pentru producție multi-instance). |
 
 ### Clinical Copilot pe Railway (TestFlight)
 

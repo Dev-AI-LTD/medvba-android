@@ -260,7 +260,7 @@ async function runExplainQuestion(
   },
 ) {
   assertClinicalEnabled();
-  tutorRateLimiter(ctx.userId);
+  await tutorRateLimiter(ctx.userId);
 
   if (input.chosenIndex >= input.options.length || input.correctIndex >= input.options.length) {
     throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invalid option index' });
@@ -450,7 +450,7 @@ async function runStartCase(
   },
 ) {
   assertClinicalEnabled();
-  tutorRateLimiter(ctx.userId);
+  await tutorRateLimiter(ctx.userId);
 
   const supabase = await adminClient();
   const locale = (input.language === 'ro' || input.language === 'en'
@@ -614,7 +614,7 @@ async function runReply(
   },
 ) {
   assertClinicalEnabled();
-  tutorRateLimiter(ctx.userId);
+  await tutorRateLimiter(ctx.userId);
 
   const requestId = newClinicalRequestId();
   const startedAt = Date.now();
@@ -852,7 +852,7 @@ const analyzeImageProcedure = protectedProcedure
   )
   .mutation(async ({ ctx, input }) => {
     assertClinicalEnabled();
-    tutorRateLimiter(ctx.userId);
+    await tutorRateLimiter(ctx.userId);
 
     if (!input.imageDataUrl && !input.attachmentId) {
       throw new TRPCError({
@@ -1084,7 +1084,7 @@ const generateSummaryProcedure = protectedProcedure
   )
   .mutation(async ({ ctx, input }) => {
     assertClinicalEnabled();
-    tutorRateLimiter(ctx.userId);
+    await tutorRateLimiter(ctx.userId);
 
     const requestId = newClinicalRequestId();
     const startedAt = Date.now();

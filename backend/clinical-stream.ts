@@ -116,7 +116,7 @@ export function registerClinicalStreamRoutes(app: Hono) {
     }
 
     try {
-      tutorRateLimiter(userId);
+      await tutorRateLimiter(userId);
     } catch (err) {
       if (err instanceof TRPCError && err.code === 'TOO_MANY_REQUESTS') {
         return c.json({ error: err.message }, 429);
