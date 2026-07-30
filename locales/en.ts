@@ -478,10 +478,59 @@ export const en: Record<string, string> = {
    'tutor.errorMessage': 'Connection error. Please check your internet connection and try again',
    'tutor.serverConfigError':
      'The AI tutor is not available right now (server configuration). If this persists, contact support.',
-   'tutor.emptyResponse': 'No answer was returned. Please try rephrasing your question or try again in a moment.',
-   'tutor.retry': 'Retry',
+  'tutor.emptyResponse': 'No answer was returned. Please try rephrasing your question or try again in a moment.',
+  'tutor.retry': 'Retry',
 
-   // Social Accounts
+  // Clinical Copilot (feature-flagged; hidden when EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED is not true)
+  'clinical.explainCta': 'Explain clinically with AI',
+  'clinical.explainLoading': 'Preparing clinical explanation…',
+  'clinical.disclaimer':
+    'Educational / simulated content only. Does not replace professional medical diagnosis or care.',
+  'clinical.errorTitle': 'Clinical Copilot',
+  'clinical.errorGeneric': 'Something went wrong. Please try again.',
+  'clinical.modeTutor': 'Tutor',
+  'clinical.modeClinical': 'Clinical',
+  'clinical.acceptDisclaimer': 'I understand — continue',
+  'clinical.disclaimerAccepted': 'Disclaimer accepted',
+  'clinical.acceptDisclaimerFirst': 'Please accept the educational disclaimer before starting a case.',
+  'clinical.pickCaseFirst': 'Choose a clinical case card to begin.',
+  'clinical.creditsRemaining': '{count} Clinical Copilot credits left',
+  'clinical.paywallTitle': 'Unlock Clinical Copilot',
+  'clinical.paywallSubtitle':
+    'Interactive clinical cases, advanced explanations, and guided visual analysis for medical learning.',
+  'clinical.topic.chest_pain': 'Chest pain',
+  'clinical.topic.acute_abdomen': 'Acute abdomen',
+  'clinical.topic.neuro': 'Neuro deficit',
+  'clinical.topic.pediatrics': 'Pediatrics',
+  'clinical.topic.gyn': 'Gynecology',
+  'clinical.imageUploaded': 'Uploaded study image for guided analysis',
+  'clinical.analyzeImage': 'Analyze image',
+  'clinical.generateSummary': 'Study sheet',
+  'clinical.topupTitle': 'Need more Clinical credits?',
+  'clinical.topupSubtitle':
+    'Top up your AI Pass balance. Purchases sync via RevenueCat.',
+  'clinical.topupCredits': '{count} credits',
+  'clinical.topupBuy': 'Buy',
+  'clinical.topupClose': 'Not now',
+  'clinical.trialBanner': '{count} trial credits remaining',
+  'clinical.homeCardTitle': 'Solve a clinical case',
+  'clinical.homeCardSubtitle': 'Practice reasoning with Clinical Copilot',
+  'clinical.contextualPaywallTitle': 'Understand this question clinically',
+  'clinical.contextualPaywallBody':
+    'Upgrade to MEDVBA Premium (AI Pass) for Clinical Copilot credits after wrong answers.',
+  'clinical.insufficientCredits': 'Insufficient Clinical Copilot credits. Top up to continue.',
+  'clinical.howToTitle': 'How Clinical Copilot works',
+  'clinical.howToHide': 'Hide guide',
+  'clinical.howToShow': 'Show guide',
+  'clinical.howToStep1': '1. Accept the educational disclaimer.',
+  'clinical.howToStep2': '2. Tap a case topic (e.g. Chest pain) to start — uses trial or ~4 credits.',
+  'clinical.howToStep3': '3. Ask follow-ups in chat (history, exam, differential).',
+  'clinical.howToStep4': '4. Optional: Analyze image or generate a Study sheet.',
+  'clinical.apiUnavailable':
+    'Clinical Copilot API is not available on the server yet. Ask support to redeploy the backend with Clinical enabled.',
+  'clinical.topupLink': 'Top up credits',
+
+  // Social Accounts
    'profile.socialAccounts': 'Social Accounts',
    'profile.connect': 'Connect',
    'profile.disconnect': 'Disconnect',

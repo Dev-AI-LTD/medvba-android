@@ -69,9 +69,18 @@ eas env:create --name EXPO_PUBLIC_KINDE_ISSUER_URL --value "https://devaieoodltd
 
 ## Build IPA (EAS cloud)
 
+**Clinical Copilot QA (flag ON):** use profile **`internal`** (see [`CLINICAL_COPILOT.md`](CLINICAL_COPILOT.md)).
+
 ```powershell
 cd C:\Users\octav\Desktop\MEDVBA3\medvba-android
 eas login
+eas build --platform ios --profile internal
+eas submit --platform ios --profile internal --latest
+```
+
+**Store / live parity (Clinical OFF):** use **`production`**.
+
+```powershell
 eas build --platform ios --profile production
 ```
 
@@ -183,11 +192,20 @@ eas submit --platform ios --profile production --latest
 
 ## Comenzi rapide (copy-paste)
 
+Clinical ON (TestFlight QA):
+
 ```powershell
 cd C:\Users\octav\Desktop\MEDVBA3\medvba-android
 eas env:list --environment production
 npm run check:kinde-ios
 npm run check:revenuecat-ios
+eas build --platform ios --profile internal
+eas submit --platform ios --profile internal --latest
+```
+
+Clinical OFF (production parity / store):
+
+```powershell
 eas build --platform ios --profile production
 eas submit --platform ios --profile production --latest
 ```

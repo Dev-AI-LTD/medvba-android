@@ -5,7 +5,7 @@ import path from 'path';
 type EnvMap = Record<string, string>;
 
 /** Keep in sync with store releases; bare workflow requires a string runtimeVersion (no policy). */
-const APP_VERSION = '1.0.30';
+const APP_VERSION = '1.0.31';
 
 const readEnvText = (filePath: string): string => {
   const buf = fs.readFileSync(filePath);
@@ -77,6 +77,29 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       .map((s) => (s || '').trim())
       .find(Boolean);
 
+  /**
+   * Clinical Copilot client flag:
+   * - On EAS: eas.json profile env + EAS_BUILD_PROFILE (internal=ON, production=OFF).
+   * - Local: .env / process.env (keep false for store-parity; see .env.example).
+   * Do not set EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED=true as a production default.
+   */
+  const easBuildProfile = (process.env.EAS_BUILD_PROFILE || '').trim().toLowerCase();
+  const clinicalFromEasProfile =
+    easBuildProfile === 'internal' ? 'true' : easBuildProfile === 'production' ? 'false' : undefined;
+  const nonEmpty = (v: string | undefined) => {
+    const t = (v ?? '').trim();
+    return t !== '' ? t : undefined;
+  };
+  const isEasCloudBuild = process.env.EAS_BUILD === 'true';
+  const clinicalCopilotEnabled = isEasCloudBuild
+    ? (nonEmpty(process.env.EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED) ??
+        clinicalFromEasProfile ??
+        'false')
+    : (nonEmpty(process.env.EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED) ??
+        nonEmpty(envFromFile.EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED) ??
+        clinicalFromEasProfile ??
+        'false');
+
   const plugins: NonNullable<ExpoConfig['plugins']> = [
     [
       'expo-router',
@@ -112,9 +135,10 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         android: {
           // Play / Expo default floor: API 24 — wide device coverage; raise to 26+ if you drop older devices.
           minSdkVersion: 24,
-          compileSdkVersion: 35,
-          targetSdkVersion: 35,
-          buildToolsVersion: '35.0.0',
+          // Google Play target requirement: Android 16 (API 36).
+          compileSdkVersion: 36,
+          targetSdkVersion: 36,
+          buildToolsVersion: '36.0.0',
           // Google Play: R8 → mapping.txt (upload in Play Console → App bundle explorer → version → Deobfuscation file).
           enableMinifyInReleaseBuilds: true,
           enableShrinkResourcesInReleaseBuilds: true,
@@ -156,7 +180,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       supportsTablet: false,
       bundleIdentifier: 'com.devaieood.medvba',
       icon: './assets/images/icon.png',
-      buildNumber: '64',
+      buildNumber: '67',
       // Required for @invertase/react-native-apple-authentication (EAS / prebuild).
       entitlements: {
         'com.apple.developer.applesignin': ['Default'],
@@ -176,7 +200,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         foregroundImage: './assets/images/adaptive-icon.png',
         backgroundColor: '#000000',
       },
-      versionCode: 40,
+      versionCode: 43,
       package: 'com.devaieood.medvba',
       // Play: upload mapping.txt per release (Deobfuscation). Native: native-debug-symbols.zip (Symbols); both are buildArtifactPaths in eas.json.
       allowBackup: false,
@@ -258,6 +282,13 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         envFromFile.EXPO_PUBLIC_ENABLE_REVIEW_PREMIUM ??
         process.env.EXPO_PUBLIC_ENABLE_REVIEW_PREMIUM ??
         'false',
+      // Clinical Copilot: OFF for production/store; ON for EAS `internal` (TestFlight / Play internal).
+      // Prefer eas.json env per profile; see docs/CLINICAL_COPILOT.md.
+      EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED: clinicalCopilotEnabled,
+      EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID:
+        envFromFile.EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID ||
+        process.env.EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID ||
+        '',
       EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID:
         envFromFile.EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID ||
         process.env.EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID,

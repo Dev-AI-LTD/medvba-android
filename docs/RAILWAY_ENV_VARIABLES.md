@@ -45,8 +45,16 @@ railway variables
 | **AI_BASE_URL** | Opțional | URL compatibil OpenAI (ex. `https://api.openai.com/v1`). Implicit în cod: `https://api.openai.com/v1`. |
 | **AI_MODEL** | Opțional | Model chat (implicit `gpt-4o-mini`). |
 | **CORS_ALLOWED_ORIGINS** | Opțional | Origini extra permise (separate prin virgulă). |
+| **CLINICAL_COPILOT_ENABLED** | Pentru TestFlight Clinical | `true` ca să activezi `clinical.*` tRPC + SSE. **Implicit false** — store UI nu apelează Clinical când Expo flag e off. Fără redeploy cu routerul `clinical`, clientul vede `No procedure found on path 'clinical.startCase'`. |
 
-### Fallback-uri (doar afișare în `/health`)
+### Clinical Copilot pe Railway (TestFlight)
+
+1. Asigură-te că ultimile commit-uri cu `backend/trpc/clinical.ts` sunt pe branch-ul pe care Railway îl deploy-uiește.
+2. Variables → adaugă **`CLINICAL_COPILOT_ENABLED=true`**.
+3. **Redeploy** serviciul (Deployments → Redeploy).
+4. Smoke: din app TestFlight (profil `internal`) → Clinical → Chest pain → răspuns AI.
+
+Store builds cu `EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED=false` nu arată UI Clinical; Tutor clasic rămâne neschimbat.
 
 `backend/hono.ts` poate raporta în `/health` și variabile `EXPO_PUBLIC_AI_PROVIDER`, `EXPO_PUBLIC_AI_BASE_URL`, `EXPO_PUBLIC_AI_MODEL` dacă există în mediu — **doar pentru diagnostic**. **`lib/ai-provider.ts`** (Tutor) folosește pentru apeluri **`AI_API_KEY` / `OPENAI_API_KEY`**, **`AI_BASE_URL`**, **`AI_MODEL`** (fără cheie în `EXPO_PUBLIC_*`). **Nu** documentăm `EXPO_PUBLIC_AI_API_KEY` pentru backend — **nu există** în cod pentru cheie; folosește `AI_API_KEY` / `OPENAI_API_KEY`.
 

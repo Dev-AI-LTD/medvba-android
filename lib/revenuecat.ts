@@ -1,135 +1,185 @@
 /**
- * RevenueCat UI helpers for Paywall and Customer Center.
- * Uses react-native-purchases-ui for native paywalls and subscription management.
+ * RevenueCat client helpers for MEDVBA.
+ * Public SDK keys only — never put webhook/secret keys in the app.
+ * Profile UUID is the RC appUserID (matches webhook app_user_id).
  */
+
 import { Platform } from 'react-native';
-import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
-import Purchases from 'react-native-purchases';
-import { ENTITLEMENT_ID } from '@/constants/subscription';
+import Constants from 'expo-constants';
+import Purchases, {
+  type CustomerInfo,
+  type PurchasesPackage,
+} from 'react-native-purchases';
+import {
+  LEGACY_PRO_ENTITLEMENT_ID,
+  PRO_AI_ENTITLEMENT_ID,
+  getProAiEntitlementIds,
+  hasProAiEntitlement,
+} from '@/constants/clinical-copilot';
+import { PACKAGE_MONTHLY, PACKAGE_YEARLY } from '@/constants/subscription';
 import { log } from '@/lib/log';
 
-const IS_NATIVE = Platform.OS === 'ios' || Platform.OS === 'android';
+let configured = false;
+let lastAppUserId: string | null = null;
 
-function isRevenueCatConfigurationError(error: unknown): boolean {
-  const message = String((error as { message?: string })?.message ?? error ?? '');
-  const code = (error as { code?: number | string })?.code;
-  const readable = String(
-    (error as { userInfo?: { readable_error_code?: string } })?.userInfo?.readable_error_code ?? '',
-  );
+function getExtra(): Record<string, string | undefined> {
   return (
-    code === 23 ||
-    code === '23' ||
-    readable === 'CONFIGURATION_ERROR' ||
-    message.includes('CONFIGURATION_ERROR') ||
-    message.includes('problem with your configuration') ||
-    message.includes('could not be fetched from the App Store') ||
-    message.includes('could be fetched from the Play Store')
+    (Constants.expoConfig?.extra as Record<string, string | undefined> | undefined) ??
+    ((Constants as { manifest?: { extra?: Record<string, string | undefined> } }).manifest
+      ?.extra ??
+      {})
   );
 }
 
-/** StoreKit / Play must return product details — RC API alone is not enough. */
-async function offeringHasStoreProducts(): Promise<boolean> {
-  try {
-    const offerings = await Purchases.getOfferings();
-    const current = offerings.current;
-    const packages = current?.availablePackages ?? [];
-    return packages.length > 0 && packages.every((pkg) => Boolean(pkg.product?.identifier));
-  } catch (error) {
-    if (isRevenueCatConfigurationError(error)) return false;
-    throw error;
-  }
+export function getRevenueCatPublicApiKey(): string {
+  const extra = getExtra();
+  const ios = extra.EXPO_PUBLIC_REVENUECAT_API_KEY_IOS ?? '';
+  const android = extra.EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID ?? '';
+  return (Platform.OS === 'ios' ? ios : android) || '';
 }
 
-/**
- * Present the RevenueCat Paywall modal.
- * Only works on native (iOS/Android). On web, returns NOT_PRESENTED.
- */
-export async function presentPaywall(): Promise<PAYWALL_RESULT> {
-  if (!IS_NATIVE) {
-    return PAYWALL_RESULT.NOT_PRESENTED;
-  }
-  try {
-    const ready = await offeringHasStoreProducts();
-    if (!ready) {
-      log.warn(
-        '[RevenueCat] Store products not loaded (ASC metadata / sandbox). Skipping paywall UI.',
-      );
-      return PAYWALL_RESULT.NOT_PRESENTED;
-    }
-    return await RevenueCatUI.presentPaywall({ displayCloseButton: true });
-  } catch (error) {
-    if (isRevenueCatConfigurationError(error)) {
-      log.warn('[RevenueCat] presentPaywall configuration error:', error);
-      return PAYWALL_RESULT.NOT_PRESENTED;
-    }
-    log.error('[RevenueCat] presentPaywall error:', error);
-    return PAYWALL_RESULT.ERROR;
-  }
+/** Entitlement ids accepted for Premium / Pro AI (legacy `pro` + `medvba_pro_ai`). */
+export function getClientProAiEntitlementIds(): string[] {
+  const extra = getExtra();
+  const fromExtra = extra.EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID?.trim();
+  const ids = new Set(getProAiEntitlementIds());
+  if (fromExtra) ids.add(fromExtra);
+  ids.add(PRO_AI_ENTITLEMENT_ID);
+  ids.add(LEGACY_PRO_ENTITLEMENT_ID);
+  return Array.from(ids);
 }
 
-/**
- * Present the paywall only if the user does not have the required entitlement.
- * Useful for access-gating (e.g. before starting a premium feature).
- */
-export async function presentPaywallIfNeeded(): Promise<PAYWALL_RESULT> {
-  if (!IS_NATIVE) {
-    return PAYWALL_RESULT.NOT_PRESENTED;
-  }
-  try {
-    const ready = await offeringHasStoreProducts();
-    if (!ready) {
-      return PAYWALL_RESULT.NOT_PRESENTED;
-    }
-    return await RevenueCatUI.presentPaywallIfNeeded({
-      requiredEntitlementIdentifier: ENTITLEMENT_ID,
-      displayCloseButton: true,
-    });
-  } catch (error) {
-    if (isRevenueCatConfigurationError(error)) {
-      return PAYWALL_RESULT.NOT_PRESENTED;
-    }
-    log.error('[RevenueCat] presentPaywallIfNeeded error:', error);
-    return PAYWALL_RESULT.ERROR;
-  }
+export function hasProAi(customerInfo: CustomerInfo | null | undefined): boolean {
+  if (!customerInfo?.entitlements?.active) return false;
+  return hasProAiEntitlement(
+    customerInfo.entitlements.active as Record<string, unknown>,
+  );
 }
 
-/**
- * Present the RevenueCat Customer Center for subscription management.
- * Allows users to view subscription, change plans, cancel, restore, request refunds (iOS).
- */
-export async function presentCustomerCenter(): Promise<void> {
-  if (!IS_NATIVE) {
-    log.warn('[RevenueCat] Customer Center is not available on web');
+export async function configureRevenueCat(profileId?: string | null): Promise<void> {
+  const apiKey = getRevenueCatPublicApiKey();
+  if (!apiKey) {
+    log.debug('[RevenueCat] No public API key — skip configure');
     return;
   }
-  try {
-    await RevenueCatUI.presentCustomerCenter({
-      callbacks: {
-        onRestoreCompleted: ({ customerInfo }) => {
-          log.debug('[RevenueCat] Restore completed:', customerInfo.originalAppUserId);
-        },
-        onRestoreFailed: ({ error }) => {
-          log.error('[RevenueCat] Restore failed:', error.message);
-        },
-      },
-    });
-  } catch (error) {
-    log.error('[RevenueCat] presentCustomerCenter error:', error);
+  if (Platform.OS !== 'ios' && Platform.OS !== 'android') {
+    return;
   }
+
+  if (!configured) {
+    Purchases.configure({ apiKey });
+    configured = true;
+  }
+
+  if (profileId && lastAppUserId !== profileId) {
+    await Purchases.logIn(profileId);
+    lastAppUserId = profileId;
+  }
+}
+
+export async function logoutRevenueCat(): Promise<void> {
+  if (!configured || !lastAppUserId) return;
+  try {
+    await Purchases.logOut();
+  } catch {
+    /* already anonymous */
+  }
+  lastAppUserId = null;
+}
+
+export function isRevenueCatConfigured(): boolean {
+  return configured;
+}
+
+function findPackageByKind(
+  packages: PurchasesPackage[],
+  kind: 'monthly' | 'yearly',
+): PurchasesPackage | undefined {
+  const wantYearly = kind === 'yearly';
+  return packages.find((pkg) => {
+    const id = `${pkg.identifier} ${pkg.product?.identifier ?? ''}`.toLowerCase();
+    if (wantYearly) {
+      return (
+        pkg.identifier === PACKAGE_YEARLY ||
+        pkg.identifier === '$rc_annual' ||
+        id.includes('annual') ||
+        id.includes('year') ||
+        id.includes('medvba_pro_ai_annual')
+      );
+    }
+    return (
+      pkg.identifier === PACKAGE_MONTHLY ||
+      pkg.identifier === '$rc_monthly' ||
+      id.includes('month') ||
+      id.includes('medvba_pro_ai_monthly')
+    );
+  });
+}
+
+async function getCurrentPackages(): Promise<PurchasesPackage[]> {
+  const offerings = await Purchases.getOfferings();
+  return offerings.current?.availablePackages ?? [];
+}
+
+export async function buyProAiMonthly(): Promise<CustomerInfo | null> {
+  const packages = await getCurrentPackages();
+  const pkg = findPackageByKind(packages, 'monthly');
+  if (!pkg) {
+    log.warn('[RevenueCat] No monthly Pro AI package in offerings');
+    return null;
+  }
+  const { customerInfo } = await Purchases.purchasePackage(pkg);
+  return customerInfo;
+}
+
+export async function buyProAiAnnual(): Promise<CustomerInfo | null> {
+  const packages = await getCurrentPackages();
+  const pkg = findPackageByKind(packages, 'yearly');
+  if (!pkg) {
+    log.warn('[RevenueCat] No annual Pro AI package in offerings');
+    return null;
+  }
+  const { customerInfo } = await Purchases.purchasePackage(pkg);
+  return customerInfo;
 }
 
 /**
- * Check if the current customer has the Pro entitlement.
+ * Purchase a consumable credit top-up by product / package id.
+ * Does NOT grant credits locally — caller must syncEntitlement afterward.
  */
-export async function checkEntitlement(): Promise<boolean> {
-  if (!IS_NATIVE) return false;
+export async function purchaseCreditTopup(
+  productId: string,
+): Promise<{ customerInfo: CustomerInfo | null; purchased: boolean }> {
+  const packages = await getCurrentPackages();
+  const needle = productId.toLowerCase();
+  const pkg =
+    packages.find((p) => p.identifier.toLowerCase() === needle) ||
+    packages.find((p) => String(p.product?.identifier ?? '').toLowerCase() === needle) ||
+    packages.find(
+      (p) =>
+        p.identifier.toLowerCase().includes(needle) ||
+        String(p.product?.identifier ?? '').toLowerCase().includes(needle),
+    );
+
+  if (!pkg) {
+    log.warn('[RevenueCat] Top-up package not found:', productId);
+    return { customerInfo: null, purchased: false };
+  }
+
   try {
-    const customerInfo = await Purchases.getCustomerInfo();
-    return customerInfo.entitlements.active[ENTITLEMENT_ID] != null;
-  } catch (error) {
-    log.error('[RevenueCat] checkEntitlement error:', error);
-    return false;
+    const { customerInfo } = await Purchases.purchasePackage(pkg);
+    return { customerInfo, purchased: true };
+  } catch (error: unknown) {
+    const cancelled = Boolean((error as { userCancelled?: boolean })?.userCancelled);
+    if (!cancelled) {
+      log.error('[RevenueCat] Top-up purchase failed:', error);
+    }
+    return { customerInfo: null, purchased: false };
   }
 }
 
-export { PAYWALL_RESULT };
+export async function restorePurchases(): Promise<CustomerInfo> {
+  return Purchases.restorePurchases();
+}
+
+export { Purchases };

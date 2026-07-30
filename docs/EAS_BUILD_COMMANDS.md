@@ -95,38 +95,29 @@ Rulezi din **root-ul proiectului** `medvba-android` (unde e `eas.json` și `app.
 
 ### Build iOS (App Store / TestFlight) — prioritar
 
-**Production (submit review):**
+**Internal (TestFlight / Play internal — Clinical Copilot ON):**
+```bash
+cd medvba-android
+eas build --platform ios --profile internal
+eas submit --platform ios --profile internal --latest
+eas build --platform android --profile internal
+eas submit --platform android --profile internal --latest
+```
+
+**Production (App Store / Play live — Clinical Copilot OFF):**
 ```bash
 cd medvba-android
 eas build --platform ios --profile production
-```
-
-**Internal (TestFlight beta, același channel internal):**
-```bash
-eas build --platform ios --profile internal
-```
-
-Prima dată: terminal **interactiv** pentru Apple Developer credentials (certificat, provisioning). După build:
-
-```bash
+eas build --platform android --profile production
 eas submit --platform ios --profile production --latest
+eas submit --platform android --profile production --latest
 ```
 
-Verifică înainte: `eas env:list --environment production` — obligatoriu `EXPO_PUBLIC_REVENUECAT_API_KEY_IOS`, `EXPO_PUBLIC_PAYWALL_ENABLED=true`, Kinde + `EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID`.
-
----
+Prima dată iOS: terminal **interactiv** pentru Apple Developer credentials. Verifică: `eas env:list --environment production` — obligatoriu `EXPO_PUBLIC_REVENUECAT_API_KEY_IOS`, `EXPO_PUBLIC_PAYWALL_ENABLED=true`, Kinde + `EXPO_PUBLIC_KINDE_APPLE_CONNECTION_ID`.
 
 ### Build Android (AAB pentru Google Play)
 
-**Profil internal (testare):**
-```bash
-eas build --platform android --profile internal
-```
-
-**Profil production (pentru store):**
-```bash
-eas build --platform android --profile production
-```
+Vezi comenzile de mai sus (`internal` vs `production`). Target SDK **36** — vezi [`ANDROID_API_36.md`](ANDROID_API_36.md).
 
 La întrebări:
 - **Generate a new Android Keystore?** – prima dată alegi **Yes**; EAS îl stochează. La build-uri următoare **No**.

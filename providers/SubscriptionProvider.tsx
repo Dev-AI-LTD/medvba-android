@@ -7,10 +7,16 @@ import Purchases from 'react-native-purchases';
 import type { CustomerInfo } from 'react-native-purchases';
 import { ENTITLEMENT_ID, FREE_AI_LIMIT, FREE_QUIZ_ANSWER_LIMIT } from '@/constants/subscription';
 import { isAppReviewPremiumEmail } from '@/lib/app-review-premium';
+import { isClinicalCopilotUiEnabled } from '@/lib/clinical-copilot-flag';
 import { useAuth } from '@/providers/AuthProvider';
 import { useUpdateSubscription } from '@/lib/supabase-hooks';
 import { log } from '@/lib/log';
 import { trpc } from '@/lib/trpc';
+import {
+  configureRevenueCat,
+  logoutRevenueCat,
+  hasProAi as hasProAiFromInfo,
+} from '@/lib/revenuecat';
 
 /** Per-calendar-day free quiz answers used toward paywall; scoped per user id when logged in. */
 const FREE_QUIZ_DAILY_KEY_PREFIX = 'medvba_free_quiz_answers_daily_v1_';
@@ -62,12 +68,18 @@ interface SubscriptionState {
 
 function isPremiumFromCustomerInfo(info: CustomerInfo | null): boolean {
   if (!info?.entitlements?.active) return false;
+  // Live: legacy `pro`; new: `medvba_pro_ai` — accept both so store subscribers are not locked out.
+  if (hasProAiFromInfo(info)) return true;
   return Boolean(info.entitlements.active[ENTITLEMENT_ID]);
 }
 
 function inferSubscriptionTypeFromCustomerInfo(info: CustomerInfo | null): 'yearly' | 'monthly' {
-  const ent = info?.entitlements?.active?.[ENTITLEMENT_ID] as { productIdentifier?: string } | undefined;
-  const pid = String(ent?.productIdentifier ?? '').toLowerCase();
+  const active = info?.entitlements?.active ?? {};
+  const ent =
+    (active as Record<string, { productIdentifier?: string }>)['medvba_pro_ai'] ||
+    (active as Record<string, { productIdentifier?: string }>)[ENTITLEMENT_ID] ||
+    Object.values(active)[0];
+  const pid = String((ent as { productIdentifier?: string } | undefined)?.productIdentifier ?? '').toLowerCase();
   if (
     pid.includes('annual') ||
     pid.includes('year') ||
@@ -116,6 +128,9 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
   updateSubscriptionMutateAsyncRef.current = updateSubscriptionMutation.mutateAsync;
   const trpcUtils = trpc.useUtils();
   const syncSubscriptionServer = trpc.subscription.syncFromClient.useMutation();
+  const syncClinicalEntitlement = trpc.clinical.syncEntitlement.useMutation();
+  const syncClinicalEntitlementRef = useRef(syncClinicalEntitlement.mutateAsync);
+  syncClinicalEntitlementRef.current = syncClinicalEntitlement.mutateAsync;
 
   const [state, setState] = useState<SubscriptionState>({
     isPremium: false,
@@ -332,6 +347,19 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     void syncAiQuestionCountFromServer();
   }, [PAYWALL_ENABLED, user?.id, syncAiQuestionCountFromServer]);
 
+  const syncClinicalAfterPurchase = useCallback(async () => {
+    if (!isClinicalCopilotUiEnabled()) return;
+    try {
+      await syncClinicalEntitlementRef.current();
+      await trpcUtils.clinical.getStatus.invalidate();
+      await trpcUtils.clinical.getCredits.invalidate();
+    } catch (err) {
+      log.warn('[Subscription] Clinical entitlement sync failed:', err);
+    }
+  }, [trpcUtils]);
+  const syncClinicalAfterPurchaseRef = useRef(syncClinicalAfterPurchase);
+  syncClinicalAfterPurchaseRef.current = syncClinicalAfterPurchase;
+
   const invalidateStudyQueries = useCallback(() => {
     void trpcUtils.study.listChapters.invalidate();
     void trpcUtils.study.getChapter.invalidate();
@@ -455,19 +483,21 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     const initRevenueCat = async () => {
       try {
         if (!revenueCatConfiguredRef.current) {
-          Purchases.configure({ apiKey: REVENUECAT_API_KEY });
+          await configureRevenueCat(user?.id ?? null);
           revenueCatConfiguredRef.current = true;
+        } else if (user?.id) {
+          await configureRevenueCat(user.id);
         }
 
         if (user?.id) {
           if (lastRevenueCatUserIdRef.current !== user.id) {
-            const { customerInfo } = await Purchases.logIn(user.id);
             lastRevenueCatUserIdRef.current = user.id;
+            const customerInfo = await Purchases.getCustomerInfo();
             handleCustomerInfoRef.current(customerInfo);
           }
         } else if (lastRevenueCatUserIdRef.current) {
           try {
-            await Purchases.logOut();
+            await logoutRevenueCat();
           } catch {
             /* already anonymous */
           }
@@ -593,6 +623,9 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
           handleCustomerInfoRef.current(customerInfo);
           syncPremiumToSupabase(isYearly ? 'yearly' : 'monthly');
         }
+        // Clinical flag ON: sync credits from backend (never grant client-side).
+        // Flag OFF: keep classic Premium sync only.
+        await syncClinicalAfterPurchaseRef.current();
         return premium;
       } catch (error: any) {
         const isCancel = error?.userCancelled === true;
@@ -615,6 +648,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       const customerInfo = await Purchases.restorePurchases();
       lastSyncedSignatureRef.current = null;
       handleCustomerInfoRef.current(customerInfo);
+      await syncClinicalAfterPurchaseRef.current();
       return isPremiumFromCustomerInfo(customerInfo);
     } catch (error) {
       log.error('[Subscription] Restore error:', error);

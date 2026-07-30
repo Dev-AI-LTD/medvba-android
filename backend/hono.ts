@@ -6,6 +6,7 @@ import { appRouter } from "./trpc/app-router";
 import { createContext } from "./trpc/create-context";
 import { registerAuthSessionRoutes } from "./auth/session-routes";
 import { registerRevenueCatWebhookRoutes } from "./webhooks/revenuecat-webhook";
+import { registerClinicalStreamRoutes } from "./clinical-stream";
 import { probeSupabaseServiceRole } from "./lib/health-supabase";
 
 const app = new Hono();
@@ -54,6 +55,7 @@ app.use(
 
 registerAuthSessionRoutes(app);
 registerRevenueCatWebhookRoutes(app);
+registerClinicalStreamRoutes(app);
 
 app.use(
   "/api/trpc/*",
@@ -80,6 +82,12 @@ app.get("/health", (c) => {
     timestamp: new Date().toISOString(),
     /** Live Supabase service-role probe (subscriptions SELECT limit 1). */
     liveSupabaseProbe: "/api/health",
+    /** Clinical router is always mounted; this flag gates mutations. */
+    clinicalCopilotEnabled:
+      String(process.env.CLINICAL_COPILOT_ENABLED ?? process.env.EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED ?? "false")
+        .trim()
+        .toLowerCase() === "true" ||
+      String(process.env.CLINICAL_COPILOT_ENABLED ?? "").trim() === "1",
   };
   if (verbose) {
     body.env = {

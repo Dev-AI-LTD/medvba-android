@@ -61,10 +61,33 @@ jest.mock('@/lib/log', () => ({
 
 jest.mock('@/lib/trpc', () => ({
   trpc: {
+    useUtils: jest.fn(() => ({
+      study: {
+        listChapters: { invalidate: jest.fn() },
+        getChapter: { invalidate: jest.fn() },
+        listModules: { invalidate: jest.fn() },
+      },
+      clinical: {
+        getStatus: { invalidate: jest.fn() },
+        getCredits: { invalidate: jest.fn() },
+      },
+    })),
     subscription: {
       validateAiQuestion: {
         useMutation: jest.fn(() => ({
           mutateAsync: jest.fn().mockResolvedValue({ allowed: true, remaining: 0, isPremium: false }),
+        })),
+      },
+      syncFromClient: {
+        useMutation: jest.fn(() => ({
+          mutateAsync: jest.fn().mockResolvedValue({ ok: true }),
+        })),
+      },
+    },
+    clinical: {
+      syncEntitlement: {
+        useMutation: jest.fn(() => ({
+          mutateAsync: jest.fn().mockResolvedValue({ ok: true, enabled: false }),
         })),
       },
     },

@@ -1,4 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  PRO_AI_ENTITLEMENT_ID,
+  getProAiEntitlementIds,
+  hasProAiEntitlement,
+  inferSubscriptionPlan,
+  resolveProAiEntitlementKey,
+} from "../../constants/clinical-copilot";
 
 /** Untyped client from service-role bootstrap (no generated Database types in backend). */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -13,10 +20,6 @@ export function getRevenueCatSecretApiKey(): string | undefined {
   return k || undefined;
 }
 
-function entitlementId(): string {
-  return process.env.REVENUECAT_ENTITLEMENT_ID?.trim() || "pro";
-}
-
 export interface RcEntitlementRest {
   expires_date: string | null;
   grace_period_expires_date?: string | null;
@@ -28,7 +31,7 @@ export interface RcSubscriberRest {
   entitlements?: Record<string, RcEntitlementRest>;
 }
 
-interface RGetSubscriberResponse {
+export interface RGetSubscriberResponse {
   subscriber?: RcSubscriberRest;
 }
 
@@ -49,6 +52,28 @@ function entitlementIsActive(ent: RcEntitlementRest | undefined): boolean {
   return false;
 }
 
+/** Pick first active Pro / Pro AI entitlement (`medvba_pro_ai` or legacy `pro`). */
+export function pickActiveProEntitlement(
+  entitlements: Record<string, RcEntitlementRest> | undefined,
+): { key: string; ent: RcEntitlementRest } | null {
+  if (!entitlements) return null;
+  for (const id of getProAiEntitlementIds()) {
+    const ent = entitlements[id];
+    if (entitlementIsActive(ent)) {
+      return { key: id, ent: ent! };
+    }
+  }
+  const activeMap: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(entitlements)) {
+    if (entitlementIsActive(v)) activeMap[k] = v;
+  }
+  if (!hasProAiEntitlement(activeMap)) return null;
+  const key = resolveProAiEntitlementKey(activeMap);
+  const ent = entitlements[key];
+  if (ent && entitlementIsActive(ent)) return { key, ent };
+  return null;
+}
+
 function isoExpiresAt(ent: RcEntitlementRest | undefined): string | null {
   if (!ent || !entitlementIsActive(ent)) return null;
   if (ent.expires_date) {
@@ -56,14 +81,6 @@ function isoExpiresAt(ent: RcEntitlementRest | undefined): string | null {
     if (!Number.isNaN(e.getTime())) return e.toISOString();
   }
   return null;
-}
-
-function inferSubscriptionType(productId: string | undefined): "yearly" | "monthly" {
-  const p = String(productId ?? "").toLowerCase();
-  if (p.includes("annual") || p.includes("year") || p.includes("yearly") || p === "$rc_annual") {
-    return "yearly";
-  }
-  return "monthly";
 }
 
 function coerceTimestamp(value: string | undefined, fallback: string): string {
@@ -104,36 +121,52 @@ export async function fetchRevenueCatSubscriber(
   return (await res.json()) as RGetSubscriberResponse;
 }
 
+export type SyncSubscriberOptions = {
+  /** When true (default), grant monthly credits if Pro active (period-deduped). */
+  grantMonthlyCredits?: boolean;
+  revenuecatTransactionId?: string | null;
+  /** Force revoke even if REST still shows active (e.g. REFUND webhook). */
+  forceRevoke?: boolean;
+};
+
 /**
- * Applies RevenueCat subscriber payload to `public.subscriptions` (service role client).
+ * Applies RevenueCat subscriber payload to `public.subscriptions` + `ai_entitlements`.
+ * Classic Premium path stays intact; Clinical credits are additive.
  */
 export async function syncSubscriberPayloadToSupabase(
   supabase: ServiceSupabase,
   userId: string,
   body: RGetSubscriberResponse | null,
-): Promise<{ ok: boolean; error?: string; source: "rest" | "noop" }> {
-  const eid = entitlementId();
-  const sub = body?.subscriber;
-  const ent = sub?.entitlements?.[eid];
-  const active = entitlementIsActive(ent);
+  options?: SyncSubscriberOptions,
+): Promise<{
+  ok: boolean;
+  error?: string;
+  source: "rest" | "noop";
+  isPro: boolean;
+  grantedMonthly?: boolean;
+}> {
+  const picked = pickActiveProEntitlement(body?.subscriber?.entitlements);
+  const active = !options?.forceRevoke && picked != null;
   const nowIso = new Date().toISOString();
+  const grantMonthly = options?.grantMonthlyCredits !== false;
 
-  if (active) {
+  if (active && picked) {
     const { data: existing } = await supabase
       .from("subscriptions")
       .select("started_at")
       .eq("user_id", userId)
       .maybeSingle();
 
-    const expiresAt = isoExpiresAt(ent);
+    const expiresAt = isoExpiresAt(picked.ent);
+    const plan = inferSubscriptionPlan(picked.ent.product_identifier);
 
     const { error } = await supabase.from("subscriptions").upsert(
       {
         user_id: userId,
         status: "premium",
-        type: inferSubscriptionType(ent?.product_identifier),
+        type: plan,
         expires_at: expiresAt,
-        started_at: existing?.started_at ?? coerceTimestamp(ent?.purchase_date, nowIso),
+        started_at: existing?.started_at ?? coerceTimestamp(picked.ent.purchase_date, nowIso),
         updated_at: nowIso,
       },
       { onConflict: "user_id" },
@@ -141,9 +174,37 @@ export async function syncSubscriberPayloadToSupabase(
 
     if (error) {
       console.error("[RevenueCat sync] Premium upsert failed:", error);
-      return { ok: false, error: error.message, source: "rest" };
+      return { ok: false, error: error.message, source: "rest", isPro: false };
     }
-    return { ok: true, source: "rest" };
+
+    let grantedMonthly = false;
+    try {
+      const { grantMonthlyCreditsIfNeeded, syncEntitlementProFlag } = await import(
+        "./ai-credits"
+      );
+      await syncEntitlementProFlag({
+        supabase,
+        userId,
+        isPro: true,
+        entitlementKey: picked.key || PRO_AI_ENTITLEMENT_ID,
+        renewsAt: expiresAt,
+      });
+      if (grantMonthly) {
+        const grant = await grantMonthlyCreditsIfNeeded({
+          supabase,
+          userId,
+          plan,
+          productId: picked.ent.product_identifier,
+          revenuecatTransactionId: options?.revenuecatTransactionId,
+          renewsAt: expiresAt,
+        });
+        grantedMonthly = grant.granted;
+      }
+    } catch (e) {
+      console.warn("[RevenueCat sync] Clinical credit grant skipped:", e);
+    }
+
+    return { ok: true, source: "rest", isPro: true, grantedMonthly };
   }
 
   const { error } = await supabase.from("subscriptions").upsert(
@@ -159,7 +220,21 @@ export async function syncSubscriberPayloadToSupabase(
 
   if (error) {
     console.error("[RevenueCat sync] Free upsert failed:", error);
-    return { ok: false, error: error.message, source: "rest" };
+    return { ok: false, error: error.message, source: "rest", isPro: false };
   }
-  return { ok: true, source: "rest" };
+
+  try {
+    const { syncEntitlementProFlag } = await import("./ai-credits");
+    await syncEntitlementProFlag({
+      supabase,
+      userId,
+      isPro: false,
+      entitlementKey: null,
+      renewsAt: null,
+    });
+  } catch (e) {
+    console.warn("[RevenueCat sync] Clinical entitlement sync skipped:", e);
+  }
+
+  return { ok: true, source: "rest", isPro: false };
 }

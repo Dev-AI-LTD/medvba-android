@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { X, Clock, CheckCircle, XCircle, ChevronRight, Copy, Lock, Crown, BookOpen } from 'lucide-react-native';
+import { X, Clock, CheckCircle, XCircle, ChevronRight, Copy, Lock, Crown, BookOpen, Sparkles } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -75,6 +75,10 @@ import {
 import { buildQuestionsWithChapters } from '@/lib/questionChapterLink';
 import { getParentStudyChapter } from '@/lib/quizToStudyChapter';
 import { STUDY_PILOT_MODULE_ID } from '@/constants/study';
+import { isClinicalCopilotUiEnabled } from '@/lib/clinical-copilot-flag';
+import { trackClinicalEvent } from '@/lib/clinical-analytics';
+import { trpc } from '@/lib/trpc';
+import { TRPCClientError } from '@trpc/client';
 
 const QUESTION_COUNTS = {
   quick: 10,
@@ -646,6 +650,7 @@ export default function QuizSessionScreen() {
   }, [showResult, selectedAnswers, finalizeAnswer]);
 
   const handleNext = useCallback(async () => {
+    setClinicalExplainText(null);
     if (!questionsRef.current || questionsRef.current.length === 0) {
       log.error('[QuizSession] No questions available');
       router.replace('/(tabs)');
@@ -714,18 +719,81 @@ export default function QuizSessionScreen() {
 
   const handleCopyExplanation = useCallback(async () => {
     if (!currentQuestion?.explanation) return;
-    
+
     const cleanText = currentQuestion.explanation.replace(/\[(web|screenshot|image|source|ref):\d+\]/gi, '').trim();
-    
+
     await Clipboard.setStringAsync(cleanText);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    
+
     if (Platform.OS === 'web') {
       Alert.alert(t('session.copied'), t('session.explanationCopied'));
     } else {
       Alert.alert(t('session.explanationCopied'));
     }
   }, [currentQuestion, t]);
+
+  const clinicalEnabled = isClinicalCopilotUiEnabled();
+  const [clinicalExplainLoading, setClinicalExplainLoading] = useState(false);
+  const [clinicalExplainText, setClinicalExplainText] = useState<string | null>(null);
+  const explainMutation = trpc.clinical.explainQuestion.useMutation();
+
+  const handleClinicalExplain = useCallback(async () => {
+    if (!currentQuestion || !clinicalEnabled) return;
+    const correct = getCorrectAnswerIndices(currentQuestion);
+    const correctIndex = correct[0] ?? 0;
+    const chosenIndex = selectedAnswers[0] ?? 0;
+    log.info('[ClinicalCopilot] explain CTA', {
+      questionId: currentQuestion.id,
+      chosenIndex,
+      correctIndex,
+    });
+    trackClinicalEvent('clinical_explain_started', { questionId: currentQuestion.id });
+    setClinicalExplainLoading(true);
+    setClinicalExplainText(null);
+    try {
+      const res = await explainMutation.mutateAsync({
+        question: currentQuestion.question,
+        options: currentQuestion.options ?? [],
+        chosenIndex,
+        correctIndex,
+        staticExplanation: currentQuestion.explanation,
+        locale: currentLanguage === 'ro' ? 'ro' : 'en',
+        acceptDisclaimer: true,
+        questionId: String(currentQuestion.id),
+        entryPoint: 'quiz_wrong_answer',
+      });
+      setClinicalExplainText(res.response);
+      trackClinicalEvent('clinical_explain_completed', { questionId: currentQuestion.id });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (e) {
+      if (e instanceof TRPCClientError && (e.data as { code?: string } | undefined)?.code === 'FORBIDDEN') {
+        trackClinicalEvent('clinical_paywall_shown', { source: 'quiz_explain' });
+        Alert.alert(
+          t('clinical.contextualPaywallTitle'),
+          t('clinical.contextualPaywallBody'),
+          [
+            { text: t('home.later'), style: 'cancel' },
+            {
+              text: t('home.upgradePremiumShort'),
+              onPress: () => router.push('/paywall'),
+            },
+          ],
+        );
+        return;
+      }
+      Alert.alert(t('clinical.errorTitle'), e instanceof Error ? e.message : t('clinical.errorGeneric'));
+    } finally {
+      setClinicalExplainLoading(false);
+    }
+  }, [
+    clinicalEnabled,
+    currentQuestion,
+    selectedAnswers,
+    explainMutation,
+    currentLanguage,
+    router,
+    t,
+  ]);
 
   const activeChapterMeta = questionsWithChapters[currentIndex];
   const activeChapterId = activeChapterMeta?.chapterId ?? '';
@@ -1046,6 +1114,29 @@ export default function QuizSessionScreen() {
                   </TouchableOpacity>
                 </View>
                 <Text style={styles.explanationText}>{currentQuestion.explanation}</Text>
+                {clinicalEnabled &&
+                  selectedAnswers.length > 0 &&
+                  !isAnswerCorrect(currentQuestion, selectedAnswers) && (
+                    <TouchableOpacity
+                      style={styles.clinicalExplainButton}
+                      onPress={handleClinicalExplain}
+                      disabled={clinicalExplainLoading}
+                      activeOpacity={0.85}
+                    >
+                      <Sparkles color={colors.primary} size={iconSm} />
+                      <Text style={[styles.clinicalExplainButtonText, { color: colors.primary }]}>
+                        {clinicalExplainLoading
+                          ? t('clinical.explainLoading')
+                          : t('clinical.explainCta')}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                {clinicalExplainText ? (
+                  <View style={styles.clinicalExplainResult}>
+                    <Text style={styles.clinicalDisclaimer}>{t('clinical.disclaimer')}</Text>
+                    <Text style={styles.explanationText}>{clinicalExplainText}</Text>
+                  </View>
+                ) : null}
                 {showChapterContext && activeModuleId && (
                   <TouchableOpacity
                     style={styles.summaryLink}
@@ -1339,6 +1430,28 @@ const createStyles = (
   explanationText: {
     ...quizTypo.explanation,
     color: colors.textSecondary,
+  },
+  clinicalExplainButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.space2,
+    marginTop: space.space3,
+    paddingVertical: space.space2,
+  },
+  clinicalExplainButtonText: {
+    ...typeScale.subhead,
+    fontWeight: '700' as const,
+  },
+  clinicalExplainResult: {
+    marginTop: space.space3,
+    paddingTop: space.space3,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+  },
+  clinicalDisclaimer: {
+    ...typeScale.caption1,
+    color: colors.textSecondary,
+    marginBottom: space.space2,
   },
   footer: {
     paddingHorizontal: screenPaddingX,

@@ -10,7 +10,8 @@
       "channel": "development",
       "bun": "1.3.6",
       "env": {
-        "EXPO_DOCTOR_ENABLE_DIRECTORY_CHECK": "0"
+        "EXPO_DOCTOR_ENABLE_DIRECTORY_CHECK": "0",
+        "EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED": "false"
       },
       "android": {
         "buildType": "apk"
@@ -20,7 +21,8 @@
       "channel": "production",
       "bun": "1.3.6",
       "env": {
-        "EXPO_DOCTOR_ENABLE_DIRECTORY_CHECK": "0"
+        "EXPO_DOCTOR_ENABLE_DIRECTORY_CHECK": "0",
+        "EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED": "false"
       },
       "ios": {
         "resourceClass": "m-medium"
@@ -35,9 +37,11 @@
     },
     "internal": {
       "channel": "internal",
+      "distribution": "store",
       "bun": "1.3.6",
       "env": {
-        "EXPO_DOCTOR_ENABLE_DIRECTORY_CHECK": "0"
+        "EXPO_DOCTOR_ENABLE_DIRECTORY_CHECK": "0",
+        "EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED": "true"
       },
       "ios": {
         "resourceClass": "m-medium"
@@ -55,7 +59,11 @@
     "internal": {
       "android": { "track": "internal" },
       "ios": {
-        "bundleIdentifier": "com.devaieood.medvba"
+        "bundleIdentifier": "com.devaieood.medvba",
+        "ascApiKeyPath": "./secrets/asc-api-key.p8",
+        "ascApiKeyId": "K64F283DJK",
+        "ascApiKeyIssuerId": "29f29a6b-929c-4bc7-98b3-7e6d224f9627",
+        "ascAppId": "6771373486"
       }
     },
     "production": {

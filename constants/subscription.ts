@@ -7,8 +7,10 @@ export const FREE_AI_LIMIT = 10;
 /** Alias for clarity in UI copy and docs. */
 export const FREE_DAILY_QUIZ_LIMIT = FREE_QUIZ_ANSWER_LIMIT;
 
-/** Entitlement identifier in RevenueCat dashboard - "Dev AI LTD. EOOD Pro" */
+/** Entitlement identifier in RevenueCat dashboard — live legacy id. Prefer checking both via hasProAi(). */
 export const ENTITLEMENT_ID = 'pro';
+/** New Clinical / Pro AI entitlement (also accept legacy `pro`). */
+export const PRO_AI_ENTITLEMENT_ID = 'medvba_pro_ai';
 
 /** Package identifiers for Monthly and Yearly products */
 export const PACKAGE_MONTHLY = 'monthly';

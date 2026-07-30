@@ -37,7 +37,8 @@ import {
   typeScale,
 } from '@/theme/iosDesign';
 import { log } from '@/lib/log';
-
+import { isClinicalCopilotUiEnabled } from '@/lib/clinical-copilot-flag';
+import { trackClinicalEvent } from '@/lib/clinical-analytics';
 export default function HomeScreen() {
   const router = useRouter();
   const { t, getModuleName } = useLanguage();
@@ -53,6 +54,7 @@ export default function HomeScreen() {
   const todayProgress = dailyProgress.questionsAnswered;
 
   const hasReachedFreeQuizLimit = isPaywallEnabled && !isPremium && getRemainingQuizzes() === 0;
+  const clinicalUiEnabled = isClinicalCopilotUiEnabled();
 
   const handleUpgradePress = useCallback(() => {
     if (!isPaywallEnabled) return;
@@ -104,6 +106,11 @@ export default function HomeScreen() {
     }
   }, [hasActiveSession, sessionState, lastSessionInfo, router, hasReachedFreeQuizLimit, handleUpgradePress, t]);
 
+  const handleClinicalHomeCard = useCallback(() => {
+    trackClinicalEvent('clinical_home_card_tapped');
+    router.push('/(tabs)/tutor');
+  }, [router]);
+
   return (
     <Screen withGradient edges={['top']} padded>
       <ScrollView
@@ -111,6 +118,29 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         <HomeWelcomeHeader />
+
+          {clinicalUiEnabled ? (
+            <Card
+              style={[styles.heroCard, { backgroundColor: colors.cardBg, borderWidth: 1, borderColor: colors.glassBorder }]}
+              mode="elevated"
+              onPress={handleClinicalHomeCard}
+            >
+              <Card.Content>
+                <View style={styles.heroContent}>
+                  <Stethoscope color={colors.primary} size={iconLg} />
+                  <View style={styles.heroLeft}>
+                    <Text style={[styles.heroTitle, { color: colors.text }]}>
+                      {t('clinical.homeCardTitle')}
+                    </Text>
+                    <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>
+                      {t('clinical.homeCardSubtitle')}
+                    </Text>
+                  </View>
+                  <ChevronRight color={colors.textMuted} size={iconMd} />
+                </View>
+              </Card.Content>
+            </Card>
+          ) : null}
 
           <Card
             style={[styles.heroCard, { backgroundColor: colors.primary + '18', borderWidth: 1, borderColor: colors.glassBorder }]}

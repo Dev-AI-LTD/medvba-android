@@ -23,6 +23,23 @@ export interface GenerateTextOptions {
   maxTokens?: number;
 }
 
+/** Multimodal content part for vision (Clinical Copilot image analysis). */
+export type ChatContentPart =
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; image_url: { url: string } };
+
+export interface MultimodalChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string | ChatContentPart[];
+}
+
+export interface GenerateTextResult {
+  text: string;
+  model: string;
+  /** Estimated usage when API returns usage; otherwise undefined. */
+  usage?: { promptTokens?: number; completionTokens?: number };
+}
+
 function getProviderConfig(): AIProviderConfig {
   return {
     apiKey: process.env.AI_API_KEY || process.env.OPENAI_API_KEY,
@@ -31,44 +48,178 @@ function getProviderConfig(): AIProviderConfig {
   };
 }
 
-// OpenAI compatible API call
-async function callOpenAI(options: GenerateTextOptions, config: AIProviderConfig): Promise<string> {
-  const { messages, model, temperature = 0.7, maxTokens = 2000 } = options;
-  
+/** Clinical / Muse Spark compatible model override (falls back to AI_MODEL). */
+export function getClinicalModel(): string {
+  return (
+    process.env.AI_CLINICAL_MODEL?.trim() ||
+    process.env.AI_MODEL?.trim() ||
+    'gpt-4o-mini'
+  );
+}
+
+async function callOpenAICompatible(
+  messages: MultimodalChatMessage[],
+  options: { model?: string; temperature?: number; maxTokens?: number },
+  config: AIProviderConfig,
+): Promise<GenerateTextResult> {
   const apiKey = config.apiKey || process.env.AI_API_KEY || process.env.OPENAI_API_KEY;
   const baseUrl = config.baseUrl || 'https://api.openai.com/v1';
-  
+  const model = options.model || config.model || 'gpt-4o-mini';
+
   if (!apiKey) {
     throw new Error('OpenAI API key not configured. Set AI_API_KEY (or OPENAI_API_KEY) on the backend.');
   }
-  
+
   const response = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: model || config.model || 'gpt-4o-mini',
+      model,
       messages,
-      temperature,
-      max_tokens: maxTokens,
+      temperature: options.temperature ?? 0.7,
+      max_tokens: options.maxTokens ?? 2000,
     }),
   });
-  
+
   if (!response.ok) {
     const error = await response.text();
     throw new Error(`OpenAI API error: ${response.status} - ${error}`);
   }
-  
+
   const data = await response.json();
-  return data.choices[0]?.message?.content || '';
+  return {
+    text: data.choices?.[0]?.message?.content || '',
+    model,
+    usage: data.usage
+      ? {
+          promptTokens: data.usage.prompt_tokens,
+          completionTokens: data.usage.completion_tokens,
+        }
+      : undefined,
+  };
 }
 
-// Main generateText function (OpenAI-compatible provider).
+// Main generateText function (OpenAI-compatible provider). Unchanged return type for classic Tutor.
 export async function generateText(options: GenerateTextOptions): Promise<string> {
   const config = getProviderConfig();
-  return callOpenAI(options, config);
+  const result = await callOpenAICompatible(options.messages, options, config);
+  return result.text;
+}
+
+/** Clinical Copilot generation with model override + usage metadata. */
+export async function generateClinicalText(options: {
+  messages: MultimodalChatMessage[];
+  temperature?: number;
+  maxTokens?: number;
+  model?: string;
+}): Promise<GenerateTextResult> {
+  const config = getProviderConfig();
+  return callOpenAICompatible(
+    options.messages,
+    {
+      model: options.model || getClinicalModel(),
+      temperature: options.temperature ?? 0.5,
+      maxTokens: options.maxTokens ?? 2500,
+    },
+    config,
+  );
+}
+
+/**
+ * Stream Clinical Copilot tokens (OpenAI-compatible SSE).
+ * Yields text deltas; throws on HTTP/API errors.
+ */
+export async function* generateClinicalTextStream(options: {
+  messages: MultimodalChatMessage[];
+  temperature?: number;
+  maxTokens?: number;
+  model?: string;
+  signal?: AbortSignal;
+}): AsyncGenerator<string, GenerateTextResult, unknown> {
+  const config = getProviderConfig();
+  const apiKey = config.apiKey || process.env.AI_API_KEY || process.env.OPENAI_API_KEY;
+  const baseUrl = config.baseUrl || 'https://api.openai.com/v1';
+  const model = options.model || getClinicalModel() || config.model || 'gpt-4o-mini';
+
+  if (!apiKey) {
+    throw new Error('OpenAI API key not configured. Set AI_API_KEY (or OPENAI_API_KEY) on the backend.');
+  }
+
+  const response = await fetch(`${baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages: options.messages,
+      temperature: options.temperature ?? 0.5,
+      max_tokens: options.maxTokens ?? 2500,
+      stream: true,
+    }),
+    signal: options.signal,
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`OpenAI API error: ${response.status} - ${error}`);
+  }
+
+  if (!response.body) {
+    throw new Error('OpenAI API returned empty stream body');
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let fullText = '';
+  let promptTokens: number | undefined;
+  let completionTokens: number | undefined;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? '';
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith('data:')) continue;
+      const payload = trimmed.slice(5).trim();
+      if (!payload || payload === '[DONE]') continue;
+      try {
+        const json = JSON.parse(payload) as {
+          choices?: { delta?: { content?: string } }[];
+          usage?: { prompt_tokens?: number; completion_tokens?: number };
+        };
+        const delta = json.choices?.[0]?.delta?.content;
+        if (delta) {
+          fullText += delta;
+          yield delta;
+        }
+        if (json.usage) {
+          promptTokens = json.usage.prompt_tokens;
+          completionTokens = json.usage.completion_tokens;
+        }
+      } catch {
+        // ignore partial JSON
+      }
+    }
+  }
+
+  return {
+    text: fullText,
+    model,
+    usage:
+      promptTokens != null || completionTokens != null
+        ? { promptTokens, completionTokens }
+        : undefined,
+  };
 }
 
 export const SYSTEM_PROMPT = `You are an expert AI tutor helping students prepare for medical exams (USMLE, MBBS, anatomy exams, etc.).

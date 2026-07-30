@@ -21,7 +21,10 @@ import {
   HelpCircle,
   Lock,
   RotateCcw,
+  Image as ImageIcon,
+  FileText,
 } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/providers/ThemeProvider';
@@ -49,7 +52,17 @@ import {
 } from '@/theme/iosDesign';
 import { OfflineFeatureNotice } from '@/components/OfflineFeatureNotice';
 import type { AppColors } from '@/constants/colors';
-
+import { isClinicalCopilotUiEnabled } from '@/lib/clinical-copilot-flag';
+import {
+  CLINICAL_CASE_TOPICS,
+  CLINICAL_DISCLAIMER_VERSION,
+  type ClinicalCaseTopic,
+} from '@/constants/clinical-copilot';
+import { ClinicalTopupSheet } from '@/components/ClinicalTopupSheet';
+import { streamClinicalReply } from '@/lib/clinical-stream-client';
+import { getMedvbaAccessToken } from '@/lib/medvba-access-token';
+import { trackClinicalEvent } from '@/lib/clinical-analytics';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 function getMutationErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof TRPCClientError) {
     const msg = error.message?.trim();
@@ -74,7 +87,19 @@ function isTrpcForbidden(error: unknown): boolean {
   return code === 'FORBIDDEN';
 }
 
+function isClinicalProcedureMissing(error: unknown): boolean {
+  const msg = getMutationErrorMessage(error, '').toLowerCase();
+  return (
+    msg.includes('no procedure found') ||
+    (msg.includes('clinical.') && msg.includes('not found')) ||
+    msg.includes("path 'clinical.")
+  );
+}
+
 function getTutorErrorContent(error: unknown, t: (key: string) => string): string {
+  if (isClinicalProcedureMissing(error)) {
+    return t('clinical.apiUnavailable');
+  }
   if (isTrpcPreconditionFailed(error)) {
     return t('tutor.serverConfigError');
   }
@@ -101,6 +126,14 @@ export default function TutorScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const clinicalUiEnabled = isClinicalCopilotUiEnabled();
+  const [copilotMode, setCopilotMode] = useState<'tutor' | 'clinical'>('tutor');
+  const [clinicalSessionId, setClinicalSessionId] = useState<string | null>(null);
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
+  const [clinicalBalance, setClinicalBalance] = useState<number | null>(null);
+  const [trialRemaining, setTrialRemaining] = useState<number | null>(null);
+  const [topupVisible, setTopupVisible] = useState(false);
+  const [howToExpanded, setHowToExpanded] = useState(true);
   const scrollViewRef = useRef<ScrollView>(null);
   const lastUserMessageRef = useRef<string>('');
   const router = useRouter();
@@ -139,6 +172,63 @@ export default function TutorScreen() {
   }, [getInitialMessage]);
 
   const chatMutation = trpc.tutor.chat.useMutation();
+  const startCaseMutation = trpc.clinical.startCase.useMutation();
+  const clinicalReplyMutation = trpc.clinical.reply.useMutation();
+  const analyzeImageMutation = trpc.clinical.analyzeImage.useMutation();
+  const generateSummaryMutation = trpc.clinical.generateSummary.useMutation();
+  const clinicalStatusQuery = trpc.clinical.getStatus.useQuery(undefined, {
+    enabled: clinicalUiEnabled,
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (clinicalStatusQuery.data?.enabled) {
+      setClinicalBalance(clinicalStatusQuery.data.balance);
+      if (typeof clinicalStatusQuery.data.trialCreditsRemaining === 'number') {
+        setTrialRemaining(clinicalStatusQuery.data.trialCreditsRemaining);
+      }
+    }
+  }, [clinicalStatusQuery.data]);
+
+  useEffect(() => {
+    if (!clinicalUiEnabled) return;
+    trackClinicalEvent('clinical_opened');
+    void (async () => {
+      try {
+        const v = await AsyncStorage.getItem('clinical_disclaimer_v');
+        if (v === CLINICAL_DISCLAIMER_VERSION) {
+          setDisclaimerAccepted(true);
+          setHowToExpanded(false);
+        }
+        const howTo = await AsyncStorage.getItem('clinical_howto_collapsed');
+        if (howTo === '1') setHowToExpanded(false);
+      } catch {
+        /* ignore */
+      }
+    })();
+  }, [clinicalUiEnabled]);
+
+  const acceptDisclaimer = useCallback(async () => {
+    setDisclaimerAccepted(true);
+    setHowToExpanded(false);
+    trackClinicalEvent('clinical_disclaimer_accepted', {
+      version: CLINICAL_DISCLAIMER_VERSION,
+    });
+    try {
+      await AsyncStorage.setItem('clinical_disclaimer_v', CLINICAL_DISCLAIMER_VERSION);
+      await AsyncStorage.setItem('clinical_howto_collapsed', '1');
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const toggleHowTo = useCallback(async () => {
+    setHowToExpanded((prev) => {
+      const next = !prev;
+      void AsyncStorage.setItem('clinical_howto_collapsed', next ? '0' : '1').catch(() => {});
+      return next;
+    });
+  }, []);
 
   const generateAIResponse = useCallback(
     async (conversationHistory: Message[], locale: 'en' | 'ro'): Promise<string> => {
@@ -170,10 +260,327 @@ export default function TutorScreen() {
     }
   }, [router, t]);
 
+  const openTopupOrPaywall = useCallback(
+    (message?: string) => {
+      const msg = message ?? '';
+      if (msg.includes('TOPUP_REQUIRED') || msg.includes('Insufficient')) {
+        trackClinicalEvent('clinical_insufficient_credits');
+        trackClinicalEvent('clinical_topup_shown');
+        setTopupVisible(true);
+        return;
+      }
+      trackClinicalEvent('clinical_paywall_shown');
+      openPaywallWithFallback();
+    },
+    [openPaywallWithFallback],
+  );
+
+  const startClinicalCase = useCallback(
+    async (topic: ClinicalCaseTopic) => {
+      if (!disclaimerAccepted) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: t('clinical.acceptDisclaimerFirst'),
+            timestamp: new Date(),
+          },
+        ]);
+        return;
+      }
+      setIsTyping(true);
+      trackClinicalEvent('clinical_case_started', { topic });
+      try {
+        const res = await startCaseMutation.mutateAsync({
+          topic,
+          locale: tutorLocale,
+          acceptDisclaimer: true,
+        });
+        setClinicalSessionId(res.sessionId);
+        setClinicalBalance(res.balance);
+        setMessages([
+          {
+            id: '1',
+            role: 'assistant',
+            content: `${t('clinical.disclaimer')}\n\n${res.response}`,
+            timestamp: new Date(),
+          },
+        ]);
+      } catch (error) {
+        if (isTrpcForbidden(error)) {
+          openTopupOrPaywall(getMutationErrorMessage(error, ''));
+          return;
+        }
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: getTutorErrorContent(error, t),
+            timestamp: new Date(),
+            isError: true,
+          },
+        ]);
+      } finally {
+        setIsTyping(false);
+      }
+    },
+    [
+      disclaimerAccepted,
+      startCaseMutation,
+      tutorLocale,
+      t,
+      openTopupOrPaywall,
+    ],
+  );
+
+  const handleClinicalImage = useCallback(async () => {
+    if (!disclaimerAccepted) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: t('clinical.acceptDisclaimerFirst'),
+          timestamp: new Date(),
+        },
+      ]);
+      return;
+    }
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) return;
+    const picked = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+      base64: true,
+    });
+    if (picked.canceled || !picked.assets?.[0]) return;
+    const asset = picked.assets[0];
+    if (!asset.base64) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: t('clinical.errorGeneric'),
+          timestamp: new Date(),
+          isError: true,
+        },
+      ]);
+      return;
+    }
+    const dataUrl = `data:${asset.mimeType ?? 'image/jpeg'};base64,${asset.base64}`;
+    setIsTyping(true);
+    try {
+      const res = await analyzeImageMutation.mutateAsync({
+        imageDataUrl: dataUrl,
+        locale: tutorLocale,
+        acceptDisclaimer: true,
+      });
+      setClinicalSessionId(res.sessionId);
+      setClinicalBalance(res.balance);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          role: 'user',
+          content: t('clinical.imageUploaded'),
+          timestamp: new Date(),
+        },
+        {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: `${t('clinical.disclaimer')}\n\n${res.response}`,
+          timestamp: new Date(),
+        },
+      ]);
+    } catch (error) {
+      if (isTrpcForbidden(error)) {
+        openPaywallWithFallback();
+        return;
+      }
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: getTutorErrorContent(error, t),
+          timestamp: new Date(),
+          isError: true,
+        },
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
+  }, [
+    disclaimerAccepted,
+    analyzeImageMutation,
+    tutorLocale,
+    t,
+    openPaywallWithFallback,
+  ]);
+
+  const handleClinicalSummary = useCallback(async () => {
+    if (!clinicalSessionId) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: t('clinical.pickCaseFirst'),
+          timestamp: new Date(),
+        },
+      ]);
+      return;
+    }
+    setIsTyping(true);
+    try {
+      const res = await generateSummaryMutation.mutateAsync({
+        sessionId: clinicalSessionId,
+        locale: tutorLocale,
+      });
+      setClinicalBalance(res.balance);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: res.response,
+          timestamp: new Date(),
+        },
+      ]);
+    } catch (error) {
+      if (isTrpcForbidden(error)) {
+        openPaywallWithFallback();
+        return;
+      }
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: getTutorErrorContent(error, t),
+          timestamp: new Date(),
+          isError: true,
+        },
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
+  }, [
+    clinicalSessionId,
+    generateSummaryMutation,
+    tutorLocale,
+    t,
+    openPaywallWithFallback,
+  ]);
+
   const handleSend = async () => {
     if (!inputText.trim() || isTyping) return;
     
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    if (clinicalUiEnabled && copilotMode === 'clinical') {
+      if (!clinicalSessionId) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: t('clinical.pickCaseFirst'),
+            timestamp: new Date(),
+          },
+        ]);
+        return;
+      }
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: inputText.trim(),
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, userMessage]);
+      setInputText('');
+      setIsTyping(true);
+      const assistantId = (Date.now() + 1).toString();
+      try {
+        trackClinicalEvent('clinical_reply_sent', { streaming: true });
+        const token = getMedvbaAccessToken();
+        if (token && clinicalStatusQuery.data?.flags?.streaming !== false) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: assistantId,
+              role: 'assistant',
+              content: '',
+              timestamp: new Date(),
+            },
+          ]);
+          const res = await streamClinicalReply({
+            token,
+            sessionId: clinicalSessionId,
+            message: userMessage.content,
+            locale: tutorLocale,
+            onDelta: (chunk) => {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantId
+                    ? { ...m, content: m.content + chunk }
+                    : m,
+                ),
+              );
+            },
+          });
+          trackClinicalEvent('clinical_stream_used');
+          setClinicalBalance(res.balance);
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantId ? { ...m, content: res.response } : m,
+            ),
+          );
+        } else {
+          const res = await clinicalReplyMutation.mutateAsync({
+            sessionId: clinicalSessionId,
+            message: userMessage.content,
+            locale: tutorLocale,
+          });
+          setClinicalBalance(res.balance);
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: assistantId,
+              role: 'assistant',
+              content: res.response,
+              timestamp: new Date(),
+            },
+          ]);
+        }
+      } catch (error) {
+        const msg = getMutationErrorMessage(error, '');
+        if (
+          isTrpcForbidden(error) ||
+          msg.includes('TOPUP_REQUIRED') ||
+          msg.includes('PAYWALL_REQUIRED')
+        ) {
+          openTopupOrPaywall(msg);
+          return;
+        }
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: assistantId,
+            role: 'assistant',
+            content: getTutorErrorContent(error, t),
+            timestamp: new Date(),
+            isError: true,
+          },
+        ]);
+      } finally {
+        setIsTyping(false);
+      }
+      return;
+    }
 
     // Check if free user can ask AI question
     if (isPaywallEnabled && !canAskAiQuestion()) {
@@ -350,6 +757,110 @@ export default function TutorScreen() {
         <OfflineFeatureNotice />
         <TutorTabHeader />
 
+        {clinicalUiEnabled ? (
+          <View style={styles.clinicalBar}>
+            <View style={styles.modeRow}>
+              <TouchableOpacity
+                style={[styles.modeChip, copilotMode === 'tutor' && styles.modeChipActive]}
+                onPress={() => setCopilotMode('tutor')}
+              >
+                <Text style={styles.modeChipText}>{t('clinical.modeTutor')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modeChip, copilotMode === 'clinical' && styles.modeChipActive]}
+                onPress={() => setCopilotMode('clinical')}
+              >
+                <Text style={styles.modeChipText}>{t('clinical.modeClinical')}</Text>
+              </TouchableOpacity>
+            </View>
+            {copilotMode === 'clinical' ? (
+              <View>
+                <Text style={styles.clinicalDisclaimer}>{t('clinical.disclaimer')}</Text>
+                <TouchableOpacity
+                  onPress={() => void acceptDisclaimer()}
+                  style={styles.disclaimerAccept}
+                >
+                  <Text style={styles.disclaimerAcceptText}>
+                    {disclaimerAccepted
+                      ? t('clinical.disclaimerAccepted')
+                      : t('clinical.acceptDisclaimer')}
+                  </Text>
+                </TouchableOpacity>
+
+                <View style={styles.howToHeader}>
+                  <Text style={styles.howToTitle}>{t('clinical.howToTitle')}</Text>
+                  <TouchableOpacity onPress={() => void toggleHowTo()} accessibilityRole="button">
+                    <Text style={styles.disclaimerAcceptText}>
+                      {howToExpanded ? t('clinical.howToHide') : t('clinical.howToShow')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                {howToExpanded ? (
+                  <View style={styles.howToBox}>
+                    <Text style={styles.howToStep}>{t('clinical.howToStep1')}</Text>
+                    <Text style={styles.howToStep}>{t('clinical.howToStep2')}</Text>
+                    <Text style={styles.howToStep}>{t('clinical.howToStep3')}</Text>
+                    <Text style={styles.howToStep}>{t('clinical.howToStep4')}</Text>
+                  </View>
+                ) : null}
+
+                <View style={styles.creditRow}>
+                  {clinicalBalance != null ? (
+                    <Text style={styles.creditBalance}>
+                      {t('clinical.creditsRemaining').replace('{count}', String(clinicalBalance))}
+                    </Text>
+                  ) : null}
+                  {trialRemaining != null && trialRemaining > 0 && !isPremium ? (
+                    <Text style={styles.creditBalance}>
+                      {t('clinical.trialBanner').replace('{count}', String(trialRemaining))}
+                    </Text>
+                  ) : null}
+                  {clinicalBalance != null ? (
+                    <TouchableOpacity
+                      onPress={() => {
+                        trackClinicalEvent('clinical_topup_shown');
+                        setTopupVisible(true);
+                      }}
+                      accessibilityRole="button"
+                    >
+                      <Text style={styles.topupLink}>{t('clinical.topupLink')}</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+
+                <View style={styles.caseGrid}>
+                  {CLINICAL_CASE_TOPICS.map((topic) => (
+                    <TouchableOpacity
+                      key={topic}
+                      style={styles.caseChip}
+                      onPress={() => void startClinicalCase(topic)}
+                      disabled={isTyping}
+                    >
+                      <Text style={styles.caseChipText}>{t(`clinical.topic.${topic}`)}</Text>
+                    </TouchableOpacity>
+                  ))}
+                  <TouchableOpacity
+                    style={[styles.caseChip, styles.caseChipAction]}
+                    onPress={() => void handleClinicalImage()}
+                    disabled={isTyping}
+                  >
+                    <ImageIcon color={colors.primary} size={iconSm} />
+                    <Text style={styles.caseChipText}>{t('clinical.analyzeImage')}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.caseChip, styles.caseChipAction]}
+                    onPress={() => void handleClinicalSummary()}
+                    disabled={isTyping || !clinicalSessionId}
+                  >
+                    <FileText color={colors.primary} size={iconSm} />
+                    <Text style={styles.caseChipText}>{t('clinical.generateSummary')}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
           <ScrollView
             ref={scrollViewRef}
             style={styles.messagesContainer}
@@ -506,6 +1017,16 @@ export default function TutorScreen() {
             </Text>
           </View>
       </KeyboardAvoidingView>
+      {clinicalUiEnabled ? (
+        <ClinicalTopupSheet
+          visible={topupVisible}
+          onClose={() => setTopupVisible(false)}
+          onSelectProduct={(productId, credits) => {
+            // Analytics only — purchase + syncEntitlement happen inside the sheet.
+            trackClinicalEvent('clinical_topup_intent', { productId, credits });
+          }}
+        />
+      ) : null}
     </Screen>
   );
 }
@@ -516,6 +1037,116 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   },
   keyboardView: {
     flex: 1,
+  },
+  clinicalBar: {
+    paddingHorizontal: screenPaddingX,
+    paddingBottom: space.space2,
+    gap: space.space2,
+  },
+  modeRow: {
+    flexDirection: 'row',
+    gap: space.space2,
+  },
+  modeChip: {
+    paddingHorizontal: space.space3,
+    paddingVertical: space.space2,
+    borderRadius: radiusPill,
+    backgroundColor: colors.cardBgLight,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.glassBorder,
+  },
+  modeChipActive: {
+    borderColor: colors.primary,
+    backgroundColor: 'rgba(0, 180, 216, 0.12)',
+  },
+  modeChipText: {
+    ...typeScale.caption,
+    color: colors.text,
+    fontWeight: '600' as const,
+  },
+  clinicalDisclaimer: {
+    ...typeScale.caption,
+    color: colors.textSecondary,
+    marginBottom: space.space1,
+  },
+  disclaimerAccept: {
+    alignSelf: 'flex-start',
+    marginBottom: space.space2,
+  },
+  disclaimerAcceptText: {
+    ...typeScale.caption,
+    color: colors.primary,
+    fontWeight: '700' as const,
+  },
+  howToHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: space.space1,
+    gap: space.space2,
+  },
+  howToTitle: {
+    ...typeScale.caption,
+    color: colors.text,
+    fontWeight: '700' as const,
+    flex: 1,
+  },
+  howToBox: {
+    marginBottom: space.space2,
+    padding: space.space3,
+    borderRadius: radiusMd,
+    backgroundColor: colors.cardBgLight,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.glassBorder,
+    gap: space.space1,
+  },
+  howToStep: {
+    ...typeScale.caption,
+    color: colors.textSecondary,
+  },
+  creditRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: space.space2,
+    marginBottom: space.space2,
+  },
+  creditBalance: {
+    ...typeScale.caption,
+    color: colors.textMuted,
+  },
+  topupLink: {
+    ...typeScale.caption,
+    color: colors.primary,
+    fontWeight: '600' as const,
+  },
+  caseGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.space2,
+  },
+  caseChip: {
+    paddingHorizontal: space.space3,
+    paddingVertical: space.space2,
+    minHeight: 36,
+    borderRadius: radiusMd,
+    backgroundColor: colors.cardBgLight,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.glassBorder,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: space.space1,
+  },
+  caseChipAction: {
+    flexGrow: 1,
+    flexBasis: '46%',
+    minWidth: '46%',
+  },
+  caseChipText: {
+    ...typeScale.caption,
+    color: colors.text,
+    fontWeight: '600' as const,
   },
   messagesContainer: {
     flex: 1,

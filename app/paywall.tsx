@@ -18,6 +18,7 @@ import { useSubscription } from '@/providers/SubscriptionProvider';
 import { log } from '@/lib/log';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { FREE_FEATURE_KEYS, getFreeFeatureLines } from '@/constants/subscription';
+import { isClinicalCopilotUiEnabled } from '@/lib/clinical-copilot-flag';
 import {
   findPaywallPackage,
   PREMIUM_FEATURE_KEYS,
@@ -173,6 +174,7 @@ export default function PaywallScreen() {
   };
 
   const showNativePurchase = IS_NATIVE && !IS_EXPO_GO;
+  const clinicalCopy = isClinicalCopilotUiEnabled();
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -183,11 +185,16 @@ export default function PaywallScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Text style={[styles.serviceTitle, { color: colors.text }]} accessibilityRole="header">
-            {t('paywall.serviceTitle')}
+            {clinicalCopy ? t('clinical.paywallTitle') : t('paywall.serviceTitle')}
           </Text>
           <Text style={[styles.serviceDescription, { color: colors.textSecondary }]}>
-            {t('paywall.serviceDescription')}
+            {clinicalCopy ? t('clinical.paywallSubtitle') : t('paywall.serviceDescription')}
           </Text>
+          {clinicalCopy ? (
+            <Text style={[styles.notice, { color: colors.textSecondary }]}>
+              {t('clinical.disclaimer')}
+            </Text>
+          ) : null}
 
           {isLoading ? (
             <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />
