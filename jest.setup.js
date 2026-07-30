@@ -62,8 +62,13 @@ jest.mock('expo-constants', () => ({
 jest.mock('@expo/vector-icons', () => {
   const React = require('react');
   const { View } = require('react-native');
+  const Icon = () => React.createElement(View);
   return {
-    Ionicons: () => React.createElement(View),
+    Ionicons: Icon,
+    MaterialCommunityIcons: Icon,
+    MaterialIcons: Icon,
+    FontAwesome: Icon,
+    Feather: Icon,
   };
 });
 
@@ -177,6 +182,13 @@ jest.mock('react-native-purchases', () => ({
   },
 }));
 
+jest.mock('react-native-purchases-ui', () => ({
+  __esModule: true,
+  default: {
+    presentCustomerCenter: jest.fn().mockResolvedValue(undefined),
+  },
+}));
+
 jest.mock('@/lib/supabase', () => ({
   isSupabaseConfigured: true,
   supabase: {
@@ -209,11 +221,37 @@ jest.mock('@/lib/supabase', () => ({
 
 jest.mock('@/lib/trpc', () => ({
   trpc: {
+    useUtils: jest.fn(() => ({
+      clinical: {
+        getStatus: { invalidate: jest.fn().mockResolvedValue(undefined) },
+        getCredits: { invalidate: jest.fn().mockResolvedValue(undefined) },
+      },
+      study: {
+        listChapters: { invalidate: jest.fn().mockResolvedValue(undefined) },
+        getChapter: { invalidate: jest.fn().mockResolvedValue(undefined) },
+        listModules: { invalidate: jest.fn().mockResolvedValue(undefined) },
+      },
+    })),
     subscription: {
       validateAiQuestion: {
         useMutation: jest.fn(() => ({
           mutateAsync: jest.fn().mockResolvedValue({ allowed: true, remaining: 5, isPremium: false }),
         })),
+      },
+      syncFromClient: {
+        useMutation: jest.fn(() => ({
+          mutateAsync: jest.fn().mockResolvedValue({}),
+        })),
+      },
+    },
+    clinical: {
+      syncEntitlement: {
+        useMutation: jest.fn(() => ({
+          mutateAsync: jest.fn().mockResolvedValue({}),
+        })),
+      },
+      getStatus: {
+        useQuery: jest.fn(() => ({ data: undefined, isLoading: false, error: null })),
       },
     },
   },
