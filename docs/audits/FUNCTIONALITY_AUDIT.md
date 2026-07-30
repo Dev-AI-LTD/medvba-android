@@ -17,7 +17,7 @@
 | Reliability | **82** | Credit refund trial/paid split correct; abort keeps charge by design; in-memory rate limits |
 | Credits / billing | **84** | RC webhook auth + idempotency tested; trial refund no longer mints paid balance |
 | Clinical safety | **86** | Prod flag false; disclaimer `literal(true)`; MIME allowlist; educational prompts |
-| Quality / CI | **92** | lint 0 errors; `test:ci` pass; **`tsc --noEmit` PASS**; **`doctor` 17/17**; **GitHub Actions CI green on `main` @ `212c796`** |
+| Quality / CI | **92** | lint 0 errors; `test:ci` pass; **`tsc --noEmit` PASS**; **`doctor` 17/17**; CI DoD now **blocks** on tsc+doctor; prior green `@212c796` (tsc soft-fail era); staging wait on Railway link |
 | Store readiness | **86** | Clinical off in production EAS; doctor green (nested expo-* deduped in postinstall) |
 
 **Honest acceptance:** Zero **CRITICAL** open for shipped flows. **HIGH** credit mint bug **fixed in repo**. Remaining **HIGH** items are primarily **ops/verification** (live API deploy, RLS 022 apply) plus multi-instance rate-limit residual — not store-binary Clinical enablement.
