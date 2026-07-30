@@ -16,7 +16,7 @@ Production `EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED` stays **false** in `eas.json` 
 - **Local quality gate GREEN (2026-07-30):** `bun install --frozen-lockfile`, `lint`, `tsc --noEmit`, `test:ci`, `doctor` (17/17), `git diff --check` all exit 0. Nested same-version `expo-file-system` / `expo-font` deduped via postinstall + overrides.
 - **Controlled push PASS (2026-07-30):** `main` @ `212c796` on origin; no force-push. Evidence: `docs/audits/evidence/push-ci-staging-2026-07-30.md`.
 - **Quality CI PASS (2026-07-30):** first green `CI` / `lint-and-test` on pushed SHA after Rules-of-Hooks lint fix (run `30542556738`) — SHA `212c796` (tsc was still soft-fail).
-- **CI DoD (2026-07-30):** quality job now **blocks** on `bunx tsc --noEmit` and `bun run doctor` (order: install → lint → tsc → test:ci → doctor). No `continue-on-error`. Staging still blocked pending Railway link confirmation.
+- **CI DoD (2026-07-30):** quality job now **blocks** on `bunx tsc --noEmit` and `bun run doctor` (order: install → lint → tsc → test:ci → doctor). No `continue-on-error`. **GREEN** on HEAD `d42fed2` (run `30543410446`). Staging still blocked pending Railway link confirmation.
 - **Railway staging / migrations 022–025 / smoke:** **BLOCKED** — Railway CLI unauthorized/unlinked; staging cannot be safely distinguished from production. No staging deploy, no prod Railway changes, no migration apply.
 
 ## Separate PRs still recommended

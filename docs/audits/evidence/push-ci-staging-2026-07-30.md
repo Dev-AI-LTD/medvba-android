@@ -29,7 +29,7 @@
 
 Workflow: `.github/workflows/ci.yml`  
 Prior green run: GitHub Actions run id `30542556738` on `212c796`  
-Post–DoD green: fill run id / SHA after watch completes
+Post–DoD green: run `30543410446` on HEAD `d42fed2b6bcedd8021c35d51c012724ba4476412` (lint → tsc → test:ci → doctor all blocking PASS)
 
 ## Railway staging + migrations + smoke
 
