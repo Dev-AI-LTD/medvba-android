@@ -163,10 +163,31 @@ REVENUECAT_WEBHOOK_AUTHORIZATION=your_webhook_bearer_secret
 # alias also accepted:
 # REVENUECAT_WEBHOOK_AUTH_TOKEN=...
 REVENUECAT_ENTITLEMENT_ID=medvba_pro_ai
-# optional Muse / OpenAI-compatible:
-AI_CLINICAL_MODEL=gpt-4o-mini
-AI_BASE_URL=https://...
+
+# Clinical AI provider (explicit). Tutor stays on AI_API_KEY / OPENAI_API_KEY.
+AI_PROVIDER=muse
+META_MODEL_API_KEY=...
+META_MODEL_API_BASE_URL=https://...   # OpenAI-compatible /chat/completions base
+META_MODEL_NAME=muse-spark-1.1
+# If AI_PROVIDER is absent or openai, Clinical uses AI_API_KEY + AI_BASE_URL + AI_CLINICAL_MODEL.
+# Never put META_MODEL_* under EXPO_PUBLIC_*.
+
+INTERNAL_HEALTH_SECRET=...            # Bearer for GET /health/ready
 ```
+
+### Muse Phase 1 — credit / abort policy
+
+| Event | Upstream | Credits | `ai_usage_events.status` |
+|-------|----------|---------|--------------------------|
+| Client abort / disconnect | aborted | **charge kept** | `aborted` |
+| Server timeout | aborted | **refund once** | `timeout` |
+| Provider 4xx/5xx before result | — | **refund once** | `provider_error` |
+| Success | — | kept | `ok` |
+| Guard reject (size/schema) | no call | **zero debit** | `guard_reject` |
+
+Usage rows store `request_id`, tokens (nullable), latency, credit cost — **never** prompts, images, or secrets. Writes are best-effort.
+
+Health: public `GET /health` returns `ok` + `clinicalCopilotEnabled` (+ optional version). Internal `GET /health/ready` requires `Authorization: Bearer $INTERNAL_HEALTH_SECRET` and may report `aiProvider` / `hasMetaModelApiKey` booleans only.
 
 Webhook URL: `POST https://<railway-host>/api/webhooks/revenuecat`  
 Authorization: `Bearer <REVENUECAT_WEBHOOK_AUTHORIZATION>`
@@ -185,6 +206,7 @@ EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID=goog_...
 
 - `019` / `020`: clinical tables + `ai_entitlements` / ledger (column remains `user_id` = `profiles.id`)
 - `021`: `revenuecat_events` for webhook idempotency (service role only; no client writes)
+- `025`: `ai_usage_events` (service role only; no PHI)
 
 ## Webhook event handling
 

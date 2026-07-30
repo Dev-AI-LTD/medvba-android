@@ -2,9 +2,12 @@
 
 Backend-ul (Hono + tRPC) rulează pe Railway. Iată cum verifici și ce variabile trebuie setate.
 
-Logica AI pentru **Tutor** este în `lib/ai-provider.ts`, apelată doar din `backend/trpc/tutor.ts`. Cheia **OpenAI nu** trebuie setată ca `EXPO_PUBLIC_*` (s-ar împacheta în aplicația client). Pe Railway folosește **`AI_API_KEY`** sau **`OPENAI_API_KEY`**.
+Logica AI pentru **Tutor** este în `lib/ai-provider.ts` → `generateText`, apelată din `backend/trpc/tutor.ts`. Cheia **OpenAI nu** trebuie setată ca `EXPO_PUBLIC_*`.
 
-`backend/hono.ts` (`GET /health`) raportează `hasAiApiKey` doar pentru `AI_API_KEY` / `OPENAI_API_KEY`. Dacă încă ai `EXPO_PUBLIC_AI_API_KEY` într-un fișier `.env` local, `/health` setează `legacyExpoPublicAiKeyPresent: true` — **șterge** acea variabilă și folosește doar `AI_API_KEY` / `OPENAI_API_KEY` pe server; **nu** seta `EXPO_PUBLIC_AI_API_KEY` pe Railway.
+**Clinical** folosește același fișier prin `generateClinicalText` / stream: dacă `AI_PROVIDER=muse`, citește **doar** `META_MODEL_*` (fără fallback la OpenAI când cheia Meta lipsește). Tutor **nu** citește `META_MODEL_*`.
+
+`GET /health` public: `status`, `clinicalCopilotEnabled`, opțional `version` — **fără** chei, URL provider, model.  
+`GET /health/ready`: Bearer `INTERNAL_HEALTH_SECRET` → `aiProvider`, `hasMetaModelApiKey` (booleans).
 
 ---
 
@@ -41,11 +44,16 @@ railway variables
 | **PORT** | Setat de Railway | Railway îl setează automat la deploy. Nu e nevoie să îl pui tu. |
 | **SUPABASE_URL** | Da | URL proiect Supabase: `https://xxxxx.supabase.co` (același proiect ca în app; numele variabilei **fără** prefix `EXPO_PUBLIC_`). |
 | **SUPABASE_SERVICE_ROLE_KEY** | Da | Cheia **service_role** (secret) din Supabase → Settings → API. **Nu** folosi anon/publishable aici. |
-| **AI_API_KEY** sau **OPENAI_API_KEY** | Da, dacă folosești Tutor | Cheie OpenAI (`sk-...`). **`lib/ai-provider.ts`** le citește direct pe server. |
-| **AI_BASE_URL** | Opțional | URL compatibil OpenAI (ex. `https://api.openai.com/v1`). Implicit în cod: `https://api.openai.com/v1`. |
-| **AI_MODEL** | Opțional | Model chat (implicit `gpt-4o-mini`). |
+| **AI_API_KEY** sau **OPENAI_API_KEY** | Da, dacă folosești Tutor | Cheie OpenAI pentru **Tutor clasic**. **`generateText`** le citește pe server. Nu folosi `EXPO_PUBLIC_*`. |
+| **AI_BASE_URL** | Opțional | URL OpenAI-compatible pentru Tutor / Clinical când `AI_PROVIDER` ≠ `muse`. |
+| **AI_MODEL** | Opțional | Model Tutor (implicit `gpt-4o-mini`). |
+| **AI_PROVIDER** | Pentru Clinical Muse | Exact `muse` pentru Meta Muse pe Clinical. Absent / `openai` = path OpenAI. **Nu** selecta Muse doar pentru că există `META_MODEL_API_KEY`. |
+| **META_MODEL_API_KEY** | Obligatoriu dacă `AI_PROVIDER=muse` | Cheie Meta Model API (Railway only). Lipsă cheie → eroare configurare, **fără** fallback OpenAI. |
+| **META_MODEL_API_BASE_URL** | Obligatoriu dacă Muse | Base URL OpenAI-compatible (`…/v1`). Alias: `META_MODEL_BASE_URL`. |
+| **META_MODEL_NAME** | Opțional | Implicit `muse-spark-1.1`. |
+| **INTERNAL_HEALTH_SECRET** | Pentru `/health/ready` | Bearer secret. Public `GET /health` rămâne minimal (fără provider/key hints). |
 | **CORS_ALLOWED_ORIGINS** | Opțional | Origini extra permise (separate prin virgulă). |
-| **CLINICAL_COPILOT_ENABLED** | Pentru TestFlight Clinical | `true` ca să activezi `clinical.*` tRPC + SSE. **Implicit false** — store UI nu apelează Clinical când Expo flag e off. Fără redeploy cu routerul `clinical`, clientul vede `No procedure found on path 'clinical.startCase'`. |
+| **CLINICAL_COPILOT_ENABLED** | Pentru TestFlight Clinical | `true` pe staging/internal API. **Implicit false** — store UI nu apelează Clinical când Expo flag e off. |
 
 ### Clinical Copilot pe Railway (TestFlight)
 
