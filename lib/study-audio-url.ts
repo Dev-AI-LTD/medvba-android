@@ -8,7 +8,8 @@ export function getStudyAudioPublicUrl(
   locale: 'ro' | 'en',
 ): string | null {
   if (moduleId !== STUDY_PILOT_MODULE_ID) return null;
-  const base = getMergedExpoExtra().EXPO_PUBLIC_SUPABASE_URL?.trim();
+  const rawBase = getMergedExpoExtra().EXPO_PUBLIC_SUPABASE_URL;
+  const base = typeof rawBase === 'string' ? rawBase.trim() : '';
   if (!base) return null;
   return `${base.replace(/\/$/, '')}/storage/v1/object/public/study-audio/${moduleId}/${chapterId}-${locale}.mp3`;
 }

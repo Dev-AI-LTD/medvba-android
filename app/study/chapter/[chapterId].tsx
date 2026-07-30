@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.space1,
   },
   parentLinkLabel: {
-    ...typeScale.subheadline,
+    ...typeScale.subhead,
     flex: 1,
   },
   lockedWrap: {

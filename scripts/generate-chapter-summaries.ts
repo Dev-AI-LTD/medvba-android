@@ -24,7 +24,7 @@ const DRAFTS_DIR = path.join(__dirname, "..", "content", "study", "drafts");
 
 function parseArgs(argv: string[]) {
   let chapter: string | undefined;
-  let moduleId = STUDY_PILOT_MODULE_ID;
+  let moduleId: string = STUDY_PILOT_MODULE_ID;
   let max: number | undefined;
   let locale: "ro" | "en" = "ro";
   let topic = false;

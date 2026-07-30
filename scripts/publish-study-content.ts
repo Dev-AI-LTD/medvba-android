@@ -8,7 +8,7 @@ import "dotenv/config";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DRAFTS_DIR = path.join(__dirname, "..", "content", "study", "drafts");
@@ -33,7 +33,7 @@ function parseArgs(argv: string[]) {
   return { file };
 }
 
-async function upsertDraft(supabase: ReturnType<typeof createClient>, draft: Draft) {
+async function upsertDraft(supabase: SupabaseClient, draft: Draft) {
   const row = {
     module_id: draft.moduleId,
     chapter_id: draft.chapterId,
@@ -47,7 +47,7 @@ async function upsertDraft(supabase: ReturnType<typeof createClient>, draft: Dra
     published_at: draft.status === "published" ? new Date().toISOString() : null,
   };
 
-  const { error } = await supabase.from("chapter_study_content").upsert(row, {
+  const { error } = await supabase.from("chapter_study_content").upsert(row as never, {
     onConflict: "module_id,chapter_id,locale",
   });
 

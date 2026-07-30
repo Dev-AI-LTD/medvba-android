@@ -12,7 +12,7 @@ export function getQuizFontFamilies(
     medium: systemFontFamily,
     semiBold: systemFontFamily,
     bold: systemFontFamily,
-  };
+  } as QuizFontFamilies;
 }
 
 export function createQuizTypography(

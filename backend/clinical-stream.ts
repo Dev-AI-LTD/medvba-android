@@ -381,7 +381,7 @@ export function registerClinicalStreamRoutes(app: Hono) {
             });
             return;
           }
-          if (cause === 'timeout' || (isAbortError(err) && cause === 'timeout')) {
+          if (cause === 'timeout') {
             await refundOnce();
             await recordClinicalUsage({
               supabase,

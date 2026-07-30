@@ -2,11 +2,10 @@ import type { Question } from '@/mocks/questions';
 import { resolveQuestionChapterLink } from '@/lib/questionChapterLink';
 
 const sampleQuestion = (overrides: Partial<Question> & Pick<Question, 'id'>): Question => ({
-  id: overrides.id,
-  category: overrides.category ?? 'head-neck',
+  category: 'head-neck',
   difficulty: 'easy',
-  question: overrides.question ?? 'Sample question',
-  options: overrides.options ?? ['A', 'B', 'C', 'D', 'E'],
+  question: 'Sample question',
+  options: ['A', 'B', 'C', 'D', 'E'],
   correctAnswer: 0,
   explanation: 'Explanation',
   ...overrides,

@@ -143,9 +143,10 @@ export function StudyMarkdown({ markdown }: { markdown: string }) {
                   </View>
                 );
               }
+              if (block.type !== 'ul') return null;
               return (
                 <View key={idx} style={styles.ul}>
-                  {block.items.map((item, j) => (
+                  {block.items.map((item: string, j: number) => (
                     <View key={j} style={styles.li}>
                       <View style={[styles.bulletDot, { backgroundColor: colors.primary }]} />
                       <View style={styles.liText}>

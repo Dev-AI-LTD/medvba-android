@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createTRPCRouter, publicProcedure } from "./create-context";
 import {
   STUDY_MODULE_IDS,
@@ -28,7 +29,7 @@ function getSupabaseAdminOrThrow() {
 }
 
 async function getIsPremium(
-  supabaseAdmin: Awaited<ReturnType<typeof import("@supabase/supabase-js").createClient>>,
+  supabaseAdmin: SupabaseClient,
   userId: string | null,
 ): Promise<boolean> {
   if (!userId) return false;

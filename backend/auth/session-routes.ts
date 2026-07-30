@@ -799,7 +799,10 @@ export function registerAuthSessionRoutes(app: Hono) {
       if (bearer) {
         const out = await sessionFromKindeAccessToken(bearer);
         if (!out.ok) {
-          return c.json({ error: out.message, detail: out.detail }, out.status);
+          return c.json(
+            { error: out.message, detail: out.detail },
+            out.status as 401 | 502,
+          );
         }
         return c.json(out.body);
       }

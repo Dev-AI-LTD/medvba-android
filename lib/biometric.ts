@@ -71,7 +71,7 @@ export async function authenticateWithBiometric(
         return { success: false, error: 'user_fallback' };
       }
 
-      if (result.error === 'lockout' || result.error === 'locked_out') {
+      if (result.error === 'lockout') {
         return { success: false, error: 'Too many attempts. Please try again later.' };
       }
 

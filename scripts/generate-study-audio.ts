@@ -37,7 +37,11 @@ export type GenerateStudyAudioParams = {
 
 
 
-export function parseStudyAudioArgs(argv: string[]): GenerateStudyAudioParams & { chapterId?: string } {
+export function parseStudyAudioArgs(argv: string[]): {
+  chapterId?: string;
+  moduleId: string;
+  locale: string;
+} {
 
   let chapterId: string | undefined;
 

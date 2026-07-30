@@ -10,6 +10,7 @@ import Purchases, {
   type CustomerInfo,
   type PurchasesPackage,
 } from 'react-native-purchases';
+import RevenueCatUI from 'react-native-purchases-ui';
 import {
   LEGACY_PRO_ENTITLEMENT_ID,
   PRO_AI_ENTITLEMENT_ID,
@@ -180,6 +181,11 @@ export async function purchaseCreditTopup(
 
 export async function restorePurchases(): Promise<CustomerInfo> {
   return Purchases.restorePurchases();
+}
+
+/** Opens RevenueCat Customer Center (manage subscription / billing support). */
+export async function presentCustomerCenter(): Promise<void> {
+  await RevenueCatUI.presentCustomerCenter();
 }
 
 export { Purchases };

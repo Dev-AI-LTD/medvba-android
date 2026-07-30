@@ -11,8 +11,7 @@ describe('rate-limit-store', () => {
     delete process.env.UPSTASH_REDIS_REST_URL;
     delete process.env.UPSTASH_REDIS_REST_TOKEN;
     delete process.env.REDIS_URL;
-    process.env.NODE_ENV = 'test';
-    process.env.RATE_LIMIT_MEMORY_FALLBACK = 'true';
+    Object.assign(process.env, { NODE_ENV: 'test', RATE_LIMIT_MEMORY_FALLBACK: 'true' });
 
     const key = `test-${Date.now()}`;
     for (let i = 0; i < 3; i++) {
@@ -24,8 +23,7 @@ describe('rate-limit-store', () => {
   it('blocks when over limit without debiting side effects (429 contract)', async () => {
     delete process.env.UPSTASH_REDIS_REST_URL;
     delete process.env.REDIS_URL;
-    process.env.NODE_ENV = 'test';
-    process.env.RATE_LIMIT_MEMORY_FALLBACK = 'true';
+    Object.assign(process.env, { NODE_ENV: 'test', RATE_LIMIT_MEMORY_FALLBACK: 'true' });
 
     const key = `block-${Date.now()}`;
     for (let i = 0; i < 2; i++) {

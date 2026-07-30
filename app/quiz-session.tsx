@@ -1446,10 +1446,10 @@ const createStyles = (
     marginTop: space.space3,
     paddingTop: space.space3,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    borderTopColor: colors.glassBorder,
   },
   clinicalDisclaimer: {
-    ...typeScale.caption1,
+    ...typeScale.caption,
     color: colors.textSecondary,
     marginBottom: space.space2,
   },
