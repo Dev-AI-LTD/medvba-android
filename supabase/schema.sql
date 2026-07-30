@@ -233,7 +233,7 @@ ALTER TABLE public.direct_chats ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can view chats they participate in" ON public.direct_chats
   FOR SELECT USING (
-    auth.uid() IN (SELECT user_id FROM direct_chat_participants WHERE chat_id = id)
+    auth.uid() IN (SELECT user_id FROM direct_chat_participants WHERE direct_chat_id = id)
   );
 
 CREATE POLICY "Authenticated users can create chats" ON public.direct_chats
@@ -247,10 +247,10 @@ CREATE POLICY "Users can update chats they created" ON public.direct_chats
 -- ===========================================
 CREATE TABLE IF NOT EXISTS public.direct_chat_participants (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  chat_id UUID REFERENCES public.direct_chats(id) ON DELETE CASCADE NOT NULL,
+  direct_chat_id UUID REFERENCES public.direct_chats(id) ON DELETE CASCADE NOT NULL,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
   joined_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(chat_id, user_id)
+  UNIQUE(direct_chat_id, user_id)
 );
 
 ALTER TABLE public.direct_chat_participants ENABLE ROW LEVEL SECURITY;
@@ -266,7 +266,7 @@ CREATE POLICY "Users can join chats" ON public.direct_chat_participants
 -- ===========================================
 CREATE TABLE IF NOT EXISTS public.direct_chat_messages (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  chat_id UUID REFERENCES public.direct_chats(id) ON DELETE CASCADE NOT NULL,
+  direct_chat_id UUID REFERENCES public.direct_chats(id) ON DELETE CASCADE NOT NULL,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
   content TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
@@ -276,13 +276,13 @@ ALTER TABLE public.direct_chat_messages ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can view messages in chats they're part of" ON public.direct_chat_messages
   FOR SELECT USING (
-    auth.uid() IN (SELECT user_id FROM direct_chat_participants WHERE chat_id = direct_chat_messages.chat_id)
+    auth.uid() IN (SELECT user_id FROM direct_chat_participants WHERE direct_chat_id = direct_chat_messages.direct_chat_id)
   );
 
 CREATE POLICY "Users can send messages to chats they're part of" ON public.direct_chat_messages
   FOR INSERT WITH CHECK (
     auth.uid() = user_id AND
-    auth.uid() IN (SELECT user_id FROM direct_chat_participants WHERE chat_id = direct_chat_messages.chat_id)
+    auth.uid() IN (SELECT user_id FROM direct_chat_participants WHERE direct_chat_id = direct_chat_messages.direct_chat_id)
   );
 
 -- ===========================================
@@ -399,9 +399,9 @@ CREATE INDEX IF NOT EXISTS idx_user_progress_user_id ON public.user_progress(use
 CREATE INDEX IF NOT EXISTS idx_daily_progress_user_id ON public.daily_progress(user_id);
 CREATE INDEX IF NOT EXISTS idx_daily_progress_date ON public.daily_progress(date);
 CREATE INDEX IF NOT EXISTS idx_user_achievements_user_id ON public.user_achievements(user_id);
-CREATE INDEX IF NOT EXISTS idx_direct_chat_participants_chat_id ON public.direct_chat_participants(chat_id);
+CREATE INDEX IF NOT EXISTS idx_direct_chat_participants_direct_chat_id ON public.direct_chat_participants(direct_chat_id);
 CREATE INDEX IF NOT EXISTS idx_direct_chat_participants_user_id ON public.direct_chat_participants(user_id);
-CREATE INDEX IF NOT EXISTS idx_direct_chat_messages_chat_id ON public.direct_chat_messages(chat_id);
+CREATE INDEX IF NOT EXISTS idx_direct_chat_messages_direct_chat_id ON public.direct_chat_messages(direct_chat_id);
 CREATE INDEX IF NOT EXISTS idx_direct_chat_messages_created_at ON public.direct_chat_messages(created_at);
 CREATE INDEX IF NOT EXISTS idx_activity_feed_user_id ON public.activity_feed(user_id);
 CREATE INDEX IF NOT EXISTS idx_activity_feed_created_at ON public.activity_feed(created_at);

@@ -105,7 +105,7 @@ DROP POLICY IF EXISTS "Users can update chats they created" ON public.direct_cha
 
 CREATE POLICY "Users can view chats they participate in" ON public.direct_chats
   FOR SELECT USING (
-    auth.uid() IN (SELECT user_id FROM direct_chat_participants WHERE chat_id = id)
+    auth.uid() IN (SELECT user_id FROM direct_chat_participants WHERE direct_chat_id = id)
   );
 
 CREATE POLICY "Authenticated users can create chats" ON public.direct_chats
@@ -130,13 +130,13 @@ DROP POLICY IF EXISTS "Users can send messages to chats they're part of" ON publ
 
 CREATE POLICY "Users can view messages in chats they're part of" ON public.direct_chat_messages
   FOR SELECT USING (
-    auth.uid() IN (SELECT user_id FROM direct_chat_participants WHERE chat_id = direct_chat_messages.chat_id)
+    auth.uid() IN (SELECT user_id FROM direct_chat_participants WHERE direct_chat_id = direct_chat_messages.direct_chat_id)
   );
 
 CREATE POLICY "Users can send messages to chats they're part of" ON public.direct_chat_messages
   FOR INSERT WITH CHECK (
     auth.uid() = user_id AND
-    auth.uid() IN (SELECT user_id FROM direct_chat_participants WHERE chat_id = direct_chat_messages.chat_id)
+    auth.uid() IN (SELECT user_id FROM direct_chat_participants WHERE direct_chat_id = direct_chat_messages.direct_chat_id)
   );
 
 -- Activity feed

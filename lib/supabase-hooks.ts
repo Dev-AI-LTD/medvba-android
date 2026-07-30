@@ -1346,7 +1346,7 @@ export function useDirectChats(userId: string | undefined) {
       const { data, error } = await supabase
         .from('direct_chat_participants')
         .select(`
-          chat_id,
+          direct_chat_id,
           direct_chats!inner (
             id,
             is_group,
@@ -1368,31 +1368,31 @@ export function useDirectChats(userId: string | undefined) {
       const rows = data || [];
       if (rows.length === 0) return [];
 
-      const chatIds = [...new Set(rows.map((item: { chat_id: string }) => item.chat_id))];
+      const chatIds = [...new Set(rows.map((item: { direct_chat_id: string }) => item.direct_chat_id))];
 
       const { data: participantsData } = await supabase
         .from('direct_chat_participants')
-        .select('chat_id, user_id')
-        .in('chat_id', chatIds);
+        .select('direct_chat_id, user_id')
+        .in('direct_chat_id', chatIds);
 
       const { data: messagesData } = await supabase
         .from('direct_chat_messages')
-        .select('chat_id, user_id, content, created_at')
-        .in('chat_id', chatIds)
+        .select('direct_chat_id, user_id, content, created_at')
+        .in('direct_chat_id', chatIds)
         .order('created_at', { ascending: false });
 
       const lastMessageByChat = new Map<string, { user_id: string; content: string; created_at: string }>();
       for (const msg of messagesData || []) {
-        if (!lastMessageByChat.has(msg.chat_id)) {
-          lastMessageByChat.set(msg.chat_id, msg);
+        if (!lastMessageByChat.has(msg.direct_chat_id)) {
+          lastMessageByChat.set(msg.direct_chat_id, msg);
         }
       }
 
       const peerIdsByChat = new Map<string, string[]>();
       for (const p of participantsData || []) {
-        const list = peerIdsByChat.get(p.chat_id) ?? [];
+        const list = peerIdsByChat.get(p.direct_chat_id) ?? [];
         list.push(p.user_id);
-        peerIdsByChat.set(p.chat_id, list);
+        peerIdsByChat.set(p.direct_chat_id, list);
       }
 
       const allPeerIds = new Set<string>();
@@ -1424,7 +1424,7 @@ export function useDirectChats(userId: string | undefined) {
       const summaries: DirectChatSummary[] = [];
 
       for (const item of rows) {
-        const row = item as { chat_id: string; direct_chats: { id: string; is_group: boolean; title: string | null; created_at: string } | { id: string; is_group: boolean; title: string | null; created_at: string }[] };
+        const row = item as { direct_chat_id: string; direct_chats: { id: string; is_group: boolean; title: string | null; created_at: string } | { id: string; is_group: boolean; title: string | null; created_at: string }[] };
         const rawChat = row.direct_chats;
         const chat = Array.isArray(rawChat) ? rawChat[0] : rawChat;
         if (!chat?.id) continue;
@@ -1509,7 +1509,7 @@ export function useCreateDirectChat() {
 
       const allParticipants = [input.createdBy, ...input.participantIds];
       const participantRecords = allParticipants.map((userId, index) => ({
-        chat_id: chatData.id,
+        direct_chat_id: chatData.id,
         user_id: userId,
         role: index === 0 ? 'owner' : 'member',
       }));
@@ -1569,7 +1569,7 @@ export function useGetOrCreateDirectChat() {
       const { data: existingChats, error: searchError } = await supabase
         .from('direct_chat_participants')
         .select(`
-          chat_id,
+          direct_chat_id,
           direct_chats!inner (
             id,
             is_group,
@@ -1592,7 +1592,7 @@ export function useGetOrCreateDirectChat() {
             const { data: participants, error: participantsError } = await supabase
               .from('direct_chat_participants')
               .select('user_id')
-              .eq('chat_id', chatId);
+              .eq('direct_chat_id', chatId);
 
             if (!participantsError && participants && participants.length === 2) {
               const userIds = participants.map((p: any) => p.user_id);
@@ -1624,8 +1624,8 @@ export function useGetOrCreateDirectChat() {
       const { error: participantsError } = await supabase
         .from('direct_chat_participants')
         .insert([
-          { chat_id: newChat.id, user_id: input.currentUserId, role: 'owner' },
-          { chat_id: newChat.id, user_id: input.otherUserId, role: 'member' },
+          { direct_chat_id: newChat.id, user_id: input.currentUserId, role: 'owner' },
+          { direct_chat_id: newChat.id, user_id: input.otherUserId, role: 'member' },
         ]);
 
       if (participantsError) {
@@ -1651,12 +1651,12 @@ async function profileForChatUser(userId: string): Promise<{ name: string; avata
 }
 
 function mapDirectChatMessage(
-  msg: { id: string; chat_id: string; user_id: string; content: string; created_at: string },
+  msg: { id: string; direct_chat_id: string; user_id: string; content: string; created_at: string },
   profile?: { name?: string | null; avatar?: string | null },
 ): DirectChatMessage {
   return {
     id: msg.id,
-    chatId: msg.chat_id,
+    chatId: msg.direct_chat_id,
     userId: msg.user_id,
     userName: profile?.name || 'Student',
     userAvatar: profile?.avatar || `https://api.dicebear.com/7.x/avataaars/png?seed=${msg.user_id}`,
@@ -1731,8 +1731,8 @@ export function useDirectChatThread(
 
       const { data, error } = await supabase
         .from('direct_chat_messages')
-        .select('id, chat_id, user_id, content, created_at')
-        .eq('chat_id', chatId)
+        .select('id, direct_chat_id, user_id, content, created_at')
+        .eq('direct_chat_id', chatId)
         .order('created_at', { ascending: true })
         .limit(100);
 
@@ -1770,13 +1770,13 @@ export function useDirectChatThread(
           event: 'INSERT',
           schema: 'public',
           table: 'direct_chat_messages',
-          filter: `chat_id=eq.${chatId}`,
+          filter: `direct_chat_id=eq.${chatId}`,
         },
         async (payload) => {
           devLog('[Supabase] New chat message received:', payload);
           const row = payload.new as {
             id: string;
-            chat_id: string;
+            direct_chat_id: string;
             user_id: string;
             content: string;
             created_at: string;
@@ -1820,7 +1820,7 @@ export function useDirectChatThread(
         const { data, error } = await supabase
           .from('direct_chat_messages')
           .insert({
-            chat_id: chatId,
+            direct_chat_id: chatId,
             user_id: currentUser.id,
             content: trimmed,
           })
@@ -1881,7 +1881,7 @@ export function useSendDirectMessage() {
       const { data, error } = await supabase
         .from('direct_chat_messages')
         .insert({
-          chat_id: input.chatId,
+          direct_chat_id: input.chatId,
           user_id: input.userId,
           content: input.content,
         })

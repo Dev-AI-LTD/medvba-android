@@ -169,7 +169,7 @@ CREATE POLICY "Users can view chats they participate in"
   USING (
     public.current_profile_id() IN (
       SELECT user_id FROM public.direct_chat_participants
-      WHERE chat_id = public.direct_chats.id
+      WHERE direct_chat_id = public.direct_chats.id
     )
   );
 
@@ -190,8 +190,8 @@ CREATE POLICY "Users can view messages in chats they're part of"
   USING (
     EXISTS (
       SELECT 1 FROM public.direct_chat_participants dcp
-      JOIN public.direct_chats dc ON dcp.chat_id = dc.id
-      WHERE dc.id = direct_chat_messages.chat_id
+      JOIN public.direct_chats dc ON dcp.direct_chat_id = dc.id
+      WHERE dc.id = direct_chat_messages.direct_chat_id
         AND dcp.user_id = public.current_profile_id()
     )
   );
@@ -202,7 +202,7 @@ CREATE POLICY "Users can send messages to chats they're part of"
   WITH CHECK (
     public.current_profile_id() IN (
       SELECT user_id FROM public.direct_chat_participants
-      WHERE chat_id = direct_chat_messages.chat_id
+      WHERE direct_chat_id = direct_chat_messages.direct_chat_id
     )
   );
 
@@ -213,12 +213,12 @@ CREATE POLICY "Users can view participant lists"
   USING (
     EXISTS (
       SELECT 1 FROM public.direct_chats dc
-      WHERE dc.id = direct_chat_participants.chat_id
+      WHERE dc.id = direct_chat_participants.direct_chat_id
         AND (
           dc.created_by = public.current_profile_id()
           OR EXISTS (
             SELECT 1 FROM public.direct_chat_participants dcp2
-            WHERE dcp2.chat_id = dc.id
+            WHERE dcp2.direct_chat_id = dc.id
               AND dcp2.user_id = public.current_profile_id()
           )
         )

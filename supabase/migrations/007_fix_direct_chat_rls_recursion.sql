@@ -30,7 +30,7 @@ AS $$
   SELECT EXISTS (
     SELECT 1
     FROM public.direct_chat_participants dcp
-    WHERE dcp.chat_id = p_chat_id
+    WHERE dcp.direct_chat_id = p_chat_id
       AND dcp.user_id = p_profile_id
   );
 $$;
@@ -82,15 +82,15 @@ END $$;
 CREATE POLICY "Users can view participant lists"
   ON public.direct_chat_participants FOR SELECT
   USING (
-    public.medvba_is_direct_chat_participant(chat_id, public.current_profile_id())
-    OR public.medvba_direct_chat_created_by_profile(chat_id) = public.current_profile_id()
+    public.medvba_is_direct_chat_participant(direct_chat_id, public.current_profile_id())
+    OR public.medvba_direct_chat_created_by_profile(direct_chat_id) = public.current_profile_id()
   );
 
 CREATE POLICY "Users can join chats"
   ON public.direct_chat_participants FOR INSERT
   WITH CHECK (
     user_id = public.current_profile_id()
-    OR public.medvba_direct_chat_created_by_profile(chat_id) = public.current_profile_id()
+    OR public.medvba_direct_chat_created_by_profile(direct_chat_id) = public.current_profile_id()
   );
 
 -- Messages: no JOIN that re-enters participants RLS from policy body
@@ -98,7 +98,7 @@ DROP POLICY IF EXISTS "Users can view messages in chats they're part of" ON publ
 DROP POLICY IF EXISTS "Users can view messages in their chats" ON public.direct_chat_messages;
 CREATE POLICY "Users can view messages in chats they're part of"
   ON public.direct_chat_messages FOR SELECT
-  USING (public.medvba_is_direct_chat_participant(chat_id, public.current_profile_id()));
+  USING (public.medvba_is_direct_chat_participant(direct_chat_id, public.current_profile_id()));
 
 DROP POLICY IF EXISTS "Users can send messages to chats they're part of" ON public.direct_chat_messages;
 DROP POLICY IF EXISTS "Users can send messages in their chats" ON public.direct_chat_messages;
@@ -106,7 +106,7 @@ CREATE POLICY "Users can send messages to chats they're part of"
   ON public.direct_chat_messages FOR INSERT
   WITH CHECK (
     user_id = public.current_profile_id()
-    AND public.medvba_is_direct_chat_participant(chat_id, public.current_profile_id())
+    AND public.medvba_is_direct_chat_participant(direct_chat_id, public.current_profile_id())
   );
 
 NOTIFY pgrst, 'reload schema';

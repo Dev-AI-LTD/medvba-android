@@ -3,10 +3,10 @@
 
 -- direct_chats.created_by
 DELETE FROM public.direct_chat_messages dm
-WHERE NOT EXISTS (SELECT 1 FROM public.direct_chats dc WHERE dc.id = dm.chat_id);
+WHERE NOT EXISTS (SELECT 1 FROM public.direct_chats dc WHERE dc.id = dm.direct_chat_id);
 
 DELETE FROM public.direct_chat_participants dcp
-WHERE NOT EXISTS (SELECT 1 FROM public.direct_chats dc WHERE dc.id = dcp.chat_id);
+WHERE NOT EXISTS (SELECT 1 FROM public.direct_chats dc WHERE dc.id = dcp.direct_chat_id);
 
 DELETE FROM public.direct_chat_participants dcp
 WHERE NOT EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = dcp.user_id);
