@@ -62,7 +62,19 @@ Client UI/layout/tutorial changes still need a new **internal** EAS build.
 - `targetSdkVersion`: **36**
 - `buildToolsVersion`: `36.0.0`
 
-`android.versionCode` is bumped for Play uploads (currently **41**). iOS `buildNumber` bumped for TestFlight (**65**). See also [`ANDROID_API_36.md`](ANDROID_API_36.md).
+`android.versionCode` is bumped for Play uploads (currently **43**). iOS `buildNumber` bumped for TestFlight (**67**). See also [`ANDROID_API_36.md`](ANDROID_API_36.md).
+
+### After API fix: new internal build for UI polish
+
+Layout grid + how-to tutorial ship only in a new client binary:
+
+```powershell
+cd C:\Users\octav\Desktop\MEDVBA3\medvba-android
+eas build --platform ios --profile internal --non-interactive
+eas submit --platform ios --profile internal --latest --non-interactive
+```
+
+Expect **1.0.31 (67)**. For API-only (`clinical.startCase` missing), redeploy Railway first — no new IPA required.
 
 ### Exact build / submit commands
 
