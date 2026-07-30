@@ -101,6 +101,7 @@ async function upstashIncrWithTtl(
 let redisClientPromise: Promise<{
   incr: (k: string) => Promise<number>;
   expire: (k: string, sec: number) => Promise<number>;
+  ping: () => Promise<string>;
   quit: () => Promise<void>;
 }> | null = null;
 
@@ -116,7 +117,10 @@ async function getRedisClient() {
       return {
         incr: (k: string) => client.incr(k),
         expire: (k: string, sec: number) => client.expire(k, sec),
-        quit: () => client.quit(),
+        ping: () => client.ping(),
+        quit: async () => {
+          await client.quit();
+        },
       };
     })();
   }
@@ -156,6 +160,35 @@ async function distributedCheck(
     };
   }
   return { allowed: true };
+}
+
+/** Lightweight connectivity check for readiness (boolean only; no error details). */
+export async function probeRateLimitRedis(): Promise<boolean> {
+  if (!isDistributedRateLimitConfigured()) {
+    return false;
+  }
+  try {
+    if (upstashConfigured()) {
+      const base = process.env.UPSTASH_REDIS_REST_URL!.trim().replace(/\/$/, "");
+      const token = process.env.UPSTASH_REDIS_REST_TOKEN!.trim();
+      const res = await fetch(base, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(["PING"]),
+      });
+      if (!res.ok) return false;
+      const body = (await res.json()) as { result?: unknown };
+      return body.result === "PONG" || body.result === "pong";
+    }
+    const client = await getRedisClient();
+    const pong = await client.ping();
+    return pong.toUpperCase() === "PONG";
+  } catch {
+    return false;
+  }
 }
 
 export async function checkRateLimit(

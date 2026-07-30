@@ -24,3 +24,30 @@ Production `EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED` stays **false** in `eas.json` 
 6. **Full tsc green:** remaining errors outside clinical-stream (quiz styles, study scripts, biometric, etc.).
 7. **Rotate Google OAuth secret** if `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_SECRET` was ever embedded in a store binary.
 8. **Redeploy Railway** from `main` after push so Muse Phase 1 ships; smoke `/health` (no secrets) + `/health/ready` with secret; Clinical flag only on staging.
+
+## Railway staging smoke (not CLOSED until executed post-deploy)
+
+Run only after deploy SHA matches expected commit. Record evidence in `docs/audits/evidence/` — **no** host/URL/token/UUID/email/clinical content in notes.
+
+| Step | Check |
+|------|--------|
+| 1 | Confirm deploy SHA (Railway / health `version` if set) |
+| 2 | `GET /health` — `status`, `clinicalCopilotEnabled` only (no provider secrets) |
+| 3 | `GET /health/ready` — Bearer `INTERNAL_HEALTH_SECRET`; booleans: `redisConfigured`, `redisReady`, `supabaseConfigured`, `supabaseReady`, `aiProvider`, `hasMetaModelApiKey`, `clinicalCopilotEnabled` |
+| 4 | Clinical SSE explain (staging/internal only) |
+| 5 | Case flow |
+| 6 | Image reject |
+| 7 | Abort / timeout / provider fail |
+| 8 | Rate limit |
+| 9 | RLS A/B contract |
+
+**Functional audit hotfix status (accurate as of gate prep):**
+
+| ID | Status |
+|----|--------|
+| FA-H03 | **OPEN** — needs deploy SHA + smoke SSE |
+| FA-H04 | **CLOSED** only if RLS A/B contract evidence PASS exists (`docs/audits/evidence/rls-022-contract-*.md`) |
+| H01 / H02 | **Pending** — VERIFIED IN DEPLOYMENT only after deploy |
+| H05 | **OPEN** — Redis must be confirmed across Railway instances (`redisReady` on `/health/ready`) |
+
+Staging smoke overall: **OPEN** (do not mark CLOSED here).

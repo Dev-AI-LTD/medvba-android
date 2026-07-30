@@ -176,6 +176,10 @@ describe('health split', () => {
     jest.doMock('@/backend/lib/health-supabase', () => ({
       probeSupabaseServiceRole: async () => ({ ok: true }),
     }));
+    jest.doMock('@/backend/trpc/rate-limit-store', () => ({
+      isDistributedRateLimitConfigured: () => false,
+      probeRateLimitRedis: async () => false,
+    }));
     jest.doMock('@/backend/webhooks/revenuecat-webhook', () => ({
       registerRevenueCatWebhookRoutes: () => undefined,
     }));
@@ -234,6 +238,10 @@ describe('health split', () => {
     expect(body.aiProvider).toBe('muse');
     expect(body.hasMetaModelApiKey).toBe(true);
     expect(body.clinicalCopilotEnabled).toBe(true);
+    expect(body.redisConfigured).toBe(false);
+    expect(body.redisReady).toBe(false);
+    expect(typeof body.supabaseConfigured).toBe('boolean');
+    expect(typeof body.supabaseReady).toBe('boolean');
     expect(JSON.stringify(body)).not.toContain('secret-meta');
   });
 });

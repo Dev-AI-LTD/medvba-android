@@ -8,6 +8,7 @@ import { registerAuthSessionRoutes } from "./auth/session-routes";
 import { registerRevenueCatWebhookRoutes } from "./webhooks/revenuecat-webhook";
 import { registerClinicalStreamRoutes } from "./clinical-stream";
 import { probeSupabaseServiceRole } from "./lib/health-supabase";
+import { getReadinessProbeBooleans } from "./lib/health-ready-probes";
 
 const app = new Hono();
 
@@ -109,7 +110,7 @@ app.get("/health", (c) => {
  * Internal readiness — requires INTERNAL_HEALTH_SECRET Bearer token.
  * Exposes operational booleans only (no secrets, URLs, or model names).
  */
-app.get("/health/ready", (c) => {
+app.get("/health/ready", async (c) => {
   const secret = process.env.INTERNAL_HEALTH_SECRET?.trim();
   if (!secret) {
     return c.json({ status: "error", error: "not_configured" }, 503);
@@ -127,6 +128,8 @@ app.get("/health/ready", (c) => {
     process.env.AI_API_KEY?.trim() || process.env.OPENAI_API_KEY?.trim()
   );
 
+  const probes = await getReadinessProbeBooleans();
+
   return c.json({
     status: "ok",
     timestamp: new Date().toISOString(),
@@ -134,6 +137,10 @@ app.get("/health/ready", (c) => {
     aiProvider,
     hasMetaModelApiKey,
     hasTutorAiKey,
+    redisConfigured: probes.redisConfigured,
+    redisReady: probes.redisReady,
+    supabaseConfigured: probes.supabaseConfigured,
+    supabaseReady: probes.supabaseReady,
     version: resolveBuildVersion(),
   });
 });
