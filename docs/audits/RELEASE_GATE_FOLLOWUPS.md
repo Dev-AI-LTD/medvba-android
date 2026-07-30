@@ -14,6 +14,9 @@ Production `EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED` stays **false** in `eas.json` 
 - RC idempotency key unit tests; clinical credit/stream auth tests; CI lint+test workflow
 - **Muse Phase 1 (code):** explicit `AI_PROVIDER=muse`, guards before debit, abort/timeout refund policy, `ai_usage_events`, `/health` + `/health/ready` split. Clinical remains OFF on EAS production. Apply migration `025_ai_usage_events.sql` before staging smoke. **No live Railway vars/deploy without explicit ops OK.**
 - **Local quality gate GREEN (2026-07-30):** `bun install --frozen-lockfile`, `lint`, `tsc --noEmit`, `test:ci`, `doctor` (17/17), `git diff --check` all exit 0. Nested same-version `expo-file-system` / `expo-font` deduped via postinstall + overrides.
+- **Controlled push PASS (2026-07-30):** `main` @ `212c796` on origin; no force-push. Evidence: `docs/audits/evidence/push-ci-staging-2026-07-30.md`.
+- **Quality CI PASS (2026-07-30):** first green `CI` / `lint-and-test` on pushed SHA after Rules-of-Hooks lint fix (run `30542556738`).
+- **Railway staging / migrations 022–025 / smoke:** **BLOCKED** — Railway CLI unauthorized/unlinked; staging cannot be safely distinguished from production. No staging deploy, no prod Railway changes, no migration apply.
 
 ## Separate PRs still recommended
 
@@ -51,4 +54,4 @@ Run only after deploy SHA matches expected commit. Record evidence in `docs/audi
 | H01 / H02 | **Pending** — VERIFIED IN DEPLOYMENT only after deploy |
 | H05 | **OPEN** — Redis must be confirmed across Railway instances (`redisReady` on `/health/ready`) |
 
-Staging smoke overall: **OPEN** (do not mark CLOSED here).
+Staging smoke overall: **OPEN / BLOCKED** (do not mark CLOSED here). Ops needs Railway login + explicit staging service link before redeploy/smoke.

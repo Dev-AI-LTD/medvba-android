@@ -12,12 +12,12 @@
 
 | Dimension | Score | Notes |
 |-----------|------:|-------|
-| **Total** | **82/100** | Shipped quiz/auth/tutor/paywall paths largely sound; HIGH trial→paid mint + stream rate-limit fixed in repo; **local tsc+doctor green**; staging still blocked on ops (Railway deploy / smoke) |
+| **Total** | **82/100** | Shipped quiz/auth/tutor/paywall paths largely sound; HIGH trial→paid mint + stream rate-limit fixed in repo; **local tsc+doctor green**; **origin push + quality CI green**; staging still blocked on ops (Railway unauthorized) |
 | Security / authz | **78** | Server premium + credits; JWT mint has `aud`; verify still lacks `aud`/`role` assert; 022 in tree unverified live |
 | Reliability | **82** | Credit refund trial/paid split correct; abort keeps charge by design; in-memory rate limits |
 | Credits / billing | **84** | RC webhook auth + idempotency tested; trial refund no longer mints paid balance |
 | Clinical safety | **86** | Prod flag false; disclaimer `literal(true)`; MIME allowlist; educational prompts |
-| Quality / CI | **88** | lint 0 errors; `test:ci` 178 pass; **`tsc --noEmit` PASS**; **`doctor` 17/17** |
+| Quality / CI | **92** | lint 0 errors; `test:ci` pass; **`tsc --noEmit` PASS**; **`doctor` 17/17**; **GitHub Actions CI green on `main` @ `212c796`** |
 | Store readiness | **86** | Clinical off in production EAS; doctor green (nested expo-* deduped in postinstall) |
 
 **Honest acceptance:** Zero **CRITICAL** open for shipped flows. **HIGH** credit mint bug **fixed in repo**. Remaining **HIGH** items are primarily **ops/verification** (live API deploy, RLS 022 apply) plus multi-instance rate-limit residual — not store-binary Clinical enablement.
@@ -185,7 +185,7 @@ No deletions performed (no import-graph proof of dead code requiring removal).
 | `bun run doctor` | **PASS** — 17/17 |
 | `git diff --check` | **PASS** — exit 0 |
 
-**Not ready for ops/staging declare:** local quality gate is green; Railway deploy + staging smoke remain **OPEN** (do not treat as staging-closed). Clinical remains `false` on EAS production/development.
+**Not ready for ops/staging declare:** push + quality CI are green; Railway staging deploy + migrations 022–025 + smoke remain **BLOCKED** (CLI unauthorized / staging not identifiable). Clinical remains `false` on EAS production/development. Railway production untouched.
 
 ---
 
