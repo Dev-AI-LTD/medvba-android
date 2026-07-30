@@ -7,7 +7,12 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { createTRPCRouter, protectedProcedure } from './create-context';
-import { generateClinicalText, type TutorLocale } from '../../lib/ai-provider';
+import {
+  CLINICAL_PROVIDER_NOT_CONFIGURED,
+  generateClinicalText,
+  resolveClinicalProvider,
+  type TutorLocale,
+} from '../../lib/ai-provider';
 import { userHasActivePremiumAccess } from '../lib/premium-access';
 import {
   CLINICAL_CASE_TOPICS,
@@ -23,6 +28,18 @@ import {
   getEntitlementStatus,
   refundClinicalCredits,
 } from '../lib/ai-credits';
+import {
+  CLINICAL_AI_LIMITS,
+  ClinicalGuardError,
+  assertImageDataUrlWithinLimit,
+  assertUserTextWithinLimit,
+  createClinicalAbortBundle,
+  isAbortError,
+  newClinicalRequestId,
+  truncateHistoryMessages,
+  type ClinicalOperation,
+} from '../lib/clinical-ai-guards';
+import { recordClinicalUsage } from '../lib/clinical-usage';
 import {
   fetchRevenueCatSubscriber,
   getRevenueCatSecretApiKey,
@@ -74,8 +91,65 @@ function isAiMissingConfigError(message: string): boolean {
   return (
     m.includes('api key not configured') ||
     m.includes('openai api key') ||
-    m.includes('base url not configured')
+    m.includes('base url not configured') ||
+    m.includes(CLINICAL_PROVIDER_NOT_CONFIGURED.toLowerCase()) ||
+    m.includes('clinical ai provider is not configured')
   );
+}
+
+function throwGuardOrConfig(err: unknown): never {
+  if (err instanceof ClinicalGuardError) {
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: err.message,
+      cause: err,
+    });
+  }
+  if (err instanceof TRPCError) throw err;
+  const message = err instanceof Error ? err.message : String(err);
+  if (isAiMissingConfigError(message)) {
+    throw new TRPCError({
+      code: 'PRECONDITION_FAILED',
+      message: 'AI is not configured. Please contact support.',
+    });
+  }
+  if (isAbortError(err)) {
+    throw new TRPCError({
+      code: 'TIMEOUT',
+      message: 'Clinical AI request timed out',
+    });
+  }
+  throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message });
+}
+
+async function callClinicalWithGuards(params: {
+  operation: ClinicalOperation;
+  messages: Parameters<typeof generateClinicalText>[0]['messages'];
+  maxTokens?: number;
+  temperature?: number;
+}): Promise<Awaited<ReturnType<typeof generateClinicalText>>> {
+  const limits = CLINICAL_AI_LIMITS[params.operation];
+  const abortBundle = createClinicalAbortBundle({
+    timeoutMs: limits.timeoutMs,
+  });
+  try {
+    return await generateClinicalText({
+      messages: params.messages,
+      maxTokens: params.maxTokens ?? limits.maxOutputTokens,
+      temperature: params.temperature,
+      signal: abortBundle.signal,
+    });
+  } catch (err) {
+    const cause = abortBundle.getCause();
+    if (cause === 'timeout' || (isAbortError(err) && cause !== 'client')) {
+      const timeoutErr = new Error('Clinical AI request timed out');
+      timeoutErr.name = 'TimeoutError';
+      throw timeoutErr;
+    }
+    throw err;
+  } finally {
+    abortBundle.cleanup();
+  }
 }
 
 async function nextSequenceNo(
@@ -139,12 +213,14 @@ async function maybeSnapshotCase(
   if (!msgs?.length) return;
 
   try {
-    const result = await generateClinicalText({
+    const truncated = truncateHistoryMessages(msgs, 'summary');
+    const result = await callClinicalWithGuards({
+      operation: 'summary',
       messages: [
         { role: 'system', content: getSnapshotSystemPrompt(locale) },
         {
           role: 'user',
-          content: msgs.map((m) => `${m.role}: ${m.content}`).join('\n\n'),
+          content: truncated.map((m) => `${m.role}: ${m.content}`).join('\n\n'),
         },
       ],
       maxTokens: 800,
@@ -157,7 +233,7 @@ async function maybeSnapshotCase(
       message_count: n,
     });
   } catch (e) {
-    console.warn('[clinical] snapshot failed:', e);
+    console.warn('[clinical] snapshot failed');
   }
 }
 
@@ -190,10 +266,31 @@ async function runExplainQuestion(
     throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invalid option index' });
   }
 
+  const requestId = newClinicalRequestId();
+  const startedAt = Date.now();
   const supabase = await adminClient();
   const locale = input.locale as TutorLocale;
-  const isPremium = await userHasActivePremiumAccess(supabase, ctx.userId);
   const cost = CLINICAL_CREDIT_COSTS.explain;
+  const providerName = resolveClinicalProvider();
+
+  try {
+    assertUserTextWithinLimit(input.question, 'explain');
+  } catch (err) {
+    if (err instanceof ClinicalGuardError) {
+      await recordClinicalUsage({
+        supabase,
+        requestId,
+        userId: ctx.userId,
+        operation: 'explain',
+        provider: providerName,
+        status: 'guard_reject',
+        creditCost: 0,
+        latencyMs: Date.now() - startedAt,
+      });
+      throwGuardOrConfig(err);
+    }
+    throw err;
+  }
 
   const { data: session, error: sessionErr } = await supabase
     .from('ai_sessions')
@@ -214,6 +311,7 @@ async function runExplainQuestion(
       meta: {
         chapter: input.chapter ?? null,
         explanationLevel: input.explanationLevel ?? null,
+        requestId,
       },
     })
     .select('id')
@@ -226,18 +324,31 @@ async function runExplainQuestion(
     });
   }
 
-  let charged = false;
+  let chargedAmount = 0;
   let usedTrial = false;
+  let refunded = false;
+  const refundOnce = async () => {
+    if (chargedAmount <= 0 || refunded) return;
+    refunded = true;
+    await refundClinicalCredits({
+      supabase,
+      userId: ctx.userId,
+      amount: chargedAmount,
+      sessionId: session.id,
+      meta: { feature: 'explain', requestId },
+      usedTrial,
+    });
+  };
+
   try {
     const charge = await consumeClinicalCredits({
       supabase,
       userId: ctx.userId,
       cost,
-      isPremium,
       feature: 'explain',
       sessionId: session.id,
     });
-    charged = !charge.usedTrial;
+    chargedAmount = charge.amount;
     usedTrial = charge.usedTrial;
 
     const userPrompt = buildExplainUserPrompt(input);
@@ -248,7 +359,8 @@ async function runExplainQuestion(
       user_id: ctx.userId,
     });
 
-    const result = await generateClinicalText({
+    const result = await callClinicalWithGuards({
+      operation: 'explain',
       messages: [
         { role: 'system', content: getExplainSystemPrompt(locale) },
         { role: 'user', content: userPrompt },
@@ -261,8 +373,8 @@ async function runExplainQuestion(
       role: 'assistant',
       content: text,
       model: result.model,
-      token_input: result.usage?.promptTokens,
-      token_output: result.usage?.completionTokens,
+      token_input: result.usage.inputTokens ?? undefined,
+      token_output: result.usage.outputTokens ?? undefined,
       user_id: ctx.userId,
       credits_charged: usedTrial ? 0 : cost,
     });
@@ -278,6 +390,23 @@ async function runExplainQuestion(
       })
       .eq('id', session.id);
 
+    await recordClinicalUsage({
+      supabase,
+      requestId,
+      userId: ctx.userId,
+      sessionId: session.id,
+      operation: 'explain',
+      provider: result.provider,
+      model: result.model,
+      tokenInput: result.usage.inputTokens,
+      tokenOutput: result.usage.outputTokens,
+      providerRequestId: result.usage.providerRequestId,
+      status: 'ok',
+      creditCost: usedTrial ? 0 : chargedAmount,
+      usedTrial,
+      latencyMs: Date.now() - startedAt,
+    });
+
     const balance = await getCreditBalance(supabase, ctx.userId);
     return {
       sessionId: session.id,
@@ -285,26 +414,27 @@ async function runExplainQuestion(
       disclaimer: clinicalDisclaimer(locale),
       usedTrial,
       balance,
+      requestId,
     };
   } catch (err) {
-    if (charged) {
-      await refundClinicalCredits({
-        supabase,
-        userId: ctx.userId,
-        amount: cost,
-        sessionId: session.id,
-        meta: { feature: 'explain' },
-      });
-    }
+    const isTimeout =
+      err instanceof Error &&
+      (err.name === 'TimeoutError' || /timed out/i.test(err.message));
+    await refundOnce();
+    await recordClinicalUsage({
+      supabase,
+      requestId,
+      userId: ctx.userId,
+      sessionId: session.id,
+      operation: 'explain',
+      provider: providerName,
+      status: isTimeout ? 'timeout' : 'provider_error',
+      creditCost: usedTrial ? 0 : chargedAmount,
+      usedTrial,
+      latencyMs: Date.now() - startedAt,
+    });
     if (err instanceof TRPCError) throw err;
-    const message = err instanceof Error ? err.message : String(err);
-    if (isAiMissingConfigError(message)) {
-      throw new TRPCError({
-        code: 'PRECONDITION_FAILED',
-        message: 'AI is not configured. Please contact support.',
-      });
-    }
-    throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message });
+    throwGuardOrConfig(err);
   }
 }
 
@@ -326,7 +456,6 @@ async function runStartCase(
   const locale = (input.language === 'ro' || input.language === 'en'
     ? input.language
     : input.locale) as TutorLocale;
-  const isPremium = await userHasActivePremiumAccess(supabase, ctx.userId);
   const cost = CLINICAL_CREDIT_COSTS.clinicalCase;
 
   const { data: session, error: sessionErr } = await supabase
@@ -359,17 +488,35 @@ async function runStartCase(
     });
   }
 
-  let charged = false;
+  let chargedAmount = 0;
+  let usedTrial = false;
+  let refunded = false;
+  const requestId = newClinicalRequestId();
+  const startedAt = Date.now();
+  const providerName = resolveClinicalProvider();
+  const refundOnce = async () => {
+    if (chargedAmount <= 0 || refunded) return;
+    refunded = true;
+    await refundClinicalCredits({
+      supabase,
+      userId: ctx.userId,
+      amount: chargedAmount,
+      sessionId: session.id,
+      meta: { feature: 'clinical_case', requestId },
+      usedTrial,
+    });
+  };
+
   try {
     const charge = await consumeClinicalCredits({
       supabase,
       userId: ctx.userId,
       cost,
-      isPremium,
       feature: 'clinical_case',
       sessionId: session.id,
     });
-    charged = !charge.usedTrial;
+    chargedAmount = charge.amount;
+    usedTrial = charge.usedTrial;
 
     const kickoff = getCaseKickoffUserMessage(locale, input.topic);
     await insertMessage(supabase, {
@@ -379,12 +526,12 @@ async function runStartCase(
       user_id: ctx.userId,
     });
 
-    const result = await generateClinicalText({
+    const result = await callClinicalWithGuards({
+      operation: 'clinical_case',
       messages: [
         { role: 'system', content: getCaseSystemPrompt(locale, input.topic) },
         { role: 'user', content: kickoff },
       ],
-      maxTokens: 2000,
     });
     const text = ensureDisclaimerFooter(result.text, locale);
 
@@ -393,42 +540,67 @@ async function runStartCase(
       role: 'assistant',
       content: text,
       model: result.model,
-      token_input: result.usage?.promptTokens,
-      token_output: result.usage?.completionTokens,
+      token_input: result.usage.inputTokens ?? undefined,
+      token_output: result.usage.outputTokens ?? undefined,
       user_id: ctx.userId,
-      credits_charged: charge.usedTrial ? 0 : cost,
+      credits_charged: usedTrial ? 0 : cost,
     });
 
     await supabase
       .from('ai_sessions')
       .update({
         model: result.model,
-        actual_credits: charge.usedTrial ? 0 : cost,
+        actual_credits: usedTrial ? 0 : cost,
         title: input.topic,
         updated_at: new Date().toISOString(),
+        meta: { difficulty: input.difficulty ?? null, specialty: input.specialty ?? null, requestId },
       })
       .eq('id', session.id);
+
+    await recordClinicalUsage({
+      supabase,
+      requestId,
+      userId: ctx.userId,
+      sessionId: session.id,
+      operation: 'clinical_case',
+      provider: result.provider,
+      model: result.model,
+      tokenInput: result.usage.inputTokens,
+      tokenOutput: result.usage.outputTokens,
+      providerRequestId: result.usage.providerRequestId,
+      status: 'ok',
+      creditCost: usedTrial ? 0 : chargedAmount,
+      usedTrial,
+      latencyMs: Date.now() - startedAt,
+    });
 
     return {
       sessionId: session.id,
       response: text,
       disclaimer: clinicalDisclaimer(locale),
-      usedTrial: charge.usedTrial,
+      usedTrial,
       balance: await getCreditBalance(supabase, ctx.userId),
+      requestId,
     };
   } catch (err) {
-    if (charged) {
-      await refundClinicalCredits({
-        supabase,
-        userId: ctx.userId,
-        amount: cost,
-        sessionId: session.id,
-        meta: { feature: 'clinical_case' },
-      });
-    }
+    const isTimeout =
+      err instanceof Error &&
+      (err.name === 'TimeoutError' || /timed out/i.test(err.message));
+    await refundOnce();
+    await recordClinicalUsage({
+      supabase,
+      requestId,
+      userId: ctx.userId,
+      sessionId: session.id,
+      operation: 'clinical_case',
+      provider: providerName,
+      status: isTimeout ? 'timeout' : 'provider_error',
+      creditCost: usedTrial ? 0 : chargedAmount,
+      usedTrial,
+      latencyMs: Date.now() - startedAt,
+    });
     if (err instanceof TRPCError) throw err;
-    const message = err instanceof Error ? err.message : String(err);
-    throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message });
+    throwGuardOrConfig(err);
   }
 }
 
@@ -444,8 +616,31 @@ async function runReply(
   assertClinicalEnabled();
   tutorRateLimiter(ctx.userId);
 
+  const requestId = newClinicalRequestId();
+  const startedAt = Date.now();
   const supabase = await adminClient();
   const locale = input.locale as TutorLocale;
+  const providerName = resolveClinicalProvider();
+
+  let guardedMessage: string;
+  try {
+    guardedMessage = assertUserTextWithinLimit(input.message, 'follow_up');
+  } catch (err) {
+    if (err instanceof ClinicalGuardError) {
+      await recordClinicalUsage({
+        supabase,
+        requestId,
+        userId: ctx.userId,
+        operation: 'follow_up',
+        provider: providerName,
+        status: 'guard_reject',
+        creditCost: 0,
+        latencyMs: Date.now() - startedAt,
+      });
+      throwGuardOrConfig(err);
+    }
+    throw err;
+  }
 
   const { data: session, error } = await supabase
     .from('ai_sessions')
@@ -460,32 +655,45 @@ async function runReply(
     throw new TRPCError({ code: 'BAD_REQUEST', message: 'Session is not active' });
   }
 
-  const isPremium = await userHasActivePremiumAccess(supabase, ctx.userId);
   const cost = CLINICAL_CREDIT_COSTS.followUp;
-  let charged = false;
+  let chargedAmount = 0;
+  let usedTrial = false;
+  let refunded = false;
+  const refundOnce = async () => {
+    if (chargedAmount <= 0 || refunded) return;
+    refunded = true;
+    await refundClinicalCredits({
+      supabase,
+      userId: ctx.userId,
+      amount: chargedAmount,
+      sessionId: session.id,
+      meta: { feature: 'follow_up', requestId },
+      usedTrial,
+    });
+  };
 
   try {
-    if (isPremium) {
-      const charge = await consumeClinicalCredits({
-        supabase,
-        userId: ctx.userId,
-        cost,
-        isPremium: true,
-        feature: 'follow_up',
-        sessionId: session.id,
-      });
-      charged = !charge.usedTrial;
-    }
+    const charge = await consumeClinicalCredits({
+      supabase,
+      userId: ctx.userId,
+      cost,
+      feature: 'follow_up',
+      sessionId: session.id,
+    });
+    chargedAmount = charge.amount;
+    usedTrial = charge.usedTrial;
 
     const modeHint = getReplyModeHint(locale, input.mode);
-    const userContent = modeHint ? `${modeHint}\n\n${input.message}` : input.message;
+    const userContent = modeHint
+      ? `${modeHint}\n\n${guardedMessage}`
+      : guardedMessage;
 
     await insertMessage(supabase, {
       session_id: session.id,
       role: 'user',
       content: userContent,
       user_id: ctx.userId,
-      credits_charged: charged ? cost : 0,
+      credits_charged: usedTrial ? 0 : chargedAmount,
     });
 
     const { data: snap } = await supabase
@@ -503,7 +711,10 @@ async function runReply(
       .order('created_at', { ascending: false })
       .limit(16);
 
-    const history = [...(recent ?? [])].reverse();
+    const history = truncateHistoryMessages(
+      [...(recent ?? [])].reverse(),
+      'follow_up',
+    );
     const system =
       session.type === 'clinical_case' && session.case_topic
         ? getCaseSystemPrompt(
@@ -518,7 +729,7 @@ async function runReply(
         ? [
             {
               role: 'system' as const,
-              content: `Prior case summary:\n${snap.summary_text}`,
+              content: `Prior case summary:\n${snap.summary_text.slice(0, 4000)}`,
             },
           ]
         : []),
@@ -528,15 +739,18 @@ async function runReply(
       })),
     ];
 
-    const result = await generateClinicalText({ messages });
+    const result = await callClinicalWithGuards({
+      operation: 'follow_up',
+      messages,
+    });
     const text = ensureDisclaimerFooter(result.text, locale);
     await insertMessage(supabase, {
       session_id: session.id,
       role: 'assistant',
       content: text,
       model: result.model,
-      token_input: result.usage?.promptTokens,
-      token_output: result.usage?.completionTokens,
+      token_input: result.usage.inputTokens ?? undefined,
+      token_output: result.usage.outputTokens ?? undefined,
       user_id: ctx.userId,
     });
 
@@ -544,7 +758,7 @@ async function runReply(
       await maybeSnapshotCase(supabase, session.id, ctx.userId, locale);
     }
 
-    if (charged) {
+    if (chargedAmount > 0 && !usedTrial) {
       await supabase
         .from('ai_sessions')
         .update({
@@ -554,25 +768,49 @@ async function runReply(
         .eq('id', session.id);
     }
 
+    await recordClinicalUsage({
+      supabase,
+      requestId,
+      userId: ctx.userId,
+      sessionId: session.id,
+      operation: 'follow_up',
+      provider: result.provider,
+      model: result.model,
+      tokenInput: result.usage.inputTokens,
+      tokenOutput: result.usage.outputTokens,
+      providerRequestId: result.usage.providerRequestId,
+      status: 'ok',
+      creditCost: usedTrial ? 0 : chargedAmount,
+      usedTrial,
+      latencyMs: Date.now() - startedAt,
+    });
+
     return {
       sessionId: session.id,
       response: text,
       disclaimer: clinicalDisclaimer(locale),
       balance: await getCreditBalance(supabase, ctx.userId),
+      requestId,
     };
   } catch (err) {
-    if (charged) {
-      await refundClinicalCredits({
-        supabase,
-        userId: ctx.userId,
-        amount: cost,
-        sessionId: session.id,
-        meta: { feature: 'follow_up' },
-      });
-    }
+    const isTimeout =
+      err instanceof Error &&
+      (err.name === 'TimeoutError' || /timed out/i.test(err.message));
+    await refundOnce();
+    await recordClinicalUsage({
+      supabase,
+      requestId,
+      userId: ctx.userId,
+      sessionId: session.id,
+      operation: 'follow_up',
+      provider: providerName,
+      status: isTimeout ? 'timeout' : 'provider_error',
+      creditCost: usedTrial ? 0 : chargedAmount,
+      usedTrial,
+      latencyMs: Date.now() - startedAt,
+    });
     if (err instanceof TRPCError) throw err;
-    const message = err instanceof Error ? err.message : String(err);
-    throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message });
+    throwGuardOrConfig(err);
   }
 }
 
@@ -584,7 +822,7 @@ const explainInput = z.object({
   chapter: z.string().trim().max(200).optional(),
   staticExplanation: z.string().trim().max(8000).optional(),
   locale: localeSchema,
-  acceptDisclaimer: z.boolean().default(true),
+  acceptDisclaimer: z.literal(true),
   questionId: z.string().trim().max(200).optional(),
   quizSessionId: z.string().trim().max(200).optional(),
   explanationLevel: z.string().trim().max(40).optional(),
@@ -602,10 +840,9 @@ const analyzeImageProcedure = protectedProcedure
         .trim()
         .min(32)
         .max(6_000_000)
-        .refine(
-          (v) => v.startsWith('data:image/') && v.includes(';base64,'),
-          'Expected a data:image/...;base64, URL',
-        )
+        .refine((v) => {
+          return /^data:image\/(?:jpeg|jpg|png|webp|gif);base64,/i.test(v);
+        }, 'Expected data:image/jpeg|png|webp|gif;base64,...')
         .optional(),
       attachmentId: z.string().uuid().optional(),
       note: z.string().trim().max(2000).optional(),
@@ -624,8 +861,35 @@ const analyzeImageProcedure = protectedProcedure
       });
     }
 
+    const requestId = newClinicalRequestId();
+    const startedAt = Date.now();
     const supabase = await adminClient();
     const locale = input.locale as TutorLocale;
+    const providerName = resolveClinicalProvider();
+
+    // Size/schema guard BEFORE premium check debit path
+    if (input.imageDataUrl) {
+      try {
+        assertImageDataUrlWithinLimit(input.imageDataUrl);
+        if (input.note) assertUserTextWithinLimit(input.note, 'image');
+      } catch (err) {
+        if (err instanceof ClinicalGuardError) {
+          await recordClinicalUsage({
+            supabase,
+            requestId,
+            userId: ctx.userId,
+            operation: 'image',
+            provider: providerName,
+            status: 'guard_reject',
+            creditCost: 0,
+            latencyMs: Date.now() - startedAt,
+          });
+          throwGuardOrConfig(err);
+        }
+        throw err;
+      }
+    }
+
     const isPremium = await userHasActivePremiumAccess(supabase, ctx.userId);
     if (!isPremium) {
       throw new TRPCError({
@@ -674,6 +938,7 @@ const analyzeImageProcedure = protectedProcedure
         credit_cost_reserved: cost,
         estimated_credits: cost,
         entry_point: 'image',
+        meta: { requestId },
       })
       .select('id')
       .single();
@@ -685,17 +950,32 @@ const analyzeImageProcedure = protectedProcedure
       });
     }
 
-    let charged = false;
+    let chargedAmount = 0;
+    let usedTrial = false;
+    let refunded = false;
+    const refundOnce = async () => {
+      if (chargedAmount <= 0 || refunded) return;
+      refunded = true;
+      await refundClinicalCredits({
+        supabase,
+        userId: ctx.userId,
+        amount: chargedAmount,
+        sessionId: session.id,
+        meta: { feature: 'image', requestId },
+        usedTrial,
+      });
+    };
+
     try {
-      await consumeClinicalCredits({
+      const charge = await consumeClinicalCredits({
         supabase,
         userId: ctx.userId,
         cost,
-        isPremium: true,
         feature: 'image',
         sessionId: session.id,
       });
-      charged = true;
+      chargedAmount = charge.amount;
+      usedTrial = charge.usedTrial;
 
       const userText =
         input.note?.trim() ||
@@ -708,10 +988,11 @@ const analyzeImageProcedure = protectedProcedure
         role: 'user',
         content: userText,
         user_id: ctx.userId,
-        credits_charged: cost,
+        credits_charged: usedTrial ? 0 : cost,
       });
 
-      const result = await generateClinicalText({
+      const result = await callClinicalWithGuards({
+        operation: 'image',
         messages: [
           { role: 'system', content: getImageSystemPrompt(locale) },
           {
@@ -722,7 +1003,6 @@ const analyzeImageProcedure = protectedProcedure
             ],
           },
         ],
-        maxTokens: 2200,
       });
       const text = ensureDisclaimerFooter(result.text, locale);
 
@@ -731,8 +1011,8 @@ const analyzeImageProcedure = protectedProcedure
         role: 'assistant',
         content: text,
         model: result.model,
-        token_input: result.usage?.promptTokens,
-        token_output: result.usage?.completionTokens,
+        token_input: result.usage.inputTokens ?? undefined,
+        token_output: result.usage.outputTokens ?? undefined,
         user_id: ctx.userId,
       });
 
@@ -741,31 +1021,55 @@ const analyzeImageProcedure = protectedProcedure
         .update({
           status: 'completed',
           model: result.model,
-          actual_credits: cost,
+          actual_credits: usedTrial ? 0 : cost,
           completed_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
         .eq('id', session.id);
+
+      await recordClinicalUsage({
+        supabase,
+        requestId,
+        userId: ctx.userId,
+        sessionId: session.id,
+        operation: 'image',
+        provider: result.provider,
+        model: result.model,
+        tokenInput: result.usage.inputTokens,
+        tokenOutput: result.usage.outputTokens,
+        providerRequestId: result.usage.providerRequestId,
+        status: 'ok',
+        creditCost: usedTrial ? 0 : chargedAmount,
+        usedTrial,
+        latencyMs: Date.now() - startedAt,
+      });
 
       return {
         sessionId: session.id,
         response: text,
         disclaimer: clinicalDisclaimer(locale),
         balance: await getCreditBalance(supabase, ctx.userId),
+        requestId,
       };
     } catch (err) {
-      if (charged) {
-        await refundClinicalCredits({
-          supabase,
-          userId: ctx.userId,
-          amount: cost,
-          sessionId: session.id,
-          meta: { feature: 'image' },
-        });
-      }
+      const isTimeout =
+        err instanceof Error &&
+        (err.name === 'TimeoutError' || /timed out/i.test(err.message));
+      await refundOnce();
+      await recordClinicalUsage({
+        supabase,
+        requestId,
+        userId: ctx.userId,
+        sessionId: session.id,
+        operation: 'image',
+        provider: providerName,
+        status: isTimeout ? 'timeout' : 'provider_error',
+        creditCost: usedTrial ? 0 : chargedAmount,
+        usedTrial,
+        latencyMs: Date.now() - startedAt,
+      });
       if (err instanceof TRPCError) throw err;
-      const message = err instanceof Error ? err.message : String(err);
-      throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message });
+      throwGuardOrConfig(err);
     }
   });
 
@@ -782,8 +1086,11 @@ const generateSummaryProcedure = protectedProcedure
     assertClinicalEnabled();
     tutorRateLimiter(ctx.userId);
 
+    const requestId = newClinicalRequestId();
+    const startedAt = Date.now();
     const supabase = await adminClient();
     const locale = input.locale as TutorLocale;
+    const providerName = resolveClinicalProvider();
     const isPremium = await userHasActivePremiumAccess(supabase, ctx.userId);
     if (!isPremium) {
       throw new TRPCError({
@@ -803,17 +1110,32 @@ const generateSummaryProcedure = protectedProcedure
     }
 
     const cost = CLINICAL_CREDIT_COSTS.summary;
-    let charged = false;
+    let chargedAmount = 0;
+    let usedTrial = false;
+    let refunded = false;
+    const refundOnce = async () => {
+      if (chargedAmount <= 0 || refunded) return;
+      refunded = true;
+      await refundClinicalCredits({
+        supabase,
+        userId: ctx.userId,
+        amount: chargedAmount,
+        sessionId: session.id,
+        meta: { feature: 'summary', requestId },
+        usedTrial,
+      });
+    };
+
     try {
-      await consumeClinicalCredits({
+      const charge = await consumeClinicalCredits({
         supabase,
         userId: ctx.userId,
         cost,
-        isPremium: true,
         feature: 'summary',
         sessionId: session.id,
       });
-      charged = true;
+      chargedAmount = charge.amount;
+      usedTrial = charge.usedTrial;
 
       const { data: msgs } = await supabase
         .from('ai_messages')
@@ -822,7 +1144,9 @@ const generateSummaryProcedure = protectedProcedure
         .order('created_at', { ascending: true })
         .limit(50);
 
-      const result = await generateClinicalText({
+      const history = truncateHistoryMessages(msgs ?? [], 'summary');
+      const result = await callClinicalWithGuards({
+        operation: 'summary',
         messages: [
           { role: 'system', content: getSummarySystemPrompt(locale) },
           {
@@ -830,7 +1154,7 @@ const generateSummaryProcedure = protectedProcedure
             content: [
               input.topic ? `Topic: ${input.topic}` : null,
               input.source ? `Source: ${input.source}` : null,
-              (msgs ?? []).map((m) => `${m.role}: ${m.content}`).join('\n\n'),
+              history.map((m) => `${m.role}: ${m.content}`).join('\n\n'),
             ]
               .filter(Boolean)
               .join('\n\n'),
@@ -858,6 +1182,7 @@ const generateSummaryProcedure = protectedProcedure
             sourceSessionId: session.id,
             topic: input.topic ?? null,
             source: input.source ?? null,
+            requestId,
           },
         })
         .select('id')
@@ -879,25 +1204,49 @@ const generateSummaryProcedure = protectedProcedure
         .update({ cached_summary: text, updated_at: new Date().toISOString() })
         .eq('id', session.id);
 
+      await recordClinicalUsage({
+        supabase,
+        requestId,
+        userId: ctx.userId,
+        sessionId: summarySession?.id ?? session.id,
+        operation: 'summary',
+        provider: result.provider,
+        model: result.model,
+        tokenInput: result.usage.inputTokens,
+        tokenOutput: result.usage.outputTokens,
+        providerRequestId: result.usage.providerRequestId,
+        status: 'ok',
+        creditCost: usedTrial ? 0 : chargedAmount,
+        usedTrial,
+        latencyMs: Date.now() - startedAt,
+      });
+
       return {
         sessionId: summarySession?.id ?? session.id,
         response: text,
         disclaimer: clinicalDisclaimer(locale),
         balance: await getCreditBalance(supabase, ctx.userId),
+        requestId,
       };
     } catch (err) {
-      if (charged) {
-        await refundClinicalCredits({
-          supabase,
-          userId: ctx.userId,
-          amount: cost,
-          sessionId: session.id,
-          meta: { feature: 'summary' },
-        });
-      }
+      const isTimeout =
+        err instanceof Error &&
+        (err.name === 'TimeoutError' || /timed out/i.test(err.message));
+      await refundOnce();
+      await recordClinicalUsage({
+        supabase,
+        requestId,
+        userId: ctx.userId,
+        sessionId: session.id,
+        operation: 'summary',
+        provider: providerName,
+        status: isTimeout ? 'timeout' : 'provider_error',
+        creditCost: usedTrial ? 0 : chargedAmount,
+        usedTrial,
+        latencyMs: Date.now() - startedAt,
+      });
       if (err instanceof TRPCError) throw err;
-      const message = err instanceof Error ? err.message : String(err);
-      throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message });
+      throwGuardOrConfig(err);
     }
   });
 

@@ -13,6 +13,7 @@ import {
   inferSubscriptionPlan,
   monthlyCreditsForProduct,
 } from '../../constants/clinical-copilot';
+import { userHasActivePremiumAccess } from './premium-access';
 
 export type CreditReason =
   | 'grant_monthly'
@@ -284,25 +285,23 @@ export async function countTrialUses(
 
 /**
  * Charge credits for a clinical feature, or consume trial credits / free slots.
+ * Entitlement is resolved server-side — callers must not pass isPremium.
  */
 export async function consumeClinicalCredits(params: {
   supabase: SupabaseClient;
   userId: string;
   cost: number;
-  isPremium: boolean;
   feature: 'explain' | 'clinical_case' | 'image' | 'summary' | 'follow_up';
   sessionId?: string | null;
-}): Promise<{ usedTrial: boolean; balanceAfter: number }> {
-  const { supabase, userId, cost, isPremium, feature, sessionId } = params;
+}): Promise<{ amount: number; usedTrial: boolean; balanceAfter: number }> {
+  const { supabase, userId, cost, feature, sessionId } = params;
   const ent = await ensureEntitlement(supabase, userId);
-  const effectivePro = isPremium || ent.is_pro;
+  const premiumAccess = await userHasActivePremiumAccess(supabase, userId);
+  const effectivePro = premiumAccess || ent.is_pro;
 
-  // Prefer trial_credits_remaining bucket for non-pro
+  // Prefer trial_credits_remaining bucket for non-pro (any clinical feature)
   if (!effectivePro) {
-    if (
-      (feature === 'explain' || feature === 'clinical_case') &&
-      ent.trial_credits_remaining + 1e-9 >= cost
-    ) {
+    if (ent.trial_credits_remaining + 1e-9 >= cost) {
       const balanceAfter = await applyBalanceDelta(supabase, {
         userId,
         delta: 0,
@@ -311,7 +310,7 @@ export async function consumeClinicalCredits(params: {
         sessionId,
         meta: { feature, cost, from: 'trial_credits_remaining' },
       });
-      return { usedTrial: true, balanceAfter };
+      return { amount: cost, usedTrial: true, balanceAfter };
     }
 
     // Legacy per-feature trial counts if trial bucket empty
@@ -329,7 +328,7 @@ export async function consumeClinicalCredits(params: {
           sessionId,
           meta: { feature, trialIndex: used + 1, legacy: true },
         });
-        return { usedTrial: true, balanceAfter };
+        return { amount: cost, usedTrial: true, balanceAfter };
       }
     }
 
@@ -354,7 +353,7 @@ export async function consumeClinicalCredits(params: {
     meta: { feature, cost },
   });
 
-  return { usedTrial: false, balanceAfter };
+  return { amount: cost, usedTrial: false, balanceAfter };
 }
 
 export async function refundClinicalCredits(params: {
@@ -363,8 +362,21 @@ export async function refundClinicalCredits(params: {
   amount: number;
   sessionId?: string | null;
   meta?: Record<string, unknown>;
+  /** When true, restore trial_credits_remaining — never mint paid current_balance. */
+  usedTrial?: boolean;
 }): Promise<void> {
   if (params.amount <= 0) return;
+  if (params.usedTrial) {
+    await applyBalanceDelta(params.supabase, {
+      userId: params.userId,
+      delta: 0,
+      trialDelta: params.amount,
+      reason: 'refund',
+      sessionId: params.sessionId,
+      meta: { ...(params.meta ?? {}), restored: 'trial_credits_remaining' },
+    });
+    return;
+  }
   await applyBalanceDelta(params.supabase, {
     userId: params.userId,
     delta: params.amount,

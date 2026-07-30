@@ -1,34 +1,52 @@
 /**
  * Clinical Copilot SSE streaming endpoint (Hono).
  * POST /api/clinical/stream — only when CLINICAL_COPILOT_ENABLED=true.
+ *
+ * Pipeline: flag → JWT → schema/size → rate → guards → debit → provider → usage.
+ * Credit policy: client abort = charge kept; timeout/provider failure = refund once.
  */
 
 import type { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
-import { verifyMedvbaRequestJwt } from '../auth/decode-request-jwt';
+import { createClient } from '@supabase/supabase-js';
+
+import { verifyMedvbaRequestJwt } from './auth/decode-request-jwt';
 import {
   generateClinicalTextStream,
+  resolveClinicalProvider,
   type TutorLocale,
-} from '../../lib/ai-provider';
-import { isClinicalCopilotEnabled } from '../../constants/clinical-copilot';
+} from '../lib/ai-provider';
 import {
   CLINICAL_CASE_TOPICS,
   CLINICAL_CREDIT_COSTS,
-} from '../../constants/clinical-copilot';
+  isClinicalCopilotEnabled,
+} from '../constants/clinical-copilot';
 import {
   consumeClinicalCredits,
   getCreditBalance,
+  PAYWALL_REQUIRED,
   refundClinicalCredits,
-} from '../lib/ai-credits';
+  TOPUP_REQUIRED,
+} from './lib/ai-credits';
+import {
+  CLINICAL_AI_LIMITS,
+  ClinicalGuardError,
+  assertUserTextWithinLimit,
+  createClinicalAbortBundle,
+  isAbortError,
+  newClinicalRequestId,
+  truncateHistoryMessages,
+} from './lib/clinical-ai-guards';
+import { recordClinicalUsage } from './lib/clinical-usage';
 import {
   clinicalDisclaimer,
   ensureDisclaimerFooter,
   getCaseSystemPrompt,
   getExplainSystemPrompt,
   getReplyModeHint,
-} from '../lib/clinical-prompts';
-import { userHasActivePremiumAccess } from '../lib/premium-access';
-import { createClient } from '@supabase/supabase-js';
+} from './lib/clinical-prompts';
+import { tutorRateLimiter } from './trpc/rate-limiter';
+import { TRPCError } from '@trpc/server';
 
 type StreamBody = {
   sessionId: string;
@@ -69,12 +87,44 @@ export function registerClinicalStreamRoutes(app: Hono) {
       return c.json({ error: 'Invalid JSON body' }, 400);
     }
 
-    if (!body.sessionId || !body.message?.trim()) {
+    if (!body.sessionId || typeof body.message !== 'string') {
       return c.json({ error: 'sessionId and message required' }, 400);
     }
 
-    const locale = (body.locale === 'ro' ? 'ro' : 'en') as TutorLocale;
+    const requestId = newClinicalRequestId();
     const supabase = adminClient();
+    const startedAt = Date.now();
+
+    let guardedMessage: string;
+    try {
+      guardedMessage = assertUserTextWithinLimit(body.message, 'follow_up');
+    } catch (err) {
+      if (err instanceof ClinicalGuardError) {
+        await recordClinicalUsage({
+          supabase,
+          requestId,
+          userId,
+          operation: 'follow_up',
+          provider: resolveClinicalProvider(),
+          status: 'guard_reject',
+          creditCost: 0,
+          latencyMs: Date.now() - startedAt,
+        });
+        return c.json({ error: err.message, code: 'GUARD_REJECT' }, 400);
+      }
+      throw err;
+    }
+
+    try {
+      tutorRateLimiter(userId);
+    } catch (err) {
+      if (err instanceof TRPCError && err.code === 'TOO_MANY_REQUESTS') {
+        return c.json({ error: err.message }, 429);
+      }
+      throw err;
+    }
+
+    const locale = (body.locale === 'ro' ? 'ro' : 'en') as TutorLocale;
 
     const { data: session } = await supabase
       .from('ai_sessions')
@@ -89,27 +139,40 @@ export function registerClinicalStreamRoutes(app: Hono) {
       return c.json({ error: 'Session is not active' }, 400);
     }
 
-    const isPremium = await userHasActivePremiumAccess(supabase, userId);
     const cost = CLINICAL_CREDIT_COSTS.followUp;
-    let charged = false;
+    let chargedAmount = 0;
+    let usedTrial = false;
+    let refunded = false;
+    const providerName = resolveClinicalProvider();
+
+    async function refundOnce() {
+      if (chargedAmount <= 0 || refunded) return;
+      refunded = true;
+      await refundClinicalCredits({
+        supabase,
+        userId,
+        amount: chargedAmount,
+        sessionId: session!.id,
+        meta: { feature: 'follow_up', stream: true, requestId },
+        usedTrial,
+      });
+    }
 
     try {
-      if (isPremium) {
-        await consumeClinicalCredits({
-          supabase,
-          userId,
-          cost,
-          isPremium: true,
-          feature: 'follow_up',
-          sessionId: session.id,
-        });
-        charged = true;
-      }
+      const charge = await consumeClinicalCredits({
+        supabase,
+        userId,
+        cost,
+        feature: 'follow_up',
+        sessionId: session.id,
+      });
+      chargedAmount = charge.amount;
+      usedTrial = charge.usedTrial;
 
       const modeHint = getReplyModeHint(locale, body.mode);
       const userContent = modeHint
-        ? `${modeHint}\n\n${body.message.trim()}`
-        : body.message.trim();
+        ? `${modeHint}\n\n${guardedMessage}`
+        : guardedMessage;
 
       const { count } = await supabase
         .from('ai_messages')
@@ -123,7 +186,7 @@ export function registerClinicalStreamRoutes(app: Hono) {
         content: userContent,
         user_id: userId,
         sequence_no: seqUser,
-        credits_charged: charged ? cost : 0,
+        credits_charged: usedTrial ? 0 : chargedAmount,
       });
 
       const { data: snap } = await supabase
@@ -141,7 +204,10 @@ export function registerClinicalStreamRoutes(app: Hono) {
         .order('created_at', { ascending: false })
         .limit(16);
 
-      const history = [...(recent ?? [])].reverse();
+      const history = truncateHistoryMessages(
+        [...(recent ?? [])].reverse(),
+        'follow_up',
+      );
       const system =
         session.type === 'clinical_case' && session.case_topic
           ? getCaseSystemPrompt(
@@ -156,7 +222,7 @@ export function registerClinicalStreamRoutes(app: Hono) {
           ? [
               {
                 role: 'system' as const,
-                content: `Prior case summary:\n${snap.summary_text}`,
+                content: `Prior case summary:\n${snap.summary_text.slice(0, 4000)}`,
               },
             ]
           : []),
@@ -166,20 +232,89 @@ export function registerClinicalStreamRoutes(app: Hono) {
         })),
       ];
 
+      const limits = CLINICAL_AI_LIMITS.follow_up;
+
       return streamSSE(c, async (stream) => {
+        const abortBundle = createClinicalAbortBundle({
+          requestSignal: c.req.raw.signal,
+          timeoutMs: limits.timeoutMs,
+        });
+
         let full = '';
         try {
-          const gen = generateClinicalTextStream({ messages });
+          const gen = generateClinicalTextStream({
+            messages,
+            maxTokens: limits.maxOutputTokens,
+            signal: abortBundle.signal,
+          });
           let result = await gen.next();
           while (!result.done) {
+            if (abortBundle.signal.aborted) break;
             const chunk = result.value;
             full += chunk;
-            await stream.writeSSE({ event: 'delta', data: JSON.stringify({ text: chunk }) });
+            await stream.writeSSE({
+              event: 'delta',
+              data: JSON.stringify({ text: chunk }),
+            });
             result = await gen.next();
           }
-          const final = result.value;
+
+          const cause = abortBundle.getCause();
+          if (cause === 'client' || (abortBundle.signal.aborted && cause !== 'timeout')) {
+            await recordClinicalUsage({
+              supabase,
+              requestId,
+              userId,
+              sessionId: session.id,
+              operation: 'follow_up',
+              provider: providerName,
+              status: 'aborted',
+              creditCost: usedTrial ? 0 : chargedAmount,
+              usedTrial,
+              latencyMs: Date.now() - startedAt,
+            });
+            return;
+          }
+
+          if (cause === 'timeout') {
+            await refundOnce();
+            await recordClinicalUsage({
+              supabase,
+              requestId,
+              userId,
+              sessionId: session.id,
+              operation: 'follow_up',
+              provider: providerName,
+              status: 'timeout',
+              creditCost: usedTrial ? 0 : chargedAmount,
+              usedTrial,
+              latencyMs: Date.now() - startedAt,
+            });
+            await stream.writeSSE({
+              event: 'error',
+              data: JSON.stringify({
+                error: 'Request timed out. Credits were restored.',
+                code: 'CLINICAL_TIMEOUT',
+              }),
+            });
+            return;
+          }
+
+          const final = result.done
+            ? (result.value as
+                | {
+                    text?: string;
+                    model?: string;
+                    provider?: string;
+                    usage?: {
+                      inputTokens: number | null;
+                      outputTokens: number | null;
+                      providerRequestId: string | null;
+                    };
+                  }
+                | undefined)
+            : undefined;
           const text = ensureDisclaimerFooter(final?.text || full, locale);
-          // If disclaimer was appended beyond streamed content, send remainder
           if (text.length > full.length) {
             await stream.writeSSE({
               event: 'delta',
@@ -192,13 +327,30 @@ export function registerClinicalStreamRoutes(app: Hono) {
             role: 'assistant',
             content: text,
             model: final?.model,
-            token_input: final?.usage?.promptTokens,
-            token_output: final?.usage?.completionTokens,
+            token_input: final?.usage?.inputTokens ?? null,
+            token_output: final?.usage?.outputTokens ?? null,
             user_id: userId,
             sequence_no: seqUser + 1,
             total_tokens:
-              (final?.usage?.promptTokens ?? 0) + (final?.usage?.completionTokens ?? 0) ||
-              null,
+              (final?.usage?.inputTokens ?? 0) +
+                (final?.usage?.outputTokens ?? 0) || null,
+          });
+
+          await recordClinicalUsage({
+            supabase,
+            requestId,
+            userId,
+            sessionId: session.id,
+            operation: 'follow_up',
+            provider: final?.provider ?? providerName,
+            model: final?.model ?? null,
+            tokenInput: final?.usage?.inputTokens ?? null,
+            tokenOutput: final?.usage?.outputTokens ?? null,
+            providerRequestId: final?.usage?.providerRequestId ?? null,
+            status: 'ok',
+            creditCost: usedTrial ? 0 : chargedAmount,
+            usedTrial,
+            latencyMs: Date.now() - startedAt,
           });
 
           const balance = await getCreditBalance(supabase, userId);
@@ -209,38 +361,102 @@ export function registerClinicalStreamRoutes(app: Hono) {
               response: text,
               disclaimer: clinicalDisclaimer(locale),
               balance,
+              requestId,
             }),
           });
         } catch (err) {
-          if (charged) {
-            await refundClinicalCredits({
+          const cause = abortBundle.getCause();
+          if (cause === 'client' || (isAbortError(err) && cause !== 'timeout')) {
+            await recordClinicalUsage({
               supabase,
+              requestId,
               userId,
-              amount: cost,
               sessionId: session.id,
-              meta: { feature: 'follow_up', stream: true },
+              operation: 'follow_up',
+              provider: providerName,
+              status: 'aborted',
+              creditCost: usedTrial ? 0 : chargedAmount,
+              usedTrial,
+              latencyMs: Date.now() - startedAt,
             });
+            return;
           }
-          const message = err instanceof Error ? err.message : String(err);
+          if (cause === 'timeout' || (isAbortError(err) && cause === 'timeout')) {
+            await refundOnce();
+            await recordClinicalUsage({
+              supabase,
+              requestId,
+              userId,
+              sessionId: session.id,
+              operation: 'follow_up',
+              provider: providerName,
+              status: 'timeout',
+              creditCost: usedTrial ? 0 : chargedAmount,
+              usedTrial,
+              latencyMs: Date.now() - startedAt,
+            });
+            await stream.writeSSE({
+              event: 'error',
+              data: JSON.stringify({
+                error: 'Request timed out. Credits were restored.',
+                code: 'CLINICAL_TIMEOUT',
+              }),
+            });
+            return;
+          }
+          console.error('[clinical-stream] failed', {
+            requestId,
+            sessionId: session.id,
+            error: err instanceof Error ? err.message : 'unknown',
+          });
+          await refundOnce();
+          await recordClinicalUsage({
+            supabase,
+            requestId,
+            userId,
+            sessionId: session.id,
+            operation: 'follow_up',
+            provider: providerName,
+            status: 'provider_error',
+            creditCost: usedTrial ? 0 : chargedAmount,
+            usedTrial,
+            latencyMs: Date.now() - startedAt,
+          });
           await stream.writeSSE({
             event: 'error',
-            data: JSON.stringify({ error: message }),
+            data: JSON.stringify({
+              error: 'Nu am putut genera răspunsul. Creditele au fost restaurate.',
+              code: 'CLINICAL_STREAM_FAILED',
+            }),
           });
+        } finally {
+          abortBundle.cleanup();
         }
       });
     } catch (err) {
-      if (charged) {
-        await refundClinicalCredits({
-          supabase,
-          userId,
-          amount: cost,
-          sessionId: session.id,
-          meta: { feature: 'follow_up', stream: true },
-        });
-      }
+      await refundOnce();
       const message = err instanceof Error ? err.message : String(err);
-      const code = message.includes('TOPUP') || message.includes('PAYWALL') ? 403 : 500;
-      return c.json({ error: message }, code);
+      if (message.includes(TOPUP_REQUIRED) || message.includes(PAYWALL_REQUIRED)) {
+        return c.json({ error: message }, 403);
+      }
+      await recordClinicalUsage({
+        supabase,
+        requestId,
+        userId,
+        sessionId: session.id,
+        operation: 'follow_up',
+        provider: providerName,
+        status: 'provider_error',
+        creditCost: usedTrial ? 0 : chargedAmount,
+        usedTrial,
+        latencyMs: Date.now() - startedAt,
+      });
+      console.error('[clinical-stream] request failed', {
+        requestId,
+        sessionId: session.id,
+        error: message,
+      });
+      return c.json({ error: 'Clinical stream request failed' }, 500);
     }
   });
 }

@@ -43,6 +43,12 @@ function trimKey(name: string) {
 
 trimKey("AI_API_KEY");
 trimKey("OPENAI_API_KEY");
+trimKey("AI_PROVIDER");
+trimKey("META_MODEL_API_KEY");
+trimKey("META_MODEL_API_BASE_URL");
+trimKey("META_MODEL_BASE_URL");
+trimKey("META_MODEL_NAME");
+trimKey("INTERNAL_HEALTH_SECRET");
 trimKey("REVENUECAT_WEBHOOK_AUTHORIZATION");
 trimKey("REVENUECAT_ENTITLEMENT_ID");
 trimKey("REVENUECAT_SECRET_API_KEY");

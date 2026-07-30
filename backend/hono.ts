@@ -70,48 +70,72 @@ app.get("/", (c) => {
   return c.json({ status: "ok", message: "Anatomy Quiz API is running" });
 });
 
-// Health check endpoint for debugging
+function clinicalCopilotEnabledFlag(): boolean {
+  return (
+    String(
+      process.env.CLINICAL_COPILOT_ENABLED ??
+        process.env.EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED ??
+        "false",
+    )
+      .trim()
+      .toLowerCase() === "true" ||
+    String(process.env.CLINICAL_COPILOT_ENABLED ?? "").trim() === "1"
+  );
+}
+
+function resolveBuildVersion(): string | null {
+  return (
+    process.env.RAILWAY_GIT_COMMIT_SHA?.trim()?.slice(0, 12) ||
+    process.env.npm_package_version?.trim() ||
+    null
+  );
+}
+
+/**
+ * Public health — minimal. No provider keys, URLs, model names, or SDK details.
+ */
 app.get("/health", (c) => {
-  const verbose =
-    process.env.NODE_ENV !== "production" || process.env.HEALTHCHECK_VERBOSE === "true";
-  const ai = process.env.AI_API_KEY?.trim();
-  const openai = process.env.OPENAI_API_KEY?.trim();
-  const expoAiLeak = !!process.env.EXPO_PUBLIC_AI_API_KEY?.trim();
   const body: Record<string, unknown> = {
     status: "ok",
     timestamp: new Date().toISOString(),
-    /** Live Supabase service-role probe (subscriptions SELECT limit 1). */
-    liveSupabaseProbe: "/api/health",
-    /** Clinical router is always mounted; this flag gates mutations. */
-    clinicalCopilotEnabled:
-      String(process.env.CLINICAL_COPILOT_ENABLED ?? process.env.EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED ?? "false")
-        .trim()
-        .toLowerCase() === "true" ||
-      String(process.env.CLINICAL_COPILOT_ENABLED ?? "").trim() === "1",
+    clinicalCopilotEnabled: clinicalCopilotEnabledFlag(),
   };
-  if (verbose) {
-    body.env = {
-      hasSupabaseUrl: !!process.env.SUPABASE_URL,
-      hasServiceRoleKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-      hasAiApiKey: !!(ai || openai),
-      /** Which server AI key vars are set (no values). */
-      aiKeyHints: {
-        AI_API_KEY: !!ai,
-        OPENAI_API_KEY: !!openai,
-      },
-      /** True if EXPO_PUBLIC_AI_API_KEY is still in .env — remove it; use AI_API_KEY / OPENAI_API_KEY for backend only. */
-      legacyExpoPublicAiKeyPresent: expoAiLeak,
-      aiProvider: process.env.AI_PROVIDER || process.env.EXPO_PUBLIC_AI_PROVIDER || "(not set, defaults to openai)",
-      hasAiBaseUrl: !!(process.env.AI_BASE_URL || process.env.EXPO_PUBLIC_AI_BASE_URL),
-      aiModel: process.env.AI_MODEL || process.env.EXPO_PUBLIC_AI_MODEL || "(not set, defaults to gpt-4o-mini)",
-      hasCorsOrigins: !!process.env.CORS_ALLOWED_ORIGINS,
-      revenueCatWebhook: !!process.env.REVENUECAT_WEBHOOK_AUTHORIZATION?.trim(),
-      revenueCatRestSecret: !!(
-        process.env.REVENUECAT_SECRET_API_KEY?.trim() || process.env.REVENUECAT_API_SECRET_KEY?.trim()
-      ),
-    };
-  }
+  const version = resolveBuildVersion();
+  if (version) body.version = version;
   return c.json(body);
+});
+
+/**
+ * Internal readiness — requires INTERNAL_HEALTH_SECRET Bearer token.
+ * Exposes operational booleans only (no secrets, URLs, or model names).
+ */
+app.get("/health/ready", (c) => {
+  const secret = process.env.INTERNAL_HEALTH_SECRET?.trim();
+  if (!secret) {
+    return c.json({ status: "error", error: "not_configured" }, 503);
+  }
+  const auth = c.req.header("authorization") ?? "";
+  const token = auth.replace(/^Bearer\s+/i, "").trim();
+  if (!token || token !== secret) {
+    return c.json({ status: "error", error: "unauthorized" }, 401);
+  }
+
+  const aiProvider =
+    process.env.AI_PROVIDER?.trim().toLowerCase() === "muse" ? "muse" : "openai";
+  const hasMetaModelApiKey = !!process.env.META_MODEL_API_KEY?.trim();
+  const hasTutorAiKey = !!(
+    process.env.AI_API_KEY?.trim() || process.env.OPENAI_API_KEY?.trim()
+  );
+
+  return c.json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    clinicalCopilotEnabled: clinicalCopilotEnabledFlag(),
+    aiProvider,
+    hasMetaModelApiKey,
+    hasTutorAiKey,
+    version: resolveBuildVersion(),
+  });
 });
 
 /** Live probe: Supabase service role can read `subscriptions` (same path as premium checks). */
@@ -124,18 +148,13 @@ app.get("/api/health", async (c) => {
 
   const probe = await probeSupabaseServiceRole();
 
-  const ai = process.env.AI_API_KEY?.trim();
-  const openai = process.env.OPENAI_API_KEY?.trim();
-
   const body: Record<string, unknown> = {
     status: probe.ok ? "ok" : "degraded",
     timestamp: new Date().toISOString(),
+    clinicalCopilotEnabled: clinicalCopilotEnabledFlag(),
     checks: {
       supabaseEnvConfigured,
       supabaseServiceRoleSubscriptionsSelect: probe.ok ? "ok" : "error",
-    },
-    hints: {
-      aiApiKeyConfigured: !!(ai || openai),
     },
   };
 
