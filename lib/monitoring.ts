@@ -21,6 +21,76 @@ export function initializeMonitoring() {
     debug: false,
     tracesSampleRate: 0.2,
     environment: 'production',
+    beforeSend(event) {
+      // Scrub common PII / secrets from breadcrumbs and extras before upload.
+      const scrubString = (value: string): string => {
+        let s = value
+          .replace(/Bearer\s+[A-Za-z0-9._\-]+/gi, 'Bearer [redacted]')
+          .replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, '[jwt-redacted]')
+          .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[email-redacted]')
+          .replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=\s]+/gi, '[image-data-url-redacted]')
+          .replace(/[A-Za-z0-9+/]{200,}={0,2}/g, '[base64-redacted]');
+        if (s.length > 8000) {
+          s = `${s.slice(0, 4000)}…[truncated]…${s.slice(-500)}`;
+        }
+        return s;
+      };
+
+      const scrub = (value: unknown): unknown => {
+        if (typeof value === 'string') {
+          return scrubString(value);
+        }
+        if (Array.isArray(value)) return value.map(scrub);
+        if (value && typeof value === 'object') {
+          const out: Record<string, unknown> = {};
+          for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+            if (
+              /email|token|password|authorization|secret|cookie|prompt|message|content|image|clinical/i.test(
+                k,
+              )
+            ) {
+              out[k] = '[redacted]';
+            } else {
+              out[k] = scrub(v);
+            }
+          }
+          return out;
+        }
+        return value;
+      };
+
+      if (event.user) {
+        event.user = {
+          id: event.user.id,
+          // Drop email / username from production crash reports
+        };
+      }
+      if (event.extra) {
+        event.extra = scrub(event.extra) as typeof event.extra;
+      }
+      if (event.contexts) {
+        event.contexts = scrub(event.contexts) as typeof event.contexts;
+      }
+      if (event.breadcrumbs) {
+        event.breadcrumbs = event.breadcrumbs.map((b) => ({
+          ...b,
+          message: typeof b.message === 'string' ? (scrub(b.message) as string) : b.message,
+          data: b.data ? (scrub(b.data) as typeof b.data) : b.data,
+        }));
+      }
+      if (event.request?.headers) {
+        const headers = { ...event.request.headers };
+        for (const h of Object.keys(headers)) {
+          if (/authorization|cookie|set-cookie|x-api-key/i.test(h)) {
+            headers[h] = '[redacted]';
+          } else if (typeof headers[h] === 'string') {
+            headers[h] = scrubString(headers[h]);
+          }
+        }
+        event.request.headers = headers;
+      }
+      return event;
+    },
   });
 
   log.info('[Monitoring] Sentry initialized');
@@ -54,8 +124,6 @@ export function setUserContext(userId: string, email?: string, name?: string) {
   if (isProduction) {
     Sentry.setUser({
       id: userId,
-      email,
-      username: name,
     });
   }
 }

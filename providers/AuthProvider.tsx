@@ -16,6 +16,7 @@ import {
   type BiometricCapabilities,
 } from '@/lib/biometric';
 import { log } from '@/lib/log';
+import { monitoring } from '@/lib/monitoring';
 import type { UserProfile } from '@/types/user';
 import {
   exchangeEmailPasswordSession,
@@ -1031,6 +1032,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     clearMedvbaSession();
     queryClient.clear();
     await clearPersistedQueryCache();
+    monitoring.clearUser();
   }, [kinde, clearMedvbaSession, queryClient]);
 
   const resetPassword = useCallback(async (email: string) => {

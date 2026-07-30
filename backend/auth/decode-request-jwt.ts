@@ -9,7 +9,14 @@ export type VerifiedMedvbaJwt = {
 export async function verifyMedvbaRequestJwt(token: string): Promise<VerifiedMedvbaJwt> {
   const secret = getJwtSigningSecretOrThrow();
   const key = new TextEncoder().encode(secret);
-  const { payload } = await jwtVerify(token, key, { algorithms: ["HS256"] });
+  const { payload } = await jwtVerify(token, key, {
+    algorithms: ["HS256"],
+    audience: "authenticated",
+  });
+  const role = typeof payload.role === "string" ? payload.role : "";
+  if (role !== "authenticated") {
+    throw new Error("JWT role must be authenticated.");
+  }
   const userId = typeof payload.profile_id === "string" ? payload.profile_id : "";
   /** Minted MEDVBA JWTs set `sub` to profile UUID and put the identity provider id in `kinde_sub`. */
   const fromClaim =
