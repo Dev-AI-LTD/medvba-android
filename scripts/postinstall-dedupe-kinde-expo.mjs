@@ -14,6 +14,9 @@ const toRemove = [
   path.join(root, "node_modules", "@kinde", "expo", "node_modules"),
   // Same-version duplicate confuses expo-doctor; root expo-crypto is authoritative.
   path.join(root, "node_modules", "expo-auth-session", "node_modules"),
+  // Same-version nested copies under expo/ confuse expo-doctor duplicate check.
+  path.join(root, "node_modules", "expo", "node_modules", "expo-file-system"),
+  path.join(root, "node_modules", "expo", "node_modules", "expo-font"),
 ];
 
 for (const dir of toRemove) {
