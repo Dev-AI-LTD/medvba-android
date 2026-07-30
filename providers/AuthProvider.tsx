@@ -1023,16 +1023,19 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
 
   const signOut = useCallback(async () => {
     try {
-      await kinde.logout({ revokeToken: true });
-    } catch (e) {
-      log.warn('[Auth] Logout:', e);
+      try {
+        await kinde.logout({ revokeToken: true });
+      } catch (e) {
+        log.warn('[Auth] Logout:', e);
+      }
+      await clearAuthReturnDestination().catch(() => {});
+      coldStartAuthBootstrapDoneRef.current = false;
+      clearMedvbaSession();
+      queryClient.clear();
+      await clearPersistedQueryCache();
+    } finally {
+      monitoring.clearUser();
     }
-    await clearAuthReturnDestination().catch(() => {});
-    coldStartAuthBootstrapDoneRef.current = false;
-    clearMedvbaSession();
-    queryClient.clear();
-    await clearPersistedQueryCache();
-    monitoring.clearUser();
   }, [kinde, clearMedvbaSession, queryClient]);
 
   const resetPassword = useCallback(async (email: string) => {
