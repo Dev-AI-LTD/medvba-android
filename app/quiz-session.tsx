@@ -738,10 +738,11 @@ export default function QuizSessionScreen() {
   const explainMutation = trpc.clinical.explainQuestion.useMutation();
 
   const handleClinicalExplain = useCallback(async () => {
-    if (!currentQuestion || !clinicalEnabled) return;
+    if (!currentQuestion || !clinicalEnabled || clinicalExplainLoading) return;
     const correct = getCorrectAnswerIndices(currentQuestion);
     const correctIndex = correct[0] ?? 0;
     const chosenIndex = selectedAnswers[0] ?? 0;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     log.info('[ClinicalCopilot] explain CTA', {
       questionId: currentQuestion.id,
       chosenIndex,
@@ -762,11 +763,18 @@ export default function QuizSessionScreen() {
         questionId: String(currentQuestion.id),
         entryPoint: 'quiz_wrong_answer',
       });
-      setClinicalExplainText(res.response);
+      const text = (res?.response ?? '').trim();
+      if (!text) {
+        throw new Error(t('clinical.errorGeneric'));
+      }
+      setClinicalExplainText(text);
       trackClinicalEvent('clinical_explain_completed', { questionId: currentQuestion.id });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (e) {
-      if (e instanceof TRPCClientError && (e.data as { code?: string } | undefined)?.code === 'FORBIDDEN') {
+      const code = (e instanceof TRPCClientError
+        ? (e.data as { code?: string } | undefined)?.code
+        : undefined) ?? '';
+      if (code === 'FORBIDDEN' || code === 'UNAUTHORIZED') {
         trackClinicalEvent('clinical_paywall_shown', { source: 'quiz_explain' });
         Alert.alert(
           t('clinical.contextualPaywallTitle'),
@@ -781,12 +789,20 @@ export default function QuizSessionScreen() {
         );
         return;
       }
-      Alert.alert(t('clinical.errorTitle'), e instanceof Error ? e.message : t('clinical.errorGeneric'));
+      const msg =
+        e instanceof TRPCClientError
+          ? e.message
+          : e instanceof Error
+            ? e.message
+            : t('clinical.errorGeneric');
+      log.debug('[ClinicalCopilot] explain failed:', msg);
+      Alert.alert(t('clinical.errorTitle'), msg || t('clinical.errorGeneric'));
     } finally {
       setClinicalExplainLoading(false);
     }
   }, [
     clinicalEnabled,
+    clinicalExplainLoading,
     currentQuestion,
     selectedAnswers,
     explainMutation,
@@ -1118,10 +1134,18 @@ export default function QuizSessionScreen() {
                   selectedAnswers.length > 0 &&
                   !isAnswerCorrect(currentQuestion, selectedAnswers) && (
                     <TouchableOpacity
-                      style={styles.clinicalExplainButton}
-                      onPress={handleClinicalExplain}
+                      style={[
+                        styles.clinicalExplainButton,
+                        clinicalExplainLoading && { opacity: 0.7 },
+                      ]}
+                      onPress={() => {
+                        void handleClinicalExplain();
+                      }}
                       disabled={clinicalExplainLoading}
                       activeOpacity={0.85}
+                      hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('clinical.explainCta')}
                     >
                       <Sparkles color={colors.primary} size={iconSm} />
                       <Text style={[styles.clinicalExplainButtonText, { color: colors.primary }]}>

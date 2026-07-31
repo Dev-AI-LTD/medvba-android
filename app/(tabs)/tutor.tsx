@@ -662,6 +662,38 @@ export default function TutorScreen() {
         content: m.content,
       }));
 
+    const applyAssistantText = (text: string) => {
+      const trimmed = (text ?? '').trim();
+      const content =
+        trimmed.length > 0 ? trimmed : t('tutor.emptyResponse');
+      setTutorMessages((prev) => {
+        const hasPlaceholder = prev.some((m) => m.id === assistantId);
+        if (hasPlaceholder) {
+          return prev.map((m) =>
+            m.id === assistantId ? { ...m, content, isError: false } : m,
+          );
+        }
+        return [
+          ...prev,
+          {
+            id: assistantId,
+            role: 'assistant' as const,
+            content,
+            timestamp: new Date(),
+          },
+        ];
+      });
+      void syncAiQuestionCountFromServer();
+    };
+
+    const runNonStreamFallback = async () => {
+      const aiResponseText = await generateAIResponse(
+        updatedMessages,
+        tutorLocale,
+      );
+      applyAssistantText(aiResponseText ?? '');
+    };
+
     try {
       const token = getMedvbaAccessToken();
       if (token) {
@@ -678,51 +710,47 @@ export default function TutorScreen() {
         tutorStreamAbortRef.current?.abort();
         const streamController = new AbortController();
         tutorStreamAbortRef.current = streamController;
-        const res = await streamTutorReply({
-          token,
-          messages: historyForBackend,
-          locale: tutorLocale,
-          signal: streamController.signal,
-          onDelta: (chunk) => {
-            setIsTyping(false);
-            setTutorMessages((prev) =>
-              prev.map((m) =>
-                m.id === assistantId
-                  ? { ...m, content: m.content + chunk }
-                  : m,
-              ),
-            );
-          },
-        });
-        if (tutorStreamAbortRef.current === streamController) {
-          tutorStreamAbortRef.current = null;
+        try {
+          const res = await streamTutorReply({
+            token,
+            messages: historyForBackend,
+            locale: tutorLocale,
+            signal: streamController.signal,
+            onDelta: (chunk) => {
+              setIsTyping(false);
+              setTutorMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantId
+                    ? { ...m, content: m.content + chunk }
+                    : m,
+                ),
+              );
+            },
+          });
+          if (tutorStreamAbortRef.current === streamController) {
+            tutorStreamAbortRef.current = null;
+          }
+          applyAssistantText(res.response ?? '');
+        } catch (streamErr) {
+          const streamAborted =
+            (streamErr instanceof Error && streamErr.name === 'AbortError') ||
+            (typeof streamErr === 'object' &&
+              streamErr !== null &&
+              'name' in streamErr &&
+              (streamErr as { name?: string }).name === 'AbortError');
+          if (streamAborted) {
+            return;
+          }
+          // Native fetch often lacks stream body; fall back to classic tRPC chat.
+          log.debug(
+            '[Tutor] Stream failed, falling back to tRPC:',
+            streamErr instanceof Error ? streamErr.message : String(streamErr),
+          );
+          setIsStreamingReply(false);
+          await runNonStreamFallback();
         }
-        const trimmed = (res.response ?? '').trim();
-        const content =
-          trimmed.length > 0 ? trimmed : t('tutor.emptyResponse');
-        setTutorMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantId ? { ...m, content } : m,
-          ),
-        );
-        void syncAiQuestionCountFromServer();
       } else {
-        const aiResponseText = await generateAIResponse(
-          updatedMessages,
-          tutorLocale,
-        );
-        const trimmed = (aiResponseText ?? '').trim();
-        const content =
-          trimmed.length > 0 ? trimmed : t('tutor.emptyResponse');
-
-        const aiResponse: Message = {
-          id: assistantId,
-          role: 'assistant',
-          content,
-          timestamp: new Date(),
-        };
-        setTutorMessages((prev) => [...prev, aiResponse]);
-        void syncAiQuestionCountFromServer();
+        await runNonStreamFallback();
       }
     } catch (error) {
       const errStr = error instanceof Error ? error.message : String(error);
