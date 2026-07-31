@@ -5,7 +5,7 @@ import path from 'path';
 type EnvMap = Record<string, string>;
 
 /** Keep in sync with store releases; bare workflow requires a string runtimeVersion (no policy). */
-const APP_VERSION = '1.0.31';
+const APP_VERSION = '1.0.32';
 
 const readEnvText = (filePath: string): string => {
   const buf = fs.readFileSync(filePath);
@@ -79,13 +79,15 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
 
   /**
    * Clinical Copilot client flag:
-   * - On EAS: eas.json profile env + EAS_BUILD_PROFILE (internal=ON, production=OFF).
-   * - Local: .env / process.env (keep false for store-parity; see .env.example).
-   * Do not set EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED=true as a production default.
+   * - On EAS: eas.json profile env + EAS_BUILD_PROFILE (internal/production=ON, development=OFF).
+   * - Local: .env / process.env (keep false unless testing Clinical; see .env.example).
+   * Store production ships Clinical ON (OpenAI until Muse keys); development stays OFF.
    */
   const easBuildProfile = (process.env.EAS_BUILD_PROFILE || '').trim().toLowerCase();
   const clinicalFromEasProfile =
-    easBuildProfile === 'internal' ? 'true' : easBuildProfile === 'production' ? 'false' : undefined;
+    easBuildProfile === 'internal' || easBuildProfile === 'production'
+      ? 'true'
+      : undefined;
   const nonEmpty = (v: string | undefined) => {
     const t = (v ?? '').trim();
     return t !== '' ? t : undefined;
@@ -180,7 +182,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       supportsTablet: false,
       bundleIdentifier: 'com.devaieood.medvba',
       icon: './assets/images/icon.png',
-      buildNumber: '67',
+      buildNumber: '68',
       // Required for @invertase/react-native-apple-authentication (EAS / prebuild).
       entitlements: {
         'com.apple.developer.applesignin': ['Default'],
@@ -200,7 +202,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         foregroundImage: './assets/images/adaptive-icon.png',
         backgroundColor: '#000000',
       },
-      versionCode: 43,
+      versionCode: 44,
       package: 'com.devaieood.medvba',
       // Play: upload mapping.txt per release (Deobfuscation). Native: native-debug-symbols.zip (Symbols); both are buildArtifactPaths in eas.json.
       allowBackup: false,

@@ -148,11 +148,11 @@ describe('clinical-ai-guards', () => {
 });
 
 describe('eas clinical production flag', () => {
-  it('production and development keep Clinical OFF; internal ON', () => {
+  it('production and internal keep Clinical ON; development OFF (OpenAI until Muse)', () => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const eas = require('../../eas.json');
     expect(eas.build.production.env.EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED).toBe(
-      'false',
+      'true',
     );
     expect(eas.build.development.env.EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED).toBe(
       'false',

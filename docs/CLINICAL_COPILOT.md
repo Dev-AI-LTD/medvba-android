@@ -1,11 +1,13 @@
 # Clinical Copilot (feature-flagged)
 
-Educational Clinical Copilot on top of the existing AI Tutor. **Off by default** so App Store / Google Play users are not disrupted until you opt in.
+Educational Clinical Copilot on top of the existing AI Tutor. Client UI is gated by `EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED`; backend by `CLINICAL_COPILOT_ENABLED`.
+
+**Public Store policy (current):** Clinical is **ON** in EAS **`production`** builds. Until Meta Model API keys are available in-country, Railway Clinical uses **`AI_PROVIDER=openai`** (ChatGPT / OpenAI). Muse remains supported in code and is re-enabled only via env when Meta access exists.
 
 ## Safety for live users
 
-| Area | Behavior with flag OFF (default) |
-|------|-----------------------------------|
+| Area | Behavior with client flag OFF |
+|------|--------------------------------|
 | Classic `tutor.chat` | Unchanged (10 free / 24h, premium unlimited) |
 | Quiz flow | No new CTA visible |
 | Home | No Clinical card |
@@ -13,35 +15,45 @@ Educational Clinical Copilot on top of the existing AI Tutor. **Off by default**
 | RevenueCat entitlements | Accept **both** legacy `pro` and `medvba_pro_ai` so live subscribers keep Premium |
 | Credits | Client never grants credits; only RC purchase → webhook / `clinical.syncEntitlement` |
 
-Public store builds must keep:
+| Area | Behavior with client flag ON (Store / internal) |
+|------|--------------------------------------------------|
+| Tutor tab | Toggle Tutor \| Clinical; separate message histories |
+| Home | Clinical case card |
+| Quiz | Optional “Explain clinically with AI” CTA |
+| Disclaimer | Required: *Educational / simulated content only. Does not replace professional medical diagnosis or care.* |
+| AI provider | OpenAI until Muse keys; then `AI_PROVIDER=muse` + `META_MODEL_*` |
+
+Public store builds (EAS **`production`**) set:
 
 ```
-EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED=false
+EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED=true
 ```
 
-This is **explicit** on the EAS `production` profile in `eas.json`. Do **not** set it `true` as a production/store default.
+EAS **`development`** stays **`false`**. Local `.env` should keep Clinical **false** unless intentionally testing.
 
-## TestFlight / Play internal (Clinical ON) + Android API 36
+## TestFlight / Play internal + Store production + Android API 36
 
 ### Client flag by EAS profile
 
 | EAS profile | `EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED` | Use for |
 |-------------|----------------------------------------|---------|
 | **`internal`** | **`true`** | iOS TestFlight + Play **internal** testing |
-| **`production`** | **`false`** | App Store / Play production (live app) |
+| **`production`** | **`true`** | App Store / Play production (Clinical ON; OpenAI until Muse) |
 | **`development`** | **`false`** | Dev client (enable locally via `.env` if needed) |
 
-Local `.env` should keep Clinical **false** (see `.env.example`). Profile env from `eas.json` is applied on EAS cloud builds.
+Local `.env` should keep Clinical **false** by default (see `.env.example`). Profile env from `eas.json` is applied on EAS cloud builds.
 
 ### Backend (Railway)
 
-For Clinical API/stream to work on TestFlight/internal builds, set on the API those builds call:
+For Clinical API/stream to work for Store / TestFlight clients, set on the API those builds call:
 
 ```
 CLINICAL_COPILOT_ENABLED=true
+AI_PROVIDER=openai
+# AI_API_KEY or OPENAI_API_KEY required while Muse is unavailable
 ```
 
-**Single Railway API (typical):** enabling the backend flag exposes Clinical endpoints to any client that calls them. Store builds with the Expo flag **false** do not show Clinical UI and should not hit those routes; classic Tutor keeps working either way. Prefer a staging API if you need backend ON without any risk to production traffic.
+**Do not** set `EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED` on Railway. Prefer staging API for QA; production API must match Store clients once Clinical is live on Store.
 
 #### Fix: `No procedure found on path 'clinical.startCase'`
 
@@ -94,7 +106,7 @@ eas build --platform android --profile internal
 eas submit --platform android --profile internal --latest
 ```
 
-Live store (Clinical OFF — keep using **`production`**):
+Live store (Clinical ON — **`production`**; OpenAI until Muse):
 
 ```powershell
 eas build --platform ios --profile production
@@ -105,10 +117,9 @@ eas submit --platform android --profile production --latest
 
 ### Manual steps after config
 
-1. **Railway:** set `CLINICAL_COPILOT_ENABLED=true` (and RC webhook secrets if not already) on the API used by TestFlight/internal.
-2. **App Store Connect:** wait for processing → Internal Testing group → install via TestFlight.
-3. **Play Console:** accept internal track upload; install via internal testing link.
-4. **Do not** flip Clinical to `true` on `production` until QA passes.
+1. **Railway production:** `CLINICAL_COPILOT_ENABLED=true`, `AI_PROVIDER=openai`, OpenAI key present (until Muse). Do **not** set Expo public Clinical flag on Railway.
+2. **App Store Connect / Play:** process build → release track as usual.
+3. **Reviewer notes:** Clinical = educational/simulated cases; not medical advice; temporarily OpenAI-backed.
 
 ## Architecture: RevenueCat vs Supabase
 
@@ -167,7 +178,7 @@ REVENUECAT_ENTITLEMENT_ID=medvba_pro_ai
 # Clinical AI provider (explicit). Tutor stays on AI_API_KEY / OPENAI_API_KEY.
 #
 # Geo note: Meta Model API may show "isn't available in your country yet".
-# Until Meta grants access, staging Clinical uses OpenAI temporarily:
+# Until Meta grants access, Clinical (staging + production) uses OpenAI:
 #   AI_PROVIDER=openai
 #   AI_API_KEY=...   # or OPENAI_API_KEY
 #   AI_BASE_URL=https://api.openai.com/v1   # optional
@@ -208,7 +219,7 @@ Health: public `GET /health` returns `ok` + `clinicalCopilotEnabled` (+ optional
 Webhook URL: `POST https://<railway-host>/api/webhooks/revenuecat`  
 Authorization: `Bearer <REVENUECAT_WEBHOOK_AUTHORIZATION>`
 
-3. App build — use EAS **`internal`** (embeds `EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED=true`). Keep local `.env` false:
+3. App build — EAS **`production`** and **`internal`** embed `EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED=true`. Keep local `.env` false unless testing:
 
 ```
 EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED=false
@@ -216,7 +227,7 @@ EXPO_PUBLIC_REVENUECAT_API_KEY_IOS=appl_...
 EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID=goog_...
 ```
 
-4. Ship a **production** store build only after QA (Clinical stays **false** on that profile).
+4. Ship a **production** store build after QA (Clinical **ON**; Railway production on OpenAI until Muse).
 
 ## Schema
 
@@ -272,9 +283,12 @@ Disclaimer version `v1` — educational / simulated only. Never market as medica
 
 ## Store checklist
 
-- [ ] `EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED=false` on public App Store / Play builds (`production` profile)
-- [ ] Clinical QA uses EAS `internal` (flag true) → TestFlight / Play internal
-- [ ] Legacy entitlement `pro` still unlocks Premium when Clinical flag is off
-- [ ] Confirm classic Tutor free limit still 10/24h
+- [ ] `EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED=true` on public App Store / Play builds (`production` profile)
+- [ ] Railway production: `CLINICAL_COPILOT_ENABLED=true`, `AI_PROVIDER=openai` (+ OpenAI key) until Muse
+- [ ] Educational disclaimer visible / accepted before Clinical cases
+- [ ] Clinical QA on EAS `internal` and Store production candidates
+- [ ] Legacy entitlement `pro` still unlocks Premium
+- [ ] Confirm classic Tutor free limit still 10/24h (separate from Clinical credits)
 - [ ] Android `targetSdkVersion` / `compileSdkVersion` = **36**
 - [ ] RC dashboard: products, entitlement `medvba_pro_ai`, offerings, webhook auth secret on Railway only
+- [ ] App Review notes: educational/simulated Clinical; not medical advice; OpenAI temporary

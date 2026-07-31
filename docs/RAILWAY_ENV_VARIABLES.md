@@ -52,22 +52,22 @@ railway variables
 | **META_MODEL_API_BASE_URL** | Obligatoriu dacă Muse (**canonical**) | Base URL OpenAI-compatible (`…/v1`). Canonical staging target: `https://api.meta.ai/v1`. Alias legacy: `META_MODEL_BASE_URL` — used **only if** canonical is unset (`lib/ai-provider.ts`). Prefer setting **only** `META_MODEL_API_BASE_URL`. |
 | **META_MODEL_NAME** | Opțional (**canonical**) | Implicit `muse-spark-1.1`. Alias: `META_MODEL_API_NAME` (only if canonical unset). |
 
-**Geo / staging note:** Meta Model API may be unavailable in some countries (`Model API isn’t available in your country yet`). Until access exists, set **`AI_PROVIDER=openai`** (or omit it) and use **`AI_API_KEY` / `OPENAI_API_KEY`** for Clinical on staging — do **not** leave `AI_PROVIDER=muse` without real `META_MODEL_*`. Reactivate Muse when [dev.meta.ai](https://dev.meta.ai/) allows a key: set `META_MODEL_API_KEY`, `META_MODEL_API_BASE_URL=https://api.meta.ai/v1`, `META_MODEL_NAME=muse-spark-1.1`, `AI_PROVIDER=muse`, redeploy, smoke `/health/ready` (`aiProvider=muse`, `hasMetaModelApiKey=true`).
+**Geo / production note:** Meta Model API may be unavailable in some countries (`Model API isn’t available in your country yet`). Until access exists, set **`AI_PROVIDER=openai`** (or omit it) and use **`AI_API_KEY` / `OPENAI_API_KEY`** for Clinical on **staging and production** — do **not** leave `AI_PROVIDER=muse` without real `META_MODEL_*`. Reactivate Muse when [dev.meta.ai](https://dev.meta.ai/) allows a key: set `META_MODEL_API_KEY`, `META_MODEL_API_BASE_URL=https://api.meta.ai/v1`, `META_MODEL_NAME=muse-spark-1.1`, `AI_PROVIDER=muse`, redeploy, smoke `/health/ready` (`aiProvider=muse`, `hasMetaModelApiKey=true`).
 | **INTERNAL_HEALTH_SECRET** | Pentru `/health/ready` | Bearer secret. Public `GET /health` rămâne minimal (fără provider/key hints). |
 | **CORS_ALLOWED_ORIGINS** | Opțional | Origini extra permise (separate prin virgulă). |
-| **CLINICAL_COPILOT_ENABLED** | Pentru TestFlight Clinical | `true` pe staging/internal API. **Implicit false** — store UI nu apelează Clinical când Expo flag e off. **Nu** seta `EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED` pe Railway. |
+| **CLINICAL_COPILOT_ENABLED** | Pentru Clinical API | `true` pe staging și pe **production** când Store Clinical e ON. **Nu** seta `EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED` pe Railway. |
 | **UPSTASH_REDIS_REST_URL** + **UPSTASH_REDIS_REST_TOKEN** | Rate limit distribuit (**recomandat**; wins if both) | Sliding window partajat între replici. **Precedence** (`rate-limit-store.ts`): dacă ambele Upstash REST vars sunt setate → **Upstash REST** este folosit; `REDIS_URL` este ignorat. |
 | **REDIS_URL** | Alternativă (doar dacă Upstash lipsește) | `redis://…` via node-redis. Folosit **doar** când Upstash REST **nu** e configurat. Pe staging: configurează **un singur** path (prefer Upstash). |
 | **RATE_LIMIT_MEMORY_FALLBACK** | Doar dev/staging temporar | `true` permite Map in-memory când Redis lipsește (nu pentru producție multi-instance). H05 rămâne OPEN până Redis e proven cross-instance. |
 
-### Clinical Copilot pe Railway (TestFlight)
+### Clinical Copilot pe Railway (Store + TestFlight)
 
-1. Asigură-te că ultimile commit-uri cu `backend/trpc/clinical.ts` sunt pe branch-ul pe care Railway îl deploy-uiește.
-2. Variables → adaugă **`CLINICAL_COPILOT_ENABLED=true`**.
-3. **Redeploy** serviciul (Deployments → Redeploy).
-4. Smoke: din app TestFlight (profil `internal`) → Clinical → Chest pain → răspuns AI.
+1. Asigură-te că ultimile commit-uri cu `backend/trpc/clinical.ts` / stream sunt pe branch-ul pe care Railway îl deploy-uiește.
+2. Variables → **`CLINICAL_COPILOT_ENABLED=true`**, **`AI_PROVIDER=openai`** (până la Muse), OpenAI key prezentă.
+3. Deploy din SHA GitHub (nu doar Redeploy pe o imagine veche).
+4. Smoke: `GET /health` → `clinicalCopilotEnabled: true`; Clinical case din app Store / internal.
 
-Store builds cu `EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED=false` nu arată UI Clinical; Tutor clasic rămâne neschimbat.
+EAS **`production`** și **`internal`** au `EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED=true`. Tutor clasic rămâne pe `AI_API_KEY` / `OPENAI_API_KEY`, separat de creditele Clinical.
 
 `backend/hono.ts` poate raporta în `/health` și variabile `EXPO_PUBLIC_AI_PROVIDER`, `EXPO_PUBLIC_AI_BASE_URL`, `EXPO_PUBLIC_AI_MODEL` dacă există în mediu — **doar pentru diagnostic**. **`lib/ai-provider.ts`** (Tutor) folosește pentru apeluri **`AI_API_KEY` / `OPENAI_API_KEY`**, **`AI_BASE_URL`**, **`AI_MODEL`** (fără cheie în `EXPO_PUBLIC_*`). **Nu** documentăm `EXPO_PUBLIC_AI_API_KEY` pentru backend — **nu există** în cod pentru cheie; folosește `AI_API_KEY` / `OPENAI_API_KEY`.
 

@@ -3,7 +3,7 @@ import { isClinicalCopilotEnabled as isClinicalCopilotEnabledFromEnv } from '@/c
 
 /**
  * Client-safe Clinical Copilot gate.
- * Defaults OFF so live store users keep the current Tutor/quiz UX until we opt in.
+ * EAS production/internal embed true; development and local default stay OFF unless env/extra set.
  */
 export function isClinicalCopilotUiEnabled(): boolean {
   const extra = Constants.expoConfig?.extra as Record<string, string | undefined> | undefined;
