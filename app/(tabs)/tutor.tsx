@@ -60,6 +60,7 @@ import {
 } from '@/constants/clinical-copilot';
 import { ClinicalTopupSheet } from '@/components/ClinicalTopupSheet';
 import { streamClinicalReply } from '@/lib/clinical-stream-client';
+import { streamTutorReply } from '@/lib/tutor-stream-client';
 import { getMedvbaAccessToken } from '@/lib/medvba-access-token';
 import { trackClinicalEvent } from '@/lib/clinical-analytics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -123,11 +124,17 @@ const getSuggestedQuestions = (t: (key: string) => string) => [
 export default function TutorScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [tutorMessages, setTutorMessages] = useState<Message[]>([]);
+  const [clinicalMessages, setClinicalMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isStreamingReply, setIsStreamingReply] = useState(false);
   const clinicalUiEnabled = isClinicalCopilotUiEnabled();
   const [copilotMode, setCopilotMode] = useState<'tutor' | 'clinical'>('tutor');
+  const messages =
+    clinicalUiEnabled && copilotMode === 'clinical'
+      ? clinicalMessages
+      : tutorMessages;
   const [clinicalSessionId, setClinicalSessionId] = useState<string | null>(null);
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
   const [clinicalBalance, setClinicalBalance] = useState<number | null>(null);
@@ -136,6 +143,8 @@ export default function TutorScreen() {
   const [howToExpanded, setHowToExpanded] = useState(true);
   const scrollViewRef = useRef<ScrollView>(null);
   const lastUserMessageRef = useRef<string>('');
+  const clinicalStreamAbortRef = useRef<AbortController | null>(null);
+  const tutorStreamAbortRef = useRef<AbortController | null>(null);
   const router = useRouter();
   const {
     isPremium,
@@ -155,6 +164,27 @@ export default function TutorScreen() {
   const tutorLocale = currentLanguage === 'ro' ? 'ro' : 'en';
 
   useEffect(() => {
+    return () => {
+      clinicalStreamAbortRef.current?.abort();
+      clinicalStreamAbortRef.current = null;
+      tutorStreamAbortRef.current?.abort();
+      tutorStreamAbortRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (copilotMode !== 'clinical') {
+      clinicalStreamAbortRef.current?.abort();
+      clinicalStreamAbortRef.current = null;
+    } else {
+      tutorStreamAbortRef.current?.abort();
+      tutorStreamAbortRef.current = null;
+    }
+    setIsTyping(false);
+    setIsStreamingReply(false);
+  }, [copilotMode]);
+
+  useEffect(() => {
     void syncAiQuestionCountFromServer();
   }, [syncAiQuestionCountFromServer]);
 
@@ -168,7 +198,7 @@ export default function TutorScreen() {
   }), [t]);
 
   useEffect(() => {
-    setMessages((prev) => (prev.length === 0 ? [getInitialMessage()] : prev));
+    setTutorMessages((prev) => (prev.length === 0 ? [getInitialMessage()] : prev));
   }, [getInitialMessage]);
 
   const chatMutation = trpc.tutor.chat.useMutation();
@@ -256,7 +286,7 @@ export default function TutorScreen() {
         timestamp: new Date(),
         isError: true,
       };
-      setMessages((prev) => [...prev, paywallRouteErrorMessage]);
+      setTutorMessages((prev) => [...prev, paywallRouteErrorMessage]);
     }
   }, [router, t]);
 
@@ -278,7 +308,7 @@ export default function TutorScreen() {
   const startClinicalCase = useCallback(
     async (topic: ClinicalCaseTopic) => {
       if (!disclaimerAccepted) {
-        setMessages((prev) => [
+        setClinicalMessages((prev) => [
           ...prev,
           {
             id: Date.now().toString(),
@@ -299,7 +329,7 @@ export default function TutorScreen() {
         });
         setClinicalSessionId(res.sessionId);
         setClinicalBalance(res.balance);
-        setMessages([
+        setClinicalMessages([
           {
             id: '1',
             role: 'assistant',
@@ -312,7 +342,7 @@ export default function TutorScreen() {
           openTopupOrPaywall(getMutationErrorMessage(error, ''));
           return;
         }
-        setMessages((prev) => [
+        setClinicalMessages((prev) => [
           ...prev,
           {
             id: Date.now().toString(),
@@ -337,7 +367,7 @@ export default function TutorScreen() {
 
   const handleClinicalImage = useCallback(async () => {
     if (!disclaimerAccepted) {
-      setMessages((prev) => [
+      setClinicalMessages((prev) => [
         ...prev,
         {
           id: Date.now().toString(),
@@ -358,7 +388,7 @@ export default function TutorScreen() {
     if (picked.canceled || !picked.assets?.[0]) return;
     const asset = picked.assets[0];
     if (!asset.base64) {
-      setMessages((prev) => [
+      setClinicalMessages((prev) => [
         ...prev,
         {
           id: Date.now().toString(),
@@ -380,7 +410,7 @@ export default function TutorScreen() {
       });
       setClinicalSessionId(res.sessionId);
       setClinicalBalance(res.balance);
-      setMessages((prev) => [
+      setClinicalMessages((prev) => [
         ...prev,
         {
           id: Date.now().toString(),
@@ -400,7 +430,7 @@ export default function TutorScreen() {
         openPaywallWithFallback();
         return;
       }
-      setMessages((prev) => [
+      setClinicalMessages((prev) => [
         ...prev,
         {
           id: Date.now().toString(),
@@ -423,7 +453,7 @@ export default function TutorScreen() {
 
   const handleClinicalSummary = useCallback(async () => {
     if (!clinicalSessionId) {
-      setMessages((prev) => [
+      setClinicalMessages((prev) => [
         ...prev,
         {
           id: Date.now().toString(),
@@ -441,7 +471,7 @@ export default function TutorScreen() {
         locale: tutorLocale,
       });
       setClinicalBalance(res.balance);
-      setMessages((prev) => [
+      setClinicalMessages((prev) => [
         ...prev,
         {
           id: Date.now().toString(),
@@ -455,7 +485,7 @@ export default function TutorScreen() {
         openPaywallWithFallback();
         return;
       }
-      setMessages((prev) => [
+      setClinicalMessages((prev) => [
         ...prev,
         {
           id: Date.now().toString(),
@@ -483,7 +513,7 @@ export default function TutorScreen() {
 
     if (clinicalUiEnabled && copilotMode === 'clinical') {
       if (!clinicalSessionId) {
-        setMessages((prev) => [
+        setClinicalMessages((prev) => [
           ...prev,
           {
             id: Date.now().toString(),
@@ -500,7 +530,7 @@ export default function TutorScreen() {
         content: inputText.trim(),
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, userMessage]);
+      setClinicalMessages((prev) => [...prev, userMessage]);
       setInputText('');
       setIsTyping(true);
       const assistantId = (Date.now() + 1).toString();
@@ -508,7 +538,7 @@ export default function TutorScreen() {
         trackClinicalEvent('clinical_reply_sent', { streaming: true });
         const token = getMedvbaAccessToken();
         if (token && clinicalStatusQuery.data?.flags?.streaming !== false) {
-          setMessages((prev) => [
+          setClinicalMessages((prev) => [
             ...prev,
             {
               id: assistantId,
@@ -517,13 +547,19 @@ export default function TutorScreen() {
               timestamp: new Date(),
             },
           ]);
+          setIsStreamingReply(true);
+          clinicalStreamAbortRef.current?.abort();
+          const streamController = new AbortController();
+          clinicalStreamAbortRef.current = streamController;
           const res = await streamClinicalReply({
             token,
             sessionId: clinicalSessionId,
             message: userMessage.content,
             locale: tutorLocale,
+            signal: streamController.signal,
             onDelta: (chunk) => {
-              setMessages((prev) =>
+              setIsTyping(false);
+              setClinicalMessages((prev) =>
                 prev.map((m) =>
                   m.id === assistantId
                     ? { ...m, content: m.content + chunk }
@@ -532,9 +568,12 @@ export default function TutorScreen() {
               );
             },
           });
+          if (clinicalStreamAbortRef.current === streamController) {
+            clinicalStreamAbortRef.current = null;
+          }
           trackClinicalEvent('clinical_stream_used');
           setClinicalBalance(res.balance);
-          setMessages((prev) =>
+          setClinicalMessages((prev) =>
             prev.map((m) =>
               m.id === assistantId ? { ...m, content: res.response } : m,
             ),
@@ -546,7 +585,7 @@ export default function TutorScreen() {
             locale: tutorLocale,
           });
           setClinicalBalance(res.balance);
-          setMessages((prev) => [
+          setClinicalMessages((prev) => [
             ...prev,
             {
               id: assistantId,
@@ -557,6 +596,15 @@ export default function TutorScreen() {
           ]);
         }
       } catch (error) {
+        const aborted =
+          (error instanceof Error && error.name === 'AbortError') ||
+          (typeof error === 'object' &&
+            error !== null &&
+            'name' in error &&
+            (error as { name?: string }).name === 'AbortError');
+        if (aborted) {
+          return;
+        }
         const msg = getMutationErrorMessage(error, '');
         if (
           isTrpcForbidden(error) ||
@@ -566,7 +614,7 @@ export default function TutorScreen() {
           openTopupOrPaywall(msg);
           return;
         }
-        setMessages((prev) => [
+        setClinicalMessages((prev) => [
           ...prev,
           {
             id: assistantId,
@@ -578,6 +626,7 @@ export default function TutorScreen() {
         ]);
       } finally {
         setIsTyping(false);
+        setIsStreamingReply(false);
       }
       return;
     }
@@ -596,34 +645,99 @@ export default function TutorScreen() {
     };
 
     lastUserMessageRef.current = userMessage.content;
-    const updatedMessages = [...messages, userMessage];
-    setMessages(updatedMessages);
+    const updatedMessages = [...tutorMessages, userMessage];
+    setTutorMessages(updatedMessages);
     setInputText('');
     setIsTyping(true);
-    
+
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 100);
-    
-    try {
-      const aiResponseText = await generateAIResponse(updatedMessages, tutorLocale);
-      const trimmed = (aiResponseText ?? '').trim();
-      const content = trimmed.length > 0 ? trimmed : t('tutor.emptyResponse');
 
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, aiResponse]);
-      void syncAiQuestionCountFromServer();
+    const assistantId = (Date.now() + 1).toString();
+    const historyForBackend = updatedMessages
+      .filter((m) => m.role === 'user' || m.role === 'assistant')
+      .map((m) => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      }));
+
+    try {
+      const token = getMedvbaAccessToken();
+      if (token) {
+        setTutorMessages((prev) => [
+          ...prev,
+          {
+            id: assistantId,
+            role: 'assistant',
+            content: '',
+            timestamp: new Date(),
+          },
+        ]);
+        setIsStreamingReply(true);
+        tutorStreamAbortRef.current?.abort();
+        const streamController = new AbortController();
+        tutorStreamAbortRef.current = streamController;
+        const res = await streamTutorReply({
+          token,
+          messages: historyForBackend,
+          locale: tutorLocale,
+          signal: streamController.signal,
+          onDelta: (chunk) => {
+            setIsTyping(false);
+            setTutorMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantId
+                  ? { ...m, content: m.content + chunk }
+                  : m,
+              ),
+            );
+          },
+        });
+        if (tutorStreamAbortRef.current === streamController) {
+          tutorStreamAbortRef.current = null;
+        }
+        const trimmed = (res.response ?? '').trim();
+        const content =
+          trimmed.length > 0 ? trimmed : t('tutor.emptyResponse');
+        setTutorMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantId ? { ...m, content } : m,
+          ),
+        );
+        void syncAiQuestionCountFromServer();
+      } else {
+        const aiResponseText = await generateAIResponse(
+          updatedMessages,
+          tutorLocale,
+        );
+        const trimmed = (aiResponseText ?? '').trim();
+        const content =
+          trimmed.length > 0 ? trimmed : t('tutor.emptyResponse');
+
+        const aiResponse: Message = {
+          id: assistantId,
+          role: 'assistant',
+          content,
+          timestamp: new Date(),
+        };
+        setTutorMessages((prev) => [...prev, aiResponse]);
+        void syncAiQuestionCountFromServer();
+      }
     } catch (error) {
       const errStr = error instanceof Error ? error.message : String(error);
+      const aborted =
+        (error instanceof Error && error.name === 'AbortError') ||
+        (typeof error === 'object' &&
+          error !== null &&
+          'name' in error &&
+          (error as { name?: string }).name === 'AbortError');
+      if (aborted) {
+        return;
+      }
       log.debug('[Tutor] Failed to get AI response:', errStr);
       console.error('[Tutor] Full error:', error);
 
-      // protectedProcedure on the backend throws UNAUTHORIZED when the user is not logged in.
       if (
         errStr.toLowerCase().includes('unauthorized') ||
         errStr.toLowerCase().includes('authentication required') ||
@@ -639,7 +753,6 @@ export default function TutorScreen() {
         return;
       }
 
-      // Network/connection errors
       if (
         errStr.toLowerCase().includes('fetch') ||
         errStr.toLowerCase().includes('network') ||
@@ -647,26 +760,37 @@ export default function TutorScreen() {
         errStr.toLowerCase().includes('failed to fetch')
       ) {
         const networkErrorMessage: Message = {
-          id: (Date.now() + 1).toString(),
+          id: assistantId,
           role: 'assistant',
           content: t('tutor.errorMessage'),
           timestamp: new Date(),
           isError: true,
         };
-        setMessages(prev => [...prev, networkErrorMessage]);
+        setTutorMessages((prev) => {
+          const withoutEmpty = prev.filter(
+            (m) => !(m.id === assistantId && !m.content),
+          );
+          return [...withoutEmpty, networkErrorMessage];
+        });
         return;
       }
 
       const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: assistantId,
         role: 'assistant',
         content: getTutorErrorContent(error, t),
         timestamp: new Date(),
         isError: true,
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setTutorMessages((prev) => {
+        const withoutEmpty = prev.filter(
+          (m) => !(m.id === assistantId && !m.content),
+        );
+        return [...withoutEmpty, errorMessage];
+      });
     } finally {
       setIsTyping(false);
+      setIsStreamingReply(false);
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
@@ -675,19 +799,18 @@ export default function TutorScreen() {
 
   const handleRetry = useCallback(async () => {
     const lastContent = lastUserMessageRef.current;
-    if (!lastContent || isTyping) return;
+    if (!lastContent || isTyping || copilotMode === 'clinical') return;
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    // Remove the last error message
-    setMessages(prev => {
+    setTutorMessages((prev) => {
       const last = prev[prev.length - 1];
       return last?.isError ? prev.slice(0, -1) : prev;
     });
     setIsTyping(true);
 
     try {
-      const messagesForRetry = messages.filter(m => !m.isError);
+      const messagesForRetry = tutorMessages.filter((m) => !m.isError);
       const aiResponseText = await generateAIResponse(messagesForRetry, tutorLocale);
       const trimmed = (aiResponseText ?? '').trim();
       const content = trimmed.length > 0 ? trimmed : t('tutor.emptyResponse');
@@ -697,7 +820,7 @@ export default function TutorScreen() {
         content,
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, aiResponse]);
+      setTutorMessages((prev) => [...prev, aiResponse]);
       void syncAiQuestionCountFromServer();
     } catch (error) {
       if (isTrpcForbidden(error)) {
@@ -712,14 +835,23 @@ export default function TutorScreen() {
         timestamp: new Date(),
         isError: true,
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setTutorMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsTyping(false);
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
     }
-  }, [isTyping, messages, generateAIResponse, t, tutorLocale, openPaywallWithFallback, syncAiQuestionCountFromServer]);
+  }, [
+    isTyping,
+    copilotMode,
+    tutorMessages,
+    generateAIResponse,
+    t,
+    tutorLocale,
+    openPaywallWithFallback,
+    syncAiQuestionCountFromServer,
+  ]);
 
   const handleSuggestion = (text: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -869,7 +1001,7 @@ export default function TutorScreen() {
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
-            {isPaywallEnabled && !isPremium && (
+            {isPaywallEnabled && !isPremium && copilotMode === 'tutor' && (
               <View style={styles.freeLimitBanner}>
                 <View style={styles.freeLimitContent}>
                   <Text style={styles.freeLimitText}>
@@ -884,7 +1016,7 @@ export default function TutorScreen() {
               </View>
             )}
 
-            {messages.length === 1 && (
+            {copilotMode === 'tutor' && tutorMessages.length === 1 && (
               <View style={styles.suggestions}>
                 <Text style={styles.suggestionsTitle}>{t('tutor.tryAsking')}</Text>
                 {suggestedQuestions.map((suggestion, index) => (
@@ -937,7 +1069,7 @@ export default function TutorScreen() {
                     </View>
                   )}
                 </View>
-                {message.isError && (
+                {message.isError && copilotMode === 'tutor' && (
                   <TouchableOpacity
                     style={styles.retryButton}
                     onPress={handleRetry}
@@ -952,7 +1084,7 @@ export default function TutorScreen() {
               </View>
             ))}
 
-            {isTyping && (
+            {isTyping && !isStreamingReply && (
               <View style={styles.messageRow}>
                 <View style={styles.avatarContainer}>
                   <Bot color={colors.primary} size={iconSm} />

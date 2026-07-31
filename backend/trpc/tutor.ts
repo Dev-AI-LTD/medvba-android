@@ -71,7 +71,11 @@ export const tutorRouter = createTRPCRouter({
           })),
         ];
 
-        const response = await generateText({ messages: fullMessages });
+        const response = await generateText({
+          messages: fullMessages,
+          maxTokens: 1200,
+          temperature: 0.65,
+        });
         return { response };
       } catch (err) {
         if (reservedFreeSlot) {

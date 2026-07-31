@@ -165,14 +165,30 @@ REVENUECAT_WEBHOOK_AUTHORIZATION=your_webhook_bearer_secret
 REVENUECAT_ENTITLEMENT_ID=medvba_pro_ai
 
 # Clinical AI provider (explicit). Tutor stays on AI_API_KEY / OPENAI_API_KEY.
+#
+# Geo note: Meta Model API may show "isn't available in your country yet".
+# Until Meta grants access, staging Clinical uses OpenAI temporarily:
+#   AI_PROVIDER=openai
+#   AI_API_KEY=...   # or OPENAI_API_KEY
+#   AI_BASE_URL=https://api.openai.com/v1   # optional
+#   AI_CLINICAL_MODEL=gpt-4o-mini           # optional
+#
+# When Meta Model API is available ([dev.meta.ai](https://dev.meta.ai/) → API keys):
 AI_PROVIDER=muse
 META_MODEL_API_KEY=...
-META_MODEL_API_BASE_URL=https://...   # OpenAI-compatible /chat/completions base
-META_MODEL_NAME=muse-spark-1.1
+META_MODEL_API_BASE_URL=https://api.meta.ai/v1   # CANONICAL OpenAI-compatible /chat/completions base
+# META_MODEL_BASE_URL=...             # alias only if META_MODEL_API_BASE_URL unset
+META_MODEL_NAME=muse-spark-1.1        # canonical; alias META_MODEL_API_NAME if unset
 # If AI_PROVIDER is absent or openai, Clinical uses AI_API_KEY + AI_BASE_URL + AI_CLINICAL_MODEL.
-# Never put META_MODEL_* under EXPO_PUBLIC_*.
+# Never put META_MODEL_* under EXPO_PUBLIC_*. No OpenAI fallback when AI_PROVIDER=muse and META_MODEL_* missing.
+# After switching to Muse: redeploy + smoke GET /health/ready → aiProvider=muse, hasMetaModelApiKey=true.
 
 INTERNAL_HEALTH_SECRET=...            # Bearer for GET /health/ready
+
+# Rate limit store — configure ONE path on staging (prefer Upstash):
+# UPSTASH_REDIS_REST_URL=...
+# UPSTASH_REDIS_REST_TOKEN=...
+# REDIS_URL=...                       # used only when Upstash REST pair is absent
 ```
 
 ### Muse Phase 1 — credit / abort policy

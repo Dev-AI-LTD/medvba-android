@@ -189,20 +189,21 @@ export function registerClinicalStreamRoutes(app: Hono) {
         credits_charged: usedTrial ? 0 : chargedAmount,
       });
 
-      const { data: snap } = await supabase
-        .from('ai_case_snapshots')
-        .select('summary_text')
-        .eq('session_id', session.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      const { data: recent } = await supabase
-        .from('ai_messages')
-        .select('role, content')
-        .eq('session_id', session.id)
-        .order('created_at', { ascending: false })
-        .limit(16);
+      const [{ data: snap }, { data: recent }] = await Promise.all([
+        supabase
+          .from('ai_case_snapshots')
+          .select('summary_text')
+          .eq('session_id', session.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from('ai_messages')
+          .select('role, content')
+          .eq('session_id', session.id)
+          .order('created_at', { ascending: false })
+          .limit(16),
+      ]);
 
       const history = truncateHistoryMessages(
         [...(recent ?? [])].reverse(),

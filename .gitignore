@@ -66,3 +66,6 @@ scripts/output/
 
 # Supabase CLI temp (pooler URLs, local state — never commit)
 supabase/.temp/
+# Local Clinical staging secrets (never commit)
+.env.staging-clinical.local
+

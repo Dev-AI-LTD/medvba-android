@@ -117,6 +117,7 @@ export function getClinicalProviderConfig(): AIProviderConfig {
     if (!apiKey) {
       throw new Error(CLINICAL_PROVIDER_NOT_CONFIGURED);
     }
+    // Canonical: META_MODEL_API_BASE_URL; alias META_MODEL_BASE_URL only if unset.
     const baseUrl =
       process.env.META_MODEL_API_BASE_URL?.trim() ||
       process.env.META_MODEL_BASE_URL?.trim();
@@ -127,6 +128,7 @@ export function getClinicalProviderConfig(): AIProviderConfig {
       provider: 'muse',
       apiKey,
       baseUrl: baseUrl.replace(/\/$/, ''),
+      // Canonical: META_MODEL_NAME; alias META_MODEL_API_NAME only if unset.
       model:
         process.env.META_MODEL_NAME?.trim() ||
         process.env.META_MODEL_API_NAME?.trim() ||
@@ -244,6 +246,107 @@ export async function generateText(options: GenerateTextOptions): Promise<string
   const config = getTutorProviderConfig();
   const result = await callOpenAICompatible(options.messages, options, config);
   return result.text;
+}
+
+/** Stream Tutor tokens (OpenAI-compatible SSE). */
+export async function* generateTutorTextStream(options: {
+  messages: ChatMessage[];
+  temperature?: number;
+  maxTokens?: number;
+  model?: string;
+  signal?: AbortSignal;
+}): AsyncGenerator<string, GenerateTextResult, unknown> {
+  const config = getTutorProviderConfig();
+  const apiKey = config.apiKey;
+  const baseUrl = config.baseUrl || 'https://api.openai.com/v1';
+  const model = options.model || config.model || 'gpt-4o-mini';
+
+  if (!apiKey) {
+    throw new Error(
+      'OpenAI API key not configured. Set AI_API_KEY (or OPENAI_API_KEY) on the backend.',
+    );
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: options.messages,
+        temperature: options.temperature ?? 0.65,
+        max_tokens: options.maxTokens ?? 1200,
+        stream: true,
+      }),
+      signal: options.signal,
+    });
+  } catch (err) {
+    if (options.signal?.aborted) throw err;
+    throw new Error(`OpenAI API error: 0`);
+  }
+
+  if (!response.ok) {
+    try {
+      await response.text();
+    } catch {
+      /* ignore */
+    }
+    throw new Error(`OpenAI API error: ${response.status}`);
+  }
+
+  if (!response.body) {
+    throw new Error('OpenAI API error: 0');
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let fullText = '';
+  let providerRequestId: string | null = null;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? '';
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith('data:')) continue;
+      const payload = trimmed.slice(5).trim();
+      if (!payload || payload === '[DONE]') continue;
+      try {
+        const json = JSON.parse(payload) as {
+          id?: string;
+          choices?: { delta?: { content?: string } }[];
+        };
+        if (json.id) providerRequestId = json.id;
+        const delta = json.choices?.[0]?.delta?.content;
+        if (delta) {
+          fullText += delta;
+          yield delta;
+        }
+      } catch {
+        // ignore partial JSON
+      }
+    }
+  }
+
+  return {
+    text: fullText,
+    model,
+    provider: 'openai',
+    usage: {
+      inputTokens: null,
+      outputTokens: null,
+      providerRequestId,
+    },
+  };
 }
 
 /** Clinical Copilot generation with explicit Muse/OpenAI config + usage metadata. */

@@ -1,6 +1,7 @@
 /**
  * Distributed rate-limit counter store.
- * Upstash REST (UPSTASH_REDIS_REST_*) or node-redis (REDIS_URL).
+ * Precedence: if UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN are both set → Upstash REST
+ * (REDIS_URL ignored). Else if REDIS_URL set → node-redis. Configure only one path in staging.
  * In-memory fallback only when NODE_ENV !== production or RATE_LIMIT_MEMORY_FALLBACK=true.
  */
 

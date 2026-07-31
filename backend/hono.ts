@@ -7,6 +7,7 @@ import { createContext } from "./trpc/create-context";
 import { registerAuthSessionRoutes } from "./auth/session-routes";
 import { registerRevenueCatWebhookRoutes } from "./webhooks/revenuecat-webhook";
 import { registerClinicalStreamRoutes } from "./clinical-stream";
+import { registerTutorStreamRoutes } from "./tutor-stream";
 import { probeSupabaseServiceRole } from "./lib/health-supabase";
 import { getReadinessProbeBooleans } from "./lib/health-ready-probes";
 
@@ -57,6 +58,7 @@ app.use(
 registerAuthSessionRoutes(app);
 registerRevenueCatWebhookRoutes(app);
 registerClinicalStreamRoutes(app);
+registerTutorStreamRoutes(app);
 
 app.use(
   "/api/trpc/*",
