@@ -58,7 +58,7 @@ railway variables
 | **CLINICAL_COPILOT_ENABLED** | Pentru Clinical API | `true` pe staging și pe **production** când Store Clinical e ON. **Nu** seta `EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED` pe Railway. |
 | **UPSTASH_REDIS_REST_URL** + **UPSTASH_REDIS_REST_TOKEN** | Rate limit distribuit (**recomandat**; wins if both) | Sliding window partajat între replici. **Precedence** (`rate-limit-store.ts`): dacă ambele Upstash REST vars sunt setate → **Upstash REST** este folosit; `REDIS_URL` este ignorat. |
 | **REDIS_URL** | Alternativă (doar dacă Upstash lipsește) | `redis://…` via node-redis. Folosit **doar** când Upstash REST **nu** e configurat. Pe staging: configurează **un singur** path (prefer Upstash). |
-| **RATE_LIMIT_MEMORY_FALLBACK** | Doar dev/staging temporar | `true` permite Map in-memory când Redis lipsește (nu pentru producție multi-instance). H05 rămâne OPEN până Redis e proven cross-instance. |
+| **RATE_LIMIT_MEMORY_FALLBACK** | Escape hatch (dev/staging; prod only until Upstash) | `true` permite Map in-memory când Redis lipsește (nu partajat între replici). **Production:** preferă Upstash; fallback e doar temporary unblock — H05 rămâne OPEN până `redisReady` pe `/health/ready`. |
 
 ### Clinical Copilot pe Railway (Store + TestFlight)
 

@@ -43,7 +43,7 @@ export const tutorRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      tutorRateLimiter(ctx.userId);
+      await tutorRateLimiter(ctx.userId);
 
       const { url, serviceRoleKey } = getSupabaseAdminOrThrow();
       const { createClient } = await import("@supabase/supabase-js");

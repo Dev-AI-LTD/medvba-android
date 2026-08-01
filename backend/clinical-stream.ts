@@ -121,7 +121,11 @@ export function registerClinicalStreamRoutes(app: Hono) {
       if (err instanceof TRPCError && err.code === 'TOO_MANY_REQUESTS') {
         return c.json({ error: err.message }, 429);
       }
-      throw err;
+      if (err instanceof TRPCError) {
+        // Fail closed without crashing the process (unhandled throw can exit Node).
+        return c.json({ error: err.message }, 503);
+      }
+      return c.json({ error: 'Rate limiting is temporarily unavailable. Please try again shortly.' }, 503);
     }
 
     const locale = (body.locale === 'ro' ? 'ro' : 'en') as TutorLocale;
