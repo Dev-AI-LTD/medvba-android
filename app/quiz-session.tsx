@@ -79,10 +79,8 @@ import { isClinicalCopilotUiEnabled } from '@/lib/clinical-copilot-flag';
 import { trackClinicalEvent } from '@/lib/clinical-analytics';
 import {
   CLINICAL_PENDING_EXPLAIN_KEY,
-  type ClinicalPendingExplain,
+  type ClinicalPendingExplainIntent,
 } from '@/lib/clinical-pending-explain';
-import { trpc } from '@/lib/trpc';
-import { TRPCClientError } from '@trpc/client';
 
 const QUESTION_COUNTS = {
   quick: 10,
@@ -737,92 +735,46 @@ export default function QuizSessionScreen() {
 
   const clinicalEnabled = isClinicalCopilotUiEnabled();
   const [clinicalExplainLoading, setClinicalExplainLoading] = useState(false);
-  const explainMutation = trpc.clinical.explainQuestion.useMutation();
 
   const handleClinicalExplain = useCallback(async () => {
     if (!currentQuestion || !clinicalEnabled || clinicalExplainLoading) return;
+    const options = currentQuestion.options ?? [];
+    if (options.length < 2) {
+      Alert.alert(t('clinical.errorTitle'), t('clinical.errorGeneric'));
+      return;
+    }
     const correct = getCorrectAnswerIndices(currentQuestion);
-    const correctIndex = correct[0] ?? 0;
-    const chosenIndex = selectedAnswers[0] ?? 0;
+    const correctIndex = Math.min(correct[0] ?? 0, options.length - 1);
+    const chosenIndex = Math.min(selectedAnswers[0] ?? 0, options.length - 1);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    log.info('[ClinicalCopilot] explain CTA → Clinical chat', {
+    log.info('[ClinicalCopilot] explain CTA → Clinical chat (intent)', {
       questionId: currentQuestion.id,
+      optionCount: options.length,
       chosenIndex,
       correctIndex,
     });
     trackClinicalEvent('clinical_explain_started', { questionId: currentQuestion.id });
     setClinicalExplainLoading(true);
     try {
-      const res = await explainMutation.mutateAsync({
+      const intent: ClinicalPendingExplainIntent = {
+        kind: 'intent',
         question: currentQuestion.question,
-        options: currentQuestion.options ?? [],
+        options,
         chosenIndex,
         correctIndex,
         staticExplanation: currentQuestion.explanation,
         locale: currentLanguage === 'ro' ? 'ro' : 'en',
-        acceptDisclaimer: true,
         questionId: String(currentQuestion.id),
         entryPoint: 'quiz_wrong_answer',
-      });
-      const text = (res?.response ?? '').trim();
-      if (!text || !res.sessionId) {
-        throw new Error(t('clinical.errorGeneric'));
-      }
-      const userLabel =
-        currentQuestion.question.length > 280
-          ? `${currentQuestion.question.slice(0, 277)}…`
-          : currentQuestion.question;
-      const pending: ClinicalPendingExplain = {
-        sessionId: res.sessionId,
-        response: text,
-        userLabel,
-        balance: typeof res.balance === 'number' ? res.balance : undefined,
-        questionId: String(currentQuestion.id),
       };
-      await AsyncStorage.setItem(CLINICAL_PENDING_EXPLAIN_KEY, JSON.stringify(pending));
-      trackClinicalEvent('clinical_explain_completed', { questionId: currentQuestion.id });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await AsyncStorage.setItem(CLINICAL_PENDING_EXPLAIN_KEY, JSON.stringify(intent));
       router.push({
         pathname: '/(tabs)/tutor',
         params: { clinicalMode: '1', fromExplain: '1' },
       });
     } catch (e) {
-      const code = (e instanceof TRPCClientError
-        ? (e.data as { code?: string } | undefined)?.code
-        : undefined) ?? '';
-      const msg =
-        e instanceof TRPCClientError
-          ? e.message
-          : e instanceof Error
-            ? e.message
-            : t('clinical.errorGeneric');
-      if (
-        code === 'FORBIDDEN' ||
-        code === 'UNAUTHORIZED' ||
-        /TOPUP_REQUIRED|PAYWALL_REQUIRED|Insufficient/i.test(msg)
-      ) {
-        trackClinicalEvent('clinical_paywall_shown', { source: 'quiz_explain' });
-        const needsTopup = /TOPUP_REQUIRED|Insufficient/i.test(msg);
-        Alert.alert(
-          needsTopup ? t('clinical.errorTitle') : t('clinical.contextualPaywallTitle'),
-          needsTopup ? t('clinical.insufficientCredits') : t('clinical.contextualPaywallBody'),
-          [
-            { text: t('home.later'), style: 'cancel' },
-            {
-              text: needsTopup ? t('clinical.topupLink') : t('home.upgradePremiumShort'),
-              onPress: () =>
-                router.push(
-                  needsTopup
-                    ? { pathname: '/(tabs)/tutor', params: { clinicalMode: '1', openTopup: '1' } }
-                    : '/paywall',
-                ),
-            },
-          ],
-        );
-        return;
-      }
-      log.debug('[ClinicalCopilot] explain failed:', msg);
-      Alert.alert(t('clinical.errorTitle'), msg || t('clinical.errorGeneric'));
+      log.debug('[ClinicalCopilot] explain navigate failed:', e);
+      Alert.alert(t('clinical.errorTitle'), t('clinical.errorGeneric'));
     } finally {
       setClinicalExplainLoading(false);
     }
@@ -831,7 +783,6 @@ export default function QuizSessionScreen() {
     clinicalExplainLoading,
     currentQuestion,
     selectedAnswers,
-    explainMutation,
     currentLanguage,
     router,
     t,

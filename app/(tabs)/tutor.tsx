@@ -68,7 +68,10 @@ import { getMedvbaAccessToken } from '@/lib/medvba-access-token';
 import { trackClinicalEvent } from '@/lib/clinical-analytics';
 import {
   CLINICAL_PENDING_EXPLAIN_KEY,
+  friendlyClinicalExplainError,
+  isExplainIntent,
   type ClinicalPendingExplain,
+  type ClinicalPendingExplainIntent,
 } from '@/lib/clinical-pending-explain';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 function getMutationErrorMessage(error: unknown, fallback: string): string {
@@ -190,68 +193,23 @@ export default function TutorScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      let cancelled = false;
-      const hydrateFromQuizExplain = async () => {
-        if (!clinicalUiEnabled) return;
-
-        const wantClinical =
-          params.clinicalMode === '1' ||
-          params.fromExplain === '1' ||
-          params.openTopup === '1';
-        if (wantClinical) {
-          setCopilotMode('clinical');
-        }
-        if (params.openTopup === '1') {
-          trackClinicalEvent('clinical_topup_shown');
-          setTopupVisible(true);
-        }
-        if (params.fromExplain !== '1') return;
-
-        try {
-          const raw = await AsyncStorage.getItem(CLINICAL_PENDING_EXPLAIN_KEY);
-          if (!raw || cancelled) return;
-          await AsyncStorage.removeItem(CLINICAL_PENDING_EXPLAIN_KEY);
-          const pending = JSON.parse(raw) as ClinicalPendingExplain;
-          if (!pending?.sessionId || !pending.response?.trim()) return;
-
-          setDisclaimerAccepted(true);
-          setHowToExpanded(false);
-          setCasesToolsExpanded(false);
-          setClinicalSessionId(pending.sessionId);
-          if (typeof pending.balance === 'number') {
-            setClinicalBalance(pending.balance);
-          }
-          setClinicalMessages([
-            {
-              id: `quiz-user-${pending.questionId ?? 'q'}`,
-              role: 'user',
-              content: pending.userLabel || t('clinical.explainCta'),
-              timestamp: new Date(),
-            },
-            {
-              id: `quiz-assistant-${pending.sessionId}`,
-              role: 'assistant',
-              content: pending.response,
-              timestamp: new Date(),
-            },
-          ]);
-          setTimeout(() => {
-            scrollViewRef.current?.scrollToEnd({ animated: true });
-          }, 250);
-        } catch {
-          // Ignore corrupt pending payload
-        }
-      };
-      void hydrateFromQuizExplain();
-      return () => {
-        cancelled = true;
-      };
+      if (!clinicalUiEnabled) return;
+      const wantClinical =
+        params.clinicalMode === '1' ||
+        params.fromExplain === '1' ||
+        params.openTopup === '1';
+      if (wantClinical) {
+        setCopilotMode('clinical');
+      }
+      if (params.openTopup === '1') {
+        trackClinicalEvent('clinical_topup_shown');
+        setTopupVisible(true);
+      }
     }, [
       clinicalUiEnabled,
       params.clinicalMode,
       params.fromExplain,
       params.openTopup,
-      t,
     ]),
   );
 
@@ -295,6 +253,7 @@ export default function TutorScreen() {
 
   const chatMutation = trpc.tutor.chat.useMutation();
   const startCaseMutation = trpc.clinical.startCase.useMutation();
+  const explainQuestionMutation = trpc.clinical.explainQuestion.useMutation();
   const clinicalReplyMutation = trpc.clinical.reply.useMutation();
   const analyzeImageMutation = trpc.clinical.analyzeImage.useMutation();
   const generateSummaryMutation = trpc.clinical.generateSummary.useMutation();
@@ -442,6 +401,168 @@ export default function TutorScreen() {
       trpcUtils,
       t,
     ],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+
+      const runQuizExplainIntent = async (intent: ClinicalPendingExplainIntent) => {
+        const userLabel =
+          intent.question.length > 280
+            ? `${intent.question.slice(0, 277)}…`
+            : intent.question;
+        const userMsgId = `quiz-user-${intent.questionId ?? Date.now()}`;
+        setDisclaimerAccepted(true);
+        setHowToExpanded(false);
+        setCasesToolsExpanded(false);
+        setCopilotMode('clinical');
+        setClinicalMessages([
+          {
+            id: userMsgId,
+            role: 'user',
+            content: userLabel,
+            timestamp: new Date(),
+          },
+        ]);
+        setIsTyping(true);
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 150);
+
+        try {
+          const res = await explainQuestionMutation.mutateAsync({
+            question: intent.question,
+            options: intent.options,
+            chosenIndex: intent.chosenIndex,
+            correctIndex: intent.correctIndex,
+            staticExplanation: intent.staticExplanation,
+            locale: intent.locale,
+            acceptDisclaimer: true,
+            questionId: intent.questionId,
+            entryPoint: intent.entryPoint ?? 'quiz_wrong_answer',
+          });
+          if (cancelled) return;
+          const text = (res?.response ?? '').trim();
+          if (!text || !res.sessionId) {
+            throw new Error(t('clinical.errorGeneric'));
+          }
+          setClinicalSessionId(res.sessionId);
+          if (typeof res.balance === 'number') {
+            setClinicalBalance(res.balance);
+          }
+          setClinicalMessages((prev) => [
+            ...prev,
+            {
+              id: `quiz-assistant-${res.sessionId}`,
+              role: 'assistant',
+              content: text,
+              timestamp: new Date(),
+            },
+          ]);
+          trackClinicalEvent('clinical_explain_completed', {
+            questionId: intent.questionId,
+          });
+          setTimeout(() => {
+            scrollViewRef.current?.scrollToEnd({ animated: true });
+          }, 200);
+        } catch (error) {
+          if (cancelled) return;
+          const msg = getMutationErrorMessage(error, '');
+          if (
+            isTrpcForbidden(error) ||
+            /TOPUP_REQUIRED|PAYWALL_REQUIRED|Insufficient/i.test(msg)
+          ) {
+            openTopupOrPaywall(msg);
+            setClinicalMessages((prev) => [
+              ...prev,
+              {
+                id: Date.now().toString(),
+                role: 'assistant',
+                content: friendlyClinicalExplainError(
+                  msg,
+                  t('clinical.insufficientCredits'),
+                ),
+                timestamp: new Date(),
+                isError: true,
+              },
+            ]);
+            return;
+          }
+          setClinicalMessages((prev) => [
+            ...prev,
+            {
+              id: Date.now().toString(),
+              role: 'assistant',
+              content: friendlyClinicalExplainError(
+                msg,
+                t('clinical.errorGeneric'),
+              ),
+              timestamp: new Date(),
+              isError: true,
+            },
+          ]);
+        } finally {
+          if (!cancelled) setIsTyping(false);
+        }
+      };
+
+      const hydrateFromQuizExplain = async () => {
+        if (!clinicalUiEnabled || params.fromExplain !== '1') return;
+        try {
+          const raw = await AsyncStorage.getItem(CLINICAL_PENDING_EXPLAIN_KEY);
+          if (!raw || cancelled) return;
+          await AsyncStorage.removeItem(CLINICAL_PENDING_EXPLAIN_KEY);
+          const pending = JSON.parse(raw) as ClinicalPendingExplain;
+
+          if (isExplainIntent(pending)) {
+            await runQuizExplainIntent(pending);
+            return;
+          }
+
+          // Legacy result payload (pre-intent)
+          if (!pending?.sessionId || !pending.response?.trim()) return;
+          setDisclaimerAccepted(true);
+          setHowToExpanded(false);
+          setCasesToolsExpanded(false);
+          setCopilotMode('clinical');
+          setClinicalSessionId(pending.sessionId);
+          if (typeof pending.balance === 'number') {
+            setClinicalBalance(pending.balance);
+          }
+          setClinicalMessages([
+            {
+              id: `quiz-user-${pending.questionId ?? 'q'}`,
+              role: 'user',
+              content: pending.userLabel || t('clinical.explainCta'),
+              timestamp: new Date(),
+            },
+            {
+              id: `quiz-assistant-${pending.sessionId}`,
+              role: 'assistant',
+              content: pending.response,
+              timestamp: new Date(),
+            },
+          ]);
+          setTimeout(() => {
+            scrollViewRef.current?.scrollToEnd({ animated: true });
+          }, 250);
+        } catch {
+          // Ignore corrupt pending payload
+        }
+      };
+
+      void hydrateFromQuizExplain();
+      return () => {
+        cancelled = true;
+      };
+    }, [
+      clinicalUiEnabled,
+      params.fromExplain,
+      explainQuestionMutation,
+      openTopupOrPaywall,
+      t,
+    ]),
   );
 
   const startClinicalCase = useCallback(

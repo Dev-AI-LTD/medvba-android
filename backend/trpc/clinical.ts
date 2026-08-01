@@ -382,10 +382,10 @@ async function runExplainQuestion(
     await supabase
       .from('ai_sessions')
       .update({
-        status: 'completed',
+        // Keep active so the user can ask follow-ups in Clinical chat after quiz explain.
+        status: 'active',
         model: result.model,
         actual_credits: usedTrial ? 0 : cost,
-        completed_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
       .eq('id', session.id);
@@ -816,7 +816,7 @@ async function runReply(
 
 const explainInput = z.object({
   question: z.string().trim().min(1).max(8000),
-  options: z.array(z.string().trim().min(1).max(2000)).min(2).max(8),
+  options: z.array(z.string().trim().min(1).max(2000)).min(2).max(24),
   chosenIndex: z.number().int().min(0),
   correctIndex: z.number().int().min(0),
   chapter: z.string().trim().max(200).optional(),
