@@ -1310,17 +1310,25 @@ export const clinicalRouter = createTRPCRouter({
   syncEntitlement: protectedProcedure.mutation(async ({ ctx }) => {
     const supabase = await adminClient();
 
-    if (getRevenueCatSecretApiKey()) {
-      const rcBody = await fetchRevenueCatSubscriber(ctx.userId);
-      const sync = await syncSubscriberPayloadToSupabase(supabase, ctx.userId, rcBody, {
-        grantMonthlyCredits: true,
+    // Without the secret key, REST subscriber fetch is impossible — silent skip
+    // leaves Premium clients stuck at Pro + 0 Clinical credits.
+    if (!getRevenueCatSecretApiKey()) {
+      throw new TRPCError({
+        code: 'PRECONDITION_FAILED',
+        message:
+          'RevenueCat secret API key is not configured on the server. Credits cannot be synced.',
       });
-      if (!sync.ok) {
-        throw new TRPCError({
-          code: 'BAD_GATEWAY',
-          message: sync.error ?? 'Could not sync entitlement with RevenueCat.',
-        });
-      }
+    }
+
+    const rcBody = await fetchRevenueCatSubscriber(ctx.userId);
+    const sync = await syncSubscriberPayloadToSupabase(supabase, ctx.userId, rcBody, {
+      grantMonthlyCredits: true,
+    });
+    if (!sync.ok) {
+      throw new TRPCError({
+        code: 'BAD_GATEWAY',
+        message: sync.error ?? 'Could not sync entitlement with RevenueCat.',
+      });
     }
 
     const status = await buildClinicalStatusPayload(ctx.userId);

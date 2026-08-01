@@ -59,6 +59,8 @@ railway variables
 | **UPSTASH_REDIS_REST_URL** + **UPSTASH_REDIS_REST_TOKEN** | Rate limit distribuit (**recomandat**; wins if both) | Sliding window partajat între replici. **Precedence** (`rate-limit-store.ts`): dacă ambele Upstash REST vars sunt setate → **Upstash REST** este folosit; `REDIS_URL` este ignorat. |
 | **REDIS_URL** | Alternativă (doar dacă Upstash lipsește) | `redis://…` via node-redis. Folosit **doar** când Upstash REST **nu** e configurat. Pe staging: configurează **un singur** path (prefer Upstash). |
 | **RATE_LIMIT_MEMORY_FALLBACK** | Escape hatch (dev/staging; prod only until Upstash) | `true` permite Map in-memory când Redis lipsește (nu partajat între replici). **Production:** preferă Upstash; fallback e doar temporary unblock — H05 rămâne OPEN până `redisReady` pe `/health/ready`. |
+| **REVENUECAT_SECRET_API_KEY** | Da, pentru Clinical credits | Secret API key din RevenueCat (Project → API keys → Secret). Folosit de `clinical.syncEntitlement` + webhook REST fetch. **Fără asta**, sync sare peste grant → Premium UI + **0** Clinical credits. Alias: `REVENUECAT_API_SECRET_KEY`. |
+| **REVENUECAT_WEBHOOK_AUTHORIZATION** | Da, pentru webhook grants | Bearer token configurat în RevenueCat webhook. Fără asta, webhook-ul respinge evenimentele (no monthly/top-up grants). Alias: `REVENUECAT_WEBHOOK_AUTH_TOKEN`. |
 
 ### Clinical Copilot pe Railway (Store + TestFlight)
 
