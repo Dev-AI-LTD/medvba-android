@@ -27,7 +27,8 @@ import {
   FileText,
 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/providers/ThemeProvider';
 import GlassCard from '@/components/GlassCard';
@@ -65,6 +66,10 @@ import { streamClinicalReply } from '@/lib/clinical-stream-client';
 import { streamTutorReply } from '@/lib/tutor-stream-client';
 import { getMedvbaAccessToken } from '@/lib/medvba-access-token';
 import { trackClinicalEvent } from '@/lib/clinical-analytics';
+import {
+  CLINICAL_PENDING_EXPLAIN_KEY,
+  type ClinicalPendingExplain,
+} from '@/lib/clinical-pending-explain';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 function getMutationErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof TRPCClientError) {
@@ -149,6 +154,11 @@ export default function TutorScreen() {
   const clinicalStreamAbortRef = useRef<AbortController | null>(null);
   const tutorStreamAbortRef = useRef<AbortController | null>(null);
   const router = useRouter();
+  const params = useLocalSearchParams<{
+    clinicalMode?: string;
+    fromExplain?: string;
+    openTopup?: string;
+  }>();
   const {
     isPremium,
     isPaywallEnabled,
@@ -177,6 +187,73 @@ export default function TutorScreen() {
     setHowToExpanded(false);
     setCasesToolsExpanded(false);
   }, [clinicalFocus]);
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      const hydrateFromQuizExplain = async () => {
+        if (!clinicalUiEnabled) return;
+
+        const wantClinical =
+          params.clinicalMode === '1' ||
+          params.fromExplain === '1' ||
+          params.openTopup === '1';
+        if (wantClinical) {
+          setCopilotMode('clinical');
+        }
+        if (params.openTopup === '1') {
+          trackClinicalEvent('clinical_topup_shown');
+          setTopupVisible(true);
+        }
+        if (params.fromExplain !== '1') return;
+
+        try {
+          const raw = await AsyncStorage.getItem(CLINICAL_PENDING_EXPLAIN_KEY);
+          if (!raw || cancelled) return;
+          await AsyncStorage.removeItem(CLINICAL_PENDING_EXPLAIN_KEY);
+          const pending = JSON.parse(raw) as ClinicalPendingExplain;
+          if (!pending?.sessionId || !pending.response?.trim()) return;
+
+          setDisclaimerAccepted(true);
+          setHowToExpanded(false);
+          setCasesToolsExpanded(false);
+          setClinicalSessionId(pending.sessionId);
+          if (typeof pending.balance === 'number') {
+            setClinicalBalance(pending.balance);
+          }
+          setClinicalMessages([
+            {
+              id: `quiz-user-${pending.questionId ?? 'q'}`,
+              role: 'user',
+              content: pending.userLabel || t('clinical.explainCta'),
+              timestamp: new Date(),
+            },
+            {
+              id: `quiz-assistant-${pending.sessionId}`,
+              role: 'assistant',
+              content: pending.response,
+              timestamp: new Date(),
+            },
+          ]);
+          setTimeout(() => {
+            scrollViewRef.current?.scrollToEnd({ animated: true });
+          }, 250);
+        } catch {
+          // Ignore corrupt pending payload
+        }
+      };
+      void hydrateFromQuizExplain();
+      return () => {
+        cancelled = true;
+      };
+    }, [
+      clinicalUiEnabled,
+      params.clinicalMode,
+      params.fromExplain,
+      params.openTopup,
+      t,
+    ]),
+  );
 
   useEffect(() => {
     return () => {
