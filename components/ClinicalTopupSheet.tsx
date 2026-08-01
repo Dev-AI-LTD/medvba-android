@@ -1,6 +1,9 @@
 /**
  * Clinical Copilot top-up sheet (flag ON only).
  * Purchases via RevenueCat SDK; credits granted only by backend webhook / syncEntitlement.
+ *
+ * Never routes to /paywall — Pro subscribers with 0 credits must buy consumable
+ * top-ups, not re-subscribe (that creates the "already subscribed" loop).
  */
 
 import React, { useMemo, useState } from 'react';
@@ -14,7 +17,6 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { router } from 'expo-router';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { trpc } from '@/lib/trpc';
@@ -51,15 +53,6 @@ export function ClinicalTopupSheet({ visible, onClose, onSelectProduct }: Props)
   const trpcUtils = trpc.useUtils();
   const [busyHint, setBusyHint] = useState<'50' | '100' | '250' | null>(null);
 
-  const openPaywallFallback = () => {
-    onClose();
-    try {
-      router.push('/paywall');
-    } catch {
-      /* ignore */
-    }
-  };
-
   const loadAndPick = async (hint: '50' | '100' | '250') => {
     if (busyHint) return;
     trackClinicalEvent('clinical_topup_intent', { packageHint: hint });
@@ -86,14 +79,17 @@ export function ClinicalTopupSheet({ visible, onClose, onSelectProduct }: Props)
       onSelectProduct?.(productId, credits);
 
       if (!isClinicalCopilotUiEnabled()) {
-        openPaywallFallback();
+        Alert.alert(t('clinical.errorTitle'), t('clinical.topupPurchaseFailed'));
         return;
       }
 
       const result = await purchaseCreditTopup(productId);
       if (!result.purchased) {
-        // Offerings missing or user cancelled — fall back to paywall route
-        openPaywallFallback();
+        // Missing consumable offering / cancel / store error — stay on top-up UX.
+        // Do NOT open /paywall (subscription) for Pro users with 0 credits.
+        if (!result.userCancelled) {
+          Alert.alert(t('clinical.errorTitle'), t('clinical.topupPurchaseFailed'));
+        }
         return;
       }
 

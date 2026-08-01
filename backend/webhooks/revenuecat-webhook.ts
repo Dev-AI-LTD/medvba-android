@@ -62,6 +62,14 @@ function eventTransactionId(event: RcEvent): string | null {
   );
 }
 
+/** Exported for unit tests — unique event id used for webhook idempotency. */
+export function revenueCatEventIdempotencyKey(event: RcEvent): string {
+  return (
+    event.id?.trim() ||
+    `synthetic:${event.type}:${eventTransactionId(event) ?? "unknown"}`
+  );
+}
+
 function eventMentionsProEntitlement(event: RcEvent): boolean {
   const ids = event.entitlement_ids ?? [];
   if (ids.length === 0) {
@@ -97,7 +105,7 @@ async function claimEvent(
   event: RcEvent,
   rawPayload: unknown,
 ): Promise<{ claimed: boolean; eventId: string }> {
-  const eventId = event.id?.trim() || `synthetic:${event.type}:${eventTransactionId(event) ?? Date.now()}`;
+  const eventId = revenueCatEventIdempotencyKey(event);
   const { error } = await supabase.from("revenuecat_events").insert({
     event_id: eventId,
     event_type: event.type ?? "UNKNOWN",

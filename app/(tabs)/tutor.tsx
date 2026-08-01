@@ -8,6 +8,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useKeyboardHeight } from '@/lib/use-keyboard-height';
@@ -210,6 +211,8 @@ export default function TutorScreen() {
     enabled: clinicalUiEnabled,
     retry: false,
   });
+  const syncClinicalEntitlement = trpc.clinical.syncEntitlement.useMutation();
+  const trpcUtils = trpc.useUtils();
 
   useEffect(() => {
     if (clinicalStatusQuery.data?.enabled) {
@@ -293,16 +296,61 @@ export default function TutorScreen() {
   const openTopupOrPaywall = useCallback(
     (message?: string) => {
       const msg = message ?? '';
-      if (msg.includes('TOPUP_REQUIRED') || msg.includes('Insufficient')) {
-        trackClinicalEvent('clinical_insufficient_credits');
-        trackClinicalEvent('clinical_topup_shown');
-        setTopupVisible(true);
+      const needsTopup =
+        msg.includes('TOPUP_REQUIRED') || msg.includes('Insufficient');
+      // Pro + 0 credits must never re-open subscription paywall ("already subscribed").
+      const looksPro = isPremium || !!clinicalStatusQuery.data?.isPro;
+
+      if (needsTopup || looksPro) {
+        void (async () => {
+          try {
+            const synced = await syncClinicalEntitlement.mutateAsync();
+            await trpcUtils.clinical.getStatus.invalidate();
+            await trpcUtils.clinical.getCredits.invalidate();
+            if (typeof synced.balance === 'number') {
+              setClinicalBalance(synced.balance);
+            }
+            if ((synced.balance ?? 0) + 1e-9 >= 1) {
+              Alert.alert(
+                t('clinical.errorTitle'),
+                t('clinical.creditsRestored').replace(
+                  '{count}',
+                  String(synced.balance),
+                ),
+              );
+              return;
+            }
+            if (synced.isPro || looksPro || needsTopup) {
+              trackClinicalEvent('clinical_insufficient_credits');
+              trackClinicalEvent('clinical_topup_shown');
+              setTopupVisible(true);
+              return;
+            }
+          } catch {
+            if (needsTopup || looksPro) {
+              trackClinicalEvent('clinical_insufficient_credits');
+              trackClinicalEvent('clinical_topup_shown');
+              setTopupVisible(true);
+              return;
+            }
+          }
+          trackClinicalEvent('clinical_paywall_shown');
+          openPaywallWithFallback();
+        })();
         return;
       }
+
       trackClinicalEvent('clinical_paywall_shown');
       openPaywallWithFallback();
     },
-    [openPaywallWithFallback],
+    [
+      openPaywallWithFallback,
+      isPremium,
+      clinicalStatusQuery.data?.isPro,
+      syncClinicalEntitlement,
+      trpcUtils,
+      t,
+    ],
   );
 
   const startClinicalCase = useCallback(
@@ -427,7 +475,7 @@ export default function TutorScreen() {
       ]);
     } catch (error) {
       if (isTrpcForbidden(error)) {
-        openPaywallWithFallback();
+        openTopupOrPaywall(getMutationErrorMessage(error, ''));
         return;
       }
       setClinicalMessages((prev) => [
@@ -448,7 +496,7 @@ export default function TutorScreen() {
     analyzeImageMutation,
     tutorLocale,
     t,
-    openPaywallWithFallback,
+    openTopupOrPaywall,
   ]);
 
   const handleClinicalSummary = useCallback(async () => {
@@ -482,7 +530,7 @@ export default function TutorScreen() {
       ]);
     } catch (error) {
       if (isTrpcForbidden(error)) {
-        openPaywallWithFallback();
+        openTopupOrPaywall(getMutationErrorMessage(error, ''));
         return;
       }
       setClinicalMessages((prev) => [
@@ -503,7 +551,7 @@ export default function TutorScreen() {
     generateSummaryMutation,
     tutorLocale,
     t,
-    openPaywallWithFallback,
+    openTopupOrPaywall,
   ]);
 
   const handleSend = async () => {

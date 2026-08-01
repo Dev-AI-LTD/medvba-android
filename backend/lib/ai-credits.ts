@@ -468,10 +468,11 @@ export async function grantMonthlyCreditsIfNeeded(params: {
 
   if (error) {
     console.error('[ai-credits] grant check failed:', error);
-    return {
-      granted: false,
-      balanceAfter: await getCreditBalance(params.supabase, params.userId),
-    };
+    // Fail closed so sync/webhook can retry — silent skip leaves Pro + 0 credits.
+    throw new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Failed to verify monthly AI credit grant',
+    });
   }
 
   if (existing) {

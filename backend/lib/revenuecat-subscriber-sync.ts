@@ -145,6 +145,17 @@ export async function syncSubscriberPayloadToSupabase(
   isPro: boolean;
   grantedMonthly?: boolean;
 }> {
+  // Never treat a failed/missing REST payload as "free" — that can wipe Pro
+  // and leave Clinical stuck (PAYWALL/TOPUP loop) right after purchase.
+  if (!options?.forceRevoke && body == null) {
+    return {
+      ok: false,
+      error: "RevenueCat subscriber unavailable",
+      source: "noop",
+      isPro: false,
+    };
+  }
+
   const picked = pickActiveProEntitlement(body?.subscriber?.entitlements);
   const active = !options?.forceRevoke && picked != null;
   const nowIso = new Date().toISOString();
@@ -177,31 +188,28 @@ export async function syncSubscriberPayloadToSupabase(
       return { ok: false, error: error.message, source: "rest", isPro: false };
     }
 
+    // Do not swallow grant failures: Pro + 0 credits is the stuck Clinical loop.
+    const { grantMonthlyCreditsIfNeeded, syncEntitlementProFlag } = await import(
+      "./ai-credits"
+    );
+    await syncEntitlementProFlag({
+      supabase,
+      userId,
+      isPro: true,
+      entitlementKey: picked.key || PRO_AI_ENTITLEMENT_ID,
+      renewsAt: expiresAt,
+    });
     let grantedMonthly = false;
-    try {
-      const { grantMonthlyCreditsIfNeeded, syncEntitlementProFlag } = await import(
-        "./ai-credits"
-      );
-      await syncEntitlementProFlag({
+    if (grantMonthly) {
+      const grant = await grantMonthlyCreditsIfNeeded({
         supabase,
         userId,
-        isPro: true,
-        entitlementKey: picked.key || PRO_AI_ENTITLEMENT_ID,
+        plan,
+        productId: picked.ent.product_identifier,
+        revenuecatTransactionId: options?.revenuecatTransactionId,
         renewsAt: expiresAt,
       });
-      if (grantMonthly) {
-        const grant = await grantMonthlyCreditsIfNeeded({
-          supabase,
-          userId,
-          plan,
-          productId: picked.ent.product_identifier,
-          revenuecatTransactionId: options?.revenuecatTransactionId,
-          renewsAt: expiresAt,
-        });
-        grantedMonthly = grant.granted;
-      }
-    } catch (e) {
-      console.warn("[RevenueCat sync] Clinical credit grant skipped:", e);
+      grantedMonthly = grant.granted;
     }
 
     return { ok: true, source: "rest", isPro: true, grantedMonthly };

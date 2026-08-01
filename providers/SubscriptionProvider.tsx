@@ -349,12 +349,22 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
 
   const syncClinicalAfterPurchase = useCallback(async () => {
     if (!isClinicalCopilotUiEnabled()) return;
-    try {
+    // RC REST can lag a moment after purchase; retry once before giving up.
+    const attempt = async () => {
       await syncClinicalEntitlementRef.current();
       await trpcUtils.clinical.getStatus.invalidate();
       await trpcUtils.clinical.getCredits.invalidate();
+    };
+    try {
+      await attempt();
     } catch (err) {
-      log.warn('[Subscription] Clinical entitlement sync failed:', err);
+      log.warn('[Subscription] Clinical entitlement sync failed, retrying:', err);
+      await new Promise((r) => setTimeout(r, 1500));
+      try {
+        await attempt();
+      } catch (retryErr) {
+        log.warn('[Subscription] Clinical entitlement sync failed:', retryErr);
+      }
     }
   }, [trpcUtils]);
   const syncClinicalAfterPurchaseRef = useRef(syncClinicalAfterPurchase);

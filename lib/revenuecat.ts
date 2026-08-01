@@ -144,38 +144,52 @@ export async function buyProAiAnnual(): Promise<CustomerInfo | null> {
   return customerInfo;
 }
 
+function isLikelyCreditTopupId(id: string): boolean {
+  const s = id.toLowerCase();
+  return s.includes('credit') || s.includes('topup') || s.includes('top_up');
+}
+
 /**
  * Purchase a consumable credit top-up by product / package id.
  * Does NOT grant credits locally — caller must syncEntitlement afterward.
+ * Exact package/product match only (never fuzzy-match subscription packages).
  */
 export async function purchaseCreditTopup(
   productId: string,
-): Promise<{ customerInfo: CustomerInfo | null; purchased: boolean }> {
-  const packages = await getCurrentPackages();
-  const needle = productId.toLowerCase();
-  const pkg =
-    packages.find((p) => p.identifier.toLowerCase() === needle) ||
-    packages.find((p) => String(p.product?.identifier ?? '').toLowerCase() === needle) ||
-    packages.find(
-      (p) =>
-        p.identifier.toLowerCase().includes(needle) ||
-        String(p.product?.identifier ?? '').toLowerCase().includes(needle),
-    );
-
-  if (!pkg) {
-    log.warn('[RevenueCat] Top-up package not found:', productId);
+): Promise<{ customerInfo: CustomerInfo | null; purchased: boolean; userCancelled?: boolean }> {
+  const needle = productId.toLowerCase().trim();
+  if (!needle || !isLikelyCreditTopupId(needle)) {
+    log.warn('[RevenueCat] Refusing non-top-up product id:', productId);
     return { customerInfo: null, purchased: false };
   }
 
+  const packages = await getCurrentPackages();
+  const pkg =
+    packages.find((p) => p.identifier.toLowerCase() === needle) ||
+    packages.find((p) => String(p.product?.identifier ?? '').toLowerCase() === needle);
+
   try {
-    const { customerInfo } = await Purchases.purchasePackage(pkg);
+    if (pkg && isLikelyCreditTopupId(`${pkg.identifier} ${pkg.product?.identifier ?? ''}`)) {
+      const { customerInfo } = await Purchases.purchasePackage(pkg);
+      return { customerInfo, purchased: true };
+    }
+
+    // Consumables may live outside the current subscription offering.
+    const products = await Purchases.getProducts([productId]);
+    const product =
+      products.find((p) => p.identifier.toLowerCase() === needle) ?? products[0];
+    if (!product || !isLikelyCreditTopupId(product.identifier)) {
+      log.warn('[RevenueCat] Top-up product not found:', productId);
+      return { customerInfo: null, purchased: false };
+    }
+    const { customerInfo } = await Purchases.purchaseStoreProduct(product);
     return { customerInfo, purchased: true };
   } catch (error: unknown) {
     const cancelled = Boolean((error as { userCancelled?: boolean })?.userCancelled);
     if (!cancelled) {
       log.error('[RevenueCat] Top-up purchase failed:', error);
     }
-    return { customerInfo: null, purchased: false };
+    return { customerInfo: null, purchased: false, userCancelled: cancelled };
   }
 }
 

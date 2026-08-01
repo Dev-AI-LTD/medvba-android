@@ -511,6 +511,10 @@ export const ro: Record<string, string> = {
   'clinical.topupCredits': '{count} credite',
   'clinical.topupBuy': 'Cumpără',
   'clinical.topupClose': 'Nu acum',
+  'clinical.topupPurchaseFailed':
+    'Nu am putut finaliza reîncărcarea de credite. Verifică pachetele de credite în magazin, apoi încearcă din nou. Dacă ai deja abonament, folosește Reîncarcă credite — nu cumpăra din nou abonamentul.',
+  'clinical.creditsRestored':
+    '{count} credite Clinical sunt disponibile. Încearcă din nou generarea.',
   'clinical.trialBanner': '{count} credite trial rămase',
   'clinical.homeCardTitle': 'Rezolvă un caz clinic',
   'clinical.homeCardSubtitle': 'Exersează raționamentul cu Clinical Copilot',

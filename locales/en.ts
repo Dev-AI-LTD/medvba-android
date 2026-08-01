@@ -512,6 +512,10 @@ export const en: Record<string, string> = {
   'clinical.topupCredits': '{count} credits',
   'clinical.topupBuy': 'Buy',
   'clinical.topupClose': 'Not now',
+  'clinical.topupPurchaseFailed':
+    'Could not complete the credit top-up. Make sure credit packs are available in the store, then try again. If you already subscribe, use Top up credits — do not buy the subscription again.',
+  'clinical.creditsRestored':
+    '{count} Clinical credits are ready. Try generating again.',
   'clinical.trialBanner': '{count} trial credits remaining',
   'clinical.homeCardTitle': 'Solve a clinical case',
   'clinical.homeCardSubtitle': 'Practice reasoning with Clinical Copilot',

@@ -57,7 +57,10 @@
   },
   "submit": {
     "internal": {
-      "android": { "track": "internal" },
+      "android": {
+        "track": "internal",
+        "serviceAccountKeyPath": "./secrets/play-service-account.json"
+      },
       "ios": {
         "bundleIdentifier": "com.devaieood.medvba",
         "ascApiKeyPath": "./secrets/asc-api-key.p8",
@@ -67,7 +70,10 @@
       }
     },
     "production": {
-      "android": { "track": "production" },
+      "android": {
+        "track": "production",
+        "serviceAccountKeyPath": "./secrets/play-service-account.json"
+      },
       "ios": {
         "bundleIdentifier": "com.devaieood.medvba",
         "ascApiKeyPath": "./secrets/asc-api-key.p8",

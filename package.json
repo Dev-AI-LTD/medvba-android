@@ -86,6 +86,8 @@
     "build:dev:android": "node scripts/eas-build.mjs development",
     "build:aab": "node scripts/eas-build.mjs production",
     "release:android": "node scripts/eas-build.mjs production",
+    "release:android:latest": "npx -y eas-cli submit --platform android --profile production --latest --non-interactive",
+    "release:ios:latest": "npx -y eas-cli submit --platform ios --profile production --latest --verbose --verbose-fastlane --non-interactive",
     "release:artifacts": "node scripts/eas-download-release-artifacts.mjs --latest",
     "campaign:build-landing": "node scripts/build-campaign-nfc-landing.mjs",
     "campaign:social-clips": "node scripts/generate-campaign-social-clips.mjs",
