@@ -20,8 +20,10 @@ function getExtra(): Record<string, unknown> {
 }
 
 /**
- * Client-side review premium bypass. Off in production store builds unless
- * EXPO_PUBLIC_ENABLE_REVIEW_PREMIUM=true (set in EAS for App Review / TestFlight).
+ * Client-side review premium bypass for allowlisted demo emails only.
+ * Production / public store: keep EXPO_PUBLIC_ENABLE_REVIEW_PREMIUM=false so users
+ * pay via RevenueCat; App Review demo premium comes from Supabase grant instead.
+ * Set true only on dedicated App Review / TestFlight builds if needed.
  */
 export function isReviewPremiumFeatureEnabled(): boolean {
   if (__DEV__) return true;

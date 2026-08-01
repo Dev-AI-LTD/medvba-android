@@ -209,7 +209,8 @@ Obligatoriu pentru review email:
 - `EXPO_PUBLIC_KINDE_LOGIN_HINT_EMAIL=contact@devaieood.com` (opțional, prefill)
 
 - `EXPO_PUBLIC_APP_REVIEW_PREMIUM_EMAILS=contact@devaieood.com`
-- **`EXPO_PUBLIC_ENABLE_REVIEW_PREMIUM=true`** — premium UI pentru contul demo în build production (TestFlight / submit)
+- **`EXPO_PUBLIC_ENABLE_REVIEW_PREMIUM=false`** pe EAS **production** (public App Store) — utilizatorii plătesc prin RevenueCat; premium demo vine din `grant-review-premium` (Supabase), nu din bypass client
+- Setează `EXPO_PUBLIC_ENABLE_REVIEW_PREMIUM=true` doar pe un profil/build dedicat App Review / TestFlight dacă ai nevoie de bypass client fără grant DB
 
 
 
@@ -247,11 +248,11 @@ npm run grant-review-premium
 
 - Allowlist în [`lib/app-review-premium.ts`](../lib/app-review-premium.ts): `contact@devaieood.com` (implicit).
 
-- EAS production (submit): `EXPO_PUBLIC_ENABLE_REVIEW_PREMIUM=true` + `EXPO_PUBLIC_APP_REVIEW_PREMIUM_EMAILS=contact@devaieood.com`
+- EAS **production** (public store): `EXPO_PUBLIC_ENABLE_REVIEW_PREMIUM=false` + `EXPO_PUBLIC_PAYWALL_ENABLED=true` — plată reală via store/RevenueCat. Contul demo rămâne premium prin grant Supabase (`npm run grant-review-premium`).
 
 - Opțional prefill Kinde: `EXPO_PUBLIC_KINDE_LOGIN_HINT_EMAIL=contact@devaieood.com`
 
-- Fără flag în build public App Store: bypass client **dezactivat** (default `false` în `app.config.ts`).
+- Bypass client (`ENABLE_REVIEW_PREMIUM=true`) doar pe build-uri dedicate review/TestFlight, nu pe App Store public.
 
 - **Nu** implementați `app_store_review_mode`, buton ascuns sau `medvba://hidden-login` pentru primul submit.
 

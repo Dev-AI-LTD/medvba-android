@@ -182,7 +182,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       supportsTablet: false,
       bundleIdentifier: 'com.devaieood.medvba',
       icon: './assets/images/icon.png',
-      buildNumber: '74',
+      buildNumber: '75',
       // Required for @invertase/react-native-apple-authentication (EAS / prebuild).
       entitlements: {
         'com.apple.developer.applesignin': ['Default'],
@@ -253,9 +253,8 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         envFromFile.EXPO_PUBLIC_REVENUECAT_API_KEY_IOS || process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_IOS,
       EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID:
         envFromFile.EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID || process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID,
-      // Local / USB dev: default on so limits + paywall can be tested without forgetting .env.
-      // EAS cloud & local EAS builds set EAS_BUILD=true → default off unless secret / .env sets true.
-      // Default true for store builds; set EXPO_PUBLIC_PAYWALL_ENABLED=false only for internal/dev EAS if needed.
+      // Default ON for store + local so users hit real RevenueCat paywall limits.
+      // Set EXPO_PUBLIC_PAYWALL_ENABLED=false only for internal/dev EAS if needed.
       EXPO_PUBLIC_PAYWALL_ENABLED:
         envFromFile.EXPO_PUBLIC_PAYWALL_ENABLED ??
         process.env.EXPO_PUBLIC_PAYWALL_ENABLED ??
