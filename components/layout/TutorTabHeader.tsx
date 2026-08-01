@@ -14,25 +14,41 @@ import {
   typeScale,
 } from '@/theme/iosDesign';
 
-export function TutorTabHeader() {
+export function TutorTabHeader({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
   const { colors } = useTheme();
   const { t } = useLanguage();
   const { isPremium, isPaywallEnabled } = useSubscription();
 
   return (
-    <View style={[styles.header, { borderBottomColor: colors.glassBorder }]}>
-      <View style={[styles.headerIcon, { backgroundColor: colors.cardBgLight }]}>
-        <Bot color={colors.primary} size={iconXl} />
+    <View
+      style={[
+        styles.header,
+        compact && styles.headerCompact,
+        { borderBottomColor: colors.glassBorder },
+      ]}
+    >
+      <View
+        style={[
+          styles.headerIcon,
+          compact && styles.headerIconCompact,
+          { backgroundColor: colors.cardBgLight },
+        ]}
+      >
+        <Bot color={colors.primary} size={compact ? iconSm : iconXl} />
       </View>
       <View style={styles.titleBlock}>
-        <Text style={[styles.title, { color: colors.text }]}>{t('tutor.title')}</Text>
-        <View style={styles.statusRow}>
-          <View style={[styles.onlineDot, { backgroundColor: colors.success }]} />
-          <Text style={[styles.status, { color: colors.textSecondary }]}>
-            {t('tutor.alwaysAvailable')}
-          </Text>
-        </View>
+        <Text style={[styles.title, compact && styles.titleCompact, { color: colors.text }]}>
+          {t('tutor.title')}
+        </Text>
+        {!compact ? (
+          <View style={styles.statusRow}>
+            <View style={[styles.onlineDot, { backgroundColor: colors.success }]} />
+            <Text style={[styles.status, { color: colors.textSecondary }]}>
+              {t('tutor.alwaysAvailable')}
+            </Text>
+          </View>
+        ) : null}
       </View>
       {isPaywallEnabled && isPremium ? (
         <View style={styles.premiumBadge}>
@@ -62,6 +78,9 @@ const styles = StyleSheet.create({
     paddingVertical: space.space4,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
+  headerCompact: {
+    paddingVertical: space.space2,
+  },
   headerIcon: {
     width: touchTargetMin,
     height: touchTargetMin,
@@ -70,12 +89,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: space.space3,
   },
+  headerIconCompact: {
+    width: touchTargetMin - space.space2,
+    height: touchTargetMin - space.space2,
+    borderRadius: (touchTargetMin - space.space2) / 2,
+    marginRight: space.space2,
+  },
   titleBlock: {
     flex: 1,
     minWidth: 0,
   },
   title: {
     ...typeScale.headline,
+  },
+  titleCompact: {
+    ...typeScale.subhead,
+    fontWeight: '700',
   },
   statusRow: {
     flexDirection: 'row',

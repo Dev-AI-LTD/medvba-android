@@ -13,6 +13,7 @@ import {
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useKeyboardHeight } from '@/lib/use-keyboard-height';
 import { Screen, TutorTabHeader } from '@/components/layout';
+import { StudyMarkdown } from '@/components/StudyMarkdown';
 import {
   Send,
   Bot,
@@ -142,6 +143,7 @@ export default function TutorScreen() {
   const [trialRemaining, setTrialRemaining] = useState<number | null>(null);
   const [topupVisible, setTopupVisible] = useState(false);
   const [howToExpanded, setHowToExpanded] = useState(true);
+  const [casesToolsExpanded, setCasesToolsExpanded] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const lastUserMessageRef = useRef<string>('');
   const clinicalStreamAbortRef = useRef<AbortController | null>(null);
@@ -163,6 +165,18 @@ export default function TutorScreen() {
   const keyboardVerticalOffset = tabBarHeight;
 
   const tutorLocale = currentLanguage === 'ro' ? 'ro' : 'en';
+
+  const clinicalFocus =
+    clinicalUiEnabled &&
+    copilotMode === 'clinical' &&
+    (!!clinicalSessionId ||
+      clinicalMessages.some((m) => m.role === 'assistant' && !m.isError));
+
+  useEffect(() => {
+    if (!clinicalFocus) return;
+    setHowToExpanded(false);
+    setCasesToolsExpanded(false);
+  }, [clinicalFocus]);
 
   useEffect(() => {
     return () => {
@@ -963,10 +977,10 @@ export default function TutorScreen() {
         enabled={Platform.OS !== 'web'}
       >
         <OfflineFeatureNotice />
-        <TutorTabHeader />
+        <TutorTabHeader compact={clinicalFocus} />
 
         {clinicalUiEnabled ? (
-          <View style={styles.clinicalBar}>
+          <View style={[styles.clinicalBar, clinicalFocus && styles.clinicalBarCompact]}>
             <View style={styles.modeRow}>
               <TouchableOpacity
                 style={[styles.modeChip, copilotMode === 'tutor' && styles.modeChipActive]}
@@ -983,36 +997,48 @@ export default function TutorScreen() {
             </View>
             {copilotMode === 'clinical' ? (
               <View>
-                <Text style={styles.clinicalDisclaimer}>{t('clinical.disclaimer')}</Text>
-                <TouchableOpacity
-                  onPress={() => void acceptDisclaimer()}
-                  style={styles.disclaimerAccept}
-                >
-                  <Text style={styles.disclaimerAcceptText}>
-                    {disclaimerAccepted
-                      ? t('clinical.disclaimerAccepted')
-                      : t('clinical.acceptDisclaimer')}
+                {clinicalFocus && disclaimerAccepted ? (
+                  <Text style={styles.clinicalDisclaimerCompact}>
+                    {t('clinical.disclaimerCompact')}
                   </Text>
-                </TouchableOpacity>
+                ) : (
+                  <>
+                    <Text style={styles.clinicalDisclaimer}>{t('clinical.disclaimer')}</Text>
+                    <TouchableOpacity
+                      onPress={() => void acceptDisclaimer()}
+                      style={styles.disclaimerAccept}
+                    >
+                      <Text style={styles.disclaimerAcceptText}>
+                        {disclaimerAccepted
+                          ? t('clinical.disclaimerAccepted')
+                          : t('clinical.acceptDisclaimer')}
+                      </Text>
+                    </TouchableOpacity>
+                  </>
+                )}
 
-                <View style={styles.howToHeader}>
-                  <Text style={styles.howToTitle}>{t('clinical.howToTitle')}</Text>
-                  <TouchableOpacity onPress={() => void toggleHowTo()} accessibilityRole="button">
-                    <Text style={styles.disclaimerAcceptText}>
-                      {howToExpanded ? t('clinical.howToHide') : t('clinical.howToShow')}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-                {howToExpanded ? (
-                  <View style={styles.howToBox}>
-                    <Text style={styles.howToStep}>{t('clinical.howToStep1')}</Text>
-                    <Text style={styles.howToStep}>{t('clinical.howToStep2')}</Text>
-                    <Text style={styles.howToStep}>{t('clinical.howToStep3')}</Text>
-                    <Text style={styles.howToStep}>{t('clinical.howToStep4')}</Text>
-                  </View>
+                {!clinicalFocus ? (
+                  <>
+                    <View style={styles.howToHeader}>
+                      <Text style={styles.howToTitle}>{t('clinical.howToTitle')}</Text>
+                      <TouchableOpacity onPress={() => void toggleHowTo()} accessibilityRole="button">
+                        <Text style={styles.disclaimerAcceptText}>
+                          {howToExpanded ? t('clinical.howToHide') : t('clinical.howToShow')}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                    {howToExpanded ? (
+                      <View style={styles.howToBox}>
+                        <Text style={styles.howToStep}>{t('clinical.howToStep1')}</Text>
+                        <Text style={styles.howToStep}>{t('clinical.howToStep2')}</Text>
+                        <Text style={styles.howToStep}>{t('clinical.howToStep3')}</Text>
+                        <Text style={styles.howToStep}>{t('clinical.howToStep4')}</Text>
+                      </View>
+                    ) : null}
+                  </>
                 ) : null}
 
-                <View style={styles.creditRow}>
+                <View style={[styles.creditRow, clinicalFocus && styles.creditRowCompact]}>
                   {clinicalBalance != null ? (
                     <Text style={styles.creditBalance}>
                       {t('clinical.creditsRemaining').replace('{count}', String(clinicalBalance))}
@@ -1036,34 +1062,50 @@ export default function TutorScreen() {
                   ) : null}
                 </View>
 
-                <View style={styles.caseGrid}>
-                  {CLINICAL_CASE_TOPICS.map((topic) => (
+                {clinicalFocus ? (
+                  <TouchableOpacity
+                    style={styles.casesToolsToggle}
+                    onPress={() => setCasesToolsExpanded((v) => !v)}
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.disclaimerAcceptText}>
+                      {casesToolsExpanded
+                        ? t('clinical.casesToolsHide')
+                        : t('clinical.casesToolsShow')}
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
+
+                {!clinicalFocus || casesToolsExpanded ? (
+                  <View style={styles.caseGrid}>
+                    {CLINICAL_CASE_TOPICS.map((topic) => (
+                      <TouchableOpacity
+                        key={topic}
+                        style={styles.caseChip}
+                        onPress={() => void startClinicalCase(topic)}
+                        disabled={isTyping}
+                      >
+                        <Text style={styles.caseChipText}>{t(`clinical.topic.${topic}`)}</Text>
+                      </TouchableOpacity>
+                    ))}
                     <TouchableOpacity
-                      key={topic}
-                      style={styles.caseChip}
-                      onPress={() => void startClinicalCase(topic)}
+                      style={[styles.caseChip, styles.caseChipAction]}
+                      onPress={() => void handleClinicalImage()}
                       disabled={isTyping}
                     >
-                      <Text style={styles.caseChipText}>{t(`clinical.topic.${topic}`)}</Text>
+                      <ImageIcon color={colors.primary} size={iconSm} />
+                      <Text style={styles.caseChipText}>{t('clinical.analyzeImage')}</Text>
                     </TouchableOpacity>
-                  ))}
-                  <TouchableOpacity
-                    style={[styles.caseChip, styles.caseChipAction]}
-                    onPress={() => void handleClinicalImage()}
-                    disabled={isTyping}
-                  >
-                    <ImageIcon color={colors.primary} size={iconSm} />
-                    <Text style={styles.caseChipText}>{t('clinical.analyzeImage')}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.caseChip, styles.caseChipAction]}
-                    onPress={() => void handleClinicalSummary()}
-                    disabled={isTyping || !clinicalSessionId}
-                  >
-                    <FileText color={colors.primary} size={iconSm} />
-                    <Text style={styles.caseChipText}>{t('clinical.generateSummary')}</Text>
-                  </TouchableOpacity>
-                </View>
+                    <TouchableOpacity
+                      style={[styles.caseChip, styles.caseChipAction]}
+                      onPress={() => void handleClinicalSummary()}
+                      disabled={isTyping || !clinicalSessionId}
+                    >
+                      <FileText color={colors.primary} size={iconSm} />
+                      <Text style={styles.caseChipText}>{t('clinical.generateSummary')}</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : null}
               </View>
             ) : null}
           </View>
@@ -1112,15 +1154,23 @@ export default function TutorScreen() {
               </View>
             )}
 
-            {messages.map((message) => (
+            {messages.map((message) => {
+              const clinicalStudyAnswer =
+                clinicalFocus &&
+                message.role === 'assistant' &&
+                !message.isError &&
+                message.content.trim().length > 0;
+
+              return (
               <View key={message.id}>
                 <View
                   style={[
                     styles.messageRow,
-                    message.role === 'user' && styles.messageRowUser
+                    message.role === 'user' && styles.messageRowUser,
+                    clinicalStudyAnswer && styles.messageRowStudy,
                   ]}
                 >
-                  {message.role === 'assistant' && (
+                  {message.role === 'assistant' && !clinicalStudyAnswer && (
                     <View style={styles.avatarContainer}>
                       <Bot color={message.isError ? colors.error : colors.primary} size={iconSm} />
                     </View>
@@ -1130,14 +1180,19 @@ export default function TutorScreen() {
                       styles.messageBubble,
                       message.role === 'user' ? styles.userBubble : styles.assistantBubble,
                       message.isError && styles.errorBubble,
+                      clinicalStudyAnswer && styles.clinicalStudyBubble,
                     ]}
                   >
-                    <Text style={[
-                      styles.messageText,
-                      message.role === 'user' && styles.userMessageText
-                    ]}>
-                      {message.content}
-                    </Text>
+                    {clinicalStudyAnswer ? (
+                      <StudyMarkdown markdown={message.content} />
+                    ) : (
+                      <Text style={[
+                        styles.messageText,
+                        message.role === 'user' && styles.userMessageText
+                      ]}>
+                        {message.content}
+                      </Text>
+                    )}
                   </View>
                   {message.role === 'user' && (
                     <View style={[styles.avatarContainer, styles.userAvatar]}>
@@ -1158,7 +1213,8 @@ export default function TutorScreen() {
                   </TouchableOpacity>
                 )}
               </View>
-            ))}
+              );
+            })}
 
             {isTyping && !isStreamingReply && (
               <View style={styles.messageRow}>
@@ -1251,6 +1307,10 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     paddingBottom: space.space2,
     gap: space.space2,
   },
+  clinicalBarCompact: {
+    paddingBottom: space.space1,
+    gap: space.space1,
+  },
   modeRow: {
     flexDirection: 'row',
     gap: space.space2,
@@ -1275,6 +1335,11 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   clinicalDisclaimer: {
     ...typeScale.caption,
     color: colors.textSecondary,
+    marginBottom: space.space1,
+  },
+  clinicalDisclaimerCompact: {
+    ...typeScale.caption,
+    color: colors.textMuted,
     marginBottom: space.space1,
   },
   disclaimerAccept: {
@@ -1319,6 +1384,9 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     gap: space.space2,
     marginBottom: space.space2,
   },
+  creditRowCompact: {
+    marginBottom: space.space1,
+  },
   creditBalance: {
     ...typeScale.caption,
     color: colors.textMuted,
@@ -1327,6 +1395,12 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     ...typeScale.caption,
     color: colors.primary,
     fontWeight: '600' as const,
+  },
+  casesToolsToggle: {
+    alignSelf: 'flex-start',
+    marginBottom: space.space1,
+    minHeight: 32,
+    justifyContent: 'center',
   },
   caseGrid: {
     flexDirection: 'row',
@@ -1399,6 +1473,9 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   messageRowUser: {
     justifyContent: 'flex-end',
   },
+  messageRowStudy: {
+    alignItems: 'stretch',
+  },
   avatarContainer: {
     width: touchTargetMin - space.space3,
     height: touchTargetMin - space.space3,
@@ -1417,6 +1494,16 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     maxWidth: '75%',
     borderRadius: radiusLg + 2,
     padding: cardPadding - 2,
+  },
+  clinicalStudyBubble: {
+    maxWidth: '100%',
+    flex: 1,
+    width: '100%',
+    borderRadius: radiusMd,
+    borderBottomLeftRadius: radiusMd,
+    paddingHorizontal: space.space3,
+    paddingVertical: space.space3,
+    backgroundColor: 'transparent',
   },
   assistantBubble: {
     backgroundColor: colors.cardBgLight,
