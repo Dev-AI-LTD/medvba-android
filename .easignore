@@ -1,10 +1,62 @@
-# Do NOT list bun.lock here — EAS must upload it so installs match `bun install --frozen-lockfile`
-# (same tree as local). Ignoring it leaves npm without package-lock.json → Doctor warning + flaky Gradle.
+# IMPORTANT: When .easignore exists, EAS CLI uses it INSTEAD of .gitignore.
+# Keep this in sync with .gitignore, then add EAS-only exclusions below.
+# Do NOT list bun.lock — EAS needs it for bun install --frozen-lockfile.
 
-# Stray npm/yarn locks (gitignored locally) still get uploaded; exclude them so expo-doctor passes.
+# --- from .gitignore ---
+node_modules/
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+android/.kotlin/
+ios/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+.metro-health-check*
+
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+.DS_Store
+*.pem
+
+secrets/
+
+# local env files and secrets (never upload to EAS — use EAS env / eas.json)
+.env
+.env*.local
+.env.production
+.env.*.local
+.env.staging-clinical.local
+
+*.tsbuildinfo
+.vercel
+
+.rork
+
+rork-eslint.config.js
+
+scripts/*-report.txt
+
+release-artifacts/
+
+content/study/sources/
+
+scripts/output/
+
+supabase/.temp/
+
+# --- EAS-only ---
 # Use CNG/Prebuild on EAS even though android/ is versioned locally.
 /android

@@ -254,6 +254,8 @@ npm run grant-review-premium
 
 - Bypass client (`ENABLE_REVIEW_PREMIUM=true`) doar pe build-uri dedicate review/TestFlight, nu pe App Store public.
 
+- **EAS upload:** `.easignore` înlocuiește `.gitignore`. Păstrează `.env` în `.easignore` — altfel un `.env` local cu `ENABLE_REVIEW_PREMIUM=true` poate fi urcat pe EAS și dezactiva paywall-ul real. Pe profilul `production`, `app.config.ts` forțează flag-ul din EAS env (default `false`), nu din fișier.
+
 - **Nu** implementați `app_store_review_mode`, buton ascuns sau `medvba://hidden-login` pentru primul submit.
 
 

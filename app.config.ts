@@ -102,6 +102,27 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         clinicalFromEasProfile ??
         'false');
 
+  /**
+   * Billing / paywall flags must follow EAS secrets + eas.json on cloud builds.
+   * A local `.env` can still be uploaded when `.easignore` replaces `.gitignore`
+   * without listing `.env` — never let that file override production paywall settings.
+   */
+  const resolvePublicEnv = (key: string, fallback: string): string => {
+    if (isEasCloudBuild) {
+      return nonEmpty(process.env[key]) ?? nonEmpty(envFromFile[key]) ?? fallback;
+    }
+    return nonEmpty(envFromFile[key]) ?? nonEmpty(process.env[key]) ?? fallback;
+  };
+
+  // Public store / TestFlight production: client review-premium bypass OFF.
+  // App Review demo premium is server-only (grant-review-premium → Supabase).
+  const enableReviewPremium =
+    isEasCloudBuild && easBuildProfile === 'production'
+      ? (nonEmpty(process.env.EXPO_PUBLIC_ENABLE_REVIEW_PREMIUM) ?? 'false')
+      : resolvePublicEnv('EXPO_PUBLIC_ENABLE_REVIEW_PREMIUM', 'false');
+
+  const paywallEnabled = resolvePublicEnv('EXPO_PUBLIC_PAYWALL_ENABLED', 'true');
+
   const plugins: NonNullable<ExpoConfig['plugins']> = [
     [
       'expo-router',
@@ -182,7 +203,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       supportsTablet: false,
       bundleIdentifier: 'com.devaieood.medvba',
       icon: './assets/images/icon.png',
-      buildNumber: '75',
+      buildNumber: '76',
       // Required for @invertase/react-native-apple-authentication (EAS / prebuild).
       entitlements: {
         'com.apple.developer.applesignin': ['Default'],
@@ -253,12 +274,9 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         envFromFile.EXPO_PUBLIC_REVENUECAT_API_KEY_IOS || process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_IOS,
       EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID:
         envFromFile.EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID || process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID,
-      // Default ON for store + local so users hit real RevenueCat paywall limits.
+      // Default ON so users hit real RevenueCat paywall limits.
       // Set EXPO_PUBLIC_PAYWALL_ENABLED=false only for internal/dev EAS if needed.
-      EXPO_PUBLIC_PAYWALL_ENABLED:
-        envFromFile.EXPO_PUBLIC_PAYWALL_ENABLED ??
-        process.env.EXPO_PUBLIC_PAYWALL_ENABLED ??
-        'true',
+      EXPO_PUBLIC_PAYWALL_ENABLED: paywallEnabled,
       EXPO_PUBLIC_KINDE_ISSUER_URL:
         envFromFile.EXPO_PUBLIC_KINDE_ISSUER_URL || process.env.EXPO_PUBLIC_KINDE_ISSUER_URL,
       EXPO_PUBLIC_KINDE_CLIENT_ID:
@@ -276,13 +294,11 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         envFromFile.EXPO_PUBLIC_KINDE_LOGIN_HINT_EMAIL ||
         process.env.EXPO_PUBLIC_KINDE_LOGIN_HINT_EMAIL,
       EXPO_PUBLIC_APP_REVIEW_PREMIUM_EMAILS:
-        envFromFile.EXPO_PUBLIC_APP_REVIEW_PREMIUM_EMAILS ||
-        process.env.EXPO_PUBLIC_APP_REVIEW_PREMIUM_EMAILS,
-      // true only for App Review / TestFlight builds; false in public App Store (premium via Supabase grant).
-      EXPO_PUBLIC_ENABLE_REVIEW_PREMIUM:
-        envFromFile.EXPO_PUBLIC_ENABLE_REVIEW_PREMIUM ??
-        process.env.EXPO_PUBLIC_ENABLE_REVIEW_PREMIUM ??
-        'false',
+        resolvePublicEnv('EXPO_PUBLIC_APP_REVIEW_PREMIUM_EMAILS', '') ||
+        undefined,
+      // Production EAS: always false unless EAS env explicitly sets true (never .env file).
+      // App Review demo premium: grant-review-premium (Supabase), not client bypass.
+      EXPO_PUBLIC_ENABLE_REVIEW_PREMIUM: enableReviewPremium,
       // Clinical Copilot: OFF for production/store; ON for EAS `internal` (TestFlight / Play internal).
       // Prefer eas.json env per profile; see docs/CLINICAL_COPILOT.md.
       EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED: clinicalCopilotEnabled,
