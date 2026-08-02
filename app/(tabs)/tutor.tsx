@@ -158,10 +158,14 @@ export default function TutorScreen() {
   const tutorStreamAbortRef = useRef<AbortController | null>(null);
   const router = useRouter();
   const params = useLocalSearchParams<{
-    clinicalMode?: string;
-    fromExplain?: string;
-    openTopup?: string;
+    clinicalMode?: string | string[];
+    fromExplain?: string | string[];
+    openTopup?: string | string[];
   }>();
+  const paramFlag = useCallback((value: string | string[] | undefined) => {
+    const raw = Array.isArray(value) ? value[0] : value;
+    return raw === '1';
+  }, []);
   const {
     isPremium,
     isPaywallEnabled,
@@ -195,18 +199,19 @@ export default function TutorScreen() {
     useCallback(() => {
       if (!clinicalUiEnabled) return;
       const wantClinical =
-        params.clinicalMode === '1' ||
-        params.fromExplain === '1' ||
-        params.openTopup === '1';
+        paramFlag(params.clinicalMode) ||
+        paramFlag(params.fromExplain) ||
+        paramFlag(params.openTopup);
       if (wantClinical) {
         setCopilotMode('clinical');
       }
-      if (params.openTopup === '1') {
+      if (paramFlag(params.openTopup)) {
         trackClinicalEvent('clinical_topup_shown');
         setTopupVisible(true);
       }
     }, [
       clinicalUiEnabled,
+      paramFlag,
       params.clinicalMode,
       params.fromExplain,
       params.openTopup,
@@ -263,6 +268,8 @@ export default function TutorScreen() {
   });
   const syncClinicalEntitlement = trpc.clinical.syncEntitlement.useMutation();
   const trpcUtils = trpc.useUtils();
+  const explainQuestionMutateRef = useRef(explainQuestionMutation.mutateAsync);
+  explainQuestionMutateRef.current = explainQuestionMutation.mutateAsync;
 
   useEffect(() => {
     if (clinicalStatusQuery.data?.enabled) {
@@ -403,6 +410,9 @@ export default function TutorScreen() {
     ],
   );
 
+  const openTopupOrPaywallRef = useRef(openTopupOrPaywall);
+  openTopupOrPaywallRef.current = openTopupOrPaywall;
+
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
@@ -425,13 +435,15 @@ export default function TutorScreen() {
             timestamp: new Date(),
           },
         ]);
+        // Clear after the question is visible so focus cleanup cannot drop the intent mid-flight.
+        await AsyncStorage.removeItem(CLINICAL_PENDING_EXPLAIN_KEY);
         setIsTyping(true);
         setTimeout(() => {
           scrollViewRef.current?.scrollToEnd({ animated: true });
         }, 150);
 
         try {
-          const res = await explainQuestionMutation.mutateAsync({
+          const res = await explainQuestionMutateRef.current({
             question: intent.question,
             options: intent.options,
             chosenIndex: intent.chosenIndex,
@@ -473,7 +485,7 @@ export default function TutorScreen() {
             isTrpcForbidden(error) ||
             /TOPUP_REQUIRED|PAYWALL_REQUIRED|Insufficient/i.test(msg)
           ) {
-            openTopupOrPaywall(msg);
+            openTopupOrPaywallRef.current(msg);
             setClinicalMessages((prev) => [
               ...prev,
               {
@@ -508,11 +520,10 @@ export default function TutorScreen() {
       };
 
       const hydrateFromQuizExplain = async () => {
-        if (!clinicalUiEnabled || params.fromExplain !== '1') return;
+        if (!clinicalUiEnabled) return;
         try {
           const raw = await AsyncStorage.getItem(CLINICAL_PENDING_EXPLAIN_KEY);
           if (!raw || cancelled) return;
-          await AsyncStorage.removeItem(CLINICAL_PENDING_EXPLAIN_KEY);
           const pending = JSON.parse(raw) as ClinicalPendingExplain;
 
           if (isExplainIntent(pending)) {
@@ -522,6 +533,8 @@ export default function TutorScreen() {
 
           // Legacy result payload (pre-intent)
           if (!pending?.sessionId || !pending.response?.trim()) return;
+          await AsyncStorage.removeItem(CLINICAL_PENDING_EXPLAIN_KEY);
+          if (cancelled) return;
           setDisclaimerAccepted(true);
           setHowToExpanded(false);
           setCasesToolsExpanded(false);
@@ -556,13 +569,7 @@ export default function TutorScreen() {
       return () => {
         cancelled = true;
       };
-    }, [
-      clinicalUiEnabled,
-      params.fromExplain,
-      explainQuestionMutation,
-      openTopupOrPaywall,
-      t,
-    ]),
+    }, [clinicalUiEnabled, t]),
   );
 
   const startClinicalCase = useCallback(

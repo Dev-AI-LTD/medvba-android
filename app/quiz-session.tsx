@@ -73,8 +73,6 @@ import {
   selectUniqueQuestions,
 } from '@/lib/quizQuestionSelection';
 import { buildQuestionsWithChapters } from '@/lib/questionChapterLink';
-import { getParentStudyChapter } from '@/lib/quizToStudyChapter';
-import { STUDY_PILOT_MODULE_ID } from '@/constants/study';
 import { isClinicalCopilotUiEnabled } from '@/lib/clinical-copilot-flag';
 import { trackClinicalEvent } from '@/lib/clinical-analytics';
 import {
@@ -790,30 +788,7 @@ export default function QuizSessionScreen() {
 
   const activeChapterMeta = questionsWithChapters[currentIndex];
   const activeChapterId = activeChapterMeta?.chapterId ?? '';
-  const activeModuleId =
-    activeChapterMeta?.moduleId || categoryRef.current || category;
   const showChapterContext = mode !== 'exam' && Boolean(activeChapterId);
-
-  const handleOpenChapterSummary = useCallback(() => {
-    if (!activeChapterId || !activeModuleId) return;
-
-    const parent = getParentStudyChapter(activeModuleId, activeChapterId);
-    const isDirectStudyModule = activeModuleId === STUDY_PILOT_MODULE_ID;
-    if (!parent && !isDirectStudyModule) {
-      Alert.alert(t('study.summaryNotFound'));
-      return;
-    }
-
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push({
-      pathname: '/study/chapter/[chapterId]',
-      params: {
-        chapterId: activeChapterId,
-        moduleId: activeModuleId,
-        fromQuiz: '1',
-      },
-    });
-  }, [activeChapterId, activeModuleId, router, t]);
 
   if (isLoading) {
     return (
@@ -1026,18 +1001,12 @@ export default function QuizSessionScreen() {
           <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
             <View style={styles.questionContainer}>
               {showChapterContext && (
-                <TouchableOpacity
-                  onPress={handleOpenChapterSummary}
-                  activeOpacity={0.75}
-                  style={styles.chapterBadge}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('session.openStudyChapter')}
-                >
+                <View style={styles.chapterBadge} accessibilityLabel={t('session.chapter')}>
                   <BookOpen color={colors.primary} size={iconSm} />
                   <Text style={styles.chapterText}>
                     {t('session.chapter')}: {getChapterTitle(activeChapterId)}
                   </Text>
-                </TouchableOpacity>
+                </View>
               )}
               {currentQuestion.difficulty && (
                 <View style={styles.difficultyBadge}>
@@ -1107,18 +1076,6 @@ export default function QuizSessionScreen() {
                   </TouchableOpacity>
                 </View>
                 <Text style={styles.explanationText}>{currentQuestion.explanation}</Text>
-                {showChapterContext && activeModuleId && (
-                  <TouchableOpacity
-                    style={styles.summaryLink}
-                    onPress={handleOpenChapterSummary}
-                    activeOpacity={0.8}
-                  >
-                    <BookOpen color={colors.primary} size={iconSm} />
-                    <Text style={[styles.summaryLinkText, { color: colors.primary }]}>
-                      {t('session.readChapterSummary')}
-                    </Text>
-                  </TouchableOpacity>
-                )}
               </GlassCard>
             )}
 
@@ -1145,22 +1102,6 @@ export default function QuizSessionScreen() {
                     {clinicalExplainLoading
                       ? t('clinical.explainLoading')
                       : t('clinical.explainCta')}
-                  </Text>
-                </TouchableOpacity>
-              )}
-
-            {showResult &&
-              !currentQuestion.explanation &&
-              showChapterContext &&
-              activeModuleId && (
-                <TouchableOpacity
-                  style={styles.summaryLink}
-                  onPress={handleOpenChapterSummary}
-                  activeOpacity={0.8}
-                >
-                  <BookOpen color={colors.primary} size={iconSm} />
-                  <Text style={[styles.summaryLinkText, { color: colors.primary }]}>
-                    {t('session.readChapterSummary')}
                   </Text>
                 </TouchableOpacity>
               )}

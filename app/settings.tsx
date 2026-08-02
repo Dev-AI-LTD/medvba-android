@@ -126,7 +126,7 @@ export default function SettingsScreen() {
   const queryClient = useQueryClient();
   const { currentLanguage, changeLanguage, t } = useLanguage();
   const { colors, preference: themePreference } = useTheme();
-  const { isPremium, isPaywallEnabled, restorePurchases } = useSubscription();
+  const { isPremium, isPaywallEnabled, restorePurchases, premiumSource } = useSubscription();
   const [isRestoringPurchases, setIsRestoringPurchases] = useState(false);
   const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
 
@@ -681,6 +681,9 @@ export default function SettingsScreen() {
           {isPaywallEnabled && (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('settings.subscriptionSection')}</Text>
+              <Text style={[styles.sectionHint, { color: colors.textSecondary }]}>
+                {t(`settings.premiumSource.${premiumSource}` as 'settings.premiumSource.none')}
+              </Text>
               <View style={[styles.sectionCard, { borderColor: colors.glassBorder }]}>
                 <LinearGradient
                   colors={['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.04)']}
@@ -865,6 +868,12 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: space.space3,
     marginLeft: 4,
+  },
+  sectionHint: {
+    ...typeScale.caption,
+    marginBottom: space.space3,
+    marginLeft: 4,
+    opacity: 0.85,
   },
   sectionCard: {
     borderRadius: radiusLg,

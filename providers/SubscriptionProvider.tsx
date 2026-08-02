@@ -73,6 +73,9 @@ function isPremiumFromCustomerInfo(info: CustomerInfo | null): boolean {
   return Boolean(info.entitlements.active[ENTITLEMENT_ID]);
 }
 
+/** Why the client treats the user as premium (TestFlight / Settings diagnosis). */
+export type PremiumSource = 'none' | 'store' | 'server' | 'review' | 'paywall_off';
+
 function inferSubscriptionTypeFromCustomerInfo(info: CustomerInfo | null): 'yearly' | 'monthly' {
   const active = info?.entitlements?.active ?? {};
   const ent =
@@ -141,6 +144,8 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     isLoading: true,
     offerings: null,
   });
+  /** RevenueCat store entitlement only (excludes server / review bypass). */
+  const [storePremium, setStorePremium] = useState(false);
 
   const hasPremiumAccess = state.isPremium || isReviewPremiumAccount;
 
@@ -223,6 +228,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     serverGrantedPremiumRef.current = false;
     lastSyncedSignatureRef.current = null;
     lastReportedPremiumRef.current = null;
+    setStorePremium(false);
     setState((prev) => ({
       ...prev,
       isPremium: false,
@@ -328,18 +334,22 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
         invalidateStudyQueriesRef.current();
         return;
       }
+      serverGrantedPremiumRef.current = false;
       const remaining = result.remaining;
-      if (typeof remaining !== 'number' || remaining < 0) {
-        setState((prev) => ({ ...prev, freeAiQuestionsToday: 0 }));
-        return;
-      }
-      const serverCount = Math.min(FREE_AI_LIMIT, Math.max(0, FREE_AI_LIMIT - remaining));
-      setState((prev) => ({ ...prev, freeAiQuestionsToday: serverCount }));
-      log.debug('[Subscription] Synced AI count from server:', serverCount);
+      const freeAiQuestionsToday =
+        typeof remaining === 'number' && remaining >= 0
+          ? Math.min(FREE_AI_LIMIT, Math.max(0, FREE_AI_LIMIT - remaining))
+          : 0;
+      setState((prev) => ({
+        ...prev,
+        isPremium: storePremium,
+        freeAiQuestionsToday,
+      }));
+      log.debug('[Subscription] Synced AI count from server:', freeAiQuestionsToday);
     } catch (error) {
       log.debug('[Subscription] Could not sync AI count from server');
     }
-  }, [PAYWALL_ENABLED]);
+  }, [PAYWALL_ENABLED, storePremium]);
 
   /** Paywall on: sync server premium + AI usage when user logs in (includes App Review grants). */
   useEffect(() => {
@@ -450,6 +460,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
 
   const handleCustomerInfo = useCallback((info: CustomerInfo) => {
     const rcPremium = isPremiumFromCustomerInfo(info);
+    setStorePremium(rcPremium);
     const premium = rcPremium || serverGrantedPremiumRef.current || isReviewPremiumAccount;
     const prevPremium = lastReportedPremiumRef.current;
     lastReportedPremiumRef.current = premium;
@@ -668,6 +679,16 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
 
   const effectivePremium = !PAYWALL_ENABLED || hasPremiumAccess;
 
+  const premiumSource: PremiumSource = !PAYWALL_ENABLED
+    ? 'paywall_off'
+    : isReviewPremiumAccount
+      ? 'review'
+      : storePremium
+        ? 'store'
+        : state.isPremium
+          ? 'server'
+          : 'none';
+
   useEffect(() => {
     if (!isReviewPremiumAccount || !user?.id) return;
     invalidateStudyQueries();
@@ -678,6 +699,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     () => ({
       isPremium: effectivePremium,
       isPaywallEnabled: PAYWALL_ENABLED,
+      premiumSource,
       isLoading: state.isLoading,
       freeQuizzesToday: state.freeQuizzesToday,
       freeQuestionsAnsweredToday: state.freeQuestionsAnsweredToday,
@@ -698,6 +720,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     }),
     [
       effectivePremium,
+      premiumSource,
       isReviewPremiumAccount,
       PAYWALL_ENABLED,
       state.isLoading,
