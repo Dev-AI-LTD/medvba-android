@@ -26,6 +26,7 @@ import {
 } from '@/lib/subscription-paywall';
 import {
   buttonHeight,
+  contentMaxWidth,
   fieldGap,
   radiusMd,
   screenPaddingX,
@@ -300,6 +301,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: screenPaddingX,
     paddingBottom: sectionGap,
+    width: '100%',
+    maxWidth: contentMaxWidth,
+    alignSelf: 'center',
   },
   serviceTitle: {
     ...typeScale.title2,

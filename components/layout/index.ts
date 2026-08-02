@@ -1,4 +1,5 @@
 export { Screen } from './Screen';
+export { ContentColumn } from './ContentColumn';
 export { ScreenHeader } from './ScreenHeader';
 export { HomeWelcomeHeader } from './HomeWelcomeHeader';
 export { ProfileTabHeader } from './ProfileTabHeader';

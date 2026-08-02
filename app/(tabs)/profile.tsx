@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Image,
   Animated,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Screen, ProfileTabHeader } from '@/components/layout';
@@ -47,16 +47,13 @@ import {
   radiusLg,
   radiusMd,
   radiusSm,
+  contentMaxWidth,
   screenPaddingX,
   sectionGap,
   space,
   touchTargetMin,
   typeScale,
 } from '@/theme/iosDesign';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-
 
 interface Achievement {
   id: string;
@@ -94,7 +91,9 @@ export default function ProfileScreen() {
   const { user, profile } = useAuth();
   const { colors } = useTheme();
   const { isPremium, isPaywallEnabled } = useSubscription();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { width: windowWidth } = useWindowDimensions();
+  const contentWidth = Math.min(windowWidth, contentMaxWidth);
+  const styles = useMemo(() => createStyles(colors, contentWidth), [colors, contentWidth]);
   const [selectedPeriod, setSelectedPeriod] = useState<LeaderboardPeriod>('weekly');
   const scaleAnims = useRef<{ [key: string]: Animated.Value }>({}).current;
 
@@ -690,7 +689,10 @@ export default function ProfileScreen() {
   );
 }
 
-const createStyles = (colors: typeof import('@/constants/colors').darkColors) => StyleSheet.create({
+const createStyles = (
+  colors: typeof import('@/constants/colors').darkColors,
+  contentWidth: number,
+) => StyleSheet.create({
   scrollContent: {
     paddingBottom: screenPaddingX,
   },
@@ -877,7 +879,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
     marginBottom: sectionGap,
   },
   statCard: {
-    width: (SCREEN_WIDTH - 52) / 2,
+    width: (contentWidth - 52) / 2,
     height: 140,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1046,7 +1048,7 @@ const createStyles = (colors: typeof import('@/constants/colors').darkColors) =>
   },
   podiumItem: {
     alignItems: 'center',
-    width: (SCREEN_WIDTH - 72) / 3,
+    width: (contentWidth - 72) / 3,
   },
   podiumAvatarContainer: {
     position: 'relative',

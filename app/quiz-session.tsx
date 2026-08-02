@@ -37,6 +37,7 @@ import {
   iconSm,
   iconXl,
   radiusLg,
+  contentMaxWidth,
   radiusMd,
   radiusPill,
   radiusSm,
@@ -1159,12 +1160,18 @@ const createStyles = (
   },
   safeArea: {
     flex: 1,
+    width: '100%',
+    maxWidth: contentMaxWidth,
+    alignSelf: 'center',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: screenPaddingX,
+    width: '100%',
+    maxWidth: contentMaxWidth,
+    alignSelf: 'center',
   },
   loadingText: {
     ...typeScale.title3,

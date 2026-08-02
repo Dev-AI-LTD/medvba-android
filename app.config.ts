@@ -200,10 +200,11 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     },
     runtimeVersion: APP_VERSION,
     ios: {
-      supportsTablet: false,
+      // Native iPad + Split View / Stage Manager (do not force requireFullScreen).
+      supportsTablet: true,
       bundleIdentifier: 'com.devaieood.medvba',
       icon: './assets/images/icon.png',
-      buildNumber: '77',
+      buildNumber: '78',
       // Required for @invertase/react-native-apple-authentication (EAS / prebuild).
       entitlements: {
         'com.apple.developer.applesignin': ['Default'],

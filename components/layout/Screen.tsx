@@ -3,7 +3,7 @@ import { View, StyleSheet, type ViewStyle } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/providers/ThemeProvider';
-import { screenPaddingX } from '@/theme/iosDesign';
+import { contentMaxWidth, screenPaddingX } from '@/theme/iosDesign';
 
 type Props = {
   children: React.ReactNode;
@@ -12,6 +12,11 @@ type Props = {
   padded?: boolean;
   /** Optional brand gradient behind content (uses theme background colors). */
   withGradient?: boolean;
+  /**
+   * Center a readable column on iPad / wide screens.
+   * Background / gradient stay full-bleed.
+   */
+  constrainWidth?: boolean;
   style?: ViewStyle;
   contentStyle?: ViewStyle;
 };
@@ -21,6 +26,7 @@ export function Screen({
   edges = ['top', 'bottom'],
   padded = true,
   withGradient = false,
+  constrainWidth = true,
   style,
   contentStyle,
 }: Props) {
@@ -37,7 +43,16 @@ export function Screen({
           style={StyleSheet.absoluteFill}
         />
       ) : null}
-      <View style={[styles.flex, padded && styles.padded, contentStyle]}>{children}</View>
+      <View
+        style={[
+          styles.flex,
+          padded && styles.padded,
+          constrainWidth && styles.constrained,
+          contentStyle,
+        ]}
+      >
+        {children}
+      </View>
     </SafeAreaView>
   );
 }
@@ -51,5 +66,10 @@ const styles = StyleSheet.create({
   },
   padded: {
     paddingHorizontal: screenPaddingX,
+  },
+  constrained: {
+    width: '100%',
+    maxWidth: contentMaxWidth,
+    alignSelf: 'center',
   },
 });

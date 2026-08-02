@@ -29,6 +29,8 @@ export const fieldGap = space.space4;
 export const itemGap = fieldGap;
 export const sectionGap = space.space6;
 export const cardPadding = space.space4;
+/** Readable content column on iPad / wide screens (phone widths pass through). */
+export const contentMaxWidth = 720;
 
 /** Interactive minimums (Apple HIG) */
 export const touchTargetMin = 44;
@@ -174,6 +176,7 @@ export const tokens = {
     itemGap,
     sectionGap,
     cardPadding,
+    contentMaxWidth,
   },
   size: {
     touchTargetMin,
