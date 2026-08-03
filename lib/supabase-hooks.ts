@@ -859,11 +859,11 @@ export function useLeaderboard(period: 'daily' | 'weekly' | 'monthly' | 'allTime
       });
 
       if (error) {
-        devError('[Supabase] Error fetching leaderboard:', JSON.stringify({ message: error.message, code: error.code }));
-        return [];
+        nativeConsole.error('Failed to fetch leaderboard:', error);
+        throw error;
       }
 
-      return (data || []).map((row: { id: string; name: string; avatar: string; points: number; streak: number; rank: number }) => ({
+      return (data ?? []).map((row: { id: string; name: string; avatar: string; points: number; streak: number; rank: number }) => ({
         id: row.id,
         name: row.name || 'Student',
         avatar: row.avatar || `https://api.dicebear.com/7.x/avataaars/png?seed=${row.id}`,
