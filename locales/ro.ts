@@ -135,7 +135,7 @@ export const ro: Record<string, string> = {
   'home.greetingEvening': 'Bună seara,',
   'home.continueLearning': 'Continuă sesiunea de studiu',
   'home.questionsToday': 'Ai completat {current}/{goal} întrebări azi',
-  'home.startQuiz': 'Începe test grilă',
+  'home.startQuiz': 'Începe Quiz',
   'home.continueQuiz': 'Continuă de unde ai rămas',
   'home.today': 'azi',
   'home.accuracy': 'Acuratețe',
@@ -161,11 +161,11 @@ export const ro: Record<string, string> = {
   'home.upgradeBannerSubtitle': 'Acces nelimitat la toate întrebările',
 
   // Quiz Screen
-  'quiz.title': 'Test grilă',
+  'quiz.title': 'Quiz',
   'quiz.subtitle': 'Alege un modul de anatomie și începe antrenamentul',
   'quiz.quizModes': 'Moduri de testare',
-  'quiz.quickQuiz': 'Test rapid (grilă)',
-  'home.quickQuiz': 'Test grilă rapid',
+  'quiz.quickQuiz': 'Quiz rapid',
+  'home.quickQuiz': 'Quiz rapid',
   'home.practiceMode': 'Antrenament',
   'home.examMode': 'Simulare examen',
   'quiz.quickQuizCount': '10 întrebări tip grilă',

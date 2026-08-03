@@ -147,19 +147,29 @@ export const es: Record<string, string> = {
   'home.quickStartAnatomy': 'Inicio rápido - Anatomía',
   'home.seeAll': 'Ver todo',
   'home.categoryQuestions': '{current} / {total} preguntas',
-  'home.categoryLockedSubtitle': 'Actualiza a Premium para acceder',
-  'home.quickQuiz': 'Cuestionario rápido',
+  'home.categoryLockedSubtitle': 'Disponible con Premium',
+  'home.quickQuiz': 'Quiz rápido',
   'home.practiceMode': 'Práctica',
   'home.examMode': 'Simulación de examen',
   'home.freeQuizLimitTitle': 'Preguntas gratuitas agotadas',
   'home.freeQuizLimitMessage':
-    'Has usado tus {count} preguntas gratuitas de hoy (en cualquier capítulo). Pasa a Premium para acceso ilimitado.',
+    'Has usado tus {count} preguntas gratuitas de hoy (en cualquier capítulo). Desbloquea más opciones con Premium.',
+  'home.later': 'Más tarde',
+  'home.upgradePremiumShort': 'Ver Premium',
+  'home.premiumFeatureTitle': 'Función Premium',
+  'home.premiumFeatureMessage':
+    '{module} está disponible con Premium. Desbloquea más opciones con Premium para acceder a todos los módulos de anatomía.',
+  'home.dailyLimitTitle': 'Límite diario alcanzado',
+  'home.dailyLimitMessage':
+    'Has respondido {count} preguntas hoy. Con Premium puedes seguir practicando sin límite diario.',
+  'home.upgradeBannerTitle': 'Desbloquea más opciones con Premium',
+  'home.upgradeBannerSubtitle': 'Acceso a todas las preguntas sin límite diario',
 
   // Quiz Screen
-  'quiz.title': 'Test de tipo test',
+  'quiz.title': 'Quiz',
   'quiz.subtitle': 'Elige un módulo de anatomía y empieza a practicar',
   'quiz.quizModes': 'Modos de prueba',
-  'quiz.quickQuiz': 'Test rápido (MCQ)',
+  'quiz.quickQuiz': 'Quiz rápido (MCQ)',
   'quiz.quickQuizCount': '10 preguntas de opción múltiple',
   'quiz.practice': 'Sesión de práctica',
   'quiz.practiceCount': '25 preguntas de opción múltiple',
@@ -174,6 +184,13 @@ export const es: Record<string, string> = {
   'quiz.practiceUnlimited': 'Práctica ilimitada',
   'quiz.freeQuizzesRemaining': '{remaining}/{total} preguntas gratuitas restantes hoy (cualquier capítulo)',
   'quiz.dailyLimitReached': 'Límite de preguntas gratuitas alcanzado',
+  'quiz.chaptersSubtitle':
+    'Explora y repasa por capítulos: elige uno para un quiz rápido de 10 preguntas.',
+  'quiz.readChapterSummary': 'Resumen',
+  'quiz.studyCardTitle': 'Estudio',
+  'quiz.studyCardSubtitle': 'Resúmenes por capítulo',
+  'quiz.allChapters': 'Todos los capítulos',
+  'quiz.questionsShort': 'Q',
 
   // Quiz Session
   'session.loading': 'Cargando preguntas…',

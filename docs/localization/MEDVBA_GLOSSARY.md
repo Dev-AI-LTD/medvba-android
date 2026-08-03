@@ -18,3 +18,8 @@ Initial glossary for Authentication + Onboarding UI only. Do not expand until la
 | Retry | Încearcă din nou | Inténtalo de nuevo | Soft retry phrasing in error copy (no dedicated Retry key in Batch 1) |
 | Anatomy | Anatomie | Anatomía | Only where Batch 1 onboarding/auth copy mentions it |
 | Medical student | Student | Estudiante | Batch 1 uses “students” / “studenți” / “estudiantes”, not “medical student” |
+| Quiz | Quiz | Quiz | Tab + product chrome — keep brand-like “Quiz” in RO/ES (not “Test grilă” / “Cuestionario” for tabs) |
+| Chapter | Capitol | Capítulo | Quiz chapter list chrome only; do not auto-translate chapter medical titles here |
+| Questions | Întrebări | Preguntas | Home/Quiz labels; short chip stays `Q` (`quiz.questionsShort`) |
+| Premium | Premium | Premium | Product tier name — do not translate |
+| Upgrade | Treci la Premium / Vezi Premium | Ver Premium / Desbloquea más opciones con Premium | Calm, informative; avoid aggressive pressure copy |
