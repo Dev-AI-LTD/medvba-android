@@ -156,6 +156,7 @@ export default function TutorScreen() {
   const lastUserMessageRef = useRef<string>('');
   const clinicalStreamAbortRef = useRef<AbortController | null>(null);
   const tutorStreamAbortRef = useRef<AbortController | null>(null);
+  const explainInFlightRef = useRef(false);
   const router = useRouter();
   const params = useLocalSearchParams<{
     clinicalMode?: string | string[];
@@ -166,6 +167,8 @@ export default function TutorScreen() {
     const raw = Array.isArray(value) ? value[0] : value;
     return raw === '1';
   }, []);
+  const paramsRef = useRef(params);
+  paramsRef.current = params;
   const {
     isPremium,
     isPaywallEnabled,
@@ -194,29 +197,6 @@ export default function TutorScreen() {
     setHowToExpanded(false);
     setCasesToolsExpanded(false);
   }, [clinicalFocus]);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (!clinicalUiEnabled) return;
-      const wantClinical =
-        paramFlag(params.clinicalMode) ||
-        paramFlag(params.fromExplain) ||
-        paramFlag(params.openTopup);
-      if (wantClinical) {
-        setCopilotMode('clinical');
-      }
-      if (paramFlag(params.openTopup)) {
-        trackClinicalEvent('clinical_topup_shown');
-        setTopupVisible(true);
-      }
-    }, [
-      clinicalUiEnabled,
-      paramFlag,
-      params.clinicalMode,
-      params.fromExplain,
-      params.openTopup,
-    ]),
-  );
 
   useEffect(() => {
     return () => {
@@ -417,16 +397,63 @@ export default function TutorScreen() {
     useCallback(() => {
       let cancelled = false;
 
-      const runQuizExplainIntent = async (intent: ClinicalPendingExplainIntent) => {
-        const userLabel =
+      const clearExplainRouteParams = () => {
+        const p = paramsRef.current;
+        if (
+          paramFlag(p.clinicalMode) ||
+          paramFlag(p.fromExplain) ||
+          paramFlag(p.openTopup)
+        ) {
+          router.setParams({
+            clinicalMode: '',
+            fromExplain: '',
+            openTopup: '',
+          });
+        }
+      };
+
+      const optionLetter = (index: number) =>
+        String.fromCharCode(65 + Math.max(0, index));
+
+      const buildQuizUserLabel = (intent: ClinicalPendingExplainIntent) => {
+        const stem =
           intent.question.length > 280
             ? `${intent.question.slice(0, 277)}…`
             : intent.question;
+        const chosen = intent.options[intent.chosenIndex];
+        const correct = intent.options[intent.correctIndex];
+        if (!chosen && !correct) return stem;
+        const chosenLine = chosen
+          ? `${optionLetter(intent.chosenIndex)}. ${chosen}`
+          : null;
+        const correctLine = correct
+          ? `${optionLetter(intent.correctIndex)}. ${correct}`
+          : null;
+        if (
+          chosenLine &&
+          correctLine &&
+          intent.chosenIndex === intent.correctIndex
+        ) {
+          return `${stem}\n\n✓ ${chosenLine}`;
+        }
+        const parts = [stem];
+        if (chosenLine) parts.push(`→ ${chosenLine}`);
+        if (correctLine && intent.chosenIndex !== intent.correctIndex) {
+          parts.push(`✓ ${correctLine}`);
+        }
+        return parts.join('\n');
+      };
+
+      const runQuizExplainIntent = async (intent: ClinicalPendingExplainIntent) => {
+        if (explainInFlightRef.current) return;
+        explainInFlightRef.current = true;
+        const userLabel = buildQuizUserLabel(intent);
         const userMsgId = `quiz-user-${intent.questionId ?? Date.now()}`;
         setDisclaimerAccepted(true);
         setHowToExpanded(false);
         setCasesToolsExpanded(false);
         setCopilotMode('clinical');
+        setClinicalSessionId(null);
         setClinicalMessages([
           {
             id: userMsgId,
@@ -515,15 +542,36 @@ export default function TutorScreen() {
             },
           ]);
         } finally {
-          if (!cancelled) setIsTyping(false);
+          explainInFlightRef.current = false;
+          clearExplainRouteParams();
+          setIsTyping(false);
         }
       };
 
       const hydrateFromQuizExplain = async () => {
         if (!clinicalUiEnabled) return;
+
+        const p = paramsRef.current;
+        const wantClinical =
+          paramFlag(p.clinicalMode) ||
+          paramFlag(p.fromExplain) ||
+          paramFlag(p.openTopup);
+        if (wantClinical) {
+          setCopilotMode('clinical');
+        }
+        if (paramFlag(p.openTopup)) {
+          trackClinicalEvent('clinical_topup_shown');
+          setTopupVisible(true);
+        }
+
         try {
           const raw = await AsyncStorage.getItem(CLINICAL_PENDING_EXPLAIN_KEY);
-          if (!raw || cancelled) return;
+          if (!raw || cancelled) {
+            if (wantClinical && !paramFlag(p.openTopup)) {
+              clearExplainRouteParams();
+            }
+            return;
+          }
           const pending = JSON.parse(raw) as ClinicalPendingExplain;
 
           if (isExplainIntent(pending)) {
@@ -557,6 +605,7 @@ export default function TutorScreen() {
               timestamp: new Date(),
             },
           ]);
+          clearExplainRouteParams();
           setTimeout(() => {
             scrollViewRef.current?.scrollToEnd({ animated: true });
           }, 250);
@@ -569,7 +618,7 @@ export default function TutorScreen() {
       return () => {
         cancelled = true;
       };
-    }, [clinicalUiEnabled, t]),
+    }, [clinicalUiEnabled, t, paramFlag, router]),
   );
 
   const startClinicalCase = useCallback(
