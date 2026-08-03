@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import {
 } from 'lucide-react-native';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { useLeaderboard } from '@/lib/supabase-hooks';
+import { useLeaderboard, type LeaderboardUser } from '@/lib/supabase-hooks';
 import { useAuth } from '@/providers/AuthProvider';
 import { safeAvatarUri } from '@/lib/safe-image-uri';
 import {
@@ -32,6 +32,35 @@ import {
 
 type LeaderboardPeriod = 'daily' | 'weekly' | 'monthly' | 'allTime';
 
+const MEDAL_BY_RANK: Record<number, readonly [string, string]> = {
+  1: ['#FFD700', '#FFA500'],
+  2: ['#C0C0C0', '#A8A8A8'],
+  3: ['#CD7F32', '#8B4513'],
+};
+
+function medalColorsForRank(rank: number): readonly [string, string] {
+  return MEDAL_BY_RANK[rank] ?? MEDAL_BY_RANK[2];
+}
+
+function barHeightForRank(rank: number): number {
+  if (rank === 1) return 120;
+  if (rank === 2) return 90;
+  if (rank === 3) return 70;
+  return 70;
+}
+
+/** Classic podium visual order (2nd, 1st, 3rd) using only real RPC rows. */
+function podiumSlots(users: LeaderboardUser[]): LeaderboardUser[] {
+  const top = users.slice(0, 3);
+  return [1, 0, 2]
+    .map((i) => top[i])
+    .filter((user): user is LeaderboardUser => user != null);
+}
+
+function formatPodiumPoints(points: number): string {
+  return points >= 1000 ? `${(points / 1000).toFixed(1)}k` : String(points);
+}
+
 export default function LeaderboardScreen() {
   const router = useRouter();
   const { colors } = useTheme();
@@ -39,7 +68,27 @@ export default function LeaderboardScreen() {
   const { profile } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState<LeaderboardPeriod>('weekly');
 
-  const { data: leaderboard = [] } = useLeaderboard(selectedPeriod);
+  const {
+    data,
+    isPending,
+    isError,
+    refetch,
+  } = useLeaderboard(selectedPeriod);
+
+  const leaderboard = data ?? [];
+  const showInitialLoading = isPending;
+  const showError = isError && !isPending;
+  const showEmpty = !isPending && !isError && leaderboard.length === 0;
+  const showSuccess = !isPending && !isError && leaderboard.length > 0;
+
+  const podiumUsers = useMemo(
+    () => (showSuccess ? podiumSlots(leaderboard) : []),
+    [leaderboard, showSuccess],
+  );
+
+  const handleRetry = useCallback(() => {
+    void refetch();
+  }, [refetch]);
 
   const periods: { key: LeaderboardPeriod; label: string }[] = [
     { key: 'daily', label: t('profile.daily') },
@@ -83,79 +132,123 @@ export default function LeaderboardScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          <View style={styles.podium}>
-            {[1, 0, 2].map((index) => {
-              const user = leaderboard[index];
-              const heights = [120, 90, 70];
-              const medalColors: readonly [string, string][] = [
-                ['#FFD700', '#FFA500'],
-                ['#C0C0C0', '#A8A8A8'],
-                ['#CD7F32', '#8B4513'],
-              ];
-              const podiumIndex = [1, 0, 2].indexOf(index);
-
-              return (
-                <View key={user?.id ?? `podium-${index}`} style={styles.podiumItem}>
-                  <View style={styles.podiumAvatarContainer}>
-                    <LinearGradient
-                      colors={medalColors[podiumIndex]}
-                      style={styles.podiumAvatarBorder}
-                    >
-                      <Image
-                        source={{ uri: user?.avatar ?? 'https://api.dicebear.com/7.x/avataaars/png?seed=placeholder' }}
-                        style={styles.podiumAvatar}
-                      />
-                    </LinearGradient>
-                    <View style={[styles.podiumBadge, { backgroundColor: medalColors[podiumIndex][0] }]}>
-                      <Text style={styles.podiumBadgeText}>{user?.rank ?? index + 1}</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.podiumName} numberOfLines={1}>
-                    {user ? user.name.split(' ')[0] : '—'}
-                  </Text>
-                  <Text style={styles.podiumPoints}>
-                    {user ? (user.points >= 1000 ? `${(user.points / 1000).toFixed(1)}k` : String(user.points)) : '0'}
-                  </Text>
-                  <View style={[styles.podiumBar, { height: heights[podiumIndex] }]}>
-                    <LinearGradient
-                      colors={medalColors[podiumIndex]}
-                      style={StyleSheet.absoluteFill}
-                    />
-                  </View>
+          {showInitialLoading ? (
+            <View style={styles.podium} accessibilityState={{ busy: true }}>
+              {[120, 90, 70].map((height, index) => (
+                <View key={`skeleton-${index}`} style={styles.podiumItem}>
+                  <View style={[styles.skeletonCircle, { backgroundColor: colors.glassBorder }]} />
+                  <View style={[styles.skeletonBar, { height, backgroundColor: colors.glassBorder }]} />
                 </View>
-              );
-            })}
-          </View>
+              ))}
+            </View>
+          ) : null}
 
-          <View style={[styles.leaderboardList, { borderColor: colors.glassBorder }]}>
-            {leaderboard.slice(3).map((user, index) => (
-              <View
-                key={user.id}
-                style={[
-                  styles.leaderboardItem,
-                  index < leaderboard.slice(3).length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.glassBorder },
-                  user.id === profile?.id && styles.leaderboardItemHighlight,
-                ]}
+          {showError ? (
+            <View style={[styles.statePanel, { borderColor: colors.glassBorder }]}>
+              <Text style={[styles.stateTitle, { color: colors.text }]}>
+                {t('leaderboard.errorTitle')}
+              </Text>
+              <Text style={[styles.stateMessage, { color: colors.textSecondary }]}>
+                {t('leaderboard.errorMessage')}
+              </Text>
+              <TouchableOpacity
+                style={[styles.retryButton, { backgroundColor: colors.primary }]}
+                onPress={handleRetry}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel={t('leaderboard.retry')}
               >
-                <Text style={styles.leaderboardRank}>#{user.rank}</Text>
-                <Image
-                  source={{ uri: safeAvatarUri(user.avatar, user.id) }}
-                  style={styles.leaderboardAvatar}
-                />
-                <View style={styles.leaderboardInfo}>
-                  <Text style={styles.leaderboardName}>{user.name}</Text>
-                  <View style={styles.leaderboardStats}>
-                    <Zap color={colors.warning} size={iconSm} />
-                    <Text style={styles.leaderboardPoints}>{user.points.toLocaleString()} {t('profile.pts')}</Text>
-                  </View>
-                </View>
-                <View style={styles.leaderboardStreak}>
-                  <Text style={styles.streakNumber}>{user.streak}</Text>
-                  <Text style={styles.streakEmoji}>⚡</Text>
-                </View>
+                <Text style={styles.retryButtonText}>{t('leaderboard.retry')}</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
+
+          {showEmpty ? (
+            <View style={[styles.statePanel, { borderColor: colors.glassBorder }]}>
+              <Text style={[styles.stateTitle, { color: colors.text }]}>
+                {t('leaderboard.emptyTitle')}
+              </Text>
+              <Text style={[styles.stateMessage, { color: colors.textSecondary }]}>
+                {t('leaderboard.emptyMessage')}
+              </Text>
+            </View>
+          ) : null}
+
+          {showSuccess ? (
+            <>
+              <View style={styles.podium}>
+                {podiumUsers.map((user) => {
+                  const medalColors = medalColorsForRank(user.rank);
+                  return (
+                    <View key={user.id} style={styles.podiumItem}>
+                      <View style={styles.podiumAvatarContainer}>
+                        <LinearGradient
+                          colors={medalColors}
+                          style={styles.podiumAvatarBorder}
+                        >
+                          <Image
+                            source={{ uri: safeAvatarUri(user.avatar, user.id) }}
+                            style={styles.podiumAvatar}
+                          />
+                        </LinearGradient>
+                        <View style={[styles.podiumBadge, { backgroundColor: medalColors[0] }]}>
+                          <Text style={styles.podiumBadgeText}>{user.rank}</Text>
+                        </View>
+                      </View>
+                      <Text style={[styles.podiumName, { color: colors.text }]} numberOfLines={1}>
+                        {user.name.split(' ')[0]}
+                      </Text>
+                      <Text style={[styles.podiumPoints, { color: colors.textSecondary }]}>
+                        {formatPodiumPoints(user.points)}
+                      </Text>
+                      <View style={[styles.podiumBar, { height: barHeightForRank(user.rank) }]}>
+                        <LinearGradient
+                          colors={medalColors}
+                          style={StyleSheet.absoluteFill}
+                        />
+                      </View>
+                    </View>
+                  );
+                })}
               </View>
-            ))}
-          </View>
+
+              {leaderboard.length > 3 ? (
+                <View style={[styles.leaderboardList, { borderColor: colors.glassBorder }]}>
+                  {leaderboard.slice(3).map((user, index, rows) => (
+                    <View
+                      key={user.id}
+                      style={[
+                        styles.leaderboardItem,
+                        index < rows.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.glassBorder },
+                        user.id === profile?.id && styles.leaderboardItemHighlight,
+                      ]}
+                    >
+                      <Text style={[styles.leaderboardRank, { color: colors.textSecondary }]}>
+                        #{user.rank}
+                      </Text>
+                      <Image
+                        source={{ uri: safeAvatarUri(user.avatar, user.id) }}
+                        style={styles.leaderboardAvatar}
+                      />
+                      <View style={styles.leaderboardInfo}>
+                        <Text style={[styles.leaderboardName, { color: colors.text }]}>{user.name}</Text>
+                        <View style={styles.leaderboardStats}>
+                          <Zap color={colors.warning} size={iconSm} />
+                          <Text style={[styles.leaderboardPoints, { color: colors.textSecondary }]}>
+                            {user.points.toLocaleString()} {t('profile.pts')}
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.leaderboardStreak}>
+                        <Text style={[styles.streakNumber, { color: colors.text }]}>{user.streak}</Text>
+                        <Text style={styles.streakEmoji}>⚡</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+            </>
+          ) : null}
         </ScrollView>
     </Screen>
   );
@@ -193,6 +286,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     marginBottom: sectionGap,
     paddingTop: 10,
+    minHeight: 200,
   },
   podiumItem: {
     alignItems: 'center',
@@ -245,6 +339,50 @@ const styles = StyleSheet.create({
     width: 60,
     borderTopLeftRadius: 8,
     borderTopRightRadius: 8,
+  },
+  skeletonCircle: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    marginBottom: 12,
+    opacity: 0.45,
+  },
+  skeletonBar: {
+    width: 60,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    opacity: 0.35,
+  },
+  statePanel: {
+    borderWidth: 1,
+    borderRadius: radiusLg,
+    padding: space.space5,
+    alignItems: 'center',
+    marginTop: space.space3,
+  },
+  stateTitle: {
+    ...typeScale.headline,
+    fontWeight: '700' as const,
+    textAlign: 'center',
+    marginBottom: space.space2,
+  },
+  stateMessage: {
+    ...typeScale.body,
+    textAlign: 'center',
+    marginBottom: space.space4,
+  },
+  retryButton: {
+    minHeight: touchTargetMin,
+    paddingHorizontal: space.space5,
+    paddingVertical: space.space3,
+    borderRadius: radiusMd,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  retryButtonText: {
+    ...typeScale.subhead,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
   },
   leaderboardList: {
     borderRadius: radiusLg,
