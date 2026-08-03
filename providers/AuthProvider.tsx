@@ -346,7 +346,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
             avatar: displayAvatar,
             profile_photo_url: result.profile_photo_url ?? undefined,
             rank: 0,
-            points: progressData?.total_questions_answered || 0,
+            points: progressData?.points ?? progressData?.total_questions_answered ?? 0,
             streak: progressData?.current_streak || 0,
             questionsAnswered: progressData?.total_questions_answered || 0,
             accuracy:

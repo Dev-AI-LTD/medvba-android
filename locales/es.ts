@@ -225,6 +225,14 @@ export const es: Record<string, string> = {
   'session.dailyGoalHitMessage': '50 preguntas hoy. Bonus +25 pts!',
   'achievement.notSavedTitle': 'Logro no guardado',
   'achievement.notSavedMessage': 'No se pudo guardar el logro. Tu progreso no cambia.',
+  'achievement.firstQuizShortDesc': 'Responde tu primera pregunta',
+  'achievement.quizCompleted10ShortDesc': 'Responde 10 preguntas',
+  'achievement.hundredQuestionsShortDesc': 'Responde 100 preguntas',
+  'achievement.fiveHundredQuestionsShortDesc': 'Responde 500 preguntas',
+  'achievement.thousandQuestionsShortDesc': 'Responde 1.000 preguntas',
+  'achievement.weekStreakShortDesc': 'Alcanza una racha de 7 días',
+  'achievement.monthStreakShortDesc': 'Alcanza una racha de 30 días',
+  'achievement.grandMasterShortDesc': 'Alcanza una racha de 100 días',
 
   // Module Names
   'module.upperLowerLimbs': 'Miembros superiores/inferiores',

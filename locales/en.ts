@@ -232,6 +232,14 @@ export const en: Record<string, string> = {
   'home.pointsToday': '{n} pts today',
   'achievement.notSavedTitle': 'Achievement not saved',
   'achievement.notSavedMessage': 'Could not save your achievement. Progress is unchanged.',
+  'achievement.firstQuizShortDesc': 'Answer your first question',
+  'achievement.quizCompleted10ShortDesc': 'Answer 10 questions',
+  'achievement.hundredQuestionsShortDesc': 'Answer 100 questions',
+  'achievement.fiveHundredQuestionsShortDesc': 'Answer 500 questions',
+  'achievement.thousandQuestionsShortDesc': 'Answer 1,000 questions',
+  'achievement.weekStreakShortDesc': 'Reach a 7-day streak',
+  'achievement.monthStreakShortDesc': 'Reach a 30-day streak',
+  'achievement.grandMasterShortDesc': 'Reach a 100-day streak',
 
   // Module Names
   'module.upperLowerLimbs': 'Upper/Lower Limbs',

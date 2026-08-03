@@ -232,6 +232,14 @@ export const ro: Record<string, string> = {
   'home.pointsToday': '{n} pct azi',
   'achievement.notSavedTitle': 'Realizarea nu a fost salvată',
   'achievement.notSavedMessage': 'Nu am putut salva realizarea. Progresul rămâne neschimbat.',
+  'achievement.firstQuizShortDesc': 'Răspunde la prima întrebare',
+  'achievement.quizCompleted10ShortDesc': 'Răspunde la 10 întrebări',
+  'achievement.hundredQuestionsShortDesc': 'Răspunde la 100 de întrebări',
+  'achievement.fiveHundredQuestionsShortDesc': 'Răspunde la 500 de întrebări',
+  'achievement.thousandQuestionsShortDesc': 'Răspunde la 1.000 de întrebări',
+  'achievement.weekStreakShortDesc': 'Ajunge la un streak de 7 zile',
+  'achievement.monthStreakShortDesc': 'Ajunge la un streak de 30 de zile',
+  'achievement.grandMasterShortDesc': 'Ajunge la un streak de 100 de zile',
 
   // Module Names
   'module.upperLowerLimbs': 'Membre Superioare și Inferioare',

@@ -25,9 +25,6 @@ import {
   Flame,
   Trophy,
   Lock,
-  ChevronUp,
-  ChevronDown,
-  Minus,
 } from 'lucide-react-native';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -35,7 +32,12 @@ import ProgressRing from '@/components/ProgressRing';
 import { useQuizProgress } from '@/providers/QuizProgressProvider';
 import { useAuth } from '@/providers/AuthProvider';
 import { safeAvatarUri } from '@/lib/safe-image-uri';
-import { useLeaderboard } from '@/lib/supabase-hooks';
+import {
+  useLeaderboard,
+  useUserAchievements,
+  useCheckAchievements,
+  type AchievementType,
+} from '@/lib/supabase-hooks';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import {
   cardPadding,
@@ -56,16 +58,109 @@ import {
 } from '@/theme/iosDesign';
 
 interface Achievement {
-  id: string;
+  id: AchievementType;
   name: string;
   icon: React.ComponentType<{ color: string; size: number; fill?: string }>;
   description: string;
   requirement: number;
   currentProgress: number;
-  type: 'questions' | 'streak' | 'accuracy' | 'time';
+  unlocked: boolean;
+  type: 'questions' | 'streak';
   gradient: readonly [string, string];
   iconColor: string;
 }
+
+const SERVER_ACHIEVEMENT_DEFS: Array<{
+  id: AchievementType;
+  requirement: number;
+  type: 'questions' | 'streak';
+  nameKey: string;
+  descKey: string;
+  icon: Achievement['icon'];
+  gradient: readonly [string, string];
+  iconColor: string;
+}> = [
+  {
+    id: 'first_quiz',
+    requirement: 1,
+    type: 'questions',
+    nameKey: 'achievement.firstQuiz',
+    descKey: 'achievement.firstQuizShortDesc',
+    icon: Star,
+    gradient: ['#4FACFE', '#00F2FE'],
+    iconColor: '#4FACFE',
+  },
+  {
+    id: 'quiz_completed_10',
+    requirement: 10,
+    type: 'questions',
+    nameKey: 'achievement.quizCompleted10',
+    descKey: 'achievement.quizCompleted10ShortDesc',
+    icon: Target,
+    gradient: ['#43E97B', '#38F9D7'],
+    iconColor: '#43E97B',
+  },
+  {
+    id: 'hundred_questions',
+    requirement: 100,
+    type: 'questions',
+    nameKey: 'achievement.hundredQuestions',
+    descKey: 'achievement.hundredQuestionsShortDesc',
+    icon: Award,
+    gradient: ['#FA709A', '#FEE140'],
+    iconColor: '#FA709A',
+  },
+  {
+    id: 'five_hundred_questions',
+    requirement: 500,
+    type: 'questions',
+    nameKey: 'achievement.fiveHundredQuestions',
+    descKey: 'achievement.fiveHundredQuestionsShortDesc',
+    icon: Trophy,
+    gradient: ['#FF6B6B', '#FF8E53'],
+    iconColor: '#FF6B6B',
+  },
+  {
+    id: 'thousand_questions',
+    requirement: 1000,
+    type: 'questions',
+    nameKey: 'achievement.thousandQuestions',
+    descKey: 'achievement.thousandQuestionsShortDesc',
+    icon: Crown,
+    gradient: ['#667EEA', '#764BA2'],
+    iconColor: '#667EEA',
+  },
+  {
+    id: 'week_streak',
+    requirement: 7,
+    type: 'streak',
+    nameKey: 'achievement.weekStreak',
+    descKey: 'achievement.weekStreakShortDesc',
+    icon: Flame,
+    gradient: ['#F093FB', '#F5576C'],
+    iconColor: '#F093FB',
+  },
+  {
+    id: 'month_streak',
+    requirement: 30,
+    type: 'streak',
+    nameKey: 'achievement.monthStreak',
+    descKey: 'achievement.monthStreakShortDesc',
+    icon: Flame,
+    gradient: ['#F5576C', '#FF8E53'],
+    iconColor: '#F5576C',
+  },
+  {
+    id: 'grand_master',
+    requirement: 100,
+    type: 'streak',
+    nameKey: 'achievement.grandMaster',
+    descKey: 'achievement.grandMasterShortDesc',
+    icon: Crown,
+    gradient: ['#667EEA', '#764BA2'],
+    iconColor: '#667EEA',
+  },
+];
 
 type LeaderboardPeriod = 'daily' | 'weekly' | 'monthly' | 'allTime';
 
@@ -75,12 +170,19 @@ function getDayName(dateString: string): string {
   return days[date.getDay()];
 }
 
+function formatLocalDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 function getLast7Days(): string[] {
   const dates: string[] = [];
   for (let i = 6; i >= 0; i--) {
     const date = new Date();
     date.setDate(date.getDate() - i);
-    dates.push(date.toISOString().split('T')[0]);
+    dates.push(formatLocalDate(date));
   }
   return dates;
 }
@@ -109,84 +211,55 @@ export default function ProfileScreen() {
     weeklyGoalProgress,
   } = useQuizProgress();
 
+  const livePoints = allTimeStats.points;
   const { data: leaderboard = [] } = useLeaderboard(selectedPeriod);
+  const { data: userAchievements = [] } = useUserAchievements(user?.id);
+  const { data: achievementCheck } = useCheckAchievements(user?.id);
 
+  const earnedAchievementTypes = useMemo(
+    () => new Set(userAchievements.map((a) => a.achievementType)),
+    [userAchievements],
+  );
 
+  const achievements: Achievement[] = useMemo(() => {
+    return SERVER_ACHIEVEMENT_DEFS.map((def) => {
+      const progressFromCheck = achievementCheck?.progress?.[def.id];
+      const localCurrent =
+        def.type === 'streak'
+          ? Math.max(streakData.currentStreak, streakData.longestStreak)
+          : allTimeStats.totalQuestionsAnswered;
+      const currentProgress = progressFromCheck?.current ?? localCurrent;
+      const unlocked =
+        earnedAchievementTypes.has(def.id) || currentProgress >= def.requirement;
 
-  const achievements: Achievement[] = useMemo(() => [
-    {
-      id: 'question_master',
-      name: t('achievement.questionMaster'),
-      icon: Target,
-      description: t('achievement.questionMasterDesc'),
-      requirement: 1000,
-      currentProgress: allTimeStats.totalQuestionsAnswered,
-      type: 'questions',
-      gradient: ['#FF6B6B', '#FF8E53'],
-      iconColor: '#FF6B6B',
-    },
-    {
-      id: 'streak_champion',
-      name: t('achievement.streakChampion'),
-      icon: Flame,
-      description: t('achievement.streakChampionDesc'),
-      requirement: 30,
-      currentProgress: streakData.currentStreak,
-      type: 'streak',
-      gradient: ['#F093FB', '#F5576C'],
-      iconColor: '#F093FB',
-    },
-    {
-      id: 'accuracy_ace',
-      name: t('achievement.accuracyAce'),
-      icon: Zap,
-      description: t('achievement.accuracyAceDesc'),
-      requirement: 80,
-      currentProgress: Math.round(accuracy),
-      type: 'accuracy',
-      gradient: ['#4FACFE', '#00F2FE'],
-      iconColor: '#4FACFE',
-    },
-    {
-      id: 'study_warrior',
-      name: t('achievement.studyWarrior'),
-      icon: Award,
-      description: t('achievement.studyWarriorDesc'),
-      requirement: 50,
-      currentProgress: Math.floor(allTimeStats.totalStudyTimeSeconds / 3600),
-      type: 'time',
-      gradient: ['#43E97B', '#38F9D7'],
-      iconColor: '#43E97B',
-    },
-    {
-      id: 'anatomy_expert',
-      name: t('achievement.anatomyExpert'),
-      icon: Trophy,
-      description: t('achievement.anatomyExpertDesc'),
-      requirement: 5000,
-      currentProgress: allTimeStats.totalQuestionsAnswered,
-      type: 'questions',
-      gradient: ['#FA709A', '#FEE140'],
-      iconColor: '#FA709A',
-    },
-    {
-      id: 'dedication',
-      name: t('achievement.dedication'),
-      icon: Crown,
-      description: t('achievement.dedicationDesc'),
-      requirement: 100,
-      currentProgress: streakData.longestStreak,
-      type: 'streak',
-      gradient: ['#667EEA', '#764BA2'],
-      iconColor: '#667EEA',
-    },
-  ], [allTimeStats.totalQuestionsAnswered, allTimeStats.totalStudyTimeSeconds, streakData.currentStreak, streakData.longestStreak, accuracy, t]);
+      return {
+        id: def.id,
+        name: t(def.nameKey),
+        icon: def.icon,
+        description: t(def.descKey),
+        requirement: def.requirement,
+        currentProgress: Math.min(currentProgress, def.requirement),
+        unlocked,
+        type: def.type,
+        gradient: def.gradient,
+        iconColor: def.iconColor,
+      };
+    });
+  }, [
+    achievementCheck?.progress,
+    allTimeStats.totalQuestionsAnswered,
+    earnedAchievementTypes,
+    streakData.currentStreak,
+    streakData.longestStreak,
+    t,
+  ]);
 
   const unlockedCount = useMemo(() => {
-    return achievements.filter(a => a.currentProgress >= a.requirement).length;
+    return achievements.filter((a) => a.unlocked).length;
   }, [achievements]);
 
   const getAchievementProgress = useCallback((achievement: Achievement) => {
+    if (achievement.unlocked) return 100;
     return Math.min((achievement.currentProgress / achievement.requirement) * 100, 100);
   }, []);
 
@@ -256,14 +329,6 @@ export default function ProfileScreen() {
     { key: 'allTime', label: t('profile.allTime') },
   ];
 
-  const getRankChangeIcon = useCallback((index: number) => {
-    const changes = [0, 1, -1, 2, 0, -2, 1];
-    const change = changes[index] || 0;
-    if (change > 0) return <ChevronUp color={colors.success} size={iconSm} />;
-    if (change < 0) return <ChevronDown color={colors.error} size={iconSm} />;
-    return <Minus color={colors.textMuted} size={iconSm} />;
-  }, [colors]);
-
   return (
     <Screen withGradient edges={['top']} padded={false}>
       <ScrollView
@@ -296,15 +361,17 @@ export default function ProfileScreen() {
                     style={styles.avatar}
                   />
                 </LinearGradient>
-                <View style={styles.rankBadge}>
-                  <LinearGradient
-                    colors={[colors.secondary, colors.primaryDark]}
-                    style={StyleSheet.absoluteFill}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                  />
-                  <Text style={styles.rankText}>#{profile?.rank || 0}</Text>
-                </View>
+                {(profile?.rank ?? 0) > 0 ? (
+                  <View style={styles.rankBadge}>
+                    <LinearGradient
+                      colors={[colors.secondary, colors.primaryDark]}
+                      style={StyleSheet.absoluteFill}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                    />
+                    <Text style={styles.rankText}>#{profile?.rank}</Text>
+                  </View>
+                ) : null}
               </View>
               <View style={styles.profileInfo}>
                 <Text style={styles.profileName}>{profile?.name || t('common.student')}</Text>
@@ -315,7 +382,7 @@ export default function ProfileScreen() {
                   </View>
                   <View style={styles.pointsBadge}>
                     <Star color={colors.warning} size={iconSm} fill={colors.warning} />
-                    <Text style={styles.pointsText}>{(profile?.points || 0).toLocaleString()}</Text>
+                    <Text style={styles.pointsText}>{livePoints.toLocaleString()}</Text>
                   </View>
                 </View>
               </View>
@@ -429,7 +496,7 @@ export default function ProfileScreen() {
               contentContainerStyle={styles.achievementsScroll}
             >
               {achievements.map((achievement) => {
-                const isUnlocked = achievement.currentProgress >= achievement.requirement;
+                const isUnlocked = achievement.unlocked;
                 const progress = getAchievementProgress(achievement);
                 const AchievementIcon = achievement.icon;
 
@@ -464,7 +531,11 @@ export default function ProfileScreen() {
                           fill={isUnlocked && achievement.id.includes('streak') ? achievement.iconColor : undefined}
                         />
                       </View>
-                      <Text style={[styles.achievementName, !isUnlocked && styles.achievementNameLocked]}>
+                      <Text
+                        style={[styles.achievementName, !isUnlocked && styles.achievementNameLocked]}
+                        numberOfLines={2}
+                        ellipsizeMode="tail"
+                      >
                         {achievement.name}
                       </Text>
                       <View style={styles.achievementProgressContainer}>
@@ -591,9 +662,6 @@ export default function ProfileScreen() {
                   ]}
                 >
                   <Text style={styles.leaderboardRank}>#{user.rank}</Text>
-                  <View style={styles.rankChange}>
-                    {getRankChangeIcon(index + 3)}
-                  </View>
                   <Image
                     source={{ uri: safeAvatarUri(user.avatar, user.id) }}
                     style={styles.leaderboardAvatar}
