@@ -68,6 +68,8 @@ export const es: Record<string, string> = {
     'La contraseña se introduce en la página segura de Kinde — no en esta pantalla de la app.',
   'auth.dontHaveAccount': '¿No tienes una cuenta?',
   'auth.alreadyHaveAccount': '¿Ya tienes una cuenta?',
+  'auth.showPassword': 'Mostrar contraseña',
+  'auth.hidePassword': 'Ocultar contraseña',
   'auth.agreeToTerms': 'Al crear una cuenta, aceptas nuestros',
   'auth.termsOfService': 'Términos de Servicio',
   'auth.and': 'y',
@@ -106,7 +108,16 @@ export const es: Record<string, string> = {
   'auth.goToSignIn': 'Ir a iniciar sesión',
   'auth.ok': 'OK',
   'auth.unexpectedError': 'Ocurrió un error inesperado. Por favor intenta de nuevo.',
+  'offline.needsInternetTitle': 'Sin conexión a internet',
+  'offline.needsInternetMessage':
+    'Necesitas internet para iniciar sesión y sincronizar tus datos con MEDVBA. Conéctate a Wi‑Fi o datos móviles e inténtalo de nuevo.',
+  'offline.workingOfflineTitle': 'Estás sin conexión',
+  'offline.workingOfflineMessage':
+    'Puedes seguir estudiando con el contenido guardado. El progreso se sincronizará cuando vuelvas a estar en línea.',
+  'offline.featureRequiresInternet':
+    'Esta sección necesita internet. Conéctate a Wi‑Fi o datos móviles para cargar contenido nuevo.',
   'auth.supabaseNotConfigured': 'Inicio de sesión no disponible: Supabase no está configurado. Configura EXPO_PUBLIC_SUPABASE_URL y EXPO_PUBLIC_SUPABASE_ANON_KEY en .env',
+  'auth.backendNotConfigured': 'Esta acción necesita la API de MEDVBA. Configura EXPO_PUBLIC_API_BASE_URL (o EXPO_PUBLIC_RORK_API_BASE_URL) en .env.',
   'auth.welcome.title': 'Bienvenido de nuevo',
   'auth.welcome.subtitle': 'Inicia sesión para continuar tu práctica de anatomía.',
   'auth.login.email': 'Correo electrónico',

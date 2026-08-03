@@ -21,6 +21,7 @@ import { useQuizProgress, type SessionState } from '@/providers/QuizProgressProv
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import GlassCard from '@/components/GlassCard';
 import type { Question } from '@/mocks/questions';
+import { resolveAppContentLanguage } from '@/lib/app-ui-languages';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { getAllQuestionsWithChapters } from '@/mocks/chapters';
 import {
@@ -229,6 +230,8 @@ async function selectQuestionsForQuiz(
 export default function QuizSessionScreen() {
   const router = useRouter();
   const { t, getChapterTitle, currentLanguage, isLoading: isLanguageHydrating } = useLanguage();
+  /** Quiz item/content language — Spanish UI uses English content until an es quiz corpus ships. */
+  const quizContentLanguage = resolveAppContentLanguage(currentLanguage);
   const { colors } = useTheme();
   const { category, mode, resume, chapterId } = useLocalSearchParams<{
     category: string;
@@ -359,10 +362,10 @@ export default function QuizSessionScreen() {
             sessionCanonicalQuestionsRef.current = canonicalOrdered;
             lastSyncedQuizUiLanguageRef.current = null;
 
-            /** Always map from English canonical + current UI language — saved blobs may be EN from an older session or before `sessionLanguage` was stored. */
+            /** Always map from English canonical + content language — saved blobs may be EN from an older session or before `sessionLanguage` was stored. */
             const resumedQuestions = translateAndShuffleQuestions(
               canonicalOrdered,
-              currentLanguage as QuestionTranslateLanguage,
+              quizContentLanguage,
             );
 
             setQuestions(resumedQuestions);
@@ -374,15 +377,15 @@ export default function QuizSessionScreen() {
             setAnsweredInSession(savedSession.answeredInSession);
             setSessionStartedAt(savedSession.startedAt);
             sessionStartTimeRef.current = Date.now();
-            sessionLanguageRef.current = currentLanguage;
+            sessionLanguageRef.current = quizContentLanguage;
             setIsLoading(false);
           }
           return;
         }
 
-        sessionLanguageRef.current = currentLanguage;
-        /** UI language for this load; mid-session changes are applied via `sessionCanonicalQuestionsRef` + effect. */
-        const quizTranslateLanguage = currentLanguage;
+        sessionLanguageRef.current = quizContentLanguage;
+        /** Content language for this load; mid-session changes are applied via `sessionCanonicalQuestionsRef` + effect. */
+        const quizTranslateLanguage = quizContentLanguage;
         const startedAt = new Date().toISOString();
         if (isMounted) setSessionStartedAt(startedAt);
 
@@ -526,15 +529,15 @@ export default function QuizSessionScreen() {
     if (canonical.length === 0) return;
 
     if (lastSyncedQuizUiLanguageRef.current === null) {
-      lastSyncedQuizUiLanguageRef.current = currentLanguage;
+      lastSyncedQuizUiLanguageRef.current = quizContentLanguage;
       return;
     }
-    if (lastSyncedQuizUiLanguageRef.current === currentLanguage) return;
-    lastSyncedQuizUiLanguageRef.current = currentLanguage;
+    if (lastSyncedQuizUiLanguageRef.current === quizContentLanguage) return;
+    lastSyncedQuizUiLanguageRef.current = quizContentLanguage;
 
-    const lang: QuestionTranslateLanguage = currentLanguage;
+    const lang: QuestionTranslateLanguage = quizContentLanguage;
     const reTranslated = translateAndShuffleQuestions(canonical, lang);
-    sessionLanguageRef.current = currentLanguage;
+    sessionLanguageRef.current = quizContentLanguage;
     setQuestions(reTranslated);
     setQuestionsWithChapters(
       buildQuestionsWithChapters(canonical, categoryRef.current || 'mixed'),
@@ -551,11 +554,11 @@ export default function QuizSessionScreen() {
         score: scoreRef.current,
         answeredInSession: answeredInSessionRef.current,
         startedAt: sessionStartedAtRef.current,
-        sessionLanguage: currentLanguage,
+        sessionLanguage: quizContentLanguage,
       });
     }
   }, [
-    currentLanguage,
+    quizContentLanguage,
     isLanguageHydrating,
     isProgressHydrating,
     isLoading,

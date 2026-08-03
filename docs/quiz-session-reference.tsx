@@ -501,13 +501,13 @@ export default function QuizSessionScreen() {
             setAnsweredInSession(savedSession.answeredInSession);
             setSessionStartedAt(savedSession.startedAt);
             sessionStartTimeRef.current = Date.now();
-            sessionLanguageRef.current = savedSession.sessionLanguage ?? currentLanguage;
+            sessionLanguageRef.current = savedSession.sessionLanguage ?? (currentLanguage === 'ro' ? 'ro' : 'en');
             setIsLoading(false);
           }
           return;
         }
         
-        sessionLanguageRef.current = currentLanguage;
+        sessionLanguageRef.current = currentLanguage === 'ro' ? 'ro' : 'en';
         const startedAt = new Date().toISOString();
         if (isMounted) setSessionStartedAt(startedAt);
         
@@ -566,7 +566,7 @@ export default function QuizSessionScreen() {
                 score: 0,
                 answeredInSession: [],
                 startedAt,
-                sessionLanguage: currentLanguage,
+                sessionLanguage: currentLanguage === 'ro' ? 'ro' : 'en',
               };
               await saveSessionState(initialSessionState);
             }
@@ -646,7 +646,7 @@ export default function QuizSessionScreen() {
         score: isCorrect ? score + 1 : score,
         answeredInSession: newAnsweredInSession,
         startedAt: sessionStartedAt,
-        sessionLanguage: sessionLanguageRef.current ?? currentLanguage,
+        sessionLanguage: sessionLanguageRef.current ?? (currentLanguage === 'ro' ? 'ro' : 'en'),
       };
       await saveSessionState(updatedSessionState);
       console.log('[QuizSession] Saved progress after question', currentIndex + 1);

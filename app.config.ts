@@ -122,6 +122,8 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       : resolvePublicEnv('EXPO_PUBLIC_ENABLE_REVIEW_PREMIUM', 'false');
 
   const paywallEnabled = resolvePublicEnv('EXPO_PUBLIC_PAYWALL_ENABLED', 'true');
+  // Default false: store builds stay English-only. Set true locally / internal EAS to test ro/es UI.
+  const allowUiLocales = resolvePublicEnv('EXPO_PUBLIC_ALLOW_UI_LOCALES', 'false');
 
   const plugins: NonNullable<ExpoConfig['plugins']> = [
     [
@@ -278,6 +280,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       // Default ON so users hit real RevenueCat paywall limits.
       // Set EXPO_PUBLIC_PAYWALL_ENABLED=false only for internal/dev EAS if needed.
       EXPO_PUBLIC_PAYWALL_ENABLED: paywallEnabled,
+      EXPO_PUBLIC_ALLOW_UI_LOCALES: allowUiLocales,
       EXPO_PUBLIC_KINDE_ISSUER_URL:
         envFromFile.EXPO_PUBLIC_KINDE_ISSUER_URL || process.env.EXPO_PUBLIC_KINDE_ISSUER_URL,
       EXPO_PUBLIC_KINDE_CLIENT_ID:

@@ -61,6 +61,7 @@
     "screenshots:ios-6.5": "python scripts/generate-app-store-screenshots.py",
     "audit:head-neck-i18n": "tsx scripts/audit-head-neck-i18n.ts",
     "audit:locales-en-ro": "tsx scripts/audit-locale-en-ro.ts",
+    "audit:locales-en-es": "tsx scripts/audit-locale-en-es.ts",
     "audit:quiz-missing-ro": "bun scripts/audit-quiz-missing-ro.ts",
     "audit:app-en-ro": "bun scripts/audit-app-en-ro.ts",
     "translate:quiz-ro": "bun scripts/batch-translate-quiz-ro.ts",

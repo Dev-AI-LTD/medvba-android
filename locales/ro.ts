@@ -9,7 +9,7 @@ export const ro: Record<string, string> = {
   'onboarding.slide2.title': 'Tutor AI',
   'onboarding.slide2.subtitle': 'Cu Inteligență Artificială',
   'onboarding.slide2.description': 'Obține răspunsuri instantanee la întrebările tale de la tutorul nostru AI inteligent. Învață concepte profund și eficient.',
-  'onboarding.slide3.title': 'Învață eficient',
+  'onboarding.slide3.title': 'Învață întâi',
   'onboarding.slide3.subtitle': 'Modul Învățare',
   'onboarding.slide3.description': 'Citește rezumate pe capitole și ascultă audio înregistrat înainte de quiz. Înțelege materia, apoi testează-te.',
   'onboarding.slide4.title': 'Urmărește',
@@ -65,7 +65,7 @@ export const ro: Record<string, string> = {
   'auth.createAccountWithEmail': 'Creează cont cu email',
   'auth.signInWithEmail': 'Autentificare cu email',
   'auth.hostedEmailPasswordHint':
-    'Parola se introduce pe pagina Kinde din browser — nu există câmp parolă în app pe TestFlight.',
+    'Parola se introduce pe pagina securizată Kinde care se deschide apoi — nu pe acest ecran din aplicație.',
   'auth.dontHaveAccount': 'Nu ai cont?',
   'auth.alreadyHaveAccount': 'Ai deja cont?',
   'auth.showPassword': 'Arată parola',

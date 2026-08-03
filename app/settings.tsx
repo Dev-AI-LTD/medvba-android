@@ -109,6 +109,7 @@ function SettingsItem({ icon, title, subtitle, onPress, showBorder = true, showC
 const languages: { code: Language; label: string; flag: string }[] = [
   { code: 'en', label: 'English', flag: '🇬🇧' },
   { code: 'ro', label: 'Română', flag: '🇷🇴' },
+  { code: 'es', label: 'Español', flag: '🇪🇸' },
 ];
 
 export default function SettingsScreen() {

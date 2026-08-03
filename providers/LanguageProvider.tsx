@@ -3,11 +3,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import { en } from '@/locales/en';
 import { ro } from '@/locales/ro';
+import { es } from '@/locales/es';
 import { chapterTranslations } from '@/locales/chapterTranslations';
-import { APP_LAUNCH_ENGLISH_UI_ONLY } from '@/lib/app-ui-languages';
+import {
+  APP_LAUNCH_ENGLISH_UI_ONLY,
+  APP_UI_LANGUAGES,
+  isAppUiLanguage,
+  type AppUiLanguage,
+} from '@/lib/app-ui-languages';
 import { log } from '@/lib/log';
 
-export type Language = 'en' | 'ro';
+export type Language = AppUiLanguage;
+export { APP_UI_LANGUAGES };
 
 /** Canonical AsyncStorage key for UI language (`en` default until user picks another in Settings). */
 export const APP_LANGUAGE_STORAGE_KEY = '@medvba_language';
@@ -21,17 +28,17 @@ export const DEFAULT_APP_LANGUAGE: Language = 'en';
 const translations: Record<Language, Record<string, string>> = {
   en,
   ro,
+  es,
 };
 
 function normalizeLanguageCode(value: string | null): Language | null {
   if (value == null) return null;
   const v = value.trim().toLowerCase();
-  if (v === 'en' || v === 'ro') return v;
-  return null;
+  return isAppUiLanguage(v) ? v : null;
 }
 
 export const [LanguageProvider, useLanguage] = createContextHook(() => {
-  /** Persisted choice (ro/en); UI may still show English only while {@link APP_LAUNCH_ENGLISH_UI_ONLY} is true. */
+  /** Persisted choice (en/ro/es); UI may still show English only while {@link APP_LAUNCH_ENGLISH_UI_ONLY} is true. */
   const [storedLanguage, setStoredLanguage] = useState<Language>(DEFAULT_APP_LANGUAGE);
   const [isLoading, setIsLoading] = useState(true);
 
