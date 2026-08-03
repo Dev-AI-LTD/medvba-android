@@ -770,7 +770,7 @@ export default function QuizSessionScreen() {
         entryPoint: 'quiz_wrong_answer',
       };
       await AsyncStorage.setItem(CLINICAL_PENDING_EXPLAIN_KEY, JSON.stringify(intent));
-      router.push({
+      router.replace({
         pathname: '/(tabs)/tutor',
         params: { clinicalMode: '1', fromExplain: '1' },
       });
