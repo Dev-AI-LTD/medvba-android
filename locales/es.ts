@@ -135,6 +135,7 @@ export const es: Record<string, string> = {
   'home.greetingEvening': 'Buenas noches,',
   'home.continueLearning': 'Continuar sesión de estudio',
   'home.questionsToday': 'Has completado {current}/{goal} preguntas hoy',
+  'home.pointsToday': '{n} pts hoy',
   'home.startQuiz': 'Iniciar cuestionario',
   'home.continueQuiz': 'Continuar donde lo dejaste',
   'home.today': 'hoy',
@@ -219,6 +220,11 @@ export const es: Record<string, string> = {
   'session.expiredMessage': 'Tu sesión de quiz anterior fue iniciada hace más de 24 horas y ha sido eliminada.',
   'session.continue': 'Continuar',
   'session.startNew': 'Comenzar nuevo',
+  'session.pointsChip': '+{n} pts',
+  'session.dailyGoalHitTitle': '¡Meta diaria!',
+  'session.dailyGoalHitMessage': '50 preguntas hoy. Bonus +25 pts!',
+  'achievement.notSavedTitle': 'Logro no guardado',
+  'achievement.notSavedMessage': 'No se pudo guardar el logro. Tu progreso no cambia.',
 
   // Module Names
   'module.upperLowerLimbs': 'Miembros superiores/inferiores',

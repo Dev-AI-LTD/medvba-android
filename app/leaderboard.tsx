@@ -11,9 +11,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Screen, ScreenHeader } from '@/components/layout';
 import {
-  ChevronUp,
-  ChevronDown,
-  Minus,
   Zap,
 } from 'lucide-react-native';
 import { useTheme } from '@/providers/ThemeProvider';
@@ -50,14 +47,6 @@ export default function LeaderboardScreen() {
     { key: 'monthly', label: t('profile.monthly') },
     { key: 'allTime', label: t('profile.allTime') },
   ];
-
-  const getRankChangeIcon = (rank: number) => {
-    const changes = [0, 1, -1, 2, 0, -2, 1, 0, -1, 1];
-    const change = changes[rank % 10] || 0;
-    if (change > 0) return <ChevronUp color={colors.success} size={14} />;
-    if (change < 0) return <ChevronDown color={colors.error} size={14} />;
-    return <Minus color={colors.textMuted} size={14} />;
-  };
 
   return (
     <Screen withGradient edges={['top', 'bottom']} padded={false}>
@@ -149,9 +138,6 @@ export default function LeaderboardScreen() {
                 ]}
               >
                 <Text style={styles.leaderboardRank}>#{user.rank}</Text>
-                <View style={styles.rankChange}>
-                  {getRankChangeIcon(index + 3)}
-                </View>
                 <Image
                   source={{ uri: safeAvatarUri(user.avatar, user.id) }}
                   style={styles.leaderboardAvatar}
@@ -278,10 +264,6 @@ const styles = StyleSheet.create({
     width: 36,
     ...typeScale.subhead,
     fontWeight: '600' as const,
-  },
-  rankChange: {
-    width: 20,
-    alignItems: 'center',
   },
   leaderboardAvatar: {
     width: touchTargetMin,

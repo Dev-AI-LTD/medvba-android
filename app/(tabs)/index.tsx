@@ -181,6 +181,11 @@ export default function HomeScreen() {
                   <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>
                     {t('home.questionsToday').replace('{current}', String(todayProgress)).replace('{goal}', String(todayGoal))}
                   </Text>
+                  {dailyProgress.points > 0 && (
+                    <Text style={[styles.heroSubtitle, { color: colors.textMuted, marginTop: 2 }]}>
+                      {t('home.pointsToday').replace('{n}', String(dailyProgress.points))}
+                    </Text>
+                  )}
                   <View style={styles.heroButton}>
                     <UIButton
                       variant="borderedProminent"

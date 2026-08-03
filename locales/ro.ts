@@ -226,6 +226,12 @@ export const ro: Record<string, string> = {
   'session.difficultyEasy': 'Ușor',
   'session.difficultyMedium': 'Mediu',
   'session.difficultyHard': 'Greu',
+  'session.pointsChip': '+{n} pct',
+  'session.dailyGoalHitTitle': 'Obiectiv zilnic atins!',
+  'session.dailyGoalHitMessage': '50 de întrebări azi. Bonus +25 pct!',
+  'home.pointsToday': '{n} pct azi',
+  'achievement.notSavedTitle': 'Realizarea nu a fost salvată',
+  'achievement.notSavedMessage': 'Nu am putut salva realizarea. Progresul rămâne neschimbat.',
 
   // Module Names
   'module.upperLowerLimbs': 'Membre Superioare și Inferioare',

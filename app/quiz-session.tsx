@@ -8,6 +8,7 @@ import {
   ScrollView,
   Platform,
   Alert,
+  AccessibilityInfo,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -227,6 +228,8 @@ async function selectQuestionsForQuiz(
   return { questions: selectedQuestions, resetHistory };
 }
 
+const POINTS_CHIP_VISIBLE_MS = 1800;
+
 export default function QuizSessionScreen() {
   const router = useRouter();
   const { t, getChapterTitle, currentLanguage, isLoading: isLanguageHydrating } = useLanguage();
@@ -246,6 +249,12 @@ export default function QuizSessionScreen() {
   const topPadding = insets.top;
   const bottomPadding = insets.bottom;
   
+  const [pointsChipValue, setPointsChipValue] = useState<number | null>(null);
+  const pointsChipOpacity = useRef(new Animated.Value(0)).current;
+  const pointsChipHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pointsChipAnimRef = useRef<Animated.CompositeAnimation | null>(null);
+  const reduceMotionRef = useRef(false);
+
   const {
     updateDailyProgress,
     saveSessionState,
@@ -256,6 +265,32 @@ export default function QuizSessionScreen() {
   } = useQuizProgress();
   const { incrementQuestionAnsweredCount, FREE_QUIZ_LIMIT } = useSubscription();
   const [limitReached, setLimitReached] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    void AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+      if (mounted) reduceMotionRef.current = enabled;
+    });
+
+    const subscription = AccessibilityInfo.addEventListener(
+      'reduceMotionChanged',
+      (enabled: boolean) => {
+        reduceMotionRef.current = enabled;
+      },
+    );
+
+    return () => {
+      mounted = false;
+      subscription.remove();
+      if (pointsChipHideTimer.current) {
+        clearTimeout(pointsChipHideTimer.current);
+        pointsChipHideTimer.current = null;
+      }
+      pointsChipAnimRef.current?.stop();
+      pointsChipAnimRef.current = null;
+    };
+  }, []);
   
   const sessionStartTimeRef = useRef<number>(Date.now());
   const sessionLanguageRef = useRef<'en' | 'ro' | undefined>(undefined);
@@ -609,7 +644,48 @@ export default function QuizSessionScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
 
-    await updateDailyProgress(isCorrect, question.id);
+    const scoreResult = await updateDailyProgress(isCorrect, question.id);
+
+    if (scoreResult.pointsDelta > 0) {
+      if (pointsChipHideTimer.current) {
+        clearTimeout(pointsChipHideTimer.current);
+        pointsChipHideTimer.current = null;
+      }
+      pointsChipAnimRef.current?.stop();
+      pointsChipAnimRef.current = null;
+
+      setPointsChipValue(scoreResult.pointsDelta);
+
+      if (reduceMotionRef.current) {
+        pointsChipOpacity.setValue(1);
+        pointsChipHideTimer.current = setTimeout(() => {
+          setPointsChipValue(null);
+          pointsChipOpacity.setValue(0);
+          pointsChipHideTimer.current = null;
+        }, POINTS_CHIP_VISIBLE_MS);
+      } else {
+        pointsChipOpacity.setValue(0);
+        const anim = Animated.sequence([
+          Animated.timing(pointsChipOpacity, { toValue: 1, duration: 180, useNativeDriver: true }),
+          Animated.delay(1200),
+          Animated.timing(pointsChipOpacity, { toValue: 0, duration: 220, useNativeDriver: true }),
+        ]);
+        pointsChipAnimRef.current = anim;
+        anim.start(({ finished }) => {
+          if (finished) setPointsChipValue(null);
+          pointsChipAnimRef.current = null;
+        });
+        pointsChipHideTimer.current = setTimeout(() => {
+          setPointsChipValue(null);
+          pointsChipHideTimer.current = null;
+        }, POINTS_CHIP_VISIBLE_MS);
+      }
+    }
+
+    if (scoreResult.dailyGoalJustHit) {
+      Alert.alert(t('session.dailyGoalHitTitle'), t('session.dailyGoalHitMessage'));
+    }
+
     await markQuestionsAsSeen(categoryRef.current || 'mixed', [question.id], modeRef.current || undefined);
 
     const withinLimit = await incrementQuestionAnsweredCount();
@@ -634,7 +710,14 @@ export default function QuizSessionScreen() {
       await saveSessionState(updatedSessionState);
       log.info('[QuizSession] Saved progress after question', currentIdx + 1);
     }
-  }, [showResult, updateDailyProgress, saveSessionState, incrementQuestionAnsweredCount]);
+  }, [
+    showResult,
+    updateDailyProgress,
+    saveSessionState,
+    incrementQuestionAnsweredCount,
+    pointsChipOpacity,
+    t,
+  ]);
 
   const handleAnswerSelect = useCallback(async (index: number) => {
     if (showResult || !currentQuestionRef.current) return;
@@ -1148,6 +1231,18 @@ export default function QuizSessionScreen() {
             </TouchableOpacity>
           </View>
         )}
+
+        {pointsChipValue != null && pointsChipValue > 0 && (
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.pointsChip, { opacity: pointsChipOpacity }]}
+            accessibilityLabel={t('session.pointsChip').replace('{n}', String(pointsChipValue))}
+          >
+            <Text style={styles.pointsChipText}>
+              {t('session.pointsChip').replace('{n}', String(pointsChipValue))}
+            </Text>
+          </Animated.View>
+        )}
       </View>
     </View>
   );
@@ -1417,6 +1512,21 @@ const createStyles = (
   footer: {
     paddingHorizontal: screenPaddingX,
     paddingBottom: space.space3,
+  },
+  pointsChip: {
+    position: 'absolute',
+    alignSelf: 'center',
+    top: '42%',
+    backgroundColor: 'rgba(0, 180, 216, 0.92)',
+    paddingHorizontal: space.space4,
+    paddingVertical: space.space2,
+    borderRadius: radiusPill,
+    zIndex: 20,
+  },
+  pointsChipText: {
+    ...typeScale.headline,
+    color: '#FFFFFF',
+    fontWeight: '700' as const,
   },
   nextButton: {
     borderRadius: radiusLg,

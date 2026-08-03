@@ -226,6 +226,12 @@ export const en: Record<string, string> = {
   'session.difficultyEasy': 'Easy',
   'session.difficultyMedium': 'Medium',
   'session.difficultyHard': 'Hard',
+  'session.pointsChip': '+{n} pts',
+  'session.dailyGoalHitTitle': 'Daily goal hit!',
+  'session.dailyGoalHitMessage': '50 questions today. +25 pts bonus!',
+  'home.pointsToday': '{n} pts today',
+  'achievement.notSavedTitle': 'Achievement not saved',
+  'achievement.notSavedMessage': 'Could not save your achievement. Progress is unchanged.',
 
   // Module Names
   'module.upperLowerLimbs': 'Upper/Lower Limbs',
