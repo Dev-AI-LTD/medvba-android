@@ -11,6 +11,7 @@ export type OfflineUserProgressPayload = {
   currentStreak: number;
   longestStreak: number;
   lastActivityDate: string | null;
+  points: number;
 };
 
 export type OfflineDailyProgressPayload = {
@@ -19,6 +20,7 @@ export type OfflineDailyProgressPayload = {
   questionsAnswered: number;
   correctAnswers: number;
   studyTimeSeconds: number;
+  points: number;
 };
 
 export type OfflineProgressQueueItem =

@@ -257,18 +257,30 @@ jest.mock('@/lib/trpc', () => ({
   },
 }));
 
-jest.mock('@/lib/supabase-hooks', () => ({
-  useUserProfile: jest.fn(() => ({ data: null })),
-  useUserProgress: jest.fn(() => ({ data: null, isLoading: false })),
-  useWeeklyProgress: jest.fn(() => ({ data: [], isLoading: false })),
-  useUpsertUserProgress: jest.fn(() => ({ mutateAsync: jest.fn().mockResolvedValue({}) })),
-  useUpsertDailyProgress: jest.fn(() => ({ mutateAsync: jest.fn().mockResolvedValue({}) })),
-  useCheckAchievements: jest.fn(() => ({ data: { earned: [], progress: {} }, isLoading: false })),
-  useGrantAchievement: jest.fn(() => ({ mutateAsync: jest.fn().mockResolvedValue({}) })),
-  useUpdateSubscription: jest.fn(() => ({
-    mutateAsync: jest.fn().mockResolvedValue({}),
-  })),
-}));
+jest.mock('@/lib/supabase-hooks', () => {
+  const emptyWeeklyProgress = [];
+  const emptyAchievements = [];
+  const emptyLeaderboard = [];
+  const checkAchievementsData = { earned: [], progress: {} };
+  return {
+    useUserProfile: jest.fn(() => ({ data: null })),
+    useUserProgress: jest.fn(() => ({ data: null, isLoading: false })),
+    useWeeklyProgress: jest.fn(() => ({ data: emptyWeeklyProgress, isLoading: false })),
+    useUpsertUserProgress: jest.fn(() => ({ mutateAsync: jest.fn().mockResolvedValue({}) })),
+    useUpsertDailyProgress: jest.fn(() => ({ mutateAsync: jest.fn().mockResolvedValue({}) })),
+    useCheckAchievements: jest.fn(() => ({
+      data: checkAchievementsData,
+      isLoading: false,
+      refetch: jest.fn().mockResolvedValue({ data: checkAchievementsData }),
+    })),
+    useGrantAchievement: jest.fn(() => ({ mutateAsync: jest.fn().mockResolvedValue(true) })),
+    useUserAchievements: jest.fn(() => ({ data: emptyAchievements, isLoading: false })),
+    useLeaderboard: jest.fn(() => ({ data: emptyLeaderboard, isLoading: false })),
+    useUpdateSubscription: jest.fn(() => ({
+      mutateAsync: jest.fn().mockResolvedValue({}),
+    })),
+  };
+});
 
 jest.mock('@/lib/monitoring', () => ({
   monitoring: {

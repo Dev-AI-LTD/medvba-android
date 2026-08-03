@@ -726,6 +726,7 @@ export interface UserProgressData {
   currentStreak: number;
   longestStreak: number;
   lastActivityDate: string | null;
+  points: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -737,6 +738,7 @@ export interface DailyProgressData {
   questionsAnswered: number;
   correctAnswers: number;
   studyTimeSeconds: number;
+  points: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -774,6 +776,7 @@ export function useUserProgress(userId: string | undefined) {
         currentStreak: data.current_streak,
         longestStreak: data.longest_streak,
         lastActivityDate: data.last_activity_date,
+        points: Number(data.points) || 0,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
       } as UserProgressData;
@@ -799,6 +802,7 @@ export function useUpsertUserProgress() {
       currentStreak: number;
       longestStreak: number;
       lastActivityDate: string | null;
+      points: number;
     }) => {
       devLog('[Supabase] Upserting user progress for:', input.userId);
 
@@ -812,6 +816,7 @@ export function useUpsertUserProgress() {
           current_streak: input.currentStreak,
           longest_streak: input.longestStreak,
           last_activity_date: input.lastActivityDate,
+          points: input.points,
         }, {
           onConflict: 'user_id',
         })
@@ -828,6 +833,8 @@ export function useUpsertUserProgress() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['userProgress', variables.userId] });
+      queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+      queryClient.invalidateQueries({ queryKey: ['checkAchievements', variables.userId] });
     },
   });
 }
@@ -901,6 +908,7 @@ export function useDailyProgress(userId: string | undefined, date: string) {
         questionsAnswered: data.questions_answered,
         correctAnswers: data.correct_answers,
         studyTimeSeconds: data.study_time_seconds,
+        points: Number(data.points) || 0,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
       } as DailyProgressData;
@@ -939,6 +947,7 @@ export function useWeeklyProgress(userId: string | undefined, startDate: string,
         questionsAnswered: day.questions_answered,
         correctAnswers: day.correct_answers,
         studyTimeSeconds: day.study_time_seconds,
+        points: Number(day.points) || 0,
         createdAt: day.created_at,
         updatedAt: day.updated_at,
       })) as DailyProgressData[];
@@ -962,6 +971,7 @@ export function useUpsertDailyProgress() {
       questionsAnswered: number;
       correctAnswers: number;
       studyTimeSeconds: number;
+      points: number;
     }) => {
       devLog('[Supabase] Upserting daily progress for:', input.userId, input.date);
 
@@ -973,6 +983,7 @@ export function useUpsertDailyProgress() {
           questions_answered: input.questionsAnswered,
           correct_answers: input.correctAnswers,
           study_time_seconds: input.studyTimeSeconds,
+          points: input.points,
         }, {
           onConflict: 'user_id,date',
         })
@@ -990,6 +1001,7 @@ export function useUpsertDailyProgress() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['dailyProgress', variables.userId, variables.date] });
       queryClient.invalidateQueries({ queryKey: ['weeklyProgress', variables.userId] });
+      queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
     },
   });
 }

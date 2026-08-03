@@ -1,16 +1,17 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import type { Question } from '@/mocks/questions';
 import { useAuth } from './AuthProvider';
-import { 
-  useUserProgress, 
-  useUpsertUserProgress, 
-  useWeeklyProgress, 
+import {
+  useUserProgress,
+  useUpsertUserProgress,
+  useWeeklyProgress,
   useUpsertDailyProgress,
   useCheckAchievements,
-  useGrantAchievement
+  useGrantAchievement,
+  type AchievementType,
 } from '@/lib/supabase-hooks';
 import { log } from '@/lib/log';
 import { useIsOffline } from '@/lib/use-network-auth-offline';
@@ -21,6 +22,15 @@ import {
   type OfflineUserProgressPayload,
 } from '@/lib/offline-progress-queue';
 import { useOfflineReconnectEffect } from '@/lib/use-offline-reconnect';
+import {
+  computeAnswerPoints,
+  computeDailyGoalBonus,
+  computeNextStreak,
+  DAILY_QUESTION_GOAL,
+  formatLocalDate,
+  getLocalYesterdayDateString,
+} from '@/lib/quiz-scoring';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 const DAILY_PROGRESS_KEY = 'quiz_daily_progress';
 const SESSION_STATE_KEY = 'quiz_session_state';
@@ -29,12 +39,19 @@ const STREAK_KEY = 'quiz_streak_data';
 const WEEKLY_HISTORY_KEY = 'quiz_weekly_history';
 const LAST_SESSION_KEY = 'quiz_last_session_info';
 
+export type UpdateDailyProgressResult = {
+  pointsDelta: number;
+  dailyGoalJustHit: boolean;
+};
+
 interface DailyProgress {
   date: string;
   questionsAnswered: number;
   correctAnswers: number;
   goal: number;
   answeredQuestionIds: string[];
+  points: number;
+  dailyGoalBonusGranted: boolean;
 }
 
 interface SessionState {
@@ -53,6 +70,7 @@ interface AllTimeStats {
   totalQuestionsAnswered: number;
   totalCorrectAnswers: number;
   totalStudyTimeSeconds: number;
+  points: number;
 }
 
 interface StreakData {
@@ -66,6 +84,7 @@ interface DailyHistoryEntry {
   questionsAnswered: number;
   correctAnswers: number;
   studyTimeSeconds: number;
+  points: number;
 }
 
 interface LastSessionInfo {
@@ -79,6 +98,7 @@ function getDefaultAllTimeStats(): AllTimeStats {
     totalQuestionsAnswered: 0,
     totalCorrectAnswers: 0,
     totalStudyTimeSeconds: 0,
+    points: 0,
   };
 }
 
@@ -98,7 +118,7 @@ interface QuizProgressContextValue {
   weeklyHistory: DailyHistoryEntry[];
   lastSessionInfo: LastSessionInfo | null;
   isLoading: boolean;
-  updateDailyProgress: (correct: boolean, questionId: string) => Promise<void>;
+  updateDailyProgress: (correct: boolean, questionId: string) => Promise<UpdateDailyProgressResult>;
   saveSessionState: (state: SessionState) => Promise<void>;
   clearSessionState: () => Promise<void>;
   loadSessionState: () => Promise<SessionState | null>;
@@ -115,13 +135,11 @@ interface QuizProgressContextValue {
 }
 
 function getTodayDateString(): string {
-  return new Date().toISOString().split('T')[0];
+  return formatLocalDate();
 }
 
 function getYesterdayDateString(): string {
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  return yesterday.toISOString().split('T')[0];
+  return getLocalYesterdayDateString();
 }
 
 function getLast7Days(): string[] {
@@ -129,7 +147,7 @@ function getLast7Days(): string[] {
   for (let i = 6; i >= 0; i--) {
     const date = new Date();
     date.setDate(date.getDate() - i);
-    dates.push(date.toISOString().split('T')[0]);
+    dates.push(formatLocalDate(date));
   }
   return dates;
 }
@@ -139,13 +157,53 @@ function getDefaultDailyProgress(): DailyProgress {
     date: getTodayDateString(),
     questionsAnswered: 0,
     correctAnswers: 0,
-    goal: 50,
+    goal: DAILY_QUESTION_GOAL,
     answeredQuestionIds: [],
+    points: 0,
+    dailyGoalBonusGranted: false,
   };
 }
 
+function normalizeDailyProgress(raw: Partial<DailyProgress> | null | undefined): DailyProgress {
+  const base = getDefaultDailyProgress();
+  if (!raw) return base;
+  return {
+    date: raw.date || base.date,
+    questionsAnswered: raw.questionsAnswered ?? 0,
+    correctAnswers: raw.correctAnswers ?? 0,
+    goal: raw.goal ?? DAILY_QUESTION_GOAL,
+    answeredQuestionIds: Array.isArray(raw.answeredQuestionIds) ? raw.answeredQuestionIds : [],
+    points: raw.points ?? 0,
+    dailyGoalBonusGranted: Boolean(raw.dailyGoalBonusGranted),
+  };
+}
+
+function normalizeAllTimeStats(raw: Partial<AllTimeStats> | null | undefined): AllTimeStats {
+  const base = getDefaultAllTimeStats();
+  if (!raw) return base;
+  return {
+    totalQuestionsAnswered: raw.totalQuestionsAnswered ?? 0,
+    totalCorrectAnswers: raw.totalCorrectAnswers ?? 0,
+    totalStudyTimeSeconds: raw.totalStudyTimeSeconds ?? 0,
+    // Legacy local data had no points; approximate from questions answered once.
+    points: raw.points ?? raw.totalQuestionsAnswered ?? 0,
+  };
+}
+
+const ACHIEVEMENT_I18N_KEYS: Partial<Record<AchievementType, string>> = {
+  first_quiz: 'achievement.firstQuiz',
+  quiz_completed_10: 'achievement.quizCompleted10',
+  hundred_questions: 'achievement.hundredQuestions',
+  five_hundred_questions: 'achievement.fiveHundredQuestions',
+  thousand_questions: 'achievement.thousandQuestions',
+  week_streak: 'achievement.weekStreak',
+  month_streak: 'achievement.monthStreak',
+  grand_master: 'achievement.grandMaster',
+};
+
 export const [QuizProgressProvider, useQuizProgress] = createContextHook<QuizProgressContextValue>(() => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const userId = user?.id;
   const [dailyProgress, setDailyProgress] = useState<DailyProgress>(getDefaultDailyProgress());
   const [sessionState, setSessionState] = useState<SessionState | null>(null);
@@ -154,6 +212,15 @@ export const [QuizProgressProvider, useQuizProgress] = createContextHook<QuizPro
   const [weeklyHistory, setWeeklyHistory] = useState<DailyHistoryEntry[]>([]);
   const [lastSessionInfo, setLastSessionInfo] = useState<LastSessionInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const dailyProgressRef = useRef(dailyProgress);
+  const allTimeStatsRef = useRef(allTimeStats);
+  const streakDataRef = useRef(streakData);
+  const weeklyHistoryRef = useRef(weeklyHistory);
+  dailyProgressRef.current = dailyProgress;
+  allTimeStatsRef.current = allTimeStats;
+  streakDataRef.current = streakData;
+  weeklyHistoryRef.current = weeklyHistory;
 
   const cloudProgressQuery = useUserProgress(userId);
   const cloudWeeklyQuery = useWeeklyProgress(
@@ -220,7 +287,6 @@ export const [QuizProgressProvider, useQuizProgress] = createContextHook<QuizPro
     return (allTimeStats.totalCorrectAnswers / allTimeStats.totalQuestionsAnswered) * 100;
   }, [allTimeStats.totalQuestionsAnswered, allTimeStats.totalCorrectAnswers]);
 
-  // Achievement grant errors are non-blocking; quiz_completed_10 is granted via grant_my_achievement.
   const checkAndGrantAchievements = useCallback(async () => {
     if (!userId) return;
 
@@ -230,20 +296,23 @@ export const [QuizProgressProvider, useQuizProgress] = createContextHook<QuizPro
 
       if (newAchievements.length > 0) {
         log.info('[QuizProgress] Granting', newAchievements.length, 'new achievements');
-        
+
         for (const achievementType of newAchievements) {
           try {
             const success = await grantAchievementMutation.mutateAsync(achievementType);
 
             if (!success) {
               Alert.alert(
-                'Achievement not saved',
-                'Could not save your achievement. It will not affect your progress.'
+                t('achievement.notSavedTitle'),
+                t('achievement.notSavedMessage'),
               );
               continue;
             }
 
             log.info('[QuizProgress] Granted achievement:', achievementType);
+            const titleKey = ACHIEVEMENT_I18N_KEYS[achievementType];
+            const title = titleKey ? t(titleKey) : achievementType;
+            Alert.alert(t('social.achievementUnlocked'), title);
           } catch (error: any) {
             log.error('[QuizProgress] Error granting achievement:', achievementType, JSON.stringify({
               message: error?.message || String(error),
@@ -253,8 +322,8 @@ export const [QuizProgressProvider, useQuizProgress] = createContextHook<QuizPro
               name: error?.name,
             }, null, 2));
             Alert.alert(
-              'Achievement not saved',
-              'Could not save your achievement. It will not affect your progress.'
+              t('achievement.notSavedTitle'),
+              t('achievement.notSavedMessage'),
             );
           }
         }
@@ -268,47 +337,24 @@ export const [QuizProgressProvider, useQuizProgress] = createContextHook<QuizPro
         name: error?.name,
       }, null, 2));
     }
-  }, [userId, achievementCheckQuery, grantAchievementMutation, allTimeStats, streakData, accuracy]);
+  }, [userId, achievementCheckQuery, grantAchievementMutation, t]);
 
-  const updateStreak = useCallback(async () => {
-    const today = getTodayDateString();
-    const yesterday = getYesterdayDateString();
-
-    setStreakData(prev => {
-      let newStreak = prev.currentStreak;
-      let newLongest = prev.longestStreak;
-
-      if (prev.lastActiveDate === today) {
-        return prev;
-      } else if (prev.lastActiveDate === yesterday) {
-        newStreak = prev.currentStreak + 1;
-      } else if (prev.lastActiveDate === '') {
-        newStreak = 1;
-      } else {
-        newStreak = 1;
-      }
-
-      if (newStreak > newLongest) {
-        newLongest = newStreak;
-      }
-
-      const updated: StreakData = {
-        currentStreak: newStreak,
-        lastActiveDate: today,
-        longestStreak: newLongest,
-      };
-
-      log.info('[QuizProgress] Updated streak:', updated.currentStreak, 'days');
-      
-      AsyncStorage.setItem(STREAK_KEY, JSON.stringify(updated)).catch(err => {
-        log.error('[QuizProgress] Error saving streak:', err);
-      });
-
-      return updated;
-    });
+  const persistStreak = useCallback(async (updated: StreakData) => {
+    setStreakData(updated);
+    streakDataRef.current = updated;
+    try {
+      await AsyncStorage.setItem(STREAK_KEY, JSON.stringify(updated));
+    } catch (err) {
+      log.error('[QuizProgress] Error saving streak:', err);
+    }
   }, []);
 
-  const updateWeeklyHistory = useCallback(async (questionsAdded: number, correctAdded: number, studyTimeAdded: number = 0) => {
+  const updateWeeklyHistory = useCallback(async (
+    questionsAdded: number,
+    correctAdded: number,
+    studyTimeAdded: number = 0,
+    pointsAdded: number = 0,
+  ) => {
     const today = getTodayDateString();
 
     setWeeklyHistory(prev => {
@@ -323,6 +369,7 @@ export const [QuizProgressProvider, useQuizProgress] = createContextHook<QuizPro
               questionsAnswered: entry.questionsAnswered + questionsAdded,
               correctAnswers: entry.correctAnswers + correctAdded,
               studyTimeSeconds: entry.studyTimeSeconds + studyTimeAdded,
+              points: (entry.points || 0) + pointsAdded,
             };
           }
           return entry;
@@ -333,14 +380,16 @@ export const [QuizProgressProvider, useQuizProgress] = createContextHook<QuizPro
           questionsAnswered: questionsAdded,
           correctAnswers: correctAdded,
           studyTimeSeconds: studyTimeAdded,
+          points: pointsAdded,
         }];
       }
 
       const last7Days = getLast7Days();
       updated = updated.filter(entry => last7Days.includes(entry.date));
+      weeklyHistoryRef.current = updated;
 
       log.info('[QuizProgress] Updated weekly history:', updated.length, 'days tracked');
-      
+
       AsyncStorage.setItem(WEEKLY_HISTORY_KEY, JSON.stringify(updated)).catch(err => {
         log.error('[QuizProgress] Error saving weekly history:', err);
       });
@@ -349,46 +398,50 @@ export const [QuizProgressProvider, useQuizProgress] = createContextHook<QuizPro
     });
   }, []);
 
-
-
   useEffect(() => {
     let isMounted = true;
 
     const loadProgress = async () => {
       try {
         log.info('[QuizProgress] Loading progress from cloud and local...');
-        
+
         if (!isMounted) return;
 
         if (userId && cloudProgressQuery.data) {
           log.info('[QuizProgress] Loading from Supabase cloud');
           if (isMounted) {
-            setAllTimeStats({
+            const nextAllTime: AllTimeStats = {
               totalQuestionsAnswered: cloudProgressQuery.data.totalQuestionsAnswered,
               totalCorrectAnswers: cloudProgressQuery.data.correctAnswers,
               totalStudyTimeSeconds: cloudProgressQuery.data.studyTimeSeconds,
-            });
-            setStreakData({
+              points: cloudProgressQuery.data.points ?? 0,
+            };
+            setAllTimeStats(nextAllTime);
+            allTimeStatsRef.current = nextAllTime;
+            const nextStreak: StreakData = {
               currentStreak: cloudProgressQuery.data.currentStreak,
               longestStreak: cloudProgressQuery.data.longestStreak,
               lastActiveDate: cloudProgressQuery.data.lastActivityDate || '',
-            });
+            };
+            setStreakData(nextStreak);
+            streakDataRef.current = nextStreak;
           }
         } else {
           log.info('[QuizProgress] Loading from local AsyncStorage');
           const allTimeStored = await AsyncStorage.getItem(ALL_TIME_STATS_KEY);
           if (isMounted && allTimeStored) {
-            const parsedAllTime = JSON.parse(allTimeStored) as AllTimeStats;
+            const parsedAllTime = normalizeAllTimeStats(JSON.parse(allTimeStored) as AllTimeStats);
             log.info('[QuizProgress] Loaded all-time stats from local:', parsedAllTime);
             setAllTimeStats(parsedAllTime);
+            allTimeStatsRef.current = parsedAllTime;
           }
-          
+
           const streakStored = await AsyncStorage.getItem(STREAK_KEY);
           if (isMounted && streakStored) {
             const parsedStreak = JSON.parse(streakStored) as StreakData;
             const today = getTodayDateString();
             const yesterday = getYesterdayDateString();
-            
+
             if (parsedStreak.lastActiveDate !== today && parsedStreak.lastActiveDate !== yesterday) {
               log.info('[QuizProgress] Streak broken, resetting to 0');
               const resetStreak: StreakData = {
@@ -397,10 +450,12 @@ export const [QuizProgressProvider, useQuizProgress] = createContextHook<QuizPro
                 longestStreak: parsedStreak.longestStreak,
               };
               setStreakData(resetStreak);
+              streakDataRef.current = resetStreak;
               await AsyncStorage.setItem(STREAK_KEY, JSON.stringify(resetStreak));
             } else {
               log.info('[QuizProgress] Loaded streak from local:', parsedStreak.currentStreak, 'days');
               setStreakData(parsedStreak);
+              streakDataRef.current = parsedStreak;
             }
           }
         }
@@ -414,36 +469,63 @@ export const [QuizProgressProvider, useQuizProgress] = createContextHook<QuizPro
             questionsAnswered: day.questionsAnswered,
             correctAnswers: day.correctAnswers,
             studyTimeSeconds: day.studyTimeSeconds,
+            points: day.points ?? 0,
           }));
           if (isMounted) {
             setWeeklyHistory(weeklyData);
+            weeklyHistoryRef.current = weeklyData;
+
+            const today = getTodayDateString();
+            const todayCloud = weeklyData.find(d => d.date === today);
+            if (todayCloud) {
+              setDailyProgress(prev => {
+                if (prev.date === today && prev.questionsAnswered > 0) {
+                  return prev;
+                }
+                const merged = normalizeDailyProgress({
+                  ...prev,
+                  date: today,
+                  questionsAnswered: Math.max(prev.questionsAnswered, todayCloud.questionsAnswered),
+                  correctAnswers: Math.max(prev.correctAnswers, todayCloud.correctAnswers),
+                  points: Math.max(prev.points, todayCloud.points),
+                });
+                dailyProgressRef.current = merged;
+                return merged;
+              });
+            }
           }
         } else {
           const weeklyStored = await AsyncStorage.getItem(WEEKLY_HISTORY_KEY);
           if (isMounted && weeklyStored) {
-            const parsedWeekly = JSON.parse(weeklyStored) as DailyHistoryEntry[];
+            const parsedWeekly = (JSON.parse(weeklyStored) as DailyHistoryEntry[]).map(entry => ({
+              ...entry,
+              points: entry.points ?? 0,
+            }));
             const last7Days = getLast7Days();
             const filtered = parsedWeekly.filter(entry => last7Days.includes(entry.date));
             log.info('[QuizProgress] Loaded weekly history from local:', filtered.length, 'days');
             setWeeklyHistory(filtered);
+            weeklyHistoryRef.current = filtered;
           }
         }
 
         if (!isMounted) return;
 
         const stored = await AsyncStorage.getItem(DAILY_PROGRESS_KEY);
-        
+
         if (isMounted && stored) {
-          const parsed = JSON.parse(stored) as DailyProgress;
+          const parsed = normalizeDailyProgress(JSON.parse(stored) as DailyProgress);
           const today = getTodayDateString();
-          
+
           if (parsed.date === today) {
             log.info('[QuizProgress] Found today\'s progress:', parsed.questionsAnswered, 'questions');
             setDailyProgress(parsed);
+            dailyProgressRef.current = parsed;
           } else {
             log.info('[QuizProgress] Progress is from a different day, resetting');
             const newProgress = getDefaultDailyProgress();
             setDailyProgress(newProgress);
+            dailyProgressRef.current = newProgress;
             await AsyncStorage.setItem(DAILY_PROGRESS_KEY, JSON.stringify(newProgress));
           }
         } else {
@@ -455,9 +537,9 @@ export const [QuizProgressProvider, useQuizProgress] = createContextHook<QuizPro
         const sessionStored = await AsyncStorage.getItem(SESSION_STATE_KEY);
         if (isMounted && sessionStored) {
           const parsedSession = JSON.parse(sessionStored) as SessionState;
-          const sessionDate = parsedSession.startedAt.split('T')[0];
+          const sessionDate = formatLocalDate(new Date(parsedSession.startedAt));
           const today = getTodayDateString();
-          
+
           if (sessionDate === today) {
             log.info('[QuizProgress] Found active session at index:', parsedSession.currentIndex);
             setSessionState(parsedSession);
@@ -491,80 +573,106 @@ export const [QuizProgressProvider, useQuizProgress] = createContextHook<QuizPro
     };
   }, [userId, cloudProgressQuery.data, cloudWeeklyQuery.data]);
 
-  const updateDailyProgress = useCallback(async (correct: boolean, questionId: string) => {
+  const updateDailyProgress = useCallback(async (correct: boolean, questionId: string): Promise<UpdateDailyProgressResult> => {
+    const empty: UpdateDailyProgressResult = { pointsDelta: 0, dailyGoalJustHit: false };
+
     try {
-
-      let newAllTime: AllTimeStats | null = null;
-      let newStreak: StreakData | null = null;
-      let newDaily: DailyProgress | null = null;
-      let newWeeklyEntry: { questionsAnswered: number; correctAnswers: number; studyTimeSeconds: number } | null = null;
-
-      setDailyProgress(prev => {
-        if (prev.answeredQuestionIds.includes(questionId)) {
-          log.info('[QuizProgress] Question already answered today:', questionId);
-          return prev;
-        }
-        newDaily = {
-          ...prev,
-          date: getTodayDateString(),
-          questionsAnswered: prev.questionsAnswered + 1,
-          correctAnswers: correct ? prev.correctAnswers + 1 : prev.correctAnswers,
-          answeredQuestionIds: [...prev.answeredQuestionIds, questionId],
-        };
-        log.info('[QuizProgress] Updated daily progress:', newDaily.questionsAnswered, '/', newDaily.goal);
-        AsyncStorage.setItem(DAILY_PROGRESS_KEY, JSON.stringify(newDaily)).catch(err => {
-          log.error('[QuizProgress] Error saving daily progress:', err);
-        });
-        return newDaily;
-      });
-
-      setAllTimeStats(prev => {
-        newAllTime = {
-          ...prev,
-          totalQuestionsAnswered: prev.totalQuestionsAnswered + 1,
-          totalCorrectAnswers: correct ? prev.totalCorrectAnswers + 1 : prev.totalCorrectAnswers,
-        };
-        log.info('[QuizProgress] Updated all-time stats:', newAllTime.totalQuestionsAnswered, 'questions,', newAllTime.totalCorrectAnswers, 'correct');
-        AsyncStorage.setItem(ALL_TIME_STATS_KEY, JSON.stringify(newAllTime)).catch(err => {
-          log.error('[QuizProgress] Error saving all-time stats:', err);
-        });
-        return newAllTime;
-      });
-
-      await updateStreak();
       const today = getTodayDateString();
-      const todayEntryBefore = weeklyHistory.find(e => e.date === today);
-      await updateWeeklyHistory(1, correct ? 1 : 0, 0);
-      newWeeklyEntry = {
+      const prevDaily = dailyProgressRef.current.date === today
+        ? dailyProgressRef.current
+        : getDefaultDailyProgress();
+
+      // Early-return on daily dedupe — no counters, points, streak, or sync.
+      if (prevDaily.answeredQuestionIds.includes(questionId)) {
+        log.info('[QuizProgress] Question already answered today:', questionId);
+        return empty;
+      }
+
+      const nextStreak = computeNextStreak(
+        streakDataRef.current,
+        today,
+        getYesterdayDateString(),
+      );
+      await persistStreak(nextStreak);
+
+      const answerScore = computeAnswerPoints(correct, nextStreak.currentStreak);
+      const nextQuestions = prevDaily.questionsAnswered + 1;
+      const goalBonus = computeDailyGoalBonus(
+        prevDaily.questionsAnswered,
+        nextQuestions,
+        prevDaily.dailyGoalBonusGranted,
+      );
+      const dailyGoalJustHit = goalBonus > 0;
+      const pointsDelta = answerScore.total + goalBonus;
+
+      const newDaily: DailyProgress = {
+        ...prevDaily,
+        date: today,
+        questionsAnswered: nextQuestions,
+        correctAnswers: correct ? prevDaily.correctAnswers + 1 : prevDaily.correctAnswers,
+        answeredQuestionIds: [...prevDaily.answeredQuestionIds, questionId],
+        points: prevDaily.points + pointsDelta,
+        dailyGoalBonusGranted: prevDaily.dailyGoalBonusGranted || dailyGoalJustHit,
+      };
+
+      setDailyProgress(newDaily);
+      dailyProgressRef.current = newDaily;
+      await AsyncStorage.setItem(DAILY_PROGRESS_KEY, JSON.stringify(newDaily));
+      log.info('[QuizProgress] Updated daily progress:', newDaily.questionsAnswered, '/', newDaily.goal, 'pts+', pointsDelta);
+
+      const newAllTime: AllTimeStats = {
+        ...allTimeStatsRef.current,
+        totalQuestionsAnswered: allTimeStatsRef.current.totalQuestionsAnswered + 1,
+        totalCorrectAnswers: correct
+          ? allTimeStatsRef.current.totalCorrectAnswers + 1
+          : allTimeStatsRef.current.totalCorrectAnswers,
+        points: allTimeStatsRef.current.points + pointsDelta,
+      };
+      setAllTimeStats(newAllTime);
+      allTimeStatsRef.current = newAllTime;
+      await AsyncStorage.setItem(ALL_TIME_STATS_KEY, JSON.stringify(newAllTime));
+
+      const todayEntryBefore = weeklyHistoryRef.current.find(e => e.date === today);
+      await updateWeeklyHistory(1, correct ? 1 : 0, 0, pointsDelta);
+      const newWeeklyEntry = {
         questionsAnswered: (todayEntryBefore?.questionsAnswered || 0) + 1,
         correctAnswers: (todayEntryBefore?.correctAnswers || 0) + (correct ? 1 : 0),
         studyTimeSeconds: todayEntryBefore?.studyTimeSeconds || 0,
+        points: (todayEntryBefore?.points || 0) + pointsDelta,
       };
 
-      if (userId && newAllTime) {
-        const streakSnapshot = streakData;
-        const allTime = newAllTime as AllTimeStats;
-        const syncPayload = {
+      if (userId) {
+        // Sync uses the fresh streak (not a stale closure snapshot).
+        const syncPayload: OfflineUserProgressPayload = {
           userId,
-          totalQuestionsAnswered: allTime.totalQuestionsAnswered,
-          correctAnswers: allTime.totalCorrectAnswers,
-          studyTimeSeconds: allTime.totalStudyTimeSeconds,
-          currentStreak: streakSnapshot.currentStreak,
-          longestStreak: streakSnapshot.longestStreak,
-          lastActivityDate: streakSnapshot.lastActiveDate || null,
+          totalQuestionsAnswered: newAllTime.totalQuestionsAnswered,
+          correctAnswers: newAllTime.totalCorrectAnswers,
+          studyTimeSeconds: newAllTime.totalStudyTimeSeconds,
+          currentStreak: nextStreak.currentStreak,
+          longestStreak: nextStreak.longestStreak,
+          lastActivityDate: nextStreak.lastActiveDate || null,
+          points: newAllTime.points,
         };
-        const dailyPayload = newWeeklyEntry
-          ? { userId, date: today, questionsAnswered: newWeeklyEntry.questionsAnswered, correctAnswers: newWeeklyEntry.correctAnswers, studyTimeSeconds: newWeeklyEntry.studyTimeSeconds }
-          : { userId, date: today, questionsAnswered: 1, correctAnswers: correct ? 1 : 0, studyTimeSeconds: 0 };
+        const dailyPayload: OfflineDailyProgressPayload = {
+          userId,
+          date: today,
+          questionsAnswered: newWeeklyEntry.questionsAnswered,
+          correctAnswers: newWeeklyEntry.correctAnswers,
+          studyTimeSeconds: newWeeklyEntry.studyTimeSeconds,
+          points: newWeeklyEntry.points,
+        };
 
         void syncUserAndDailyToCloud(syncPayload, dailyPayload, () => {
           checkAndGrantAchievements();
         });
       }
+
+      return { pointsDelta, dailyGoalJustHit };
     } catch (error) {
       log.error('[QuizProgress] Error updating daily progress:', error);
+      return empty;
     }
-  }, [updateStreak, updateWeeklyHistory, userId, streakData, weeklyHistory, syncUserAndDailyToCloud, checkAndGrantAchievements]);
+  }, [persistStreak, updateWeeklyHistory, userId, syncUserAndDailyToCloud, checkAndGrantAchievements]);
 
   const saveLastSessionInfo = useCallback(async (category: string, mode: string) => {
     try {
@@ -585,7 +693,7 @@ export const [QuizProgressProvider, useQuizProgress] = createContextHook<QuizPro
     try {
       setSessionState(state);
       await AsyncStorage.setItem(SESSION_STATE_KEY, JSON.stringify(state));
-      
+
       await saveLastSessionInfo(state.category, state.mode);
     } catch (error) {
       log.error('[QuizProgress] Error saving session state:', error);
@@ -607,9 +715,9 @@ export const [QuizProgressProvider, useQuizProgress] = createContextHook<QuizPro
       const stored = await AsyncStorage.getItem(SESSION_STATE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as SessionState;
-        const sessionDate = parsed.startedAt.split('T')[0];
+        const sessionDate = formatLocalDate(new Date(parsed.startedAt));
         const today = getTodayDateString();
-        
+
         if (sessionDate === today) {
           return parsed;
         }
@@ -625,6 +733,7 @@ export const [QuizProgressProvider, useQuizProgress] = createContextHook<QuizPro
     try {
       const newProgress = getDefaultDailyProgress();
       setDailyProgress(newProgress);
+      dailyProgressRef.current = newProgress;
       await AsyncStorage.setItem(DAILY_PROGRESS_KEY, JSON.stringify(newProgress));
       log.info('[QuizProgress] Daily progress reset');
     } catch (error) {
@@ -638,37 +747,31 @@ export const [QuizProgressProvider, useQuizProgress] = createContextHook<QuizPro
 
   const addStudyTime = useCallback(async (seconds: number) => {
     try {
-      setAllTimeStats(prev => {
-        const updated: AllTimeStats = {
-          ...prev,
-          totalStudyTimeSeconds: prev.totalStudyTimeSeconds + seconds,
-        };
+      const updated: AllTimeStats = {
+        ...allTimeStatsRef.current,
+        totalStudyTimeSeconds: allTimeStatsRef.current.totalStudyTimeSeconds + seconds,
+      };
+      setAllTimeStats(updated);
+      allTimeStatsRef.current = updated;
+      log.info('[QuizProgress] Added', seconds, 'seconds. Total study time:', updated.totalStudyTimeSeconds, 'seconds');
+      await AsyncStorage.setItem(ALL_TIME_STATS_KEY, JSON.stringify(updated));
 
-        log.info('[QuizProgress] Added', seconds, 'seconds. Total study time:', updated.totalStudyTimeSeconds, 'seconds');
-        
-        AsyncStorage.setItem(ALL_TIME_STATS_KEY, JSON.stringify(updated)).catch(err => {
-          log.error('[QuizProgress] Error saving study time:', err);
-        });
-
-        return updated;
-      });
-
-      await updateWeeklyHistory(0, 0, seconds);
+      await updateWeeklyHistory(0, 0, seconds, 0);
 
       if (userId) {
-        const currentAllTime = allTimeStats;
-        const currentStreak = streakData;
+        const currentStreak = streakDataRef.current;
         const today = getTodayDateString();
-        const todayEntry = weeklyHistory.find(e => e.date === today);
+        const todayEntry = weeklyHistoryRef.current.find(e => e.date === today);
 
         const userPayload: OfflineUserProgressPayload = {
           userId,
-          totalQuestionsAnswered: currentAllTime.totalQuestionsAnswered,
-          correctAnswers: currentAllTime.totalCorrectAnswers,
-          studyTimeSeconds: currentAllTime.totalStudyTimeSeconds + seconds,
+          totalQuestionsAnswered: updated.totalQuestionsAnswered,
+          correctAnswers: updated.totalCorrectAnswers,
+          studyTimeSeconds: updated.totalStudyTimeSeconds,
           currentStreak: currentStreak.currentStreak,
           longestStreak: currentStreak.longestStreak,
           lastActivityDate: currentStreak.lastActiveDate || null,
+          points: updated.points,
         };
 
         if (todayEntry) {
@@ -678,6 +781,7 @@ export const [QuizProgressProvider, useQuizProgress] = createContextHook<QuizPro
             questionsAnswered: todayEntry.questionsAnswered,
             correctAnswers: todayEntry.correctAnswers,
             studyTimeSeconds: todayEntry.studyTimeSeconds + seconds,
+            points: todayEntry.points || 0,
           };
           void syncUserAndDailyToCloud(userPayload, dailyPayload, () => {
             checkAndGrantAchievements();
@@ -702,9 +806,6 @@ export const [QuizProgressProvider, useQuizProgress] = createContextHook<QuizPro
   }, [
     updateWeeklyHistory,
     userId,
-    allTimeStats,
-    streakData,
-    weeklyHistory,
     syncUserAndDailyToCloud,
     isOffline,
     upsertUserProgressAsync,
