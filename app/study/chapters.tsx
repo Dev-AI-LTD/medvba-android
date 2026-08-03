@@ -15,6 +15,7 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import { useStudyChapterList } from '@/lib/study-hooks';
+import { resolveStudyContentLocale } from '@/lib/study-content-locale';
 import { STUDY_MODULE_IDS } from '@/constants/study';
 import {
   cardPadding,
@@ -33,7 +34,7 @@ export default function StudyChaptersScreen() {
   const { t, getModuleName, currentLanguage } = useLanguage();
   const { colors } = useTheme();
   const { isPremium, isPaywallEnabled } = useSubscription();
-  const locale = currentLanguage === 'ro' ? 'ro' : 'en';
+  const locale = resolveStudyContentLocale(currentLanguage);
   const { chapters } = useStudyChapterList(moduleId ?? '', locale);
 
   if (!moduleId || !(STUDY_MODULE_IDS as readonly string[]).includes(moduleId)) {

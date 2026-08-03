@@ -1,4 +1,4 @@
-import Constants from 'expo-constants';
+import { getMergedExpoExtra } from '@/lib/expo-public-extra';
 
 /**
  * App UI language source of truth (Settings picker + LanguageProvider).
@@ -11,30 +11,29 @@ export function isAppUiLanguage(value: string | null | undefined): value is AppU
   return value === 'en' || value === 'ro' || value === 'es';
 }
 
-/** Quiz/study content locales currently shipped (`es` UI falls back to English content). */
+/**
+ * Quiz/study content locale.
+ * Until reviewed medical corpora ship for RO/ES, content is always English for every UI locale.
+ */
 export type AppContentLanguage = 'en' | 'ro';
 
-export function resolveAppContentLanguage(uiLanguage: AppUiLanguage): AppContentLanguage {
-  return uiLanguage === 'ro' ? 'ro' : 'en';
+export function resolveAppContentLanguage(_uiLanguage: AppUiLanguage): AppContentLanguage {
+  return 'en';
 }
 
 /**
  * Production/default launch gate: English UI only (picker hidden; `currentLanguage` forced to `en`).
- * Romanian/Spanish locale files and AsyncStorage preference are preserved.
+ * Romanian/Spanish locale files and AsyncStorage preference (`@medvba_language`) are preserved —
+ * the gate must never rewrite that key.
  *
  * Testing override (does not change store default): set `EXPO_PUBLIC_ALLOW_UI_LOCALES=true`
  * (or `1`) in `.env` / EAS env / `app.config` extra so the picker and stored language apply.
- *
- * Behavior:
- * - Before: `APP_LAUNCH_ENGLISH_UI_ONLY` was always `true` → English-only for everyone.
- * - After: still `true` by default (same production/store behavior for existing users).
- *   With `EXPO_PUBLIC_ALLOW_UI_LOCALES=true`, gate is `false` → ro/es selectable when picker is shown.
  */
 const APP_LAUNCH_ENGLISH_UI_ONLY_DEFAULT = true;
 
 function readAllowUiLocales(): boolean {
-  const extra = Constants.expoConfig?.extra as Record<string, string | undefined> | undefined;
-  const fromExtra = extra?.EXPO_PUBLIC_ALLOW_UI_LOCALES;
+  const extra = getMergedExpoExtra();
+  const fromExtra = extra.EXPO_PUBLIC_ALLOW_UI_LOCALES;
   const raw =
     fromExtra != null && String(fromExtra).trim() !== ''
       ? fromExtra
@@ -44,5 +43,7 @@ function readAllowUiLocales(): boolean {
   return v === 'true' || v === '1';
 }
 
-export const APP_LAUNCH_ENGLISH_UI_ONLY =
-  APP_LAUNCH_ENGLISH_UI_ONLY_DEFAULT && !readAllowUiLocales();
+/** Runtime gate — re-read config each call (do not freeze at module import). */
+export function isAppLaunchEnglishUiOnly(): boolean {
+  return APP_LAUNCH_ENGLISH_UI_ONLY_DEFAULT && !readAllowUiLocales();
+}

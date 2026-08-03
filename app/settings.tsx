@@ -75,7 +75,7 @@ import {
   typeScale,
 } from '@/theme/iosDesign';
 import { useUserProfile, useUpdateUserProfile, uploadProfilePhoto } from '@/lib/supabase-hooks';
-import { APP_LAUNCH_ENGLISH_UI_ONLY } from '@/lib/app-ui-languages';
+import { isAppLaunchEnglishUiOnly } from '@/lib/app-ui-languages';
 import PhotoPicker from '@/components/PhotoPicker';
 
 interface SettingsItemProps {
@@ -436,7 +436,7 @@ export default function SettingsScreen() {
                 colors={['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.04)']}
                 style={StyleSheet.absoluteFill}
               />
-              {!APP_LAUNCH_ENGLISH_UI_ONLY && (
+              {!isAppLaunchEnglishUiOnly() && (
               <View style={[styles.languageSection, { borderBottomColor: colors.glassBorder }]}>
                 <View style={styles.languageSectionHeader}>
                   <View style={styles.settingsItemIcon}>

@@ -1,18 +1,11 @@
-import {
-  APP_LAUNCH_ENGLISH_UI_ONLY,
-  resolveAppContentLanguage,
-  type AppUiLanguage,
-} from '@/lib/app-ui-languages';
+import { resolveAppContentLanguage, type AppUiLanguage } from '@/lib/app-ui-languages';
 
 export type StudyContentLocale = 'ro' | 'en';
 
 /**
  * Locale for study summary markdown (not UI strings).
- * Spanish UI maps to English study content until an `es` study corpus exists.
+ * Content is English for every UI locale until reviewed RO/ES corpora ship.
  */
-export function resolveStudyContentLocale(
-  appLanguage: AppUiLanguage,
-): StudyContentLocale {
-  if (APP_LAUNCH_ENGLISH_UI_ONLY) return 'en';
+export function resolveStudyContentLocale(appLanguage: AppUiLanguage): StudyContentLocale {
   return resolveAppContentLanguage(appLanguage);
 }

@@ -6,9 +6,10 @@ import { ro } from '@/locales/ro';
 import { es } from '@/locales/es';
 import { chapterTranslations } from '@/locales/chapterTranslations';
 import {
-  APP_LAUNCH_ENGLISH_UI_ONLY,
   APP_UI_LANGUAGES,
+  isAppLaunchEnglishUiOnly,
   isAppUiLanguage,
+  resolveAppContentLanguage,
   type AppUiLanguage,
 } from '@/lib/app-ui-languages';
 import { log } from '@/lib/log';
@@ -38,11 +39,12 @@ function normalizeLanguageCode(value: string | null): Language | null {
 }
 
 export const [LanguageProvider, useLanguage] = createContextHook(() => {
-  /** Persisted choice (en/ro/es); UI may still show English only while {@link APP_LAUNCH_ENGLISH_UI_ONLY} is true. */
+  /** Persisted choice (en/ro/es); UI may still show English only while {@link isAppLaunchEnglishUiOnly} is true. */
   const [storedLanguage, setStoredLanguage] = useState<Language>(DEFAULT_APP_LANGUAGE);
   const [isLoading, setIsLoading] = useState(true);
 
-  const currentLanguage: Language = APP_LAUNCH_ENGLISH_UI_ONLY ? 'en' : storedLanguage;
+  /** Gate may hide non-EN UI for store/launch; it never rewrites {@link APP_LANGUAGE_STORAGE_KEY}. */
+  const currentLanguage: Language = isAppLaunchEnglishUiOnly() ? 'en' : storedLanguage;
 
   useEffect(() => {
     const loadLanguage = async () => {
@@ -99,7 +101,9 @@ export const [LanguageProvider, useLanguage] = createContextHook(() => {
       log.warn(`Missing chapter translation for: ${chapterId}`);
       return chapterId;
     }
-    return chapterTrans[currentLanguage] || chapterTrans['en'] || chapterId;
+    /** Medical chapter titles follow content locale (always EN for now), not UI language. */
+    const contentLanguage = resolveAppContentLanguage(currentLanguage);
+    return chapterTrans[contentLanguage] || chapterTrans.en || chapterId;
   }, [currentLanguage]);
 
   const getModuleName = useCallback((moduleId: string): string => {
