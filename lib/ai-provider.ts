@@ -4,6 +4,10 @@
  * Clinical: AI_PROVIDER=muse (explicit) → META_MODEL_*; otherwise OpenAI path.
  */
 
+import type { TutorLocale } from './tutor-locale';
+
+export type { TutorLocale } from './tutor-locale';
+
 export type AIProvider = 'openai' | 'muse';
 
 export interface AIProviderConfig {
@@ -507,14 +511,17 @@ Formatting guidelines:
 
 Topics you cover: Anatomy, Physiology, Pathology, Pharmacology, Biochemistry, Microbiology, Immunology, Histology, Embryology, and clinical medicine.`;
 
-export type TutorLocale = 'en' | 'ro';
-
 /** System prompt plus explicit response language for the AI tutor. */
 export function getTutorSystemPrompt(locale: TutorLocale): string {
   if (locale === 'ro') {
     return `${SYSTEM_PROMPT}
 
 IMPORTANT — LIMBĂ: Răspunde întotdeauna în limba română. Folosește terminologie medicală corectă în română.`;
+  }
+  if (locale === 'es') {
+    return `${SYSTEM_PROMPT}
+
+IMPORTANT — IDIOMA: Responde únicamente en español. Usa lenguaje médico educativo claro. No cambies de idioma porque el material de origen, la pregunta o las etiquetas de la imagen estén en inglés.`;
   }
   return `${SYSTEM_PROMPT}
 
@@ -524,6 +531,9 @@ IMPORTANT — LANGUAGE: Always respond in English.`;
 export function getTutorAssistantPreamble(locale: TutorLocale): string {
   if (locale === 'ro') {
     return 'Înțeleg. Sunt gata să ajut studenții la medicină cu explicații precise și detaliate.';
+  }
+  if (locale === 'es') {
+    return 'Entiendo. Estoy listo para ayudar a estudiantes de medicina con explicaciones precisas y detalladas.';
   }
   return 'I understand. I am ready to help medical students with accurate, detailed explanations.';
 }

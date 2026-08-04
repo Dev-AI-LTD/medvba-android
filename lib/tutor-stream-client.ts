@@ -4,6 +4,7 @@
 
 import { getApiBaseUrl } from '@/lib/api-base-url';
 import { fetchSse } from '@/lib/sse-fetch';
+import type { TutorLocale } from '@/lib/tutor-locale';
 
 export type TutorStreamDone = {
   response: string;
@@ -12,7 +13,7 @@ export type TutorStreamDone = {
 export async function streamTutorReply(params: {
   token: string;
   messages: { role: 'user' | 'assistant'; content: string }[];
-  locale: 'en' | 'ro';
+  locale: TutorLocale;
   onDelta: (chunk: string) => void;
   signal?: AbortSignal;
 }): Promise<TutorStreamDone> {

@@ -4,6 +4,7 @@
 
 import { getApiBaseUrl } from '@/lib/api-base-url';
 import { fetchSse } from '@/lib/sse-fetch';
+import type { TutorLocale } from '@/lib/tutor-locale';
 
 export type ClinicalStreamDone = {
   sessionId: string;
@@ -16,7 +17,7 @@ export async function streamClinicalReply(params: {
   token: string;
   sessionId: string;
   message: string;
-  locale: 'en' | 'ro';
+  locale: TutorLocale;
   mode?: 'history' | 'exam' | 'labs' | 'differential' | 'management' | 'free';
   onDelta: (chunk: string) => void;
   signal?: AbortSignal;

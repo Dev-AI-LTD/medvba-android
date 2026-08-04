@@ -13,15 +13,18 @@ import {
   generateTutorTextStream,
   getTutorAssistantPreamble,
   getTutorSystemPrompt,
-  type TutorLocale,
 } from '../lib/ai-provider';
+import {
+  resolveTutorLocaleOrDefault,
+  type TutorLocale,
+} from '../lib/tutor-locale';
 import { decrementFreeAiUsage, incrementFreeAiUsage } from './lib/free-ai-usage';
 import { userHasActivePremiumAccess } from './lib/premium-access';
 import { tutorRateLimiter } from './trpc/rate-limiter';
 
 type StreamBody = {
   messages: { role: 'user' | 'assistant'; content: string }[];
-  locale?: 'en' | 'ro';
+  locale?: TutorLocale;
 };
 
 function adminClient() {
@@ -79,7 +82,7 @@ export function registerTutorStreamRoutes(app: Hono) {
     }
 
     const supabase = adminClient();
-    const locale = (body.locale === 'ro' ? 'ro' : 'en') as TutorLocale;
+    const locale = resolveTutorLocaleOrDefault(body.locale);
     const isPremium = await userHasActivePremiumAccess(supabase, userId);
     let reservedFreeSlot = false;
 

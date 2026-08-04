@@ -64,6 +64,10 @@ import {
 import { ClinicalTopupSheet } from '@/components/ClinicalTopupSheet';
 import { streamClinicalReply } from '@/lib/clinical-stream-client';
 import { streamTutorReply } from '@/lib/tutor-stream-client';
+import {
+  resolveTutorResponseLocale,
+  type TutorLocale,
+} from '@/lib/tutor-locale';
 import { getMedvbaAccessToken } from '@/lib/medvba-access-token';
 import { trackClinicalEvent } from '@/lib/clinical-analytics';
 import {
@@ -184,7 +188,7 @@ export default function TutorScreen() {
   const keyboardHeight = useKeyboardHeight();
   const keyboardVerticalOffset = tabBarHeight;
 
-  const tutorLocale = currentLanguage === 'ro' ? 'ro' : 'en';
+  const tutorLocale = resolveTutorResponseLocale(currentLanguage);
 
   const clinicalFocus =
     clinicalUiEnabled &&
@@ -301,7 +305,7 @@ export default function TutorScreen() {
   }, []);
 
   const generateAIResponse = useCallback(
-    async (conversationHistory: Message[], locale: 'en' | 'ro'): Promise<string> => {
+    async (conversationHistory: Message[], locale: TutorLocale): Promise<string> => {
     const historyForBackend = conversationHistory
       .filter(m => m.role === 'user' || m.role === 'assistant')
       .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));

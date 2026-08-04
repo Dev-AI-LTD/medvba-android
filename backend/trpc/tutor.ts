@@ -2,6 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "./create-context";
 import { generateText, getTutorAssistantPreamble, getTutorSystemPrompt, type TutorLocale } from "../../lib/ai-provider";
+import { tutorLocaleSchema } from "../../lib/tutor-locale";
 import { tutorRateLimiter } from "./rate-limiter";
 import { decrementFreeAiUsage, incrementFreeAiUsage } from "../lib/free-ai-usage";
 import { userHasActivePremiumAccess } from "../lib/premium-access";
@@ -39,7 +40,7 @@ export const tutorRouter = createTRPCRouter({
     .input(
       z.object({
         messages: z.array(messageSchema).min(1).max(40),
-        locale: z.enum(["en", "ro"]).default("en"),
+        locale: tutorLocaleSchema.default("en"),
       }),
     )
     .mutation(async ({ ctx, input }) => {

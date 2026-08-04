@@ -13,6 +13,7 @@ import {
   resolveClinicalProvider,
   type TutorLocale,
 } from '../../lib/ai-provider';
+import { tutorLocaleSchema } from '../../lib/tutor-locale';
 import { userHasActivePremiumAccess } from '../lib/premium-access';
 import {
   CLINICAL_CASE_TOPICS,
@@ -237,7 +238,7 @@ async function maybeSnapshotCase(
   }
 }
 
-const localeSchema = z.enum(['en', 'ro']).default('en');
+const localeSchema = tutorLocaleSchema.default('en');
 const replyModeSchema = z
   .enum(['history', 'exam', 'labs', 'differential', 'management', 'free'])
   .optional();
@@ -251,7 +252,7 @@ async function runExplainQuestion(
     correctIndex: number;
     chapter?: string;
     staticExplanation?: string;
-    locale: 'en' | 'ro';
+    locale: TutorLocale;
     acceptDisclaimer: boolean;
     questionId?: string;
     quizSessionId?: string;
@@ -442,7 +443,7 @@ async function runStartCase(
   ctx: { userId: string },
   input: {
     topic: (typeof CLINICAL_CASE_TOPICS)[number];
-    locale: 'en' | 'ro';
+    locale: TutorLocale;
     acceptDisclaimer: true;
     specialty?: string;
     difficulty?: string;
@@ -609,7 +610,7 @@ async function runReply(
   input: {
     sessionId: string;
     message: string;
-    locale: 'en' | 'ro';
+    locale: TutorLocale;
     mode?: 'history' | 'exam' | 'labs' | 'differential' | 'management' | 'free';
   },
 ) {

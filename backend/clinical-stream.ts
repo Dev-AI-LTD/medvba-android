@@ -14,8 +14,11 @@ import { verifyMedvbaRequestJwt } from './auth/decode-request-jwt';
 import {
   generateClinicalTextStream,
   resolveClinicalProvider,
-  type TutorLocale,
 } from '../lib/ai-provider';
+import {
+  resolveTutorLocaleOrDefault,
+  type TutorLocale,
+} from '../lib/tutor-locale';
 import {
   CLINICAL_CASE_TOPICS,
   CLINICAL_CREDIT_COSTS,
@@ -51,7 +54,7 @@ import { TRPCError } from '@trpc/server';
 type StreamBody = {
   sessionId: string;
   message: string;
-  locale?: 'en' | 'ro';
+  locale?: TutorLocale;
   mode?: 'history' | 'exam' | 'labs' | 'differential' | 'management' | 'free';
 };
 
@@ -128,7 +131,7 @@ export function registerClinicalStreamRoutes(app: Hono) {
       return c.json({ error: 'Rate limiting is temporarily unavailable. Please try again shortly.' }, 503);
     }
 
-    const locale = (body.locale === 'ro' ? 'ro' : 'en') as TutorLocale;
+    const locale = resolveTutorLocaleOrDefault(body.locale);
 
     const { data: session } = await supabase
       .from('ai_sessions')
