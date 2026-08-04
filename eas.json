@@ -25,7 +25,8 @@
         "EXPO_DOCTOR_ENABLE_DIRECTORY_CHECK": "0",
         "EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED": "true",
         "EXPO_PUBLIC_PAYWALL_ENABLED": "true",
-        "EXPO_PUBLIC_ENABLE_REVIEW_PREMIUM": "false"
+        "EXPO_PUBLIC_ENABLE_REVIEW_PREMIUM": "false",
+        "EXPO_PUBLIC_ALLOW_UI_LOCALES": "true"
       },
       "ios": {
         "resourceClass": "m-medium"
@@ -44,7 +45,8 @@
       "bun": "1.3.6",
       "env": {
         "EXPO_DOCTOR_ENABLE_DIRECTORY_CHECK": "0",
-        "EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED": "true"
+        "EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED": "true",
+        "EXPO_PUBLIC_ALLOW_UI_LOCALES": "true"
       },
       "ios": {
         "resourceClass": "m-medium"
