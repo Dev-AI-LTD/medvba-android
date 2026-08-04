@@ -1,7 +1,8 @@
 /**
- * Verify Batch 1 + Batch 2 UI strings for en ↔ es:
+ * Verify Batch 1 + Batch 2 + Study UI chrome strings for en ↔ es:
  * - Batch 1: auth.*, onboarding.*, offline.*
  * - Batch 2: Home + Quiz chrome + Home/Quiz tabs (exact 61 keys)
+ * - Study: study.* UI chrome (exact 34 keys; catalog fill)
  *
  * Fails on missing, empty, or extra keys within those batches.
  * Full-catalog gaps remain informational.
@@ -79,6 +80,44 @@ const BATCH2_KEYS = [
   'tabs.homeIconA11y',
   'tabs.quiz',
   'tabs.quizIconA11y',
+] as const;
+
+/** Study UI chrome catalog (EN/RO already complete; ES fill). */
+const STUDY_KEYS = [
+  'study.session',
+  'study.room',
+  'study.mcq',
+  'study.hubTitle',
+  'study.hubSubtitle',
+  'study.chaptersSubtitle',
+  'study.moduleComingSoon',
+  'study.moduleChapters',
+  'study.moduleSummaries',
+  'study.chapterFree',
+  'study.chapterPremium',
+  'study.chapterComingSoon',
+  'study.readSummary',
+  'study.listenSummary',
+  'study.playAudio',
+  'study.pauseAudio',
+  'study.stopAudio',
+  'study.audioTtsFallback',
+  'study.audioError',
+  'study.audioTtsUntilRebuild',
+  'study.audioStreaming',
+  'study.audioBuffering',
+  'study.audioStreamRetryHint',
+  'study.audioRetryMp3',
+  'study.startChapterQuiz',
+  'study.summaryNotFound',
+  'study.summaryApiUnavailable',
+  'study.summaryOfflinePreview',
+  'study.lockedTitle',
+  'study.lockedMessage',
+  'study.minRead',
+  'study.fromQuiz',
+  'study.partOfChapter',
+  'study.topicSummaryFallback',
 ] as const;
 
 function isBatch1Key(key: string): boolean {
@@ -162,6 +201,14 @@ function main() {
   }
   const batch2Ok = auditBatch('audit:locales-en-es (Batch 2: Home + Quiz chrome)', batch2Keys, en, es);
 
+  console.log('');
+  const studyKeys = [...STUDY_KEYS];
+  if (studyKeys.length !== 34) {
+    console.error(`FAILED: STUDY_KEYS length is ${studyKeys.length}, expected 34.`);
+    process.exit(1);
+  }
+  const studyOk = auditBatch('audit:locales-en-es (Study UI chrome)', studyKeys, en, es);
+
   const catalogOnlyEn = enKeys.filter((k) => !esSet.has(k));
   const catalogOnlyEs = esKeys.filter((k) => !enSet.has(k));
 
@@ -170,11 +217,11 @@ function main() {
   console.log(`Only in en.ts (full catalog): ${catalogOnlyEn.length}`);
   console.log(`Only in es.ts (full catalog): ${catalogOnlyEs.length}`);
 
-  if (!batch1Ok || !batch2Ok) {
-    console.error('\nFAILED: fix Batch 1 / Batch 2 en/es mismatches above.');
+  if (!batch1Ok || !batch2Ok || !studyOk) {
+    console.error('\nFAILED: fix Batch 1 / Batch 2 / Study en/es mismatches above.');
     process.exit(1);
   }
-  console.log('\nOK: Batch 1 + Batch 2 en/es locale parity.');
+  console.log('\nOK: Batch 1 + Batch 2 + Study en/es locale parity.');
 }
 
 main();
