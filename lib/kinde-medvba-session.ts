@@ -11,14 +11,14 @@ export async function resolveMedvbaSessionFromKindeAccessToken(
   getUserProfile: () => Promise<KindeUserProfileLite>,
 ): Promise<
   | { ok: true; access_token: string; profile_id: string; email?: string; refresh_token?: string }
-  | { ok: false; error: string; kind: SessionExchangeFailureKind }
+  | { ok: false; error: string; kind: SessionExchangeFailureKind; status?: number }
 > {
   const [ex, up] = await Promise.all([
     exchangeKindeAccessToken(kindeAccessToken),
     getUserProfile(),
   ]);
   if (!ex.ok) {
-    return { ok: false, error: ex.error, kind: ex.kind };
+    return { ok: false, error: ex.error, kind: ex.kind, status: ex.status };
   }
   const email = typeof up?.email === 'string' && up.email.length > 0 ? up.email : undefined;
   return {

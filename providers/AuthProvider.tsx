@@ -44,7 +44,10 @@ import { getKindeLoginHintEmail } from '@/lib/app-review-premium';
 import { clearPersistedQueryCache } from '@/lib/query-client';
 import { shouldClearMedvbaSessionAfterSyncFailure } from '@/lib/auth-sync-failure';
 import { isLikelyAuthConnectivityFailure } from '@/lib/auth-connectivity-errors';
-import { isConnectivityExchangeFailure } from '@/lib/session-exchange-errors';
+import {
+  isConnectivityExchangeFailure,
+  isRateLimitExchangeFailure,
+} from '@/lib/session-exchange-errors';
 import { useOfflineReconnectEffect } from '@/lib/use-offline-reconnect';
 import { persistKindeRefreshTokenFromSdk } from '@/lib/kinde-refresh-persistence';
 import { clearAuthReturnDestination } from '@/lib/auth-return-url';
@@ -243,6 +246,8 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   const recentProfileFetchRef = useRef<{ profileId: string; at: number } | null>(null);
   /** Avoid overlapping Kinde→MEDVBA refresh runs (interval + AppState). */
   const sessionRefreshInFlightRef = useRef<Promise<void> | null>(null);
+  /** After HTTP 429 / rate-limit on session exchange, skip further sync until this time. */
+  const sessionExchangeRateLimitUntilRef = useRef(0);
   /** Hosted Kinde OAuth in progress (state so navigators re-render; ref alone would not). */
   const [hostedOAuthInFlight, setHostedOAuthInFlight] = useState(false);
   const [offlineSessionGrace, setOfflineSessionGrace] = useState(false);
@@ -414,6 +419,10 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   const syncFromKinde = useCallback(async () => {
     const perf = authPerfStep('syncFromKinde');
     perf('enter');
+    if (Date.now() < sessionExchangeRateLimitUntilRef.current) {
+      log.debug('[Auth] Skipping session exchange (rate-limit backoff)');
+      return;
+    }
     const k = kindeRef.current;
     if (!k.isAuthenticated) {
       clearMedvbaSession();
@@ -429,17 +438,37 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
     perf('after_exchange_parallel_getUserProfile');
     if (!resolved.ok) {
       if (
-        isConnectivityExchangeFailure(resolved.error, undefined, resolved.kind) &&
+        isConnectivityExchangeFailure(resolved.error, resolved.status, resolved.kind) &&
         medvbaJwtHasMinTtlSeconds(0)
       ) {
         log.warn('[Auth] Session exchange deferred (offline); keeping local MEDVBA session');
         setOfflineSessionGrace(true);
         return;
       }
+      if (isRateLimitExchangeFailure(resolved.error, resolved.status, resolved.kind)) {
+        sessionExchangeRateLimitUntilRef.current = Date.now() + 65_000;
+        if (!shouldClearMedvbaSessionAfterSyncFailure()) {
+          log.warn(
+            '[Auth] Session exchange rate-limited; keeping unexpired local MEDVBA session:',
+            resolved.error,
+          );
+          return;
+        }
+        log.warn('[Auth] Session exchange rate-limited and no valid local MEDVBA JWT:', resolved.error);
+        return;
+      }
+      if (!shouldClearMedvbaSessionAfterSyncFailure()) {
+        log.warn(
+          '[Auth] Session exchange failed; keeping unexpired local MEDVBA session:',
+          resolved.error,
+        );
+        return;
+      }
       log.error('[Auth] Session exchange failed:', resolved.error);
       clearMedvbaSession();
       return;
     }
+    sessionExchangeRateLimitUntilRef.current = 0;
     await applyMedvbaSession(resolved.access_token, resolved.profile_id, resolved.email);
     perf('after_applyMedvbaSession');
     const mountedRef = { current: true };
@@ -479,6 +508,22 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
             if (isConnectivityExchangeFailure(ex.error, ex.status, ex.kind) && medvbaJwtHasMinTtlSeconds(0)) {
               log.warn('[Auth] MEDVBA refresh deferred (offline); keeping local session');
               setOfflineSessionGrace(true);
+              return;
+            }
+            if (isRateLimitExchangeFailure(ex.error, ex.status, ex.kind)) {
+              sessionExchangeRateLimitUntilRef.current = Date.now() + 65_000;
+              if (!shouldClearMedvbaSessionAfterSyncFailure()) {
+                log.warn(
+                  '[Auth] MEDVBA refresh rate-limited; keeping unexpired local session:',
+                  ex.error,
+                );
+                return;
+              }
+              log.warn('[Auth] MEDVBA refresh rate-limited and no valid local JWT:', ex.error);
+              return;
+            }
+            if (!shouldClearMedvbaSessionAfterSyncFailure()) {
+              log.warn('[Auth] MEDVBA refresh failed; keeping unexpired local session:', ex.error);
               return;
             }
             log.warn('[Auth] MEDVBA refresh (Kinde refresh_token) failed:', ex.error);

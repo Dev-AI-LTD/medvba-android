@@ -1,25 +1,26 @@
 import {
   classifySessionExchangeFailure,
   isConnectivityExchangeFailure,
+  isRateLimitExchangeFailure,
 } from '@/lib/session-exchange-errors';
 
-describe('session-exchange-errors', () => {
-  it('classifies fetch failures as connectivity', () => {
-    expect(classifySessionExchangeFailure('Network request failed')).toBe('connectivity');
-    expect(isConnectivityExchangeFailure('Network request failed')).toBe(true);
+describe('classifySessionExchangeFailure rate_limit', () => {
+  it('classifies HTTP 429 as rate_limit', () => {
+    expect(classifySessionExchangeFailure('Too many authentication attempts', 429)).toBe(
+      'rate_limit',
+    );
   });
 
-  it('classifies 401 as auth', () => {
-    expect(classifySessionExchangeFailure('Unauthorized', 401)).toBe('auth');
-    expect(isConnectivityExchangeFailure('Unauthorized', 401)).toBe(false);
+  it('classifies known rate-limit message without status', () => {
+    expect(
+      classifySessionExchangeFailure(
+        'Too many authentication attempts. Please try again shortly.',
+      ),
+    ).toBe('rate_limit');
   });
 
-  it('classifies 503 as connectivity', () => {
-    expect(classifySessionExchangeFailure('Service unavailable', 503)).toBe('connectivity');
-  });
-
-  it('respects explicit kind', () => {
-    expect(isConnectivityExchangeFailure('anything', undefined, 'connectivity')).toBe(true);
-    expect(isConnectivityExchangeFailure('network', undefined, 'auth')).toBe(false);
+  it('isRateLimitExchangeFailure respects explicit kind', () => {
+    expect(isRateLimitExchangeFailure('anything', undefined, 'rate_limit')).toBe(true);
+    expect(isConnectivityExchangeFailure('anything', undefined, 'rate_limit')).toBe(false);
   });
 });
