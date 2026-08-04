@@ -168,3 +168,6 @@ export const CLINICAL_DISCLAIMER_EN =
 
 export const CLINICAL_DISCLAIMER_RO =
   'Conținut educațional/simulat. Nu înlocuiește un diagnostic medical profesional.';
+
+export const CLINICAL_DISCLAIMER_ES =
+  'Contenido educativo/simulado. No sustituye un diagnóstico médico profesional ni la atención clínica.';

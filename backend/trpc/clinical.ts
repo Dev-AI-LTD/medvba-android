@@ -13,7 +13,7 @@ import {
   resolveClinicalProvider,
   type TutorLocale,
 } from '../../lib/ai-provider';
-import { tutorLocaleSchema } from '../../lib/tutor-locale';
+import { isTutorLocale, tutorLocaleSchema } from '../../lib/tutor-locale';
 import { userHasActivePremiumAccess } from '../lib/premium-access';
 import {
   CLINICAL_CASE_TOPICS,
@@ -53,6 +53,7 @@ import {
   getCaseKickoffUserMessage,
   getCaseSystemPrompt,
   getExplainSystemPrompt,
+  getImageAnalysisUserText,
   getImageSystemPrompt,
   getReplyModeHint,
   getSnapshotSystemPrompt,
@@ -454,9 +455,7 @@ async function runStartCase(
   await tutorRateLimiter(ctx.userId);
 
   const supabase = await adminClient();
-  const locale = (input.language === 'ro' || input.language === 'en'
-    ? input.language
-    : input.locale) as TutorLocale;
+  const locale = (isTutorLocale(input.language) ? input.language : input.locale) as TutorLocale;
   const cost = CLINICAL_CREDIT_COSTS.clinicalCase;
 
   const { data: session, error: sessionErr } = await supabase
@@ -978,11 +977,7 @@ const analyzeImageProcedure = protectedProcedure
       chargedAmount = charge.amount;
       usedTrial = charge.usedTrial;
 
-      const userText =
-        input.note?.trim() ||
-        (locale === 'ro'
-          ? 'Analizează imaginea în scop didactic.'
-          : 'Provide a guided educational analysis of this image.');
+      const userText = input.note?.trim() || getImageAnalysisUserText(locale);
 
       await insertMessage(supabase, {
         session_id: session.id,
@@ -1267,6 +1262,7 @@ async function buildClinicalStatusPayload(userId: string) {
       disclaimerVersion: CLINICAL_DISCLAIMER_VERSION,
       disclaimerEn: clinicalDisclaimer('en'),
       disclaimerRo: clinicalDisclaimer('ro'),
+      disclaimerEs: clinicalDisclaimer('es'),
       costs: CLINICAL_CREDIT_COSTS,
       flags: { streaming: false, topup: false },
     };
@@ -1292,6 +1288,7 @@ async function buildClinicalStatusPayload(userId: string) {
     disclaimerVersion: CLINICAL_DISCLAIMER_VERSION,
     disclaimerEn: clinicalDisclaimer('en'),
     disclaimerRo: clinicalDisclaimer('ro'),
+    disclaimerEs: clinicalDisclaimer('es'),
     costs: CLINICAL_CREDIT_COSTS,
     flags: { streaming: true, topup: true },
   };

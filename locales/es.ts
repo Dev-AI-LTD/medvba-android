@@ -477,6 +477,66 @@ export const es: Record<string, string> = {
     'No se recibió ninguna respuesta. Reformula la pregunta o inténtalo de nuevo en unos momentos.',
   'tutor.retry': 'Reintentar',
 
+  // Clinical Copilot (feature-flagged; hidden when EXPO_PUBLIC_CLINICAL_COPILOT_ENABLED is not true)
+  'clinical.explainCta': 'Explicar clínicamente con IA',
+  'clinical.explainLoading': 'Preparando la explicación clínica…',
+  'clinical.disclaimer':
+    'Contenido educativo/simulado. No sustituye un diagnóstico médico profesional ni la atención clínica.',
+  'clinical.errorTitle': 'Clinical Copilot',
+  'clinical.errorGeneric': 'Algo salió mal. Inténtalo de nuevo.',
+  'clinical.modeTutor': 'Tutor',
+  'clinical.modeClinical': 'Clínico',
+  'clinical.acceptDisclaimer': 'Entiendo — continuar',
+  'clinical.disclaimerAccepted': 'Descargo aceptado',
+  'clinical.acceptDisclaimerFirst':
+    'Acepta el descargo educativo antes de iniciar un caso.',
+  'clinical.pickCaseFirst': 'Elige una tarjeta de caso clínico para empezar.',
+  'clinical.creditsRemaining': '{count} créditos de Clinical Copilot restantes',
+  'clinical.paywallTitle': 'Desbloquear Clinical Copilot',
+  'clinical.paywallSubtitle':
+    'Casos clínicos interactivos, explicaciones avanzadas y análisis visual guiado para el aprendizaje médico.',
+  'clinical.topic.chest_pain': 'Dolor torácico',
+  'clinical.topic.acute_abdomen': 'Abdomen agudo',
+  'clinical.topic.neuro': 'Déficit neurológico',
+  'clinical.topic.pediatrics': 'Pediatría',
+  'clinical.topic.gyn': 'Ginecología',
+  'clinical.imageUploaded': 'Imagen de estudio cargada para análisis guiado',
+  'clinical.analyzeImage': 'Analizar imagen',
+  'clinical.generateSummary': 'Ficha de estudio',
+  'clinical.topupTitle': '¿Necesitas más créditos Clinical?',
+  'clinical.topupSubtitle':
+    'Recarga tu saldo AI Pass. Las compras se sincronizan con RevenueCat.',
+  'clinical.topupCredits': '{count} créditos',
+  'clinical.topupBuy': 'Comprar',
+  'clinical.topupClose': 'Ahora no',
+  'clinical.topupPurchaseFailed':
+    'No se pudo completar la recarga de créditos. Comprueba que los paquetes estén disponibles en la tienda e inténtalo de nuevo. Si ya tienes suscripción, usa Recargar créditos — no vuelvas a comprar la suscripción.',
+  'clinical.creditsRestored':
+    '{count} créditos Clinical están listos. Intenta generar de nuevo.',
+  'clinical.trialBanner': '{count} créditos de prueba restantes',
+  'clinical.homeCardTitle': 'Resolver un caso clínico',
+  'clinical.homeCardSubtitle': 'Practica el razonamiento con Clinical Copilot',
+  'clinical.contextualPaywallTitle': 'Entiende esta pregunta clínicamente',
+  'clinical.contextualPaywallBody':
+    'Pasa a MEDVBA Premium (AI Pass) para créditos de Clinical Copilot tras respuestas incorrectas.',
+  'clinical.insufficientCredits':
+    'Créditos de Clinical Copilot insuficientes. Recarga para continuar.',
+  'clinical.howToTitle': 'Cómo funciona Clinical Copilot',
+  'clinical.howToHide': 'Ocultar guía',
+  'clinical.howToShow': 'Mostrar guía',
+  'clinical.casesTools': 'Casos y herramientas',
+  'clinical.casesToolsHide': 'Ocultar casos y herramientas',
+  'clinical.casesToolsShow': 'Casos y herramientas',
+  'clinical.disclaimerCompact': 'Descargo educativo aceptado',
+  'clinical.howToStep1': '1. Acepta el descargo educativo.',
+  'clinical.howToStep2':
+    '2. Toca un tema de caso (p. ej. Dolor torácico) para empezar — usa prueba o ~4 créditos.',
+  'clinical.howToStep3': '3. Continúa en el chat (anamnesis, exploración, diferencial).',
+  'clinical.howToStep4': '4. Opcional: Analizar imagen o generar una Ficha de estudio.',
+  'clinical.apiUnavailable':
+    'La API de Clinical Copilot aún no está disponible en el servidor. Pide a soporte que redespliegue el backend con Clinical activado.',
+  'clinical.topupLink': 'Recargar créditos',
+
   // Social / Study Rooms
   'social.title': 'Salas de estudio',
   'social.subtitle': 'Únete a sesiones en vivo o crea tu propia revisión de anatomía.',
